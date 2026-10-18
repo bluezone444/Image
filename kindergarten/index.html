@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>동천동 유치원 찾기</title>
+<style>
+:root{
+  --bg:#f6f5f2; --card:#ffffff; --ink:#1d1d1b; --muted:#6b6a66; --line:#e4e2dc;
+  --accent:#2f6f5e; --accent-soft:#e3efe9; --warn:#b5531c; --warn-soft:#f8e9df;
+  --bad:#a33a3a; --bad-soft:#f6e1e1; --star:#d9a400; --chip:#efede8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#151614; --card:#1f201d; --ink:#ecebe6; --muted:#a19f98; --line:#33342f;
+    --accent:#7cc4ab; --accent-soft:#22352e; --warn:#e9a072; --warn-soft:#3a2a20;
+    --bad:#ec8f8f; --bad-soft:#3b2323; --star:#f2c84b; --chip:#2a2b27;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#151614; --card:#1f201d; --ink:#ecebe6; --muted:#a19f98; --line:#33342f;
+  --accent:#7cc4ab; --accent-soft:#22352e; --warn:#e9a072; --warn-soft:#3a2a20;
+  --bad:#ec8f8f; --bad-soft:#3b2323; --star:#f2c84b; --chip:#2a2b27;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;
+  font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:22px;margin:0 0 2px;letter-spacing:-.02em}
+.sub{color:var(--muted);font-size:14px;margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.kid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kid div{background:var(--chip);border-radius:10px;padding:10px 12px}
+.kid b{display:block;font-size:17px}
+.kid small{color:var(--muted);font-size:12px}
+.seg{display:flex;background:var(--chip);border-radius:10px;padding:3px;margin-bottom:10px}
+.seg button{flex:1;border:0;background:transparent;color:var(--ink);padding:9px 6px;border-radius:8px;font:inherit;font-size:14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--card);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--card);font-weight:600}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input[type=search],input[type=text],select,textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;width:100%}
+textarea{min-height:90px;font-size:12px;font-family:ui-monospace,Menlo,monospace}
+label.tg{display:flex;gap:6px;align-items:center;font-size:14px;white-space:nowrap}
+.btn{border:0;background:var(--accent);color:var(--card);font:inherit;font-weight:600;padding:10px 14px;border-radius:10px;cursor:pointer}
+.btn.ghost{background:var(--chip);color:var(--ink)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.stat b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.stat small{color:var(--muted);font-size:12px}
+h2{font-size:16px;margin:20px 0 8px}
+h2 small{font-weight:400;color:var(--muted);font-size:13px}
+.k{position:relative}
+.k-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.k-name{font-size:16px;font-weight:700;margin:0}
+.rank{display:inline-block;min-width:22px;height:22px;line-height:22px;text-align:center;border-radius:6px;background:var(--accent);color:var(--card);font-size:12px;font-weight:700;margin-right:6px}
+.star{border:0;background:none;font-size:22px;line-height:1;cursor:pointer;color:var(--line);padding:0 2px}
+.star[aria-pressed="true"]{color:var(--star)}
+.badges{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+.badge{font-size:12px;padding:2px 8px;border-radius:6px;background:var(--chip);color:var(--muted)}
+.badge.near{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.badge.pub{background:var(--accent-soft);color:var(--accent)}
+.addr{color:var(--muted);font-size:13px;margin:0 0 8px}
+.meter{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;margin:8px 0}
+.meter div{border-radius:10px;background:var(--chip);padding:6px 4px}
+.meter b{display:block;font-size:17px;font-variant-numeric:tabular-nums}
+.meter small{font-size:11px;color:var(--muted)}
+.meter .ok{background:var(--accent-soft)} .meter .ok b{color:var(--accent)}
+.meter .tight{background:var(--warn-soft)} .meter .tight b{color:var(--warn)}
+.meter .full{background:var(--bad-soft)} .meter .full b{color:var(--bad)}
+.bar{height:6px;border-radius:3px;background:var(--chip);overflow:hidden;margin-top:2px}
+.bar i{display:block;height:100%;background:var(--accent)}
+.why{font-size:13px;color:var(--accent);margin:4px 0 0}
+.links{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;margin-top:8px}
+.links a{color:var(--accent);text-decoration:none;font-weight:600}
+.more{font-size:12px;color:var(--muted);margin-top:6px}
+details.setup summary{cursor:pointer;font-weight:700}
+.note{font-size:13px;color:var(--muted)}
+.msg{padding:10px 12px;border-radius:10px;font-size:14px;margin:8px 0}
+.msg.err{background:var(--bad-soft);color:var(--bad)}
+.msg.ok{background:var(--accent-soft);color:var(--accent)}
+.empty{text-align:center;color:var(--muted);padding:28px 8px}
+ol.steps{padding-left:20px;margin:6px 0} ol.steps li{margin:4px 0}
+footer{color:var(--muted);font-size:12px;margin-top:24px}
+@media (max-width:420px){.stats b{font-size:17px}.kid b{font-size:15px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>우리 아이 유치원 찾기</h1>
+  <p class="sub">수지구 동천동 기준 · 2023년 4월생 · 수지구·분당구(+기흥구) 유치원 모집 현황</p>
+
+  <div class="card kid">
+    <div><small>지금 (2026학년도)</small><b>만 3세반</b><small>2023년생 = 2026년 만3세반</small></div>
+    <div><small>내년 3월 입학 (2027학년도)</small><b>만 4세반</b><small>처음학교로 모집은 보통 11월경</small></div>
+  </div>
+
+  <details class="card setup" id="setup">
+    <summary>데이터 불러오기 설정</summary>
+    <div id="setupBody"></div>
+  </details>
+
+  <div id="msg"></div>
+
+  <div class="seg" role="group" aria-label="대상 반">
+    <button data-mode="next" aria-pressed="true">2027년 입학 · 만4세반</button>
+    <button data-mode="now" aria-pressed="false">지금 · 만3세반</button>
+  </div>
+
+  <div class="chips" id="areaChips">
+    <button class="chip" data-area="near" aria-pressed="true">동천동 인근</button>
+    <button class="chip" data-area="수지구" aria-pressed="false">수지구 전체</button>
+    <button class="chip" data-area="분당구" aria-pressed="false">분당구 전체</button>
+    <button class="chip" data-area="기흥구" aria-pressed="false">기흥구</button>
+    <button class="chip" data-area="all" aria-pressed="false">전체</button>
+    <button class="chip" data-area="fav" aria-pressed="false">★ 관심</button>
+  </div>
+  <div class="row" style="margin-bottom:12px">
+    <input type="search" id="q" placeholder="유치원 이름·주소 검색" style="flex:1 1 200px">
+    <select id="type" style="width:auto">
+      <option value="">설립 전체</option>
+      <option value="pub">국공립</option>
+      <option value="pri">사립</option>
+    </select>
+    <label class="tg"><input type="checkbox" id="onlyOpen"> 여석 있는 곳만</label>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <h2 id="topTitle">추천 TOP 5 <small id="topSub"></small></h2>
+  <div id="top"></div>
+
+  <h2>전체 목록 <small id="listSub"></small></h2>
+  <div class="row" style="margin-bottom:8px">
+    <select id="sort" style="width:auto">
+      <option value="score">추천순</option>
+      <option value="vac">여석 많은 순</option>
+      <option value="near">가까운 순</option>
+      <option value="name">이름순</option>
+    </select>
+  </div>
+  <div id="list"></div>
+
+  <footer>
+    데이터: 유치원알리미(교육부) Open API 기본현황(basicInfo2). 정원·현원은 공시 기준일 값이라 실제 모집 인원과 다를 수 있어요.
+    “예상 여석(2027)”은 <b>만4세 정원 − 현재 만3세 현원(그대로 진급 예정)</b>으로 계산한 추정치예요. 정확한 모집 인원은 처음학교로·각 유치원 모집요강에서 꼭 확인하세요.
+    거리 구분은 주소(동·도로명) 기준의 대략적인 분류예요.
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- 설정 ---------- */
+const REGIONS = [
+  { name: "수지구", sido: "41", sgg: "41465", on: true },
+  { name: "분당구", sido: "41", sgg: "41135", on: true },
+  { name: "기흥구", sido: "41", sgg: "41463", on: false }
+];
+const API = "https://e-childschoolinfo.moe.go.kr/api/notice/basicInfo2.do";
+
+// 동천동 기준 거리 구분 (주소의 법정동 → 없으면 도로명으로 판단)
+const TIERS = [
+  { label: "우리 동네", dongs: ["동천동"], roads: ["동천로", "손곡로"] },
+  { label: "바로 옆", dongs: ["풍덕천동", "고기동", "구미동", "금곡동"], roads: ["풍덕천로", "고기로", "구미로", "미금로", "금곡로"] },
+  { label: "가까운 편", dongs: ["신봉동", "성복동", "상현동", "죽전동", "정자동", "동원동", "궁내동", "수내동"], roads: ["신봉", "성복", "상현로", "죽전로", "정자일로", "정자로", "수내로"] }
+];
+const AREA_TIER = { "수지구": 3, "분당구": 3, "기흥구": 4 };
+const TIER_LABEL = ["우리 동네", "바로 옆", "가까운 편", "같은 생활권", "조금 멀어요"];
+const TIER_POINTS = [40, 30, 20, 8, 0];
+
+const isGAS = typeof google !== "undefined" && google.script && google.script.run;
+
+/* ---------- 저장소 (실패해도 동작) ---------- */
+const store = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+
+const state = {
+  mode: "next", area: "near", q: "", type: "", onlyOpen: false, sort: "score",
+  favs: new Set(store.get("kg.favs", [])),
+  data: [], updated: null
+};
+
+/* ---------- 유틸 ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num = v => { const n = parseInt(String(v == null ? "" : v).replace(/[^0-9-]/g, ""), 10); return isNaN(n) ? null : n; };
+const has = v => v !== null && v !== undefined;
+
+function msg(text, kind){
+  $("#msg").innerHTML = text ? `<div class="msg ${kind || "ok"}">${text}</div>` : "";
+}
+
+/* ---------- 데이터 정규화 ---------- */
+function areaOf(addr, fallback){
+  for (const a of ["수지구", "분당구", "기흥구"]) if (addr.includes(a)) return a;
+  return fallback || "기타";
+}
+function tierOf(addr, area){
+  for (let t = 0; t < TIERS.length; t++) if (TIERS[t].dongs.some(d => addr.includes(d))) return t;
+  for (let t = 0; t < TIERS.length; t++) if (TIERS[t].roads.some(r => addr.includes(r))) return t;
+  return AREA_TIER[area] != null ? AREA_TIER[area] : 4;
+}
+function normalize(raw, regionName){
+  const addr = String(raw.addr || "");
+  const area = areaOf(addr, regionName);
+  const est = String(raw.establish || "");
+  return {
+    id: String(raw.kindercode || raw.key || (raw.kindername + "|" + addr)),
+    name: String(raw.kindername || "(이름 없음)"),
+    establish: est,
+    isPublic: /공립|국립/.test(est),
+    addr, area, tier: tierOf(addr, area),
+    tel: String(raw.telno || "").trim(),
+    home: String(raw.hpaddr || "").trim(),
+    hours: String(raw.opertime || "").trim(),
+    cap: { 3: num(raw.ag3fpcnt), 4: num(raw.ag4fpcnt), 5: num(raw.ag5fpcnt), mix: num(raw.mixfpcnt) },
+    cur: { 3: num(raw.ppcnt3), 4: num(raw.ppcnt4), 5: num(raw.ppcnt5), mix: num(raw.mixppcnt) },
+    cls: { 3: num(raw.clcnt3), 4: num(raw.clcnt4), 5: num(raw.clcnt5), mix: num(raw.mixclcnt) },
+    pbnt: String(raw.pbnttmng || "")
+  };
+}
+function extractList(json){
+  if (!json) return [];
+  if (Array.isArray(json)) return json;
+  if (Array.isArray(json.kinderInfo)) return json.kinderInfo;
+  for (const k in json) if (Array.isArray(json[k])) return json[k];
+  return [];
+}
+
+/* ---------- 대상 반 기준 여석 계산 ---------- */
+// next: 2027 만4세반 → 만4세 정원 − 현재 만3세 현원(진급 예정)
+// now : 2026 만3세반 → 만3세 정원 − 만3세 현원
+function seat(k){
+  if (state.mode === "next"){
+    const cap = k.cap[4], stay = k.cur[3];
+    return { cap, cur: stay, vac: has(cap) && has(stay) ? cap - stay : null,
+             capLabel: "만4세 정원", curLabel: "진급 예정(현 만3세)", cls: k.cls[4] };
+  }
+  const cap = k.cap[3], cur = k.cur[3];
+  return { cap, cur, vac: has(cap) && has(cur) ? cap - cur : null,
+           capLabel: "만3세 정원", curLabel: "만3세 현원", cls: k.cls[3] };
+}
+function offersTarget(k){
+  const age = state.mode === "next" ? 4 : 3;
+  return (k.cap[age] || 0) > 0 || (k.cls[age] || 0) > 0 || (k.cap.mix || 0) > 0 || (k.cls.mix || 0) > 0;
+}
+function score(k){
+  const s = seat(k);
+  let sc = TIER_POINTS[k.tier];
+  if (has(s.vac)) sc += s.vac > 0 ? Math.min(s.vac, 10) * 3 : -25;
+  if (k.isPublic) sc += 5;
+  if (state.favs.has(k.id)) sc += 100;
+  return sc;
+}
+function reasons(k){
+  const s = seat(k), r = [];
+  if (k.tier <= 2) r.push(TIER_LABEL[k.tier]);
+  if (has(s.vac) && s.vac > 0) r.push(`예상 여석 ${s.vac}명`);
+  if (k.isPublic) r.push("국공립(학비 부담 적음)");
+  if (!has(s.vac) && (k.cap.mix || 0) > 0) r.push("혼합연령반 운영");
+  return r.join(" · ");
+}
+
+/* ---------- 필터 & 렌더 ---------- */
+function filtered(){
+  const q = state.q.trim();
+  return state.data.filter(k => {
+    if (!offersTarget(k)) return false;
+    if (state.area === "near" && k.tier > 2) return false;
+    if (state.area === "fav" && !state.favs.has(k.id)) return false;
+    if (["수지구", "분당구", "기흥구"].includes(state.area) && k.area !== state.area) return false;
+    if (state.type === "pub" && !k.isPublic) return false;
+    if (state.type === "pri" && k.isPublic) return false;
+    if (state.onlyOpen){ const v = seat(k).vac; if (!(has(v) && v > 0)) return false; }
+    if (q && !(k.name.includes(q) || k.addr.includes(q))) return false;
+    return true;
+  });
+}
+function sorted(list, by){
+  const a = list.slice();
+  const vac = k => { const v = seat(k).vac; return has(v) ? v : -999; };
+  if (by === "vac") a.sort((x, y) => vac(y) - vac(x) || x.tier - y.tier);
+  else if (by === "near") a.sort((x, y) => x.tier - y.tier || vac(y) - vac(x));
+  else if (by === "name") a.sort((x, y) => x.name.localeCompare(y.name, "ko"));
+  else a.sort((x, y) => score(y) - score(x) || x.name.localeCompare(y.name, "ko"));
+  return a;
+}
+function vacClass(v){ return !has(v) ? "" : v >= 3 ? "ok" : v > 0 ? "tight" : "full"; }
+function fmt(v){ return has(v) ? v : "–"; }
+
+function cardHTML(k, rank){
+  const s = seat(k);
+  const fill = has(s.cap) && s.cap > 0 && has(s.cur) ? Math.min(100, Math.round(s.cur / s.cap * 100)) : null;
+  const fav = state.favs.has(k.id);
+  const href = k.home && !/^https?:\/\//i.test(k.home) ? "http://" + k.home : k.home;
+  const mix = (k.cap.mix || k.cur.mix || k.cls.mix) ? `<div class="more">혼합연령반: 정원 ${fmt(k.cap.mix)} · 현원 ${fmt(k.cur.mix)} · ${fmt(k.cls.mix)}학급</div>` : "";
+  return `<div class="card k">
+    <div class="k-head">
+      <p class="k-name">${rank ? `<span class="rank">${rank}</span>` : ""}${esc(k.name)}</p>
+      <button class="star" data-fav="${esc(k.id)}" aria-pressed="${fav}" aria-label="관심 유치원">★</button>
+    </div>
+    <div class="badges">
+      <span class="badge ${k.tier <= 2 ? "near" : ""}">${TIER_LABEL[k.tier]}</span>
+      <span class="badge">${esc(k.area)}</span>
+      ${k.establish ? `<span class="badge ${k.isPublic ? "pub" : ""}">${esc(k.establish)}</span>` : ""}
+      ${has(s.cls) && s.cls > 0 ? `<span class="badge">${s.cls}학급</span>` : ""}
+    </div>
+    <p class="addr">${esc(k.addr)}</p>
+    <div class="meter">
+      <div><b>${fmt(s.cap)}</b><small>${s.capLabel}</small></div>
+      <div><b>${fmt(s.cur)}</b><small>${s.curLabel}</small></div>
+      <div class="${vacClass(s.vac)}"><b>${fmt(s.vac)}</b><small>${state.mode === "next" ? "예상 여석" : "여석"}</small></div>
+    </div>
+    ${fill !== null ? `<div class="bar" aria-hidden="true"><i style="width:${fill}%"></i></div>` : ""}
+    ${rank ? `<p class="why">${esc(reasons(k))}</p>` : ""}
+    ${mix}
+    <div class="more">현원 전체: 만3세 ${fmt(k.cur[3])} · 만4세 ${fmt(k.cur[4])} · 만5세 ${fmt(k.cur[5])}${k.hours ? " · 운영 " + esc(k.hours) : ""}</div>
+    <div class="links">
+      ${k.tel ? `<a href="tel:${esc(k.tel.replace(/[^0-9-]/g, ""))}">📞 ${esc(k.tel)}</a>` : ""}
+      ${href ? `<a href="${esc(href)}" target="_blank" rel="noopener">홈페이지</a>` : ""}
+      <a href="https://map.naver.com/p/search/${encodeURIComponent(k.name + " " + k.area)}" target="_blank" rel="noopener">지도</a>
+    </div>
+  </div>`;
+}
+
+function render(){
+  const list = filtered();
+  const withVac = list.filter(k => { const v = seat(k).vac; return has(v) && v > 0; });
+  const total = withVac.reduce((a, k) => a + seat(k).vac, 0);
+  $("#stats").innerHTML = `
+    <div class="stat"><b>${list.length}</b><small>유치원</small></div>
+    <div class="stat"><b>${withVac.length}</b><small>${state.mode === "next" ? "예상 여석 있는 곳" : "여석 있는 곳"}</small></div>
+    <div class="stat"><b>${total}</b><small>여석 합계(명)</small></div>`;
+
+  if (!state.data.length){
+    $("#top").innerHTML = `<div class="card empty">아직 데이터가 없어요.<br>위의 <b>데이터 불러오기 설정</b>을 열어 주세요.</div>`;
+    $("#list").innerHTML = ""; $("#topSub").textContent = ""; $("#listSub").textContent = "";
+    return;
+  }
+  const top = sorted(list, "score").slice(0, 5);
+  $("#topSub").textContent = state.mode === "next" ? "가까움 + 2027 예상 여석 + 국공립" : "가까움 + 현재 여석 + 국공립";
+  $("#top").innerHTML = top.length ? top.map((k, i) => cardHTML(k, i + 1)).join("") : `<div class="card empty">조건에 맞는 유치원이 없어요.</div>`;
+  const rest = sorted(list, state.sort);
+  $("#listSub").textContent = `${rest.length}곳${state.updated ? " · " + state.updated + " 불러옴" : ""}`;
+  $("#list").innerHTML = rest.map(k => cardHTML(k, 0)).join("");
+}
+
+/* ---------- 데이터 불러오기 ---------- */
+function setData(rows, updated){
+  const seen = new Set();
+  state.data = rows.filter(k => !seen.has(k.id) && seen.add(k.id));
+  state.updated = updated || new Date().toLocaleString("ko-KR");
+  store.set("kg.cache", { rows: state.data, updated: state.updated });
+  render();
+}
+
+async function fetchDirect(key, regions){
+  const out = [];
+  for (const r of regions){
+    const url = `${API}?key=${encodeURIComponent(key)}&sidoCode=${r.sido}&sggCode=${r.sgg}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`${r.name}: HTTP ${res.status}`);
+    const json = await res.json();
+    if (json && json.status && String(json.status).toUpperCase() !== "SUCCESS" && !extractList(json).length)
+      throw new Error(`${r.name}: ${json.status}`);
+    extractList(json).forEach(x => out.push(normalize(x, r.name)));
+  }
+  return out;
+}
+
+function loadFromGAS(){
+  msg("불러오는 중…");
+  google.script.run
+    .withSuccessHandler(text => {
+      try {
+        const payload = typeof text === "string" ? JSON.parse(text) : text;
+        const rows = [];
+        (payload.regions || []).forEach(r => extractList(r.items).forEach(x => rows.push(normalize(x, r.name))));
+        setData(rows, payload.updated);
+        msg(`${rows.length}개 유치원을 불러왔어요.`, "ok");
+      } catch(e){ msg("데이터 형식 오류: " + esc(e.message), "err"); }
+    })
+    .withFailureHandler(e => msg("Apps Script 오류: " + esc(e && e.message || e), "err"))
+    .getData();
+}
+
+function setupUI(){
+  const body = $("#setupBody");
+  if (isGAS){
+    body.innerHTML = `<p class="note">구글 Apps Script로 실행 중이에요. 인증키는 스크립트(Code.gs)에 저장되어 있어요.</p>
+      <button class="btn" id="reload">새로 불러오기</button>`;
+    $("#reload").onclick = loadFromGAS;
+    return;
+  }
+  const key = store.get("kg.key", "");
+  body.innerHTML = `
+    <ol class="steps note">
+      <li><a href="https://e-childschoolinfo.moe.go.kr/openApi/openApiIntro.do" target="_blank" rel="noopener">유치원알리미 Open API</a>에서 인증키 무료 신청</li>
+      <li>아래에 인증키를 넣고 <b>불러오기</b> (브라우저 보안(CORS) 때문에 막히면 3번)</li>
+      <li>막히면: 함께 있는 <b>Code.gs</b>를 구글시트 → 확장 프로그램 → Apps Script에 붙여넣고 웹앱으로 배포 (README 참고)</li>
+    </ol>
+    <div class="row" style="margin:8px 0">
+      <input type="text" id="key" placeholder="유치원알리미 인증키" value="${esc(key)}" style="flex:1 1 220px" autocomplete="off">
+    </div>
+    <div class="row" id="regionBoxes" style="margin-bottom:8px">
+      ${REGIONS.map((r, i) => `<label class="tg"><input type="checkbox" data-r="${i}" ${r.on ? "checked" : ""}> ${r.name}</label>`).join("")}
+    </div>
+    <div class="row">
+      <button class="btn" id="load">불러오기</button>
+      <button class="btn ghost" id="showPaste">JSON 붙여넣기</button>
+    </div>
+    <div id="pasteBox" hidden style="margin-top:10px">
+      <p class="note">API 주소를 브라우저에서 직접 열고 나온 결과(JSON)를 통째로 복사해 붙여넣으세요. 지역마다 한 번씩 추가하면 합쳐져요.</p>
+      <div class="note" id="apiLinks"></div>
+      <textarea id="paste" placeholder='{"kinderInfo":[ ... ]}'></textarea>
+      <div class="row" style="margin-top:6px"><button class="btn" id="addPaste">추가</button><button class="btn ghost" id="clearData">데이터 비우기</button></div>
+    </div>`;
+
+  const regions = () => [...document.querySelectorAll("#regionBoxes input")].filter(c => c.checked).map(c => REGIONS[+c.dataset.r]);
+  const links = () => {
+    const k = $("#key").value.trim() || "인증키";
+    $("#apiLinks").innerHTML = regions().map(r => `<div><a target="_blank" rel="noopener" href="${API}?key=${encodeURIComponent(k)}&sidoCode=${r.sido}&sggCode=${r.sgg}">${r.name} API 열기</a></div>`).join("");
+  };
+  $("#key").addEventListener("input", links);
+  $("#regionBoxes").addEventListener("change", links);
+  $("#showPaste").onclick = () => { $("#pasteBox").hidden = !$("#pasteBox").hidden; links(); };
+  $("#load").onclick = async () => {
+    const k = $("#key").value.trim();
+    if (!k){ msg("인증키를 입력해 주세요.", "err"); return; }
+    store.set("kg.key", k);
+    msg("불러오는 중…");
+    try {
+      const rows = await fetchDirect(k, regions());
+      setData(rows);
+      msg(`${rows.length}개 유치원을 불러왔어요.`, "ok");
+      $("#setup").open = false;
+    } catch(e){
+      msg(`직접 불러오기에 실패했어요 (${esc(e.message)}). 브라우저 보안(CORS) 때문일 가능성이 커요 — <b>JSON 붙여넣기</b>나 <b>Apps Script</b> 방법을 써 주세요.`, "err");
+    }
+  };
+  $("#addPaste").onclick = () => {
+    try {
+      const rows = extractList(JSON.parse($("#paste").value)).map(x => normalize(x));
+      if (!rows.length) throw new Error("유치원 목록(kinderInfo)을 찾지 못했어요");
+      setData(state.data.concat(rows));
+      $("#paste").value = "";
+      msg(`${rows.length}개 추가 · 총 ${state.data.length}개`, "ok");
+    } catch(e){ msg("붙여넣기 오류: " + esc(e.message), "err"); }
+  };
+  $("#clearData").onclick = () => { state.data = []; state.updated = null; store.set("kg.cache", null); render(); msg(""); };
+}
+
+/* ---------- 이벤트 ---------- */
+function pressGroup(sel, attr, val){
+  document.querySelectorAll(sel).forEach(b => b.setAttribute("aria-pressed", String(b.dataset[attr] === val)));
+}
+document.querySelectorAll(".seg button").forEach(b => b.onclick = () => { state.mode = b.dataset.mode; pressGroup(".seg button", "mode", state.mode); render(); });
+document.querySelectorAll("#areaChips .chip").forEach(b => b.onclick = () => { state.area = b.dataset.area; pressGroup("#areaChips .chip", "area", state.area); render(); });
+$("#q").addEventListener("input", e => { state.q = e.target.value; render(); });
+$("#type").addEventListener("change", e => { state.type = e.target.value; render(); });
+$("#onlyOpen").addEventListener("change", e => { state.onlyOpen = e.target.checked; render(); });
+$("#sort").addEventListener("change", e => { state.sort = e.target.value; render(); });
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-fav]"); if (!b) return;
+  const id = b.dataset.fav;
+  state.favs.has(id) ? state.favs.delete(id) : state.favs.add(id);
+  store.set("kg.favs", [...state.favs]);
+  render();
+});
+
+/* ---------- 시작 ---------- */
+setupUI();
+const cached = store.get("kg.cache", null);
+if (cached && cached.rows && cached.rows.length){ state.data = cached.rows; state.updated = cached.updated; }
+render();
+if (isGAS) loadFromGAS();
+else if (!state.data.length) $("#setup").open = true;
+})();
+</script>
+</body>
+</html>
