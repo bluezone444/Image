@@ -382,13 +382,16 @@ def locate_home(cache):
 # ---------- 엄마(안다빈) 픽 4곳 집중 수집 ----------
 DEEP_TARGETS = [
     {"key": "daycare", "names": ["동천센트럴자이", "동천자이", "센트럴자이"], "home": None,
-     "queries": ["동천센트럴자이 어린이집", "시립동천자이2차어린이집", "용인시립 동천센트럴자이어린이집", "동천센트럴자이 국공립 어린이집 후기"]},
+     "queries": ["동천센트럴자이 어린이집", "시립동천자이2차어린이집", "시립동천자이2차어린이집 아이근처", "시립동천자이2차어린이집 토리맵", "동천센트럴자이 국공립 어린이집 후기"]},
     {"key": "poly", "names": ["폴리", "POLY", "Poly"], "home": None,
-     "queries": ["수지 폴리어학원 유치부", "폴리어학원 수지 킨더 원비", "POLY 수지 풍덕천 하나로프라자", "수지 폴리 영어유치원 후기"]},
+     "queries": ["수지 폴리어학원 유치부", "폴리어학원 수지 킨더 원비", "POLY 수지 풍덕천 하나로프라자", "수지 폴리 영어유치원 후기",
+                 "폴리어학원 수지캠퍼스", "폴리 킨더 수지 학원비", "poly kinder suji"]},
     {"key": "sungmin", "names": ["성민"], "home": "http://www.sungmin-i.com",
-     "queries": ["성민프리미어 유치원", "성민유치원 수지 풍덕천", "성민유치원 수지 원비 후기", "sungmin-i.com 성민유치원"]},
+     "queries": ["성민프리미어 유치원", "성민유치원 수지 풍덕천", "성민유치원 수지 원비 후기", "sungmin-i.com 성민유치원",
+                 "성민유치원 아이근처", "성민유치원 토리맵", "성민유치원 용인 수지구 풍덕천로148번길"]},
     {"key": "besti", "names": ["베스아이", "best-i", "BEST-I"], "home": "http://best-i.kg.kr",
-     "queries": ["베스아이유치원", "베스아이유치원 수지 원비", "베스아이유치원 후기 동천", "best-i.kg.kr 유치원"]},
+     "queries": ["베스아이유치원", "베스아이유치원 수지 원비", "베스아이유치원 후기 동천", "best-i.kg.kr 유치원",
+                 "베스아이유치원 아이근처", "베스아이유치원 토리맵", "베스아이유치원 용인 고기로139번길"]},
 ]
 TOPICS = {
     "비용": r"원비|교육비|수업료|수강료|부모 ?부담|납부|입학금|등록금|재료비|교재비|차량비|만 ?원",
@@ -400,6 +403,7 @@ TOPICS = {
     "교사": r"교사|선생님|원장|담임|원어민|자격",
     "후기": r"좋아|만족|추천|아쉬|단점|불만|친절|꼼꼼|비싸",
 }
+DEBUG = "--deep-only" in sys.argv
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
       "Accept-Language": "ko-KR,ko;q=0.9"}
 
@@ -455,8 +459,20 @@ def homepage_pages(home):
     try:
         html, base = fetch_text(home)
     except Exception as e:  # noqa: BLE001
-        print(f"  홈페이지 실패 {home}: {e}", file=sys.stderr)
+        print(f"  홈페이지 실패 {home}: {e}")
         return []
+    # 프레임·아이프레임으로 만든 홈페이지는 안쪽 페이지를 따라감
+    for src in re.findall(r'<i?frame[^>]+src="([^"]+)"', html, re.I):
+        u = urllib.parse.urljoin(base, src.replace("&amp;", "&"))
+        if u not in pages:
+            pages.append(u)
+            try:
+                inner, _ = fetch_text(u)
+                html += inner
+            except Exception:  # noqa: BLE001
+                pass
+    if DEBUG:
+        print(f"  [홈] {home} → {base} html {len(html)}자, 텍스트 {len(page_text(html))}자, 프레임 {len(pages) - 1}")
     for href, text in re.findall(r'<a[^>]+href="([^"#]+)"[^>]*>(.*?)</a>', html, re.S):
         t = strip_tags(text)
         if re.search(r"소개|교육|프로그램|일과|모집|입학|시설|안내|오시는|특성화|방과후|차량|공지|원비|교육비|하루", t):
@@ -473,15 +489,22 @@ def deep_collect(target):
     urls = (homepage_pages(target["home"]) if target["home"] else [])
     official = set(urls)
     for q in target["queries"]:
-        for u in web_search(q)[:6]:
+        res = web_search(q)
+        if DEBUG:
+            print(f"  [검색] {q} → {len(res)}건 {res[:4]}")
+        for u in res[:6]:
             if u not in urls:
                 urls.append(u)
-    for u in urls[:30]:
+    for u in urls[:40]:
         try:
             html, final = fetch_text(u)
-        except Exception:  # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
+            if DEBUG:
+                print(f"  [실패] {u[:90]} {e}")
             continue
         text = page_text(html)
+        if DEBUG:
+            print(f"  [페이지] {u[:90]} 텍스트 {len(text)}자 이름포함 {any(n in text for n in names)}")
         if u not in official and not any(n in text for n in names):
             continue  # 대상과 상관없는 페이지 제외
         title = strip_tags((re.search(r"<title[^>]*>(.*?)</title>", html, re.S | re.I) or [None, ""])[1]).strip()[:80]
@@ -640,4 +663,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if DEBUG:  # 4곳 집중 수집만 빠르게 점검
+        for t in DEEP_TARGETS:
+            r = deep_collect(t)
+            for topic, fs in r["facts"].items():
+                for f in fs[:3]:
+                    print(f"    {topic} | {f['text'][:100]} | {f['url'][:60]}")
+    else:
+        main()
