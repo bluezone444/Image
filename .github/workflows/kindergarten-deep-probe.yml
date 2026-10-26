@@ -18,4 +18,4 @@ jobs:
         with:
           python-version: "3.12"
       - name: 4곳 집중 수집만 실행 (기록 확인용, 커밋 없음)
-        run: python kindergarten/build.py --deep-only
+        run: python kindergarten/build.py --deep-only "--only=$(cat kindergarten/probe.txt | head -1)"

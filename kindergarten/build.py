@@ -385,9 +385,11 @@ DEEP_TARGETS = [
      "childcare": ["41460000477", "41460000475"],  # 어린이집 정보공개포털 코드 (시립동천자이2차 등)
      "queries": ["시립동천자이2차어린이집", "동천센트럴자이 어린이집"]},
     {"key": "poly", "names": ["폴리", "POLY", "Poly"], "home": None,
+     "neis": "폴리", "smileus": ["폴리어학원", "수지폴리어학원"],
      "queries": ["수지 폴리어학원 유치부", "폴리 킨더 수지 원비", "폴리어학원 수지 후기"]},
-    {"key": "sungmin", "names": ["성민"], "home": "http://www.sungmin-i.com",
-     "queries": ["성민유치원 수지 풍덕천", "성민프리미어 유치원", "성민유치원 수지 원비 후기"]},
+    {"key": "sungmin", "names": ["성민프리미어", "성민 프리미어"], "home": None,
+     "neis": "성민프리미어", "smileus": ["성민프리미어학원"],
+     "queries": ["성민프리미어학원 수지", "성민프리미어스쿨 원비", "성민프리미어스쿨 후기"]},
     {"key": "besti", "names": ["베스아이", "best-i", "BEST-I"], "home": "http://best-i.kg.kr",
      "queries": ["베스아이유치원", "베스아이유치원 수지 원비", "베스아이유치원 후기"]},
 ]
@@ -529,6 +531,49 @@ def childcare_official(code):
     return out
 
 
+NEIS_FIELDS = {"ACA_NM": "학원명", "FA_RDNMA": "주소", "FA_RDNDA": "상세주소", "REG_STTUS_NM": "상태", "ESTBL_YMD": "설립일",
+               "REG_YMD": "등록일", "TOFOR_SMTOT": "정원", "DTM_RCPTN_ABLTY_NMPR_SMTOT": "일시수용", "REALM_SC_NM": "분야",
+               "LE_ORD_NM": "교습계열", "LE_CRSE_LIST_NM": "교습과정목록", "LE_CRSE_NM": "교습과정",
+               "PSNBY_THCC_CNTNT": "1인당 수강료", "THCC_OTHBC_YN": "수강료 공개", "BRHS_ACA_YN": "기숙사"}
+
+
+def neis_lookup(name):
+    """교육청 학원 등록 정보(나이스)에서 이름으로 찾기 — 수지·분당만."""
+    if not NEIS_KEY:
+        return []
+    try:
+        rows = fetch_neis({"ACA_NM": name})
+    except Exception as e:  # noqa: BLE001
+        print(f"  NEIS 조회 실패 {name}: {e}")
+        return []
+    out = []
+    for r in rows:
+        if not re.search(r"수지구|분당구", str(r.get("FA_RDNMA") or "") + str(r.get("ADMST_ZONE_NM") or "")):
+            continue
+        out.append({NEIS_FIELDS[k]: str(r.get(k)).strip() for k in NEIS_FIELDS if r.get(k) not in (None, "", " ")})
+    if DEBUG:
+        for o in out:
+            print(f"  [NEIS] {o}")
+    return out
+
+
+def smileus_page(name):
+    """학원 정보 사이트(smileus) 용인시 학원 상세: 교습비 등."""
+    url = "https://education.smileus.net/" + "/".join(urllib.parse.quote(x) for x in ("학원", "경기", "용인시", "view", name))
+    try:
+        html, final = fetch_text(url)
+    except Exception as e:  # noqa: BLE001
+        print(f"  smileus 실패 {name}: {e}")
+        return None
+    lines = [ln.strip() for ln in page_text(html).split("\n") if 2 <= len(ln.strip()) <= 160]
+    lines = [ln for i, ln in enumerate(lines) if ln not in lines[:i]]
+    if DEBUG:
+        print(f"  [smileus] {name} 줄 {len(lines)}: {' / '.join(lines[:120])[:3000]}")
+    if not any(name[:4] in ln for ln in lines):
+        return None
+    return {"url": final or url, "title": f"{name} · 학원 정보(smileus)", "lines": lines[:150]}
+
+
 def deep_collect(target):
     names = target["names"]
     found = {t: [] for t in TOPICS}
@@ -593,9 +638,14 @@ def deep_collect(target):
     official_pages = []
     for code in target.get("childcare", []):
         official_pages += childcare_official(code)
+    for nm in target.get("smileus", []):
+        pg = smileus_page(nm)
+        if pg:
+            official_pages.append(pg)
+    neis_rows = neis_lookup(target["neis"]) if target.get("neis") else []
     total = sum(len(v) for v in found.values())
     print(f"  집중 수집 {target['key']}: 페이지 {len(sources)}곳, 문장 {total}개, 뉴스 {len(news)}건")
-    return {"facts": found, "sources": sources[:15], "news": news[:8], "official": official_pages,
+    return {"facts": found, "sources": sources[:15], "news": news[:8], "official": official_pages, "neis": neis_rows,
             "collected": time.strftime("%Y-%m-%d", time.gmtime(time.time() + 9 * 3600))}
 
 
@@ -714,7 +764,10 @@ def main():
 
 if __name__ == "__main__":
     if DEBUG:  # 4곳 집중 수집만 빠르게 점검
+        only = [a.split("=", 1)[1] for a in sys.argv if a.startswith("--only=")]
         for t in DEEP_TARGETS:
+            if only and t["key"] not in only[0].split(","):
+                continue
             r = deep_collect(t)
             for topic, fs in r["facts"].items():
                 for f in fs[:3]:
