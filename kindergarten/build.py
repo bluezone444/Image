@@ -382,16 +382,14 @@ def locate_home(cache):
 # ---------- 엄마(안다빈) 픽 4곳 집중 수집 ----------
 DEEP_TARGETS = [
     {"key": "daycare", "names": ["동천센트럴자이", "동천자이", "센트럴자이"], "home": None,
-     "queries": ["동천센트럴자이 어린이집", "시립동천자이2차어린이집", "시립동천자이2차어린이집 아이근처", "시립동천자이2차어린이집 토리맵", "동천센트럴자이 국공립 어린이집 후기"]},
+     "childcare": ["41460000477", "41460000475"],  # 어린이집 정보공개포털 코드 (시립동천자이2차 등)
+     "queries": ["시립동천자이2차어린이집", "동천센트럴자이 어린이집"]},
     {"key": "poly", "names": ["폴리", "POLY", "Poly"], "home": None,
-     "queries": ["수지 폴리어학원 유치부", "폴리어학원 수지 킨더 원비", "POLY 수지 풍덕천 하나로프라자", "수지 폴리 영어유치원 후기",
-                 "폴리어학원 수지캠퍼스", "폴리 킨더 수지 학원비", "poly kinder suji"]},
+     "queries": ["수지 폴리어학원 유치부", "폴리 킨더 수지 원비", "폴리어학원 수지 후기"]},
     {"key": "sungmin", "names": ["성민"], "home": "http://www.sungmin-i.com",
-     "queries": ["성민프리미어 유치원", "성민유치원 수지 풍덕천", "성민유치원 수지 원비 후기", "sungmin-i.com 성민유치원",
-                 "성민유치원 아이근처", "성민유치원 토리맵", "성민유치원 용인 수지구 풍덕천로148번길"]},
+     "queries": ["성민유치원 수지 풍덕천", "성민프리미어 유치원", "성민유치원 수지 원비 후기"]},
     {"key": "besti", "names": ["베스아이", "best-i", "BEST-I"], "home": "http://best-i.kg.kr",
-     "queries": ["베스아이유치원", "베스아이유치원 수지 원비", "베스아이유치원 후기 동천", "best-i.kg.kr 유치원",
-                 "베스아이유치원 아이근처", "베스아이유치원 토리맵", "베스아이유치원 용인 고기로139번길"]},
+     "queries": ["베스아이유치원", "베스아이유치원 수지 원비", "베스아이유치원 후기"]},
 ]
 TOPICS = {
     "비용": r"원비|교육비|수업료|수강료|부모 ?부담|납부|입학금|등록금|재료비|교재비|차량비|만 ?원",
@@ -435,7 +433,7 @@ def web_search(query):
         links += re.findall(r'<li class="b_algo".*?<a[^>]+href="(https?://[^"]+)"', html, re.S)
     except Exception as e:  # noqa: BLE001
         print(f"  bing 실패 {query}: {e}", file=sys.stderr)
-    time.sleep(1.0)
+    time.sleep(6.0)  # 검색엔진이 빠른 연속 요청을 막아서 천천히
     try:
         html, _ = fetch_text("https://html.duckduckgo.com/html/?" + urllib.parse.urlencode({"q": query, "kl": "kr-kr"}))
         for u in re.findall(r'class="result__a"[^>]+href="([^"]+)"', html):
@@ -443,7 +441,7 @@ def web_search(query):
             links.append(urllib.parse.unquote(m.group(1)) if m else u)
     except Exception as e:  # noqa: BLE001
         print(f"  ddg 실패 {query}: {e}", file=sys.stderr)
-    time.sleep(1.0)
+    time.sleep(6.0)
     out = []
     for u in links:
         u = u.replace("&amp;", "&")
@@ -458,9 +456,25 @@ def homepage_pages(home):
     pages = [home]
     try:
         html, base = fetch_text(home)
+        # 빈 껍데기 페이지는 meta refresh·자바스크립트 이동 주소를 따라감
+        for _ in range(3):
+            if len(page_text(html)) > 300:
+                break
+            m = (re.search(r'http-equiv=["\']?refresh["\']?[^>]*url=([^"\'>\s]+)', html, re.I)
+                 or re.search(r'location(?:\.href)?\s*=\s*["\']([^"\']+)["\']', html)
+                 or re.search(r'location\.replace\(["\']([^"\']+)["\']', html))
+            if not m:
+                break
+            nxt = urllib.parse.urljoin(base, m.group(1))
+            if DEBUG:
+                print(f"  [이동] {base} → {nxt}")
+            html, base = fetch_text(nxt)
+            pages = [base]
     except Exception as e:  # noqa: BLE001
         print(f"  홈페이지 실패 {home}: {e}")
         return []
+    if DEBUG and len(page_text(html)) < 300:
+        print(f"  [홈 원문 앞부분] {html[:400]!r}")
     # 프레임·아이프레임으로 만든 홈페이지는 안쪽 페이지를 따라감
     for src in re.findall(r'<i?frame[^>]+src="([^"]+)"', html, re.I):
         u = urllib.parse.urljoin(base, src.replace("&amp;", "&"))
@@ -480,6 +494,39 @@ def homepage_pages(home):
             if urllib.parse.urlparse(u).netloc == urllib.parse.urlparse(base).netloc and u not in pages:
                 pages.append(u)
     return pages[:14]
+
+
+def childcare_official(code):
+    """어린이집 정보공개포털 공개 페이지(요약·기본현황·교직원 등)를 읽어 줄 단위로 정리."""
+    base = "https://info.childcare.go.kr/info_html5/pnis/search/preview/"
+    first = f"{base}SummaryInfoSlPu.jsp?flag=YJ&STCODE_POP={code}"
+    out, seen = [], set()
+    try:
+        html, _ = fetch_text(first)
+    except Exception as e:  # noqa: BLE001
+        print(f"  어린이집 포털 실패 {code}: {e}")
+        return []
+    urls = [first] + [urllib.parse.urljoin(first, h.replace("&amp;", "&"))
+                      for h in re.findall(r'href="([^"]*SlPu\.jsp[^"]*)"', html)]
+    urls += [f"{base}{p}?flag={f}&STCODE_POP={code}" for p, f in
+             (("BasisPresentConditionSlPu.jsp", "JH"), ("ChildStaffSlPu.jsp", "BG"), ("ClassInfoSlPu.jsp", "BG"))]
+    for u in urls[:10]:
+        if u in seen:
+            continue
+        seen.add(u)
+        try:
+            h, final = fetch_text(u) if u != first else (html, first)
+        except Exception:  # noqa: BLE001
+            continue
+        title = strip_tags((re.search(r"<title[^>]*>(.*?)</title>", h, re.S | re.I) or [None, ""])[1]).strip()
+        lines = [ln.strip() for ln in page_text(h).split("\n") if 2 <= len(ln.strip()) <= 120]
+        lines = [ln for i, ln in enumerate(lines) if ln not in lines[:i]][:80]
+        if DEBUG:
+            print(f"  [포털] {u[-60:]} 제목 {title[:30]} 줄 {len(lines)}: {' / '.join(lines[:25])[:600]}")
+        if len(lines) > 5:
+            out.append({"url": final or u, "title": title or "어린이집 정보공개포털", "lines": lines})
+        time.sleep(0.5)
+    return out
 
 
 def deep_collect(target):
@@ -543,9 +590,12 @@ def deep_collect(target):
         except Exception as e:  # noqa: BLE001
             print(f"  뉴스 실패 {q}: {e}", file=sys.stderr)
         time.sleep(1.0)
+    official_pages = []
+    for code in target.get("childcare", []):
+        official_pages += childcare_official(code)
     total = sum(len(v) for v in found.values())
     print(f"  집중 수집 {target['key']}: 페이지 {len(sources)}곳, 문장 {total}개, 뉴스 {len(news)}건")
-    return {"facts": found, "sources": sources[:15], "news": news[:8],
+    return {"facts": found, "sources": sources[:15], "news": news[:8], "official": official_pages,
             "collected": time.strftime("%Y-%m-%d", time.gmtime(time.time() + 9 * 3600))}
 
 
