@@ -84,6 +84,13 @@ dl.facts dt{color:var(--muted)} dl.facts dd{margin:0}
 .topic{font-size:var(--fs-sm)} .topic b{display:block;margin-top:6px}
 .topic ul{margin:2px 0 0;padding-left:16px;display:flex;flex-direction:column;gap:3px}
 .topic a,.deep ul.mini a+small{font-size:var(--fs-xs);color:var(--faint)}
+.brief{border-top:1px dashed var(--line);padding-top:8px}
+.brief h4{margin:0 0 4px;font-size:var(--fs-xs);color:var(--accent);font-weight:700}
+.brief dl.facts a,.deep dl.facts a{font-size:var(--fs-xs);color:var(--faint)}
+details.raw{font-size:var(--fs-sm);border:1px solid var(--line);border-radius:var(--r-sm);padding:6px 10px;margin-top:6px}
+details.raw summary{cursor:pointer;color:var(--accent)}
+details.raw ul{margin:6px 0;max-height:280px;overflow:auto}
+.deep hr{border:0;border-top:1px dashed var(--line);margin:6px 0}
 .qlist{margin:0;padding-left:18px;font-size:var(--fs-sm);display:flex;flex-direction:column;gap:3px}
 
 /* 아이 정보 */
@@ -1222,16 +1229,65 @@ const DAYCARE = {
   id: "dabin:daycare", type: "daycare", name: "동천센트럴자이 시립 어린이집", area: "수지구",
   pos: null, establish: "국공립 어린이집(용인시립)", addr: "동천센트럴자이 단지 안·인접 (정확한 위치 확인 필요)"
 };
+// 성민프리미어는 교육청 분류가 '종합'이라 영어학원 목록에 없어서 나이스 등록 정보로 따로 만듦
+const SUNGMIN_NEIS = { "학원명": "성민프리미어학원", "주소": "경기도 용인시 수지구 진산로11번길 2", "상세주소": "(풍덕천동) 3,4층",
+  "정원": "200", "일시수용": "200", "분야": "종합(대)", "교습과정목록": "보습,실용외국어(유아/초·중·고)", "설립일": "20220113" };
+function deepOf(key){ return (window.KG_DATA && window.KG_DATA.deep && window.KG_DATA.deep[key]) || null; }
 function dabinPlaces(){
   const gen = n => state.data.find(k => k.name === n && k.area === "수지구") || state.data.find(k => k.name === n);
-  const poly = (state.eng || []).find(k => k.name === "폴리어학원" && /풍덕천로 122/.test(k.addr)) ||
-               (state.eng || []).find(k => /폴리/.test(k.name));
+  const eng = state.eng || [];
+  const poly = eng.find(k => k.name === "수지폴리어학원") || eng.find(k => /폴리/.test(k.name));
+  const sm = (deepOf("sungmin") && deepOf("sungmin").neis && deepOf("sungmin").neis[0]) || SUNGMIN_NEIS;
+  const smAddr = `${sm["주소"]} ${sm["상세주소"] || ""}`.trim();
+  const sungmin = eng.find(k => /성민프리미어/.test(k.name)) || {
+    id: "dabin:sungmin", name: sm["학원명"], area: "수지구", addr: smAddr, pos: coordOf({}, smAddr),
+    travel: {}, tel: "", cap: num(sm["정원"]), courses: [sm["교습과정목록"] || ""], fees: [], news: [], facilities: {}, community: null };
   return [
     { ...DAYCARE, deepKey: "daycare" },
-    poly ? { ...poly, type: "eng", deepKey: "poly", note: "수지 폴리 2곳 중 풍덕천로 122(하나로프라자) 지점 기준. 문정로 13(중수프라자) 지점도 있어요." } : { id: "dabin:poly", type: "eng", deepKey: "poly", name: "폴리어학원", area: "수지구", addr: "", news: [], fees: [] },
-    gen("성민유치원") ? { ...gen("성민유치원"), type: "kg", deepKey: "sungmin", alias: "성민프리미어", note: "'성민프리미어'라는 이름은 공시 목록에 없어 수지 성민유치원(홈페이지 sungmin-i.com) 기준으로 비교했어요." } : null,
+    poly ? { ...poly, type: "eng", deepKey: "poly", alias: "폴리 (ECP 유치부)", note: "수지 폴리는 2곳이에요. 2027 ECP 유치부(영어유치원) 설명회 공지가 나온 문정로 13 중수프라자의 '수지폴리어학원' 기준이고, 풍덕천로 122 하나로프라자 '폴리어학원'도 있어요." }
+         : { id: "dabin:poly", type: "eng", deepKey: "poly", name: "수지폴리어학원", area: "수지구", addr: "", news: [], fees: [] },
+    { ...sungmin, type: "eng", deepKey: "sungmin", alias: "성민프리미어", note: "성민프리미어는 수지(진산로11번길 2, 풍덕천동)와 수원(장안구 천천동)에 있어요. 수원 지점 이야기는 빼고 수지 지점 기준으로 정리했어요." },
     gen("베스아이유치원") ? { ...gen("베스아이유치원"), type: "kg", deepKey: "besti" } : null
   ].filter(Boolean);
+}
+// 수집 기록에서 확인한 핵심 숫자 (2026-10-26 기준, 출처 링크)
+const BRIEF = {
+  daycare: { title: "시립동천자이2차어린이집 기준", facts: [
+    ["정원·현원", "정원 88명 · 현원 79명 (2026년 10월)", "https://torimap.zzxxccvv.com/k/%EC%9A%A9%EC%9D%B8%EC%8B%9C-%EC%88%98%EC%A7%80%EA%B5%AC-%EC%8B%9C%EB%A6%BD%EB%8F%99%EC%B2%9C%EC%9E%90%EC%9D%B42%EC%B0%A8%EC%96%B4%EB%A6%B0%EC%9D%B4%EC%A7%91"],
+    ["입소대기", "318명", "https://www.ttpk.co.kr/childcare/detail/88506"],
+    ["교사 1명당", "아이 4.4명 (전 연령 평균)", "https://torimap.zzxxccvv.com/k/%EC%9A%A9%EC%9D%B8%EC%8B%9C-%EC%88%98%EC%A7%80%EA%B5%AC-%EC%8B%9C%EB%A6%BD%EB%8F%99%EC%B2%9C%EC%9E%90%EC%9D%B42%EC%B0%A8%EC%96%B4%EB%A6%B0%EC%9D%B4%EC%A7%91"],
+    ["운영", "시간연장 보육 운영 · 통학차량 없음", "https://torimap.zzxxccvv.com/k/%EC%9A%A9%EC%9D%B8%EC%8B%9C-%EC%88%98%EC%A7%80%EA%B5%AC-%EC%8B%9C%EB%A6%BD%EB%8F%99%EC%B2%9C%EC%9E%90%EC%9D%B42%EC%B0%A8%EC%96%B4%EB%A6%B0%EC%9D%B4%EC%A7%91"],
+    ["부모 부담", "시도 특성화 비용 월 36,500원", "https://www.ttpk.co.kr/childcare/detail/88506"]
+  ], fee: 36500, close: 1170 },
+  poly: { title: "수지폴리어학원 (ECP 유치부)", facts: [
+    ["월 비용", "교습비 약 120만 + 차량 10만 + 급식 16.4만 ≈ 약 146만원 (블로그)", "https://m.blog.naver.com/crs0802/224053504468"],
+    ["하원", "정규 14:40 · 방과후(선착순) 16:15", "https://m.blog.naver.com/crs0802/224053504468"],
+    ["입학", "2027학년도 ECP 유치부 신입생 입학설명회 진행", "https://m.blog.naver.com/serim0228/224408794860"],
+    ["대상", "유치부 5~7세(한국 나이) 연령별 과정", "https://m.blog.naver.com/serim0228/224408794860"],
+    ["교육청 등록", "정원 336명 · 2022년 2월 개원 · 실용외국어(유아/초·중·고)", ""]
+  ], fee: 1464000, close: 975 },
+  sungmin: { title: "성민프리미어 (수지 지점)", facts: [
+    ["교육청 등록", "정원 200명 · 2022년 1월 개원 · 분야 종합(보습·실용외국어 유아)", ""],
+    ["등원", "8:40부터", "https://m.blog.naver.com/sororo23/224064375251"],
+    ["하원", "5세반 15:30 (설명회 후기)", "https://m.blog.naver.com/sororo23/224064375251"],
+    ["차량비", "월 4만원, 6개월 일시납 (차량 미이용 시 제외)", "https://m.blog.naver.com/sororo23/224064375251"],
+    ["시설", "3·4층 사용, 4층은 6세 교실", "https://m.blog.naver.com/sororo23/224064375251"],
+    ["운영", "성민유치원을 운영하는 재단에서 만든 영어유치원 (수원 지점 후기)", "https://m.blog.naver.com/hyunra27/223198512336"]
+  ], close: 930 },
+  besti: { title: "베스아이유치원", facts: [
+    ["규모", "인가 정원 320명 · 원아 204명 · 11학급 (만3세 3, 만4세 4, 만5세 4)", "https://kidsinfo.kr/kindergartens/gyeonggi/yonginsi/%EB%B2%A0%EC%8A%A4%EC%95%84%EC%9D%B4%EC%9C%A0%EC%B9%98%EC%9B%90"],
+    ["교육비", "만3·4·5세 모두 인근 5개원 평균보다 기본 교육비가 낮음 (블로그 분석)", "https://m.blog.naver.com/leak_finder/224359553301"],
+    ["차량", "등하원 차량 4대 운행", "https://www.kidsmap.co.kr/kindergarten/77255f69"],
+    ["입학", "2027학년도 모집요강 홈페이지 게시 · 모집은 처음학교로", "http://best-i.kg.kr/main/main.html"],
+    ["안전", "CCTV 32대 · 영양교사 배치", "https://kinder.netfilcker.com/details/10c58c55-16ac-4b2c-9e3c-016d3a93615b/%EB%B2%A0%EC%8A%A4%EC%95%84%EC%9D%B4%EC%9C%A0%EC%B9%98%EC%9B%90"],
+    ["후기", "\"아이가 너무 좋아해서 1년 내내 잘 다닌 유치원\" (동천동 학부모 블로그)", "https://m.blog.naver.com/spring_66/222656817456"]
+  ] }
+};
+function briefHTML(p){
+  const b = BRIEF[p.deepKey];
+  if (!b) return "";
+  return `<div class="brief"><h4>한눈에 · ${esc(b.title)}</h4><dl class="facts">${b.facts.map(([k, v, u]) =>
+    `<dt>${esc(k)}</dt><dd>${esc(v)}${u ? ` <a href="${esc(u)}" target="_blank" rel="noopener">출처</a>` : ""}</dd>`).join("")}</dl></div>`;
 }
 function dabinAge(){ return AGE; }
 function seatFor(k, ag){
@@ -1253,14 +1309,15 @@ function dabinRows(ag){
     ["학비 지원", { daycare: () => "누리과정 보육료 정부 지원. 부모는 특성화·필요경비 위주로 부담" + src("보육 제도 기준"),
                    eng: () => "<b>지원 없음</b>. 학원이라 누리과정(유아학비) 대상이 아니에요" + src("유아교육법·학원법 구분"),
                    kg: k => k.isPublic ? "국공립 유치원: 교육비 무상, 방과후비 소액" : "누리과정 유아학비 지원 + 차액(부모부담금) 납부" + src("사립 유치원 구조") }],
-    ["월 부모 부담", { any: k => DN(k, "fee") + (k.type === "eng" && k.fees && k.fees.length ? `<span class="src">교육청 신고 수강료: ${esc(k.fees.join(" / "))}</span>` : src("상담 때 확인해서 적어 두세요")) },
-      { best: k => num((state.notes[k.id] || {}).fee), pick: "min" }],
+    ["월 부모 부담", { any: k => { const b = BRIEF[k.deepKey];
+        return (b && b.fee ? `<b>약 ${comma(b.fee)}원</b>` + src(k.deepKey === "poly" ? "교습비+차량+급식, 블로그 기준" : "시도 특성화 비용") : "") + DN(k, "fee") + src("상담 후 정확한 금액을 적어 두세요"); } },
+      { best: k => num((state.notes[k.id] || {}).fee) || (BRIEF[k.deepKey] || {}).fee || null, pick: "min" }],
     ["sec", "시간"],
     ["운영 시간", { daycare: () => "07:30~19:30" + src("어린이집 기본 운영시간"),
-                   eng: () => "보통 오후 2~3시 하원, 이후는 별도 프로그램" + src("영어유치원 일반적 일과 · 확인 필요"),
+                   eng: k => { const b = BRIEF[k.deepKey]; return b && b.close ? `하원 ${fmtMin(b.close)}` + src(k.deepKey === "poly" ? "방과후 선택 시 · 블로그" : "5세반 기준 · 설명회 후기") : "보통 오후 2~3시 하원" + src("확인 필요"); },
                    kg: k => { const h = hoursOf(k); return h ? `${fmtMin(h.open)}~${fmtMin(h.close)}` + src("유치원알리미 공시(방과후 포함)") : "–"; } },
-      { best: k => k.type === "daycare" ? 1170 : k.type === "kg" ? (hoursOf(k) || {}).close : 900, pick: "max" }],
-    ["하원 16시 이후", { daycare: () => "가능", eng: () => "추가 프로그램 있어야 가능", kg: k => { const h = hoursOf(k); return h ? (h.close >= 960 ? "가능" : "어려움") : "–"; } }],
+      { best: k => k.type === "kg" ? (hoursOf(k) || {}).close : (BRIEF[k.deepKey] || {}).close, pick: "max" }],
+    ["하원 16시 이후", { daycare: () => "가능", eng: k => k.deepKey === "poly" ? "방과후(선착순) 들어가면 16:15" : "어려움 (15:30 하원)", kg: k => { const h = hoursOf(k); return h ? (h.close >= 960 ? "가능" : "어려움") : "–"; } }],
     ["sec", "교육"],
     ["교육과정", { daycare: () => "누리과정 (유치원과 같은 국가 공통과정)", eng: () => "원 자체 영어 커리큘럼 (누리과정 의무 아님)",
                   kg: k => "누리과정" + (k.lesson && num(k.lesson.ag4_lsn_dcnt) ? ` · 연 수업일수 ${num(k.lesson.ag4_lsn_dcnt)}일` : "") }],
@@ -1268,18 +1325,18 @@ function dabinRows(ag){
                    eng: () => "공시 데이터 없음 · 원어민·한국인 담임 구성 확인",
                    kg: k => { const q = quality(k); return q.s == null ? "–" : `<b>${Math.round(q.s * 100)}점</b>` + src(esc(q.text)); } },
       { best: k => k.type === "kg" ? quality(k).s : null, pick: "max" }],
-    ["교사 1명당 아이", { daycare: () => "법정 상한: 만3세 15명, 만4세 이상 20명" + src("영유아보육법 기준, 실제는 더 적을 수 있음"),
+    ["교사 1명당 아이", { daycare: () => "4.4명 (전 연령 평균)" + src("법정 상한 만4세 이상 20명 · 토리맵"),
                        eng: () => "공개 자료 없음",
                        kg: k => { const r = kidsPerTeacher(k); return r == null ? "–" : `${r.toFixed(1)}명` + src("공시 교사 수 ÷ 현원"); } },
       { best: k => k.type === "kg" ? kidsPerTeacher(k) : null, pick: "min" }],
     ["방과후 과정", { daycare: () => "종일반으로 저녁까지 보육", eng: () => "원마다 다름 (보통 별도 수강)", kg: k => esc(afterSchool(k).text || "–") }],
     ["sec", "입학·반"],
-    [`${yr} 만${nx}세 반`, { daycare: () => "아이사랑 포털 입소대기 순번으로 결정" + src("국공립은 대기가 길 수 있어요"),
+    [`${yr} 만${nx}세 반`, { daycare: () => "<b>입소대기 318명</b> · 정원 88명 중 현원 79명" + src("아이사랑 입소대기 순번으로 결정"),
                             eng: k => has(k.cap) ? `학원 전체 정원 ${k.cap}명` + src("유아반 정원은 따로 확인") : "–",
                             kg: k => { const s = seatFor(k, ag); return has(s.vac) ? `정원 ${fmt(s.cap)} · 진급 예정 ${fmt(s.stay)} → 예상 여석 <b>${s.vac}</b>` : "–"; } },
       { best: k => k.type === "kg" ? seatFor(k, ag).vac : null, pick: "max" }],
     ["sec", "생활·시설"],
-    ["통학차량", { daycare: () => "단지 안이라 필요 없음", eng: () => "대부분 운행 · 노선 확인", kg: k => k.bus ? (k.bus.on ? `운행 ${k.bus.cars || ""}대` : "없음") : "–" }],
+    ["통학차량", { daycare: () => "없음 (단지 안)", eng: k => k.deepKey === "poly" ? "운행 · 월 약 10만원" : "운행 · 월 4만원(6개월 일시납)", kg: k => k.bus ? (k.bus.on ? `운행 ${k.bus.cars || ""}대` : "없음") : "–" }],
     ["급식", { daycare: () => "어린이집 자체 급식", eng: () => "원마다 다름 (도시락·위탁 확인)", kg: k => { const r = extraRows(k.meal); return r.length ? r.slice(0, 3).map(([a, b]) => `${a} ${esc(b)}`).join(" · ") : "–"; } }],
     ["시설", { daycare: () => "아파트 관리동 내 시설이 일반적", eng: () => "상가 건물 층 (실외 놀이공간 확인)", kg: k => esc(facilityText(k) || "–") }],
     ["원아 1명당 교실", { daycare: () => "–", eng: () => "–", kg: k => { const a = perKid(k); return a ? `${a.toFixed(1)}㎡` : "–"; } },
@@ -1311,7 +1368,7 @@ function officialFacts(p){
   ];
   if (p.type === "eng") return [
     ["등록", `경기도교육청 학원 (교습과정: ${esc((p.courses || []).join(", ") || "–")})`],
-    ["학원 전체 정원", has(p.cap) ? `${p.cap}명` : "–"],
+    ["학원 전체 정원", has(p.cap) ? `${p.cap}명 (유아반 정원은 따로 확인)` : "–"],
     ["주소", esc(p.addr || "–")],
     ["학비 지원", "누리과정·유아학비 지원 대상 아님"],
     ["교육청 신고 수강료", p.fees && p.fees.length ? esc(p.fees.join(" / ")) : "공개 자료 비어 있음 (상담 필수)"]
@@ -1340,12 +1397,19 @@ function officialFacts(p){
 function deepHTML(p, i){
   const d = (window.KG_DATA && window.KG_DATA.deep && window.KG_DATA.deep[p.deepKey]) || null;
   const facts = officialFacts(p);
+  const neis = d && d.neis && d.neis.length ? d.neis : (p.deepKey === "sungmin" ? [SUNGMIN_NEIS] : []);
+  const pages = d && d.official ? d.official : [];
   const topics = d ? TOPIC_ORDER.filter(t => d.facts[t] && d.facts[t].length) : [];
   return `<details class="card deep"${i === 0 ? " open" : ""}>
     <summary><span class="kind">${p.type === "daycare" ? "국공립 어린이집" : p.type === "eng" ? "영어유치원(학원)" : "사립 유치원"}</span><b>${esc(p.alias || p.name)}</b>
       <small>${d ? `웹 문장 ${topics.reduce((a, t) => a + d.facts[t].length, 0)}개 · 출처 ${d.sources.length}곳 · 뉴스 ${d.news.length}건` : "웹 수집 전"}</small></summary>
     <h4>${p.type === "kg" ? "유치원알리미 공시" : p.type === "eng" ? "교육청 학원 등록 정보" : "제도 기준"}</h4>
     <dl class="facts">${facts.map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join("")}</dl>
+    ${neis.length ? `<h4>교육청 학원 등록 정보 (나이스)</h4>${neis.map(r => `<dl class="facts">${Object.entries(r).map(([a, b]) =>
+        `<dt>${esc(a)}</dt><dd>${esc(/^\d{8}$/.test(b) ? b.slice(0, 4) + "." + b.slice(4, 6) + "." + b.slice(6) : b)}</dd>`).join("")}</dl>`).join("<hr>")}` : ""}
+    ${pages.length ? `<h4>공식 포털·정보 사이트 원문</h4>${pages.map(pg => `<details class="raw"><summary>${esc(pg.title)}</summary>
+        <ul class="mini">${pg.lines.slice(0, 40).map(l => `<li>${esc(l)}</li>`).join("")}</ul>
+        <a href="${esc(pg.url)}" target="_blank" rel="noopener">원문 열기</a></details>`).join("")}` : ""}
     ${topics.length ? `<h4>홈페이지·웹에서 찾은 내용</h4>${topics.map(t => `<div class="topic"><b>${t}</b><ul>${d.facts[t].slice(0, 5).map(f =>
         `<li>${esc(f.text)} <a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.kind)}</a></li>`).join("")}</ul></div>`).join("")}`
       : `<p class="note">${d ? "웹에서 이 곳을 다룬 글을 찾지 못했어요." : "다음 데이터 갱신 때 홈페이지·웹 내용이 채워져요."}</p>`}
@@ -1356,7 +1420,7 @@ function deepHTML(p, i){
 }
 const DABIN_Q = {
   daycare: ["만4·5세 반이 따로 있는지, 반별 인원과 담임 수", "입소 대기 순번과 단지 입주민 우선 입소 여부", "특성화 활동 종류와 월 필요경비", "초등 입학 전 유치원으로 옮기는 아이가 많은지"],
-  eng: ["월 원비 + 교재비 + 차량비 + 방과후비 합계", "하루 일과와 실제 하원 시각, 오후 연장반 유무", "담임 구성(원어민·한국인)과 교사 근속", "누리과정 지원이 없는 점, 초등 연계반 유무"],
+  eng: ["월 교습비 + 교재비 + 급식비 + 차량비 + 방과후비 총액 (6개월 일시납 항목 포함)", "만4세(6살) 반 하원 시각과 방과후 정원·선착순 방식", "담임 구성(원어민·한국인)과 교사 근속, 반당 인원", "누리과정 지원이 없는 점, 초등 연계반·레벨테스트 여부"],
   kg: [`${AGE.sy + 1}년 만4세 모집 인원과 처음학교로 일정`, "월 부모부담금 (방과후·특성화·차량 포함 총액)", "통학차량이 동천센트럴자이에 서는지", "방과후 반 하원 시각과 담당 교사"]
 };
 function renderDabin(){
@@ -1385,8 +1449,10 @@ function renderDabin(){
     <thead><tr><th></th>${places.map(p => `<td>${esc(p.alias ? `${p.alias}` : p.name)}${p.alias ? `<span class="src">${esc(p.name)}</span>` : ""}</td>`).join("")}</tr></thead>
     <tbody>${html}</tbody></table></div>`;
   const ONE = {
-    daycare: "집 바로 앞에서 저녁까지 맡길 수 있고 학비 부담이 가장 적어요. 반 구성과 대기 순번이 관건이에요.",
-    eng: "영어 노출은 가장 많지만 학비 지원이 없고 하원이 이른 편이에요. 총비용과 오후 일과를 꼭 확인하세요.",
+    daycare: "집 바로 앞에서 저녁까지 맡길 수 있고 부담이 가장 적어요. 다만 입소대기가 318명이라 자리 얻기가 관건이에요.",
+    eng: k => k.deepKey === "poly"
+      ? "영어 몰입은 가장 강하지만 월 140만원대로 가장 비싸고, 학비 지원이 없어요. 정규 하원 14:40이라 방과후 자리가 중요해요."
+      : "성민유치원 재단의 영어유치원이에요. 교육청 정원 200명, 8:40 등원·5세반 15:30 하원. 학비 지원이 없고 원비는 상담 확인이 필요해요.",
     kg: k => {
       const h = hoursOf(k), q = quality(k), st = seatFor(k, ag), af = afterSchool(k), r = evaluate(k);
       return [h && `${fmtMin(h.close)}까지 운영`, q.s != null && `교육의 질 ${Math.round(q.s * 100)}점`,
@@ -1396,11 +1462,13 @@ function renderDabin(){
   };
   $("#dabinCards").innerHTML = places.map(p => {
     const one = typeof ONE[p.type] === "function" ? ONE[p.type](p) : ONE[p.type];
+    if (p.deepKey === "sungmin" && !p.pos) p.pos = coordOf({}, p.addr || "");
     return `<article class="card place">
       <span class="kind">${p.type === "daycare" ? "국공립 어린이집" : p.type === "eng" ? "영어유치원(학원)" : "사립 유치원"}</span>
       <h3>${esc(p.alias || p.name)}</h3>
       <div class="badges">${newsBadge(p)}${travelBadge(p)}${p.pos ? `<span class="badge">${distText(p)}</span>` : `<span class="badge near">단지 안·인접</span>`}</div>
       <p class="one">${esc(one)}</p>
+      ${briefHTML(p)}
       ${wins[p.id].length ? `<h4>이 줄에서 가장 유리</h4><div class="wins">${wins[p.id].map(w => `<span class="badge pub">${esc(w)}</span>`).join("")}</div>` : ""}
       ${p.note ? `<p class="verdict">${esc(p.note)}</p>` : ""}
     </article>`;

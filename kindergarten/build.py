@@ -385,10 +385,12 @@ DEEP_TARGETS = [
      "childcare": ["41460000477", "41460000475"],  # 어린이집 정보공개포털 코드 (시립동천자이2차 등)
      "queries": ["시립동천자이2차어린이집", "동천센트럴자이 어린이집"]},
     {"key": "poly", "names": ["폴리", "POLY", "Poly"], "home": None,
-     "neis": "폴리", "smileus": ["폴리어학원", "수지폴리어학원"],
+     "neis": "폴리", "neis_name": r"^(수지)?폴리어학원$", "smileus": ["폴리어학원", "수지폴리어학원"],
+     "exclude": r"분당|정자|판교|강남|대치|목동|동탄|광교|수원", "include": r"수지|풍덕천|문정로|중수프라자|하나로프라자",
      "queries": ["수지 폴리어학원 유치부", "폴리 킨더 수지 원비", "폴리어학원 수지 후기"]},
     {"key": "sungmin", "names": ["성민프리미어", "성민 프리미어"], "home": None,
      "neis": "성민프리미어", "smileus": ["성민프리미어학원"],
+     "exclude": r"수원|장안구|천천동", "include": r"수지|풍덕천|진산로|용인",
      "queries": ["성민프리미어학원 수지", "성민프리미어스쿨 원비", "성민프리미어스쿨 후기"]},
     {"key": "besti", "names": ["베스아이", "best-i", "BEST-I"], "home": "http://best-i.kg.kr",
      "queries": ["베스아이유치원", "베스아이유치원 수지 원비", "베스아이유치원 후기"]},
@@ -537,6 +539,10 @@ NEIS_FIELDS = {"ACA_NM": "학원명", "FA_RDNMA": "주소", "FA_RDNDA": "상세�
                "PSNBY_THCC_CNTNT": "1인당 수강료", "THCC_OTHBC_YN": "수강료 공개", "BRHS_ACA_YN": "기숙사"}
 
 
+# 정원·교습비·입학 정보가 표처럼 정리된 정보 사이트: 페이지 줄을 통째로 보관
+INFO_SITES = r"youngu\.kr|hakwonbi|edufindkorea|prompie|kidsinfo|kidsmap|daycarekorea|torimap|ttpk\.co\.kr|webify|childcare\.go\.kr|e-childschoolinfo|starteacher|mom-mom"
+
+
 def neis_lookup(name):
     """교육청 학원 등록 정보(나이스)에서 이름으로 찾기 — 수지·분당만."""
     if not NEIS_KEY:
@@ -577,7 +583,7 @@ def smileus_page(name):
 def deep_collect(target):
     names = target["names"]
     found = {t: [] for t in TOPICS}
-    sources, seen_sent = [], set()
+    sources, seen_sent, info_pages = [], set(), []
     urls = (homepage_pages(target["home"]) if target["home"] else [])
     official = set(urls)
     for q in target["queries"]:
@@ -599,12 +605,25 @@ def deep_collect(target):
             print(f"  [페이지] {u[:90]} 텍스트 {len(text)}자 이름포함 {any(n in text for n in names)}")
         if u not in official and not any(n in text for n in names):
             continue  # 대상과 상관없는 페이지 제외
+        exc, inc = target.get("exclude"), target.get("include")
+        if exc and re.search(exc, text) and not (inc and re.search(inc, text)):
+            if DEBUG:
+                print(f"  [다른 지점 제외] {u[:80]}")
+            continue
+        if re.search(INFO_SITES, u):
+            lines = [ln.strip() for ln in text.split("\n") if 2 <= len(ln.strip()) <= 140 and re.search(r"\d|원비|교습|정원|현원|차량|운영|입학|대기|교사", ln)]
+            lines = [ln for i, ln in enumerate(lines) if ln not in lines[:i]][:60]
+            if lines:
+                ttl = strip_tags((re.search(r"<title[^>]*>(.*?)</title>", html, re.S | re.I) or [None, ""])[1]).strip()[:80]
+                info_pages.append({"url": final or u, "title": ttl or u, "lines": lines})
         title = strip_tags((re.search(r"<title[^>]*>(.*?)</title>", html, re.S | re.I) or [None, ""])[1]).strip()[:80]
         kind = "공식 홈페이지" if u in official else ("블로그" if "blog" in u else "카페" if "cafe" in u else "웹")
         hits = 0
         for sent in re.split(r"[\n。!?]|(?<=[다요음])\.\s", text):
             sent = sent.strip(" -·•|")
             if not (12 <= len(sent) <= 170) or sent in seen_sent:
+                continue
+            if exc and re.search(exc, sent):
                 continue
             if u not in official and not any(n in sent for n in names) and not re.search(r"원비|하원|등원|차량|설명회|특성화|수영|원어민", sent):
                 continue
@@ -643,6 +662,9 @@ def deep_collect(target):
         if pg:
             official_pages.append(pg)
     neis_rows = neis_lookup(target["neis"]) if target.get("neis") else []
+    if target.get("neis_name"):
+        neis_rows = [r for r in neis_rows if re.search(target["neis_name"], r.get("학원명", ""))]
+    official_pages += info_pages[:6]
     total = sum(len(v) for v in found.values())
     print(f"  집중 수집 {target['key']}: 페이지 {len(sources)}곳, 문장 {total}개, 뉴스 {len(news)}건")
     return {"facts": found, "sources": sources[:15], "news": news[:8], "official": official_pages, "neis": neis_rows,
