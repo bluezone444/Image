@@ -606,7 +606,8 @@ def deep_collect(target):
         if u not in official and not any(n in text for n in names):
             continue  # 대상과 상관없는 페이지 제외
         exc, inc = target.get("exclude"), target.get("include")
-        if exc and re.search(exc, text) and not (inc and re.search(inc, text)):
+        head = urllib.parse.unquote(u) + " " + (re.search(r"<title[^>]*>(.*?)</title>", html, re.S | re.I) or [None, ""])[1]
+        if exc and (re.search(exc, head) or (re.search(exc, text) and not (inc and re.search(inc, text)))):
             if DEBUG:
                 print(f"  [다른 지점 제외] {u[:80]}")
             continue
