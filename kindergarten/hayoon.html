@@ -374,6 +374,7 @@ footer p{margin:0;max-width:70ch}
     <p>유치원 데이터: 유치원알리미(교육부) Open API의 기본현황, 통학차량, 방과후, 급식, 건물, 교실면적, 교직원, 수업일수, 안전, 환경위생 공시. 영어유치원: 나이스 교육정보 개방 포털 학원교습소정보(경기도교육청).</p>
     <p>예상 여석은 내년 반 정원에서 지금 한 살 아래 반 현원(그대로 진급할 아이들)을 뺀 추정치예요. 정확한 모집 인원과 원비, 설명회 일정은 처음학교로와 각 유치원에서 확인하세요.</p>
     <p>거리는 우리 집에서의 직선거리, 통학시간은 오픈스트리트맵 경로 기준 예상치예요.</p>
+    <p>사건·사고 표시는 구글 뉴스에서 유치원 이름과 사건 단어가 제목에 함께 있는 용인·성남 기사만 자동으로 골랐어요. 표시가 없다고 이력이 없다는 뜻은 아니에요. 교육청 감사 결과는 지원청 단위로 공개돼서 유치원별 자동 대조가 어려워요. 원문은 <a href="https://www.goe.go.kr/goe/na/ntt/selectNttList.do?mi=10275&amp;bbsId=1965" target="_blank" rel="noopener">경기도교육청 감사결과 공개</a>에서 볼 수 있어요.</p>
   </footer>
 </div>
 
@@ -639,6 +640,7 @@ function filtered(){
     if (state.onlyBus && !(k.bus && k.bus.on)) return false;
     if (state.onlyAfter && !hasAfter(k)) return false;
     if (state.onlyCctv && !(k.safety && k.safety.cctv_ist_yn === "Y")) return false;
+    if (state.hideNews && flagged(k)) return false;
     if (!travelOk(k)) return false;
     if (state.onlyOpen){ const v = seat(k).vac; if (!(has(v) && v > 0)) return false; }
     if (q && !(k.name.includes(q) || k.addr.includes(q))) return false;
@@ -831,7 +833,6 @@ function renderEng(){
     if (state.engSure && !k.sure && !state.engOk.has(k.id)) return false;
     if (state.hideNews && flagged(k)) return false;
     if (!travelOk(k)) return false;
-    if (state.hideNews && flagged(k)) return false;
     if (q && !(k.name.includes(q) || k.addr.includes(q))) return false;
     return true;
   });
