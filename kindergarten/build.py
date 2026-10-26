@@ -31,7 +31,7 @@ EXTRAS = {
 }
 
 # 영어유치원 = 법적으로 '유아 대상 영어학원' → 유치원알리미가 아닌 나이스(NEIS) 학원교습소정보에 있음
-NEIS_KEY = os.environ.get("NEIS_KEY") or ""
+NEIS_KEY = os.environ.get("NEIS_KEY") or "9cfcc173b15f44768c52ad689224a185"
 NEIS_URL = "https://open.neis.go.kr/hub/acaInsTiInfo"
 GU = re.compile(r"(수지구|분당구|기흥구)")
 YOUNG = re.compile(r"유아|유치|영유|킨더|kinder|키즈|kids|프리스쿨|pre-?school|토들러|toddler", re.I)
