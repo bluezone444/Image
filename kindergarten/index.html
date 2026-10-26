@@ -1422,6 +1422,7 @@ if (window.KG_DATA && Array.isArray(window.KG_DATA.items)){
   if (Array.isArray(window.KG_DATA.english)) state.eng = window.KG_DATA.english.map(normalizeEng);
   $("#setup").hidden = true;
 }
+document.body.dataset.tab = state.tab;
 setHome(state.home);
 if (isGAS) loadFromGAS();
 else if (!state.data.length) $("#setup").open = true;
