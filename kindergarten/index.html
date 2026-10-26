@@ -287,8 +287,8 @@ footer p{margin:0;max-width:70ch}
   </header>
 
   <div class="kid">
-    <div><small>지금 · <span id="schoolYear">2026</span>학년도</small><b>만 <span id="classNow">3</span>세반</b></div>
-    <div><small>내년 3월 입학 · <span id="schoolYearNext">2027</span>학년도</small><b>만 <span id="classNext">4</span>세반</b></div>
+    <div><small>지금 · <span id="schoolYear">2026</span>학년도</small><b><span id="classNow">2023년생 반</span></b></div>
+    <div><small>내년 3월 입학 · <span id="schoolYearNext">2027</span>학년도</small><b><span id="classNext">2023년생 반</span></b></div>
   </div>
 
   <details class="panel setup gen-only" id="setup">
@@ -299,8 +299,8 @@ footer p{margin:0;max-width:70ch}
   <div id="msg"></div>
 
   <div class="seg cls-seg" role="group" aria-label="대상 반">
-    <button data-mode="next" aria-pressed="true">2027년 입학 · 만4세반</button>
-    <button data-mode="now" aria-pressed="false">지금 · 만3세반</button>
+    <button data-mode="next" aria-pressed="true">2027년 입학 · 2023년생 반</button>
+    <button data-mode="now" aria-pressed="false">지금 · 2023년생 반</button>
   </div>
 
   <!-- 맞춤 추천 -->
@@ -429,7 +429,7 @@ footer p{margin:0;max-width:70ch}
 
   <footer>
     <p>유치원 데이터: 유치원알리미(교육부) Open API의 기본현황, 통학차량, 방과후, 급식, 건물, 교실면적, 교직원, 수업일수, 안전, 환경위생 공시. 영어유치원: 나이스 교육정보 개방 포털 학원교습소정보(경기도교육청).</p>
-    <p>반 나이는 학년도 − 출생연도 − 1이에요(2023년생은 2027년 만3세반, 유치원 첫해). 만3세반은 모두 신입이라 그 반 정원 전체가 모집 인원이고, 만4·5세반은 정원에서 한 살 아래 반 현원을 뺀 추정치예요. 정확한 모집 인원과 원비, 설명회 일정은 처음학교로와 각 유치원에서 확인하세요.</p>
+    <p>반은 출생연도로 표시했어요. 2023년생은 2027학년도에 유치원 첫해 반(만3세반·5세반)에 들어가요. 첫해 반은 모두 신입이라 그 반 정원 전체가 모집 인원이고, 윗반은 정원에서 한 살 아래 반 현원을 뺀 추정치예요. 정확한 모집 인원과 원비, 설명회 일정은 처음학교로와 각 유치원에서 확인하세요.</p>
     <p>거리는 우리 집에서의 직선거리, 통학시간은 오픈스트리트맵 경로 기준 예상치예요.</p>
     <p>사건·사고 표시는 구글 뉴스에서 유치원 이름과 사건 단어가 제목에 함께 있는 용인·성남 기사만 자동으로 골랐어요. 표시가 없다고 이력이 없다는 뜻은 아니에요. 교육청 감사 결과는 지원청 단위로 공개돼서 유치원별 자동 대조가 어려워요. 원문은 <a href="https://www.goe.go.kr/goe/na/ntt/selectNttList.do?mi=10275&amp;bbsId=1965" target="_blank" rel="noopener">경기도교육청 감사결과 공개</a>에서 볼 수 있어요.</p>
   </footer>
@@ -460,6 +460,8 @@ function kidInfo(today, birth){
   return { years: Math.floor(months / 12), months: months % 12, total: months, sy,
            now: sy - b.getFullYear() - 1, next: sy - b.getFullYear() };
 }
+// 헷갈리지 않게 반은 '○○년생 반'으로 표시 (반 나이 n, 학년도 sy → 출생연도 = sy − n − 1)
+const cohort = (n, sy) => `${(sy || AGE_SY) - n - 1}년생`;
 // 우리 집: 동천센트럴자이 (데이터에 확인된 좌표가 있으면 그걸 사용)
 const DONGCHEON = (window.KG_DATA && window.KG_DATA.home) || { lat: 37.3343, lng: 127.0862, label: "동천센트럴자이" };
 
@@ -588,7 +590,7 @@ const EXTRA_LABELS = {
   spcn_thcnt: "특수교사", ntcnt: "보건교사", ntrt_thcnt: "영양교사", owcnt: "사무직원",
   rgth_gd1_qacnt: "정교사 1급", rgth_gd2_qacnt: "정교사 2급", asth_qacnt: "준교사",
   // 수업일수
-  ag3_lsn_dcnt: "만3세", ag4_lsn_dcnt: "만4세", ag5_lsn_dcnt: "만5세", afsc_pros_lsn_dcnt: "방과후", ldnum_blw_yn: "법정일수 미달",
+  ag3_lsn_dcnt: "첫해 반(22년생)", ag4_lsn_dcnt: "둘째 해(21년생)", ag5_lsn_dcnt: "셋째 해(20년생)", afsc_pros_lsn_dcnt: "방과후", ldnum_blw_yn: "법정일수 미달",
   // 안전
   cctv_ist_yn: "CCTV", cctv_ist_total: "CCTV 총", cctv_ist_in: "CCTV 실내", cctv_ist_out: "CCTV 실외",
   plyg_ck_rs_cd: "놀이시설 검사", plyg_ck_dt: "놀이시설 검사일", fire_avd_dt: "소방대피훈련", fire_safe_dt: "소방안전점검",
@@ -650,16 +652,17 @@ function extractList(json){
 // now : 지금 반 → 정원 − 현원
 // 하윤이(2023년생): 2026 만2세반(어린이집 나이) → 2027 만3세반(유치원 첫해)
 const AGE = kidInfo(new Date());
+const AGE_SY = AGE.sy + 1; // 내년 학년도 기준으로 '○○년생' 계산
 function seat(k){
   const a = AGE.now, n = AGE.next;
   if (state.mode === "next"){
     const cap = k.cap[n], stay = n <= 3 ? 0 : k.cur[n - 1];
     return { cap, cur: stay, vac: has(cap) && has(stay) ? cap - stay : null,
-             capLabel: `만${n}세 정원`, curLabel: n <= 3 ? "진급생 없음(모두 신입)" : `진급 예정(현 만${n - 1}세)`, cls: k.cls[n] };
+             capLabel: `${cohort(n)} 반 정원`, curLabel: n <= 3 ? "진급생 없음(모두 신입)" : `진급 예정(${cohort(n)})`, cls: k.cls[n] };
   }
   const cap = k.cap[a], cur = k.cur[a];
   return { cap, cur, vac: has(cap) && has(cur) ? cap - cur : null,
-           capLabel: `만${a}세 정원`, curLabel: `만${a}세 현원`, cls: k.cls[a] };
+           capLabel: `${cohort(a, AGE.sy)} 반 정원`, curLabel: `${cohort(a, AGE.sy)} 반 현원`, cls: k.cls[a] };
 }
 function offersTarget(k){
   const age = state.mode === "next" ? AGE.next : AGE.now;
@@ -750,7 +753,7 @@ function cardHTML(k, rank){
     ${fill !== null ? `<div class="bar" aria-hidden="true"><i style="width:${fill}%"></i></div>` : ""}
     ${rank ? `<p class="why">${esc(reasons(k))}</p>` : ""}
     ${mix}
-    <div class="more">현원 전체: 만3세 ${fmt(k.cur[3])} · 만4세 ${fmt(k.cur[4])} · 만5세 ${fmt(k.cur[5])}${k.hours ? " · 운영 " + esc(k.hours) : ""}</div>
+    <div class="more">올해 현원: 2022년생 ${fmt(k.cur[3])} · 2021년생 ${fmt(k.cur[4])} · 2020년생 ${fmt(k.cur[5])}명${k.hours ? " · 운영 " + esc(k.hours) : ""}</div>
     ${newsHTML(k)}
     ${facilityChips(k)}
     ${communityHTML(k)}
@@ -969,8 +972,8 @@ function renderCmp(){
     ["운영시간", k => esc(k.hours || "–")],
     ["sec", "모집·반"],
     [AGE.sy + 1 + " 예상 여석", k => { if (isEng(k)) return "–"; const v = seat({ ...k }).vac; return mark(v, mostVac, fmt(v)); }],
-    [`만${AGE.next}세 정원/학급`, k => isEng(k) ? (has(k.cap) ? `학원 정원 ${k.cap}` : "–") : `${fmt(k.cap[AGE.next])}명 / ${fmt(k.cls[AGE.next])}학급`],
-    ["현원(3·4·5세)", k => isEng(k) ? "–" : `${fmt(k.cur[3])} · ${fmt(k.cur[4])} · ${fmt(k.cur[5])}`],
+    [`${cohort(AGE.next)} 반 정원/학급`, k => isEng(k) ? (has(k.cap) ? `학원 정원 ${k.cap}` : "–") : `${fmt(k.cap[AGE.next])}명 / ${fmt(k.cls[AGE.next])}학급`],
+    ["올해 현원 (22·21·20년생)", k => isEng(k) ? "–" : `${fmt(k.cur[3])} · ${fmt(k.cur[4])} · ${fmt(k.cur[5])}`],
     ["sec", "원비·커뮤니티"],
     ["원비 언급", k => { const fr = feeRange(k); return fr ? mark(fr.mid, cheapestComm, `${fr.min === fr.max ? manwon(fr.min) : manwon(fr.min) + "~" + manwon(fr.max)}<div class="more">블로그·카페 ${fr.n}건</div>`) : (isEng(k) && k.fees.length ? `<div class="more">신고 수강료: ${esc(k.fees.join(" / "))}</div>` : "–"); }],
     ["좋다는 이야기", k => k.community && k.community.pros.length ? `<ul class="mini">${k.community.pros.slice(0, 2).map(x => `<li>${esc(x.text)} <a href="${esc(x.link)}" target="_blank" rel="noopener">출처</a></li>`).join("")}</ul>` : "–"],
@@ -1237,7 +1240,7 @@ function deepOf(key){ return (window.KG_DATA && window.KG_DATA.deep && window.KG
 function dabinPlaces(){
   const gen = n => state.data.find(k => k.name === n && k.area === "수지구") || state.data.find(k => k.name === n);
   const eng = state.eng || [];
-  const poly = eng.find(k => k.name === "수지폴리어학원") || eng.find(k => /폴리/.test(k.name));
+  const poly = eng.find(k => k.name === "폴리어학원" && /풍덕천로 122/.test(k.addr)) || eng.find(k => /폴리/.test(k.name));
   const sm = (deepOf("sungmin") && deepOf("sungmin").neis && deepOf("sungmin").neis[0]) || SUNGMIN_NEIS;
   const smAddr = `${sm["주소"]} ${sm["상세주소"] || ""}`.trim();
   const sungmin = eng.find(k => /성민프리미어/.test(k.name)) || {
@@ -1245,7 +1248,7 @@ function dabinPlaces(){
     travel: {}, tel: "", cap: num(sm["정원"]), courses: [sm["교습과정목록"] || ""], fees: [], news: [], facilities: {}, community: null };
   return [
     { ...DAYCARE, deepKey: "daycare" },
-    poly ? { ...poly, type: "eng", deepKey: "poly", alias: "폴리 (ECP 유치부)", note: "수지 폴리는 2곳이에요. 2027 ECP 유치부(영어유치원) 설명회 공지가 나온 문정로 13 중수프라자의 '수지폴리어학원' 기준이고, 풍덕천로 122 하나로프라자 '폴리어학원'도 있어요." }
+    poly ? { ...poly, type: "eng", deepKey: "poly", alias: "폴리 수지캠퍼스 (ECP 유치부)", note: "유치부(ECP) 설명회가 열린 풍덕천로 122 하나로프라자 7층 '폴리어학원' 기준이에요. 문정로 13 중수프라자 '수지폴리어학원'은 초등부 위주이고, 유치부 일부 반이 별관을 쓴다는 후기도 있어요." }
          : { id: "dabin:poly", type: "eng", deepKey: "poly", name: "수지폴리어학원", area: "수지구", addr: "", news: [], fees: [] },
     { ...sungmin, type: "eng", deepKey: "sungmin", alias: "성민프리미어", note: "성민프리미어는 수지(진산로11번길 2, 풍덕천동)와 수원(장안구 천천동)에 있어요. 수원 지점 이야기는 빼고 수지 지점 기준으로 정리했어요." },
     gen("베스아이유치원") ? { ...gen("베스아이유치원"), type: "kg", deepKey: "besti" } : null
@@ -1256,40 +1259,41 @@ const BRIEF = {
   daycare: { title: "시립동천자이2차어린이집 (어린이집 정보공개포털 공시)", facts: [
     ["위치", "고기로45번길 40-18, 동천자이 2차아파트 관리동 · 2020년 7월 개원 · 원장 박정훈", "https://info.childcare.go.kr/info_html5/pnis/search/preview/SummaryInfoSlPu.jsp?flag=YJ&STCODE_POP=41460000477"],
     ["운영", "평일 07:30~19:30 · 연장보육반 7개 · 장애아통합", "https://info.childcare.go.kr/info_html5/pnis/search/preview/SummaryInfoSlPu.jsp?flag=YJ&STCODE_POP=41460000477"],
-    ["정원·현원", "정원 88명 · 현원 79명 · 13개 반 (만3세 2반 12명, 만4세 1반 20명, 만5세 1반 7명)", "https://torimap.zzxxccvv.com/k/%EC%9A%A9%EC%9D%B8%EC%8B%9C-%EC%88%98%EC%A7%80%EA%B5%AC-%EC%8B%9C%EB%A6%BD%EB%8F%99%EC%B2%9C%EC%9E%90%EC%9D%B42%EC%B0%A8%EC%96%B4%EB%A6%B0%EC%9D%B4%EC%A7%91"],
-    ["입소대기", "전체 318명 · 만3세 대기 15명 (2026.10)", "https://www.ttpk.co.kr/childcare/detail/88506"],
-    ["보육료", "만3~5세 월 28만원 정부 지원 → 부모 부담 0원", "https://info.childcare.go.kr/info_html5/pnis/search/preview/SummaryInfoSlPu.jsp?flag=YJ&STCODE_POP=41460000477"],
+    ["정원·현원", "정원 88명 · 현원 79명 · 13개 반 (2022년생 2반 12명, 2021년생 1반 20명, 2020년생 1반 7명)", "https://torimap.zzxxccvv.com/k/%EC%9A%A9%EC%9D%B8%EC%8B%9C-%EC%88%98%EC%A7%80%EA%B5%AC-%EC%8B%9C%EB%A6%BD%EB%8F%99%EC%B2%9C%EC%9E%90%EC%9D%B42%EC%B0%A8%EC%96%B4%EB%A6%B0%EC%9D%B4%EC%A7%91"],
+    ["입소대기", "전체 318명 · 2022년생 반 대기 15명, 2023년생 반 대기 62명 (2026.10)", "https://www.ttpk.co.kr/childcare/detail/88506"],
+    ["보육료", "유아반(2020~2022년생, 내년 2021~2023년생) 월 28만원 정부 지원 → 부모 부담 0원", "https://info.childcare.go.kr/info_html5/pnis/search/preview/SummaryInfoSlPu.jsp?flag=YJ&STCODE_POP=41460000477"],
     ["필요경비", "특별활동비 월 79,000 · 시도특성화 월 36,500 · 현장학습비 분기 135,000 · 행사비 연 240,000 · 피복비 연 100,000 · 조석식 월 50,000(이용 시)", "https://www.ttpk.co.kr/childcare/detail/88506"],
     ["교사", "보육교사 16 · 특수교사 2 · 1급 자격 90% · 4년 이상 근속 36.8%, 1년 미만 42.1%", "https://info.childcare.go.kr/info_html5/pnis/search/preview/SummaryInfoSlPu.jsp?flag=YJ&STCODE_POP=41460000477"],
     ["교사 1명당", "아이 4.4명 · 보육실 1인당 3㎡ (동네보다 좁은 편)", "https://torimap.zzxxccvv.com/k/%EC%9A%A9%EC%9D%B8%EC%8B%9C-%EC%88%98%EC%A7%80%EA%B5%AC-%EC%8B%9C%EB%A6%BD%EB%8F%99%EC%B2%9C%EC%9E%90%EC%9D%B42%EC%B0%A8%EC%96%B4%EB%A6%B0%EC%9D%B4%EC%A7%91"],
     ["안전·평가", "CCTV 14대 · 2026년 소방·가스·전기 점검 적합 · 식중독 미발생 · 평가 2025.04 완료 · 통학차량 없음", "https://info.childcare.go.kr/info_html5/pnis/search/preview/SummaryInfoSlPu.jsp?flag=YJ&STCODE_POP=41460000477"]
-  ], fee: 190000, close: 1170 },
-  poly: { title: "수지폴리어학원 (ECP 유치부)", facts: [
-    ["월 비용", "교습비 약 120만 + 차량 10만 + 급식 16.4만 ≈ 약 146만원 (블로그)", "https://m.blog.naver.com/crs0802/224053504468"],
+  ], fee: 190000, open: 450, close: 1170 },
+  poly: { title: "폴리 수지캠퍼스 ECP (2026 설명회 기준)", facts: [
+    ["월 비용", "교습비 120만 + 차량 10만 + 급식 16.4만 = 146.4만원, 교재(3개월 30만)·e-POLY(6개월 30만) 월 환산 15만 더해 약 161만원. 2026년 인상 예정", "https://m.blog.naver.com/crs0802/224053504468"],
+    ["등원", "오전 9시경 등원 · 이른 등원(돌봄) 정보 없음", "https://m.blog.naver.com/5gongs_/224450910611"],
     ["하원", "정규 14:40 · 방과후(선착순) 16:15", "https://m.blog.naver.com/crs0802/224053504468"],
-    ["입학", "2027학년도 ECP 유치부 신입생 입학설명회 진행", "https://m.blog.naver.com/serim0228/224408794860"],
-    ["대상", "유치부 5~7세(한국 나이) 연령별 과정", "https://m.blog.naver.com/serim0228/224408794860"],
-    ["교육청 등록", "정원 336명 · 2022년 2월 개원 · 실용외국어(유아/초·중·고)", ""]
-  ], fee: 1464000, close: 975 },
-  sungmin: { title: "성민프리미어 (수지 지점)", facts: [
-    ["교육청 등록", "정원 200명 · 2022년 1월 개원 · 분야 종합(보습·실용외국어 유아)", ""],
-    ["등원", "8:40부터", "https://m.blog.naver.com/sororo23/224064375251"],
-    ["하원", "5세반 15:30 (설명회 후기)", "https://m.blog.naver.com/sororo23/224064375251"],
-    ["차량비", "월 4만원, 6개월 일시납 (차량 미이용 시 제외)", "https://m.blog.naver.com/sororo23/224064375251"],
-    ["시설", "3·4층 사용, 4층은 6세 교실", "https://m.blog.naver.com/sororo23/224064375251"],
-    ["교습비 공시", "1분당 254원 (교육청 공시 2026.1.1, 외국어(원어민) 유아) · 용인 영어유치원 평균보다 25% 높음 · 급식·교재·특별활동비 별도", "https://www.youngu.kr/%EC%96%B4%ED%95%99%EC%9B%90/%EC%9A%A9%EC%9D%B8%EC%8B%9C-%EC%84%B1%EB%AF%BC%ED%94%84%EB%A6%AC%EB%AF%B8%EC%96%B4%ED%95%99%EC%9B%90"],
-    ["참고", "같은 계열 수원 지점 신고 수강료 월 140~150만원 + 급식 12~16만 + 셔틀 12만원 (수지 지점 금액 아님)", "https://hakwonbi.com/academy/16284/"],
-    ["연락처", "031-266-0262", "https://www.edufindkorea.com/edu/detail.php?uid=172808&schoolgubun=%ED%95%99%EC%9B%90"],
-    ["운영", "성민유치원을 운영하는 재단에서 만든 영어유치원 (수원 지점 후기)", "https://m.blog.naver.com/hyunra27/223198512336"]
-  ], close: 930 },
-  besti: { title: "베스아이유치원", facts: [
-    ["규모", "인가 정원 320명 · 원아 204명 · 11학급 (만3세 3, 만4세 4, 만5세 4)", "https://kidsinfo.kr/kindergartens/gyeonggi/yonginsi/%EB%B2%A0%EC%8A%A4%EC%95%84%EC%9D%B4%EC%9C%A0%EC%B9%98%EC%9B%90"],
-    ["교육비", "만3·4·5세 모두 인근 5개원 평균보다 기본 교육비가 낮음 (블로그 분석)", "https://m.blog.naver.com/leak_finder/224359553301"],
-    ["차량", "등하원 차량 4대 운행", "https://www.kidsmap.co.kr/kindergarten/77255f69"],
-    ["입학", "2027학년도 모집요강 홈페이지 게시 · 모집은 처음학교로", "http://best-i.kg.kr/main/main.html"],
-    ["안전", "CCTV 32대 · 영양교사 배치", "https://kinder.netfilcker.com/details/10c58c55-16ac-4b2c-9e3c-016d3a93615b/%EB%B2%A0%EC%8A%A4%EC%95%84%EC%9D%B4%EC%9C%A0%EC%B9%98%EC%9B%90"],
+    ["반 구성", "5세반 한 반 12명 · 원어민·한국인 담임 (12:2)", "https://m.blog.naver.com/smj_0112/222925620560"],
+    ["입학", "2023년생(5세반)은 레벨테스트 없이 인터뷰만 · 2027 ECP 설명회 진행", "https://m.blog.naver.com/teachersusie/223313118202"],
+    ["교육청 등록", "풍덕천로 122 하나로프라자 · 정원 336명 · 2003년 개원 · 학원(학비 지원 없음)", ""]
+  ], fee: 1614000, open: 540, close: 975 },
+  sungmin: { title: "성민프리미어 수지 (설명회 후기 기준)", facts: [
+    ["월 비용 (5세반)", "교육비 140만 + 급식 14만 + 차량 4만 + 방과후 약 16만 + 교재 3.8만 ≈ 약 178만원 (급식·차량·교재는 6개월 일시납)", "https://m.blog.naver.com/sororo23/224064375251"],
+    ["등원", "8:40부터 가능 (정규 수업 9:30 시작)", "https://m.blog.naver.com/sororo23/224064375251"],
+    ["하원", "2023년생(5세반) 정규 15:30 · 방과후 신청 시 연장 (6~7세반은 정규 16:50)", "https://m.blog.naver.com/sororo23/224064375251"],
+    ["교사 대 아동", "5세반 1:7 · 6~7세반 1:8 · 영어 비율 80% 이상", "https://m.blog.naver.com/sororo23/224064375251"],
+    ["입학 참고", "5세반이 1개뿐이라 자리가 적음 · 바로 옆 성민어린이집과 연계", "https://m.blog.naver.com/sororo23/224064375251"],
+    ["교습비 공시", "1분당 254원 (교육청 공시 2026.1.1) · 용인 영어유치원 평균보다 25% 높음", "https://www.youngu.kr/%EC%96%B4%ED%95%99%EC%9B%90/%EC%9A%A9%EC%9D%B8%EC%8B%9C-%EC%84%B1%EB%AF%BC%ED%94%84%EB%A6%AC%EB%AF%B8%EC%96%B4%ED%95%99%EC%9B%90"],
+    ["기타 비용", "원복 약 24~25만 + 원복 자켓·물품 약 30만 (2025 후기)", "https://m.blog.naver.com/pudding1125/223729596501"],
+    ["연락처", "031-266-0262 · 진산로11번길 2, 3·4층 · 정원 200명 · 학원(학비 지원 없음)", "https://www.edufindkorea.com/edu/detail.php?uid=172808&schoolgubun=%ED%95%99%EC%9B%90"]
+  ], fee: 1778000, open: 520, close: 930 },
+  besti: { title: "베스아이유치원 (유치원알리미 2026.4.1 공시)", facts: [
+    ["월 부모 부담", "만3세반(2027년 2023년생) 기본 244,167원 · 만4·5세반 134,167원 (누리 유아학비 지원 뺀 금액)", "https://m.blog.naver.com/leak_finder/224359553301"],
+    ["추가 비용", "입학금 연 5만원 · 특성화 10개 중 선택 (만3세 전부 선택 시 최대 월 28만원, 영어 2개 6.5만원)", "https://m.blog.naver.com/leak_finder/224359553301"],
+    ["등원·하원", "공시 운영 9:00~18:00 (방과후 포함) · 이른 등원은 상담 확인", "https://torimap.zzxxccvv.com/k/%EC%9A%A9%EC%9D%B8%EC%8B%9C-%EC%88%98%EC%A7%80%EA%B5%AC-%EB%B2%A0%EC%8A%A4%EC%95%84%EC%9D%B4%EC%9C%A0%EC%B9%98%EC%9B%90"],
+    ["규모", "인가 정원 320명 · 원아 204명 · 11학급 · 수지구 원아 수 5위", "https://kidsinfo.kr/kindergartens/gyeonggi/yonginsi/%EB%B2%A0%EC%8A%A4%EC%95%84%EC%9D%B4%EC%9C%A0%EC%B9%98%EC%9B%90"],
+    ["차량·안전", "등하원 차량 4대 · CCTV 32대 · 영양교사 배치", "https://www.kidsmap.co.kr/kindergarten/77255f69"],
+    ["입학", "2027학년도 모집요강 홈페이지 게시 · 모집은 처음학교로 · 연락처 031-889-1818", "http://best-i.kg.kr/main/main.html"],
     ["후기", "\"아이가 너무 좋아해서 1년 내내 잘 다닌 유치원\" (동천동 학부모 블로그)", "https://m.blog.naver.com/spring_66/222656817456"]
-  ] }
+  ], fee: 244167 }
 };
 function briefHTML(p){
   const b = BRIEF[p.deepKey];
@@ -1314,43 +1318,50 @@ function dabinRows(ag){
                    any: k => k.pos ? `${distText(k)}${travel(k, "car") != null ? ` · 차 ${mins(travel(k, "car"))}, 걸어서 ${mins(travel(k, "walk"))}` : ""}` : "–" },
       { best: k => k.type === "daycare" ? 0 : travel(k, "car"), pick: "min" }],
     ["sec", "비용"],
-    ["학비 지원", { daycare: () => "누리과정 보육료 정부 지원. 부모는 특성화·필요경비 위주로 부담" + src("보육 제도 기준"),
-                   eng: () => "<b>지원 없음</b>. 학원이라 누리과정(유아학비) 대상이 아니에요" + src("유아교육법·학원법 구분"),
-                   kg: k => k.isPublic ? "국공립 유치원: 교육비 무상, 방과후비 소액" : "누리과정 유아학비 지원 + 차액(부모부담금) 납부" + src("사립 유치원 구조") }],
+    ["학비 지원", { daycare: () => "누리과정 보육료 월 28만원 정부 지원 → 보육료 부모 부담 0원. 필요경비만 냄" + src("정보공개포털 · 2026.3~2027.2 단가"),
+                   eng: () => "<b>지원 없음</b>. 학원이라 누리과정(유아학비·보육료) 대상이 아니에요" + src("유치원·어린이집을 안 다니면 가정양육수당(월 10만원) 대상인지 복지로에서 확인"),
+                   kg: k => k.isPublic ? "국공립 유치원: 교육비 무상, 방과후비 소액" : "누리과정 유아학비 지원 후 차액(부모부담금)만 납부" + src(k.deepKey === "besti" ? "만3세 부모부담 244,167원은 지원금을 뺀 금액" : "사립 유치원 구조") }],
     ["월 부모 부담", { any: k => { const b = BRIEF[k.deepKey];
-        return (b && b.fee ? `<b>약 ${comma(b.fee)}원</b>` + src(k.deepKey === "poly" ? "교습비+차량+급식, 블로그 기준" : "보육료 0원 + 필요경비 월 환산 (조석식 제외)") : "") + DN(k, "fee") + src("상담 후 정확한 금액을 적어 두세요"); } },
+        const why = { daycare: "보육료 0원 + 필요경비 월 환산 (조석식 제외)", poly: "교습비·차량·급식·교재·e-POLY, 2026 설명회 후기", sungmin: "5세반 교육비·급식·차량·방과후·교재, 설명회 후기", besti: "만3세 기본 납부액, 2026.4 공시 · 특성화 별도" }[k.deepKey] || "";
+        return (b && b.fee ? `<b>약 ${comma(b.fee)}원</b>` + src(why) : "") + DN(k, "fee") + src("상담 후 정확한 금액을 적어 두세요"); } },
       { best: k => num((state.notes[k.id] || {}).fee) || (BRIEF[k.deepKey] || {}).fee || null, pick: "min" }],
     ["sec", "시간"],
+    ["등원 시작", { daycare: () => "<b>07:30</b>" + src("정보공개포털 공시"),
+                   eng: k => { const b = BRIEF[k.deepKey]; return b && b.open ? fmtMin(b.open) + src(k.deepKey === "sungmin" ? "정규 9:30 · 설명회 후기" : "블로그 · 상담 확인") : "상담 확인"; },
+                   kg: k => { const h = hoursOf(k); return h ? fmtMin(h.open) + src("유치원알리미 공시") : "–"; } },
+      { best: k => k.type === "kg" ? (hoursOf(k) || {}).open : (BRIEF[k.deepKey] || {}).open, pick: "min" }],
+    ["이른 등원 (9시 전)", { daycare: () => "가능 · 07:30부터", eng: k => k.deepKey === "sungmin" ? "가능 · 8:40부터" : "정보 없음 · 상담 확인",
+                   kg: k => { const h = hoursOf(k); return h ? (h.open < 540 ? `가능 · ${fmtMin(h.open)}부터` : "공시상 어려움 · 아침 돌봄 상담 확인") : "–"; } }],
     ["운영 시간", { daycare: () => "07:30~19:30" + src("어린이집 기본 운영시간"),
                    eng: k => { const b = BRIEF[k.deepKey]; return b && b.close ? `하원 ${fmtMin(b.close)}` + src(k.deepKey === "poly" ? "방과후 선택 시 · 블로그" : "5세반 기준 · 설명회 후기") : "보통 오후 2~3시 하원" + src("확인 필요"); },
                    kg: k => { const h = hoursOf(k); return h ? `${fmtMin(h.open)}~${fmtMin(h.close)}` + src("유치원알리미 공시(방과후 포함)") : "–"; } },
       { best: k => k.type === "kg" ? (hoursOf(k) || {}).close : (BRIEF[k.deepKey] || {}).close, pick: "max" }],
-    ["하원 16시 이후", { daycare: () => "가능", eng: k => k.deepKey === "poly" ? "방과후(선착순) 들어가면 16:15" : "어려움 (15:30 하원)", kg: k => { const h = hoursOf(k); return h ? (h.close >= 960 ? "가능" : "어려움") : "–"; } }],
+    ["하원 16시 이후", { daycare: () => "가능", eng: k => k.deepKey === "poly" ? "방과후(선착순) 들어가면 16:15" : "방과후(월 약 16만원) 신청 시 가능 · 정규는 15:30", kg: k => { const h = hoursOf(k); return h ? (h.close >= 960 ? "가능" : "어려움") : "–"; } }],
     ["sec", "교육"],
     ["교육과정", { daycare: () => "누리과정 (유치원과 같은 국가 공통과정)", eng: () => "원 자체 영어 커리큘럼 (누리과정 의무 아님)",
                   kg: k => "누리과정" + (k.lesson && num(k.lesson.ag3_lsn_dcnt) ? ` · 연 수업일수 ${num(k.lesson.ag3_lsn_dcnt)}일` : "") }],
-    ["교육의 질", { daycare: () => "공시 데이터 없음 · 보육교사 자격·근속은 상담 때 확인",
-                   eng: () => "공시 데이터 없음 · 원어민·한국인 담임 구성 확인",
+    ["교육의 질", { daycare: () => "보육교사 1급 자격 90% · 4년 이상 근속 36.8%" + src("1년 미만 42.1% · 평가 2025.04 완료 · 정보공개포털"),
+                   eng: k => k.deepKey === "poly" ? "원어민·한국인 공동 담임 · 숙제 많음(매일 책 3권, 단어 시험, e-POLY)" + src("공시 평가 없음 · 블로그") : "영어 비율 80% 이상 · 연 약 1,850시간 영어 노출" + src("공시 평가 없음 · 설명회 후기"),
                    kg: k => { const q = quality(k); return q.s == null ? "–" : `<b>${Math.round(q.s * 100)}점</b>` + src(esc(q.text)); } },
       { best: k => k.type === "kg" ? quality(k).s : null, pick: "max" }],
-    ["교사 1명당 아이", { daycare: () => "4.4명 (전 연령 평균)" + src("보육교사 1급 90% · 정보공개포털"),
-                       eng: () => "공개 자료 없음",
+    ["교사 1명당 아이", { daycare: () => "4.4명 (전 연령 평균, 유아반은 더 많음)" + src("정보공개포털 · 토리맵"),
+                       eng: k => k.deepKey === "poly" ? "12명에 담임 2명 (약 6명)" + src("원어민+한국인 · 블로그") : "5세반 1:7 · 6~7세반 1:8" + src("설명회 후기"),
                        kg: k => { const r = kidsPerTeacher(k); return r == null ? "–" : `${r.toFixed(1)}명` + src("공시 교사 수 ÷ 현원"); } },
       { best: k => k.type === "kg" ? kidsPerTeacher(k) : null, pick: "min" }],
-    ["방과후 과정", { daycare: () => "종일반으로 저녁까지 보육", eng: () => "원마다 다름 (보통 별도 수강)", kg: k => esc(afterSchool(k).text || "–") }],
+    ["방과후 과정", { daycare: () => "종일반·연장보육반 7개로 19:30까지", eng: k => k.deepKey === "poly" ? "선착순 방과후, 16:15 하원" : "5세반 방과후 월 약 16만원 (6~7세는 정규가 16:50까지)", kg: k => esc(afterSchool(k).text || "–") }],
     ["sec", "입학·반"],
-    [`${yr} 만${nx}세 반`, { daycare: () => "만3세 2개 반(현원 12명) · <b>대기 15명</b>" + src("전체 입소대기 318명 · 아이사랑 순번 (2026.10)"),
-                            eng: k => has(k.cap) ? `학원 전체 정원 ${k.cap}명` + src("유아반 정원은 따로 확인") : "–",
-                            kg: k => { const s = seatFor(k, ag); return has(s.vac) ? (s.n <= 3 ? `만${s.n}세 정원 <b>${fmt(s.cap)}명</b> · ${fmt(s.cls)}학급` + src("유치원 첫해라 모두 신입 모집 (지금 정원 기준 추정)") : `정원 ${fmt(s.cap)} · 진급 예정 ${fmt(s.stay)} → 예상 여석 <b>${s.vac}</b>`) : "–"; } },
+    [`${yr} ${cohort(nx)} 반`, { daycare: () => "지금 2023년생 반 2개(14명) · <b>대기 62명</b>" + src("올해 다니는 14명이 그대로 올라가 새 자리는 적어요 · 이미 다니면 그대로 진급 (2026.10)"),
+                            eng: k => k.deepKey === "poly" ? "5세반 한 반 12명 · 2023년생은 인터뷰로 입학" + src("레벨테스트는 6·7세부터 · 블로그") : k.deepKey === "sungmin" ? "5세반 1개 반뿐 · 자리 적음" + src("6세반 16명 · 설명회 후기") : (has(k.cap) ? `학원 전체 정원 ${k.cap}명` : "–"),
+                            kg: k => { const s = seatFor(k, ag); return has(s.vac) ? (s.n <= 3 ? `${cohort(s.n)} 반 정원 <b>${fmt(s.cap)}명</b> · ${fmt(s.cls)}학급` + src("유치원 첫해(만3세반)라 모두 신입 모집 · 올해 같은 반 정원 기준 추정") : `정원 ${fmt(s.cap)} · 진급 예정 ${fmt(s.stay)} → 예상 여석 <b>${s.vac}</b>`) : "–"; } },
       { best: k => k.type === "kg" ? seatFor(k, ag).vac : null, pick: "max" }],
     ["sec", "생활·시설"],
     ["통학차량", { daycare: () => "없음 (단지 안)", eng: k => k.deepKey === "poly" ? "운행 · 월 약 10만원" : "운행 · 월 4만원(6개월 일시납)", kg: k => k.bus ? (k.bus.on ? `운행 ${k.bus.cars || ""}대` : "없음") : "–" }],
-    ["급식", { daycare: () => "어린이집 자체 급식", eng: () => "원마다 다름 (도시락·위탁 확인)", kg: k => { const r = extraRows(k.meal); return r.length ? r.slice(0, 3).map(([a, b]) => `${a} ${esc(b)}`).join(" · ") : "–"; } }],
-    ["시설", { daycare: () => "아파트 관리동 내 시설이 일반적", eng: () => "상가 건물 층 (실외 놀이공간 확인)", kg: k => esc(facilityText(k) || "–") }],
+    ["급식", { daycare: () => "자체 급식 · 조리사 2명 · 아침·저녁 급식 월 5만원(이용 시)", eng: k => k.deepKey === "poly" ? "급식비 월 16.4만원" : "급식비 월 14만원 (6개월치 일시납)", kg: k => { const r = extraRows(k.meal); return r.length ? r.slice(0, 3).map(([a, b]) => `${a} ${esc(b)}`).join(" · ") : "–"; } }],
+    ["시설", { daycare: () => "2019년 건물 1층(전용 449㎡) · 보육실 6개 238㎡ · 놀이터는 단지 인근 · 1인당 3㎡로 좁은 편", eng: () => "상가 건물 층 (실외 놀이공간 확인)", kg: k => esc(facilityText(k) || "–") }],
     ["원아 1명당 교실", { daycare: () => "–", eng: () => "–", kg: k => { const a = perKid(k); return a ? `${a.toFixed(1)}㎡` : "–"; } },
       { best: k => k.type === "kg" ? perKid(k) : null, pick: "max" }],
     ["sec", "안전"],
-    ["CCTV·점검", { daycare: () => "어린이집 CCTV 설치 의무 (영유아보육법)", eng: () => "학원 CCTV는 의무 아님 · 확인 필요",
+    ["CCTV·점검", { daycare: () => "CCTV 14대 · 2026 소방·가스·전기 점검 적합 · 식중독 미발생", eng: () => "학원 CCTV는 의무 아님 · 확인 필요",
                    kg: k => { const sf = k.safety; return sf ? `CCTV ${sf.cctv_ist_yn === "Y" ? num(sf.cctv_ist_total) + "대" : "없음"} · 놀이시설 ${esc(sf.plyg_ck_rs_cd || "–")}` : "–"; } }],
     ["사고·처분 보도", { any: k => k.news && k.news.length ? `<span class="badge alert">⚠ ${k.news.length}건</span>` : "검색된 보도 없음" + src("구글 뉴스 자동 검색") }],
     ["sec", "메모"],
@@ -1369,7 +1380,7 @@ function officialFacts(p){
     ["소관", "보건복지부·용인시 (국공립 어린이집)"],
     ["운영", "평일 07:30~19:30 기본, 종일반·맞춤반"],
     ["교육과정", "만3~5세 누리과정 (유치원과 동일한 국가 공통과정)"],
-    ["교사 대 아동 법정 상한", "만3세 1:15, 만4세 이상 1:20"],
+    ["교사 대 아동 법정 상한", "유치원 첫해 나이 반 1:15, 그 위 반 1:20"],
     ["비용", "누리과정 보육료 정부 지원, 특성화·필요경비는 원마다 다름"],
     ["입소", "아이사랑 포털 입소대기 순번, 국공립은 대기가 긴 편"],
     ["안전", "어린이집 CCTV 설치 의무"]
@@ -1387,8 +1398,8 @@ function officialFacts(p){
   return [
     ["설립", esc(p.establish)],
     ["운영시간", h ? `${fmtMin(h.open)}~${fmtMin(h.close)} (방과후 포함)` : "–"],
-    [`${AGE.sy + 1} 만${AGE.next}세`, has(st.vac) ? (st.n <= 3 ? `정원 ${st.cap}명 · ${fmt(st.cls)}학급 (모두 신입)` : `정원 ${st.cap}명 · 진급 예정 ${st.stay}명 · 예상 여석 ${st.vac}명 · ${fmt(st.cls)}학급`) : "–"],
-    ["현원", `만3세 ${fmt(p.cur[3])} · 만4세 ${fmt(p.cur[4])} · 만5세 ${fmt(p.cur[5])}명`],
+    [`${AGE.sy + 1} ${cohort(AGE.next)} 반`, has(st.vac) ? (st.n <= 3 ? `정원 ${st.cap}명 · ${fmt(st.cls)}학급 (모두 신입)` : `정원 ${st.cap}명 · 진급 예정 ${st.stay}명 · 예상 여석 ${st.vac}명 · ${fmt(st.cls)}학급`) : "–"],
+    ["현원 (올해)", `2022년생 ${fmt(p.cur[3])} · 2021년생 ${fmt(p.cur[4])} · 2020년생 ${fmt(p.cur[5])}명`],
     ["교사", `원장 ${fmt(num(t.drcnt))} · 일반교사 ${fmt(num(t.gnrl_thcnt))} · 기간제 ${fmt(num(t.shcnt_thcnt))} · 정교사1급 ${fmt(num(t.rgth_gd1_qacnt))} / 2급 ${fmt(num(t.rgth_gd2_qacnt))}`],
     ["교사 근속", tenure.some(Boolean) ? `1년 미만 ${tenure[0]} · 1~2년 ${tenure[1]} · 2~4년 ${tenure[2]} · 4~6년 ${tenure[3]} · 6년 이상 ${tenure[4]}명` : "–"],
     ["교육의 질", q.s != null ? `${Math.round(q.s * 100)}점 (${esc(q.text)})` : "–"],
@@ -1436,12 +1447,12 @@ function deepHTML(p, i){
 }
 const DABIN_Q = {
   daycare: ["만4·5세 반이 따로 있는지, 반별 인원과 담임 수", "입소 대기 순번과 단지 입주민 우선 입소 여부", "특성화 활동 종류와 월 필요경비", "초등 입학 전 유치원으로 옮기는 아이가 많은지"],
-  eng: ["월 교습비 + 교재비 + 급식비 + 차량비 + 방과후비 총액 (6개월 일시납 항목 포함)", "만4세(6살) 반 하원 시각과 방과후 정원·선착순 방식", "담임 구성(원어민·한국인)과 교사 근속, 반당 인원", "누리과정 지원이 없는 점, 초등 연계반·레벨테스트 여부"],
-  kg: [`${AGE.sy + 1}년 만${AGE.next}세 모집 인원과 처음학교로 일정, 경쟁률`, "월 부모부담금 (방과후·특성화·차량 포함 총액)", "통학차량이 동천센트럴자이에 서는지", "방과후 반 하원 시각과 담당 교사"]
+  eng: ["월 교습비 + 교재비 + 급식비 + 차량비 + 방과후비 총액 (6개월 일시납 항목 포함)", "2023년생(5세반) 하원 시각과 방과후 정원·선착순 방식", "담임 구성(원어민·한국인)과 교사 근속, 반당 인원", "누리과정 지원이 없는 점, 초등 연계반·레벨테스트 여부"],
+  kg: [`${AGE.sy + 1}학년도 ${cohort(AGE.next)} 반(만3세반) 모집 인원과 처음학교로 일정, 경쟁률`, "월 부모부담금 (방과후·특성화·차량 포함 총액)", "통학차량이 동천센트럴자이에 서는지", "방과후 반 하원 시각과 담당 교사"]
 };
 function renderDabin(){
   const ag = dabinAge();
-  $("#dabinAge").textContent = `하윤이 만 ${ag.years}세 ${ag.months}개월 · ${ag.sy + 1}년 3월 만${ag.next}세반 입학 기준`;
+  $("#dabinAge").textContent = `하윤이 2023년생 · ${ag.sy + 1}년 3월 2023년생 반(유치원 첫해) 입학 기준`;
   const places = dabinPlaces();
   if (!state.data.length){ $("#dabinTable").innerHTML = `<div class="card empty">데이터를 불러오는 중이에요.</div>`; return; }
   const rows = dabinRows(ag);
@@ -1465,10 +1476,10 @@ function renderDabin(){
     <thead><tr><th></th>${places.map(p => `<td>${esc(p.alias ? `${p.alias}` : p.name)}${p.alias ? `<span class="src">${esc(p.name)}</span>` : ""}</td>`).join("")}</tr></thead>
     <tbody>${html}</tbody></table></div>`;
   const ONE = {
-    daycare: "보육료는 전액 지원돼 월 19만원 안팎의 필요경비만 내고, 07:30~19:30 맡길 수 있어요. 교사 1급 비율이 90%로 높아요. 만3세 대기 15명이 관건이에요.",
+    daycare: "보육료는 전액 지원돼 월 19만원 안팎의 필요경비만 내고, 07:30~19:30 맡길 수 있어요. 교사 1급 비율이 90%로 높아요. 입소대기가 관건이에요.",
     eng: k => k.deepKey === "poly"
-      ? "영어 몰입은 가장 강하지만 월 140만원대로 가장 비싸고, 학비 지원이 없어요. 정규 하원 14:40이라 방과후 자리가 중요해요."
-      : "성민유치원 재단의 영어유치원이에요. 교육청 정원 200명, 8:40 등원·5세반 15:30 하원. 학비 지원이 없고 원비는 상담 확인이 필요해요.",
+      ? "영어 몰입 대표 브랜드예요. 월 약 161만원(교재 포함), 학비 지원 없음. 2023년생은 인터뷰만으로 입학하고, 정규 하원이 14:40이라 방과후 자리가 중요해요."
+      : "성민유치원 재단의 영어유치원이에요. 5세반 월 약 178만원으로 가장 비싸지만 8:40 이른 등원이 되고 교사 1명당 7명이에요. 5세반이 1개뿐이라 자리가 적어요.",
     kg: k => {
       const h = hoursOf(k), q = quality(k), st = seatFor(k, ag), af = afterSchool(k), r = evaluate(k);
       return [h && `${fmtMin(h.close)}까지 운영`, q.s != null && `교육의 질 ${Math.round(q.s * 100)}점`,
@@ -1742,9 +1753,9 @@ if (cached && cached.rows && cached.rows.length && "bus" in cached.rows[0]){ sta
 const kid = kidInfo(new Date());
 $("#kidAge").textContent = `2023.4.15생 · 만 ${kid.years}세 ${kid.months}개월`;
 $("#schoolYear").textContent = kid.sy; $("#schoolYearNext").textContent = kid.sy + 1;
-$("#classNow").textContent = kid.now; $("#classNext").textContent = kid.next;
-document.querySelector('.seg button[data-mode="next"]').textContent = `${kid.sy + 1}년 입학 · 만${kid.next}세반`;
-document.querySelector('.seg button[data-mode="now"]').textContent = `지금 · 만${kid.now}세반`;
+$("#classNow").textContent = `${cohort(kid.now, kid.sy)} 반`; $("#classNext").textContent = `${cohort(kid.next)} 반 (유치원 첫해)`;
+document.querySelector('.seg button[data-mode="next"]').textContent = `${kid.sy + 1}년 입학 · ${cohort(kid.next)} 반`;
+document.querySelector('.seg button[data-mode="now"]').textContent = `지금 · ${cohort(kid.now, kid.sy)} 반`;
 // 지금 반이 유치원 나이(만3세)보다 어리면 '지금' 보기는 숨김
 if (kid.now < 3) document.querySelector('.seg button[data-mode="now"]').hidden = true;
 
