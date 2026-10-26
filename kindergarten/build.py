@@ -28,6 +28,7 @@ EXTRAS = {
     "_bus": "schoolBus", "_after": "afterSchoolPresent", "_meal": "schoolMeal",
     "_building": "building", "_classArea": "classArea", "_teachers": "teachersInfo",
     "_lesson": "lessonDay", "_safety": "safetyEdu", "_hygiene": "environmentHygiene",
+    "_years": "yearOfWork",  # 교사 근속연수
 }
 
 # 영어유치원 = 법적으로 '유아 대상 영어학원' → 유치원알리미가 아닌 나이스(NEIS) 학원교습소정보에 있음

@@ -271,7 +271,7 @@ footer p{margin:0;max-width:70ch}
     <div class="rec-intro">
       <p class="section-label">하윤이에게 맞는 순서</p>
       <h2 id="recHeadline">조건을 정하면 바로 순위가 바뀌어요</h2>
-      <p>통학, 학비, 등·하원 시간, 입학 가능성, 시설과 안전을 공개 데이터로 점수 매겨 합쳤어요. 기준마다 중요도를 고르면 다시 계산해요.</p>
+      <p>교육의 질, 방과후 과정, 하원 시간, 통학, 입학 가능성, 시설과 안전을 공시 데이터로 점수 매겨 합쳤어요. 기준마다 중요도를 고르면 다시 계산해요.</p>
     </div>
     <div class="chips" id="recPresets" aria-label="추천 방식"></div>
     <details class="panel" id="recPanel">
@@ -280,7 +280,7 @@ footer p{margin:0;max-width:70ch}
         <label for="wantIn">희망 등원
           <select id="wantIn"><option value="480">8:00</option><option value="510">8:30</option><option value="540" selected>9:00</option></select></label>
         <label for="wantOut">희망 하원
-          <select id="wantOut"><option value="840">14:00</option><option value="960">16:00</option><option value="1020" selected>17:00</option><option value="1080">18:00</option><option value="1140">19:00</option></select></label>
+          <select id="wantOut"><option value="840">14:00</option><option value="960">16:00</option><option value="1020">17:00</option><option value="1080" selected>18:00</option><option value="1140">19:00</option></select></label>
         <label for="recRange">후보 범위
           <select id="recRange"><option value="10">차로 10분</option><option value="15">차로 15분</option><option value="20" selected>차로 20분</option><option value="0">전체</option></select></label>
       </div>
@@ -342,7 +342,7 @@ footer p{margin:0;max-width:70ch}
   </div>
 
   <div class="eng-only" style="display:flex;flex-direction:column;gap:12px">
-    <p class="note">영어유치원은 법적으로 <b>유아 대상 영어학원</b>이라 유치원알리미에 없어요. 경기도교육청 학원 등록 정보(나이스)에서 유아 과정이 등록됐거나 이름에 유아·키즈 같은 말이 들어간 영어학원을 골랐어요. 누리과정 지원 대상이 아니고, 수강료는 교육청에 신고된 금액이에요.</p>
+    <p class="note">영어유치원은 법적으로 <b>유아 대상 영어학원</b>이라 유치원알리미에 없어요. 경기도교육청 학원 등록 정보(나이스)에는 영어유치원 구분이 따로 없어요. 그래서 이름(키즈·킨더·유치부·국제캠퍼스 등)과 대표 브랜드로 <b>영유 유력</b>을 추정했어요. 상담으로 확인한 곳은 <b>영유 맞아요</b>를 눌러 두세요. 누리과정 지원 대상이 아니고, 수강료는 교육청에 신고된 금액이에요.</p>
     <div class="stats" id="engStats"></div>
     <div class="row">
       <select id="engSort">
@@ -350,7 +350,7 @@ footer p{margin:0;max-width:70ch}
         <option value="near">가까운 순</option>
         <option value="name">이름순</option>
       </select>
-      <label class="tg"><input type="checkbox" id="engSure"> 유아 과정 등록된 곳만</label>
+      <label class="tg"><input type="checkbox" id="engSure" checked> 영유 유력·확인한 곳만</label>
     </div>
     <div class="list" id="engList"></div>
   </div>
@@ -437,8 +437,8 @@ const store = {
 const state = {
   mode: "next", area: "5", region: "",
   home: DONGCHEON, cmp: store.get("kg.cmp", []), notes: store.get("kg.notes", {}), q: "", type: "", onlyOpen: false, onlyBus: false, sort: "score",
-  tab: "rec", travelMode: "car", maxMin: "15", limit: "20", onlyAfter: false, onlyCctv: false, eng: null, engSort: "time", engSure: false,
-  rec: Object.assign({ preset: "balance", weights: null, wantIn: "540", wantOut: "1020", range: "20" }, store.get("kg.rec", {})),
+  tab: "rec", travelMode: "car", maxMin: "15", limit: "20", onlyAfter: false, onlyCctv: false, eng: null, engSort: "time", engSure: true, engOk: new Set(store.get("kg.engOk", [])),
+  rec: Object.assign({ preset: "balance", weights: null, wantIn: "540", wantOut: "1080", range: "20" }, store.get("kg.rec2", {})),
   favs: new Set(store.get("kg.favs", [])),
   data: [], updated: null
 };
@@ -577,7 +577,7 @@ function normalize(raw, regionName){
     meal: raw._meal || null,
     building: raw._building || null, classArea: raw._classArea || null, teachers: raw._teachers || null,
     lesson: raw._lesson || null, safety: raw._safety || null, hygiene: raw._hygiene || null,
-    facilities: raw._facilities || {}, community: raw._community || null
+    facilities: raw._facilities || {}, community: raw._community || null, years: raw._years || null
   };
 }
 function extractList(json){
@@ -762,11 +762,13 @@ function extraHTML(k){
     `<div class="ex-t">${t}</div><dl>${rows.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>`).join("")}</details>`;
 }
 
+// 교육청 자료엔 '영어유치원' 구분이 없어서 이름·대표 브랜드로 추정
+const ENG_LIKELY = /키즈|kids|킨더|kinder|유치부|영유|국제캠퍼스|인터내셔널|international|프리스쿨|pre-?school|토들러|폴리|poly|SLP|에스엘피|엘리프|ELIF|킨더슐레|아이스쿨/i;
 function normalizeEng(r){
   const addr = String(r.addr || "");
   return { id: "eng:" + r.id, name: String(r.name || ""), addr, area: r.region || areaOf(addr),
     pos: coordOf(r, addr), travel: { car: num1(r._car_min), walk: num1(r._walk_min) }, tel: String(r.tel || "").trim(), cap: num(r.cap),
-    courses: r.courses || [], fees: r.fees || [], sure: r.basis === "유아 과정 등록",
+    courses: r.courses || [], fees: (r.fees || []).filter(f => String(f).trim()), sure: ENG_LIKELY.test(String(r.name || "")),
     facilities: r._facilities || {}, community: r._community || null };
 }
 function engCard(k){
@@ -777,7 +779,7 @@ function engCard(k){
     <div class="badges">
       ${travelBadge(k)}<span class="badge ${dist(k) != null && dist(k) <= 2 ? "near" : ""}">${distText(k)}</span>
       <span class="badge">${esc(k.area)}</span>
-      <span class="badge ${k.sure ? "pub" : ""}">${k.sure ? "유아 과정 등록" : "이름으로 추정"}</span>
+      <span class="badge ${k.sure || state.engOk.has(k.id) ? "pub" : ""}">${state.engOk.has(k.id) ? "영유 확인함" : k.sure ? "영유 유력(이름·브랜드)" : "유아 과정 가능 영어학원"}</span>
       ${has(k.cap) ? `<span class="badge">정원 ${k.cap}명</span>` : ""}
     </div>
     <p class="addr">${esc(k.addr)}</p>
@@ -791,6 +793,7 @@ function engCard(k){
       ${roadviewLink(k)}
       <a href="https://map.naver.com/p/search/${encodeURIComponent(k.name + " " + k.area)}" target="_blank" rel="noopener">지도</a>
       <a href="https://search.naver.com/search.naver?query=${encodeURIComponent(k.name + " 영어유치원 후기")}" target="_blank" rel="noopener">후기 검색</a>
+      <button class="cmpbtn" data-engok="${esc(k.id)}" aria-pressed="${state.engOk.has(k.id)}">${state.engOk.has(k.id) ? "✓ 영유 맞아요" : "영유 맞아요"}</button>
     </div>
   </div>`;
 }
@@ -805,7 +808,7 @@ function renderEng(){
     if (!isNaN(lim)){ const d = dist(k); if (d == null || d > lim) return false; }
     if (state.area === "fav" && !state.favs.has(k.id)) return false;
     if (state.region && k.area !== state.region) return false;
-    if (state.engSure && !k.sure) return false;
+    if (state.engSure && !k.sure && !state.engOk.has(k.id)) return false;
     if (!travelOk(k)) return false;
     if (q && !(k.name.includes(q) || k.addr.includes(q))) return false;
     return true;
@@ -816,8 +819,8 @@ function renderEng(){
     : state.engSort === "time" ? (a, b) => tt(a) - tt(b) || dd(a) - dd(b) : (a, b) => dd(a) - dd(b));
   $("#engStats").innerHTML = `
     <div class="stat"><b>${list.length}</b><small>영어유치원</small></div>
-    <div class="stat"><b>${list.filter(k => k.sure).length}</b><small>유아 과정 등록</small></div>
-    <div class="stat"><b>${list.filter(k => k.fees.length).length}</b><small>수강료 공개</small></div>`;
+    <div class="stat"><b>${list.filter(k => k.sure).length}</b><small>영유 유력</small></div>
+    <div class="stat"><b>${list.filter(k => state.engOk.has(k.id)).length}</b><small>직접 확인</small></div>`;
   $("#engList").innerHTML = list.length ? list.map(engCard).join("") : `<div class="card empty">조건에 맞는 곳이 없어요.</div>`;
 }
 
@@ -908,6 +911,8 @@ function renderCmp(){
     ["sec", "시설·교사·안전"],
     ["시설 설명", k => isEng(k) ? "–" : esc(facilityText(k) || "–")],
     ["시설 키워드", k => facilityChips(k) || "–"],
+    ["교육의 질", k => { if (isEng(k)) return "–"; const q = quality(k); return q.s == null ? "–" : `${Math.round(q.s * 100)}점<div class="more">${esc(q.text)}</div>`; }],
+    ["방과후 과정", k => { if (isEng(k)) return "–"; const a = afterSchool(k); return a.s == null ? "–" : esc(a.text); }],
     ["원아 1인당 교실", k => { const a = perKid(k); return a == null ? "–" : mark(a, roomiest, a.toFixed(1) + "㎡"); }],
     ["교사 1인당 원아", k => { const r = kidsPerTeacher(k); return r == null ? "–" : mark(r, bestRatio, r.toFixed(1) + "명"); }],
     ["CCTV", k => isEng(k) || !k.safety ? "–" : k.safety.cctv_ist_yn === "Y" ? `${fmt(num(k.safety.cctv_ist_total))}대` : "없음"],
@@ -942,6 +947,39 @@ function hoursOf(k){
   if (!spans.length) return null;
   return { open: Math.min(...spans.map(x => x[0])), close: Math.max(...spans.map(x => x[1])) };
 }
+// 교사 자격: 정교사 1급 비율
+function gd1Share(k){
+  const t = k.teachers;
+  if (!t) return null;
+  const g1 = num(t.rgth_gd1_qacnt) || 0, all = g1 + (num(t.rgth_gd2_qacnt) || 0) + (num(t.asth_qacnt) || 0) + (num(t.hdst_tchr_qacnt) || 0);
+  return all ? g1 / all : null;
+}
+// 근속연수: 필드 이름에 연차 구간이 들어 있음. 2년 이상 근무 교사 비율을 추정
+function tenureShare(k){
+  const y = k.years;
+  if (!y) return null;
+  const vals = Object.entries(y).filter(([key, v]) => !SKIP_KEYS.test(key) && /cnt|thcnt/i.test(key) && num(v) != null);
+  if (!vals.length) return null;
+  const short = vals.filter(([key]) => /(^|_)(yy1|y1|1y|lt1|undr1|blw1|1yr|0)(_|$)|1년\s*미만|_1_/.test(key)).reduce((a, [, v]) => a + num(v), 0);
+  const all = vals.reduce((a, [, v]) => a + num(v), 0);
+  return all ? 1 - short / all : null;
+}
+function quality(k){
+  const parts = [], notes = [];
+  const g = gd1Share(k); if (g != null){ parts.push(clamp(g / .6)); notes.push(`정교사 1급 ${Math.round(g * 100)}%`); }
+  const r = kidsPerTeacher(k); if (r != null){ parts.push(clamp((16 - r) / 8)); notes.push(`교사 1명당 ${r.toFixed(1)}명`); }
+  const ld = k.lesson && num(k.lesson.ag4_lsn_dcnt); if (ld){ parts.push(clamp((ld - 180) / 40)); notes.push(`수업일수 ${ld}일`); }
+  const tn = tenureShare(k); if (tn != null){ parts.push(clamp(tn)); notes.push(`2년 이상 근속 ${Math.round(tn * 100)}%`); }
+  return parts.length ? { s: parts.reduce((a, b) => a + b, 0) / parts.length, text: notes.join(", ") } : { s: null };
+}
+function afterSchool(k){
+  const a = k.after;
+  if (!a) return { s: null };
+  const ind = num(a.inor_clcnt) || 0, pm = num(a.pm_rrgn_clcnt) || 0, full = num(a.fxrl_thcnt) || 0;
+  if (!ind && !pm) return { s: 0, text: "방과후 과정 학급이 없어요" };
+  const s = (ind ? .7 : .45) + (full ? .3 : 0);
+  return { s: clamp(s), text: `방과후 ${ind ? "독립편성 " + ind + "학급" : "오후재편성 " + pm + "학급"}${full ? `, 전담교사 ${full}명` : ""}${a.oper_time ? `, ${hhmm(a.oper_time)}` : ""}` };
+}
 const CRITERIA = [
   { id: "commute", label: "통학", desc: "집에서 차로 걸리는 시간", fn: k => {
       const t = travel(k, "car") != null ? travel(k, "car") : dist(k) != null ? dist(k) * 2.5 : null;
@@ -972,6 +1010,8 @@ const CRITERIA = [
       if (!has(v)) return { s: null };
       return v > 0 ? { s: .35 + .65 * clamp(v / 12), text: `예상 여석 ${v}명` } : { s: 0, text: "예상 여석이 없어 대기 가능성이 커요" };
     } },
+  { id: "quality", label: "교육의 질", desc: "정교사 1급 비율, 교사 1명당 원아, 수업일수, 교사 근속", fn: quality },
+  { id: "after", label: "방과후 과정", desc: "방과후 전용 학급과 전담교사가 있는지", fn: afterSchool },
   { id: "bus", label: "통학차량", desc: "차량 운행 여부", fn: k => k.bus
       ? { s: k.bus.on ? 1 : 0, text: k.bus.on ? `통학차량 ${k.bus.cars || ""}대 운행`.replace(" 대", "") : "통학차량이 없어요" } : { s: null } },
   { id: "space", label: "공간 여유", desc: "원아 1인당 교실 면적", fn: k => {
@@ -1003,14 +1043,15 @@ const CRITERIA = [
 ];
 const W_LABELS = ["무관", "보통", "중요", "매우"];
 const PRESETS = {
-  balance: { label: "균형", w: { commute: 3, cost: 2, pickup: 2, dropoff: 1, seat: 3, bus: 1, space: 1, teacher: 1, safety: 2, newbuild: 0 } },
-  work:    { label: "맞벌이", w: { commute: 2, cost: 1, pickup: 3, dropoff: 3, seat: 3, bus: 2, space: 1, teacher: 1, safety: 2, newbuild: 0 }, wantIn: "480", wantOut: "1080" },
-  near:    { label: "가까운 곳", w: { commute: 3, cost: 1, pickup: 1, dropoff: 1, seat: 2, bus: 0, space: 0, teacher: 0, safety: 1, newbuild: 0 } },
-  budget:  { label: "학비 절약", w: { commute: 2, cost: 3, pickup: 1, dropoff: 1, seat: 2, bus: 1, space: 0, teacher: 1, safety: 1, newbuild: 0 } },
-  quality: { label: "시설·안전", w: { commute: 1, cost: 1, pickup: 1, dropoff: 0, seat: 2, bus: 0, space: 3, teacher: 3, safety: 3, newbuild: 2 } }
+  balance: { label: "하윤이 기본", w: { commute: 2, cost: 1, pickup: 3, dropoff: 1, seat: 2, quality: 3, after: 3, bus: 1, space: 1, teacher: 1, safety: 2, newbuild: 0 }, wantOut: "1080" },
+  work:    { label: "맞벌이", w: { commute: 2, cost: 1, pickup: 3, dropoff: 3, seat: 3, quality: 2, after: 3, bus: 2, space: 1, teacher: 1, safety: 2, newbuild: 0 }, wantIn: "480", wantOut: "1080" },
+  edu:     { label: "교육 중심", w: { commute: 1, cost: 1, pickup: 2, dropoff: 0, seat: 2, quality: 3, after: 2, bus: 0, space: 2, teacher: 3, safety: 2, newbuild: 1 } },
+  near:    { label: "가까운 곳", w: { commute: 3, cost: 1, pickup: 1, dropoff: 1, seat: 2, quality: 1, after: 1, bus: 0, space: 0, teacher: 0, safety: 1, newbuild: 0 } },
+  budget:  { label: "학비 절약", w: { commute: 2, cost: 3, pickup: 1, dropoff: 1, seat: 2, quality: 1, after: 1, bus: 1, space: 0, teacher: 1, safety: 1, newbuild: 0 } },
+  facility:{ label: "시설·안전", w: { commute: 1, cost: 1, pickup: 1, dropoff: 0, seat: 2, quality: 1, after: 1, bus: 0, space: 3, teacher: 2, safety: 3, newbuild: 2 } }
 };
 const weights = () => state.rec.weights || PRESETS[state.rec.preset || "balance"].w;
-function saveRec(){ store.set("kg.rec", state.rec); }
+function saveRec(){ store.set("kg.rec2", state.rec); }
 
 function evaluate(k){
   const w = weights();
@@ -1291,6 +1332,12 @@ $("#onlyCctv").addEventListener("change", e => { state.onlyCctv = e.target.check
 $("#onlyBus").addEventListener("change", e => { state.onlyBus = e.target.checked; render(); });
 $("#sort").addEventListener("change", e => { state.sort = e.target.value; render(); });
 document.addEventListener("click", e => {
+  const eo = e.target.closest("[data-engok]");
+  if (eo){
+    const id = eo.dataset.engok;
+    state.engOk.has(id) ? state.engOk.delete(id) : state.engOk.add(id);
+    store.set("kg.engOk", [...state.engOk]); render(); return;
+  }
   const pr = e.target.closest("[data-preset]");
   if (pr){
     const p = PRESETS[pr.dataset.preset];
