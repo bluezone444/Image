@@ -41,17 +41,19 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 GEO_CACHE = os.path.join(HERE, "geo_cache.json")
 
 
-def get_json(url, headers=None, tries=3):
+def get_json(url, headers=None, tries=5):
+    # 유치원알리미 서버가 느리거나 가끔 연결이 끊겨서 넉넉히 기다리며 재시도
     for i in range(tries):
         try:
             req = urllib.request.Request(url, headers=headers or {"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=30) as res:
+            with urllib.request.urlopen(req, timeout=60) as res:
                 return json.loads(res.read().decode("utf-8"))
         except Exception as e:  # noqa: BLE001
             if i == tries - 1:
                 raise
-            print(f"  retry {url.split('?')[0]}: {e}", file=sys.stderr)
-            time.sleep(2 * (i + 1))
+            wait = 5 * 2 ** i
+            print(f"  retry in {wait}s {url.split('?')[0]}: {e}", file=sys.stderr)
+            time.sleep(wait)
 
 
 def fetch(endpoint, region):
