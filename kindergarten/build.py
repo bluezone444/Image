@@ -14,14 +14,21 @@ import urllib.request
 
 API_KEY = os.environ.get("CHILDSCHOOL_KEY") or "5164059cb25a4827b42a677c4af10a04"
 API_BASE = "https://e-childschoolinfo.moe.go.kr/api/notice/"
-HOME = (37.3369, 127.0866)  # 용인시 수지구 동천동 행정복지센터 부근
+# 우리 집: 동천센트럴자이 (좌표는 실행 때 주소 검색으로 확인, 실패하면 아래 대략값)
+HOME_NAME = "동천센트럴자이"
+HOME_QUERIES = ["동천센트럴자이", "동천 센트럴자이", "Dongcheon Central Xi"]
+HOME = (37.3343, 127.0862)
 
 REGIONS = [
     {"name": "수지구", "sido": "41", "sgg": "41465"},
     {"name": "분당구", "sido": "41", "sgg": "41135"},
     {"name": "기흥구", "sido": "41", "sgg": "41463"},
 ]
-EXTRAS = {"_bus": "schoolBus", "_after": "afterSchoolPresent", "_meal": "schoolMeal"}
+EXTRAS = {
+    "_bus": "schoolBus", "_after": "afterSchoolPresent", "_meal": "schoolMeal",
+    "_building": "building", "_classArea": "classArea", "_teachers": "teachersInfo",
+    "_lesson": "lessonDay", "_safety": "safetyEdu", "_hygiene": "environmentHygiene",
+}
 
 # 영어유치원 = 법적으로 '유아 대상 영어학원' → 유치원알리미가 아닌 나이스(NEIS) 학원교습소정보에 있음
 NEIS_KEY = os.environ.get("NEIS_KEY") or ""
@@ -150,11 +157,33 @@ def geocode(addr, cache):
     return point
 
 
+def locate_home(cache):
+    global HOME
+    for q in HOME_QUERIES:
+        qs = urllib.parse.urlencode({"q": q, "format": "json", "limit": 1, "countrycodes": "kr"})
+        try:
+            res = get_json(f"https://nominatim.openstreetmap.org/search?{qs}",
+                           headers={"User-Agent": "hayoon-kindergarten-finder/1.0 (github.com/bluezone444/Image)"}, tries=2)
+        except Exception as e:  # noqa: BLE001
+            print(f"  집 좌표 검색 실패 {q}: {e}", file=sys.stderr)
+            res = None
+        time.sleep(1.1)
+        if res:
+            p = (float(res[0]["lat"]), float(res[0]["lon"]))
+            if km(HOME, p) < 3:  # 동천동 근처로 잡혔을 때만 사용
+                print(f"집 좌표 확인: {q} → {p}")
+                HOME = p
+                return True
+    print(f"집 좌표 검색 실패 → 대략값 {HOME} 사용")
+    return False
+
+
 def main():
     cache = {}
     if os.path.exists(GEO_CACHE):
         with open(GEO_CACHE, encoding="utf-8") as f:
             cache = json.load(f)
+    home_exact = locate_home(cache)
 
     items = []
     for region in REGIONS:
@@ -193,7 +222,8 @@ def main():
     with open(GEO_CACHE, "w", encoding="utf-8") as f:
         json.dump(cache, f, ensure_ascii=False, indent=0, sort_keys=True)
 
-    payload = {"updated": time.strftime("%Y-%m-%d %H:%M", time.gmtime(time.time() + 9 * 3600)), "items": items, "english": english}
+    payload = {"updated": time.strftime("%Y-%m-%d %H:%M", time.gmtime(time.time() + 9 * 3600)), "items": items, "english": english,
+               "home": {"lat": HOME[0], "lng": HOME[1], "label": HOME_NAME, "exact": home_exact}}
     with open(os.path.join(HERE, "data.json"), "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False)
 

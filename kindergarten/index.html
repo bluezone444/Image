@@ -93,8 +93,24 @@ ol.steps{padding-left:20px;margin:6px 0} ol.steps li{margin:4px 0}
 .tabs{display:flex;gap:0;border-bottom:2px solid var(--line);margin:4px 0 14px}
 .tabs button{flex:1;border:0;background:none;color:var(--muted);font:inherit;font-size:15px;font-weight:700;padding:10px 4px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
 .tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
-body[data-tab="eng"] .gen-only{display:none!important}
+body[data-tab="eng"] .gen-only,body[data-tab="cmp"] .gen-only,body[data-tab="cmp"] .list-only{display:none!important}
 body:not([data-tab="eng"]) .eng-only{display:none!important}
+body:not([data-tab="cmp"]) .cmp-only{display:none!important}
+.k-btns{display:flex;gap:4px;align-items:center}
+.cmpbtn{border:1px solid var(--line);background:var(--card);color:var(--accent);font:inherit;font-size:12px;font-weight:700;border-radius:8px;padding:3px 8px;cursor:pointer;white-space:nowrap}
+.cmpbtn[aria-pressed="true"]{background:var(--accent);color:var(--card);border-color:var(--accent)}
+.cmp-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -16px;padding:0 16px}
+table.cmp{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%}
+table.cmp th,table.cmp td{border-bottom:1px solid var(--line);padding:8px;vertical-align:top;text-align:left;background:var(--card)}
+table.cmp th{position:sticky;left:0;z-index:1;color:var(--muted);font-weight:600;min-width:84px;max-width:96px;background:var(--bg)}
+table.cmp td{min-width:150px;max-width:190px}
+table.cmp thead td{font-weight:700;font-size:14px}
+table.cmp tr.sec th,table.cmp tr.sec td{background:var(--chip);color:var(--ink);font-weight:700;padding:5px 8px}
+table.cmp .best{color:var(--accent);font-weight:700}
+table.cmp input,table.cmp textarea{font-size:13px;padding:6px 8px;border-radius:8px}
+table.cmp textarea{min-height:60px;font-family:inherit}
+table.cmp dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:1px 6px} table.cmp dt{color:var(--muted)} table.cmp dd{margin:0}
+.rm{border:0;background:none;color:var(--bad);font:inherit;font-size:12px;cursor:pointer;padding:0}
 .fee{font-size:13px;background:var(--chip);border-radius:8px;padding:6px 10px;margin:6px 0;white-space:pre-wrap;word-break:break-all}
 footer{color:var(--muted);font-size:12px;margin-top:24px}
 @media (max-width:420px){.stats b{font-size:17px}.kid b{font-size:15px}}
@@ -103,7 +119,7 @@ footer{color:var(--muted);font-size:12px;margin-top:24px}
 <body>
 <div class="wrap">
   <h1>🌱 하윤이 유치원 찾기</h1>
-  <p class="sub"><span id="homeLabel">수지구 동천동</span> 반경 <span id="radiusLabel">5</span>km · <span id="kidAge">2023.4.15생</span></p>
+  <p class="sub">🏠 <span id="homeLabel">동천센트럴자이</span> 반경 <span id="radiusLabel">5</span>km · <span id="kidAge">2023.4.15생</span></p>
 
   <div class="card kid">
     <div><small>하윤이 지금 (<span id="schoolYear">2026</span>학년도)</small><b>만 <span id="classNow">3</span>세반</b><small>2023년생 반 기준</small></div>
@@ -113,6 +129,7 @@ footer{color:var(--muted);font-size:12px;margin-top:24px}
   <div class="tabs" role="tablist">
     <button role="tab" data-tab="gen" aria-selected="true">🏫 유치원</button>
     <button role="tab" data-tab="eng" aria-selected="false">🔤 영어유치원</button>
+    <button role="tab" data-tab="cmp" aria-selected="false">⚖️ 비교 <span id="cmpCount"></span></button>
   </div>
 
   <details class="card setup gen-only" id="setup">
@@ -127,7 +144,7 @@ footer{color:var(--muted);font-size:12px;margin-top:24px}
     <button data-mode="now" aria-pressed="false">지금 · 만3세반</button>
   </div>
 
-  <div class="chips" id="areaChips">
+  <div class="chips list-only" id="areaChips">
     <button class="chip" data-area="2" aria-pressed="false">2km</button>
     <button class="chip" data-area="3" aria-pressed="false">3km</button>
     <button class="chip" data-area="5" aria-pressed="true">5km</button>
@@ -136,7 +153,7 @@ footer{color:var(--muted);font-size:12px;margin-top:24px}
     <button class="chip" data-area="fav" aria-pressed="false">★ 관심</button>
     <button class="chip" id="useGeo" type="button">📍 내 위치 기준</button>
   </div>
-  <div class="row" style="margin-bottom:12px">
+  <div class="row list-only" style="margin-bottom:12px">
     <input type="search" id="q" placeholder="이름·주소 검색" style="flex:1 1 200px">
     <select id="region" style="width:auto">
       <option value="">구 전체</option>
@@ -149,6 +166,11 @@ footer{color:var(--muted);font-size:12px;margin-top:24px}
     </select>
     <label class="tg gen-only"><input type="checkbox" id="onlyOpen"> 여석 있는 곳만</label>
     <label class="tg gen-only"><input type="checkbox" id="onlyBus"> 통학차량 있는 곳만</label>
+  </div>
+
+  <div class="cmp-only">
+    <p class="note">목록에서 <b>＋비교</b>를 눌러 최대 4곳까지 담아요. 원비·설명회 날짜·메모는 직접 적어 두면 이 휴대폰에 저장돼요(유치원알리미 API에 원비·설명회 정보가 없어서예요).</p>
+    <div id="cmpBody"></div>
   </div>
 
   <div class="eng-only">
@@ -184,7 +206,7 @@ footer{color:var(--muted);font-size:12px;margin-top:24px}
     영어유치원 데이터: 나이스 교육정보 개방 포털 학원교습소정보(경기도교육청).
     데이터: 유치원알리미(교육부) Open API 기본현황(basicInfo2)·통학차량·방과후 과정·급식 현황. 정원·현원은 공시 기준일 값이라 실제 모집 인원과 다를 수 있어요.
     “예상 여석(2027)”은 <b>만4세 정원 − 현재 만3세 현원(그대로 진급 예정)</b>으로 계산한 추정치예요. 정확한 모집 인원은 처음학교로·각 유치원 모집요강에서 꼭 확인하세요.
-    거리는 기준점(동천동 행정복지센터 부근)에서의 직선거리예요. Apps Script로 실행하면 주소를 좌표로 바꿔 정확히 계산하고, 좌표가 없으면 동 중심 기준으로 “약 ○km”로 표시해요.
+    거리는 우리 집(동천센트럴자이)에서의 직선거리예요. Apps Script로 실행하면 주소를 좌표로 바꿔 정확히 계산하고, 좌표가 없으면 동 중심 기준으로 “약 ○km”로 표시해요.
   </footer>
 </div>
 
@@ -212,7 +234,8 @@ function kidInfo(today){
   return { years: Math.floor(months / 12), months: months % 12, total: months, sy,
            now: sy - b.getFullYear(), next: sy + 1 - b.getFullYear() };
 }
-const DONGCHEON = { lat: 37.3369, lng: 127.0866, label: "수지구 동천동" };
+// 우리 집: 동천센트럴자이 (데이터에 확인된 좌표가 있으면 그걸 사용)
+const DONGCHEON = (window.KG_DATA && window.KG_DATA.home) || { lat: 37.3343, lng: 127.0862, label: "동천센트럴자이" };
 
 // 좌표가 없을 때 쓰는 동 중심 대략 좌표 → "약 ○km"로 표시
 const DONG_CENTER = {
@@ -244,7 +267,7 @@ const store = {
 
 const state = {
   mode: "next", area: "5", region: "",
-  home: store.get("kg.home", DONGCHEON), q: "", type: "", onlyOpen: false, onlyBus: false, sort: "score",
+  home: DONGCHEON, cmp: store.get("kg.cmp", []), notes: store.get("kg.notes", {}), q: "", type: "", onlyOpen: false, onlyBus: false, sort: "score",
   tab: "gen", eng: null, engSort: "near", engSure: false,
   favs: new Set(store.get("kg.favs", [])),
   data: [], updated: null
@@ -325,7 +348,9 @@ function normalize(raw, regionName){
     pbnt: String(raw.pbnttmng || ""),
     bus: busOf(raw._bus),
     after: raw._after || null,
-    meal: raw._meal || null
+    meal: raw._meal || null,
+    building: raw._building || null, classArea: raw._classArea || null, teachers: raw._teachers || null,
+    lesson: raw._lesson || null, safety: raw._safety || null, hygiene: raw._hygiene || null
   };
 }
 function extractList(json){
@@ -413,7 +438,7 @@ function cardHTML(k, rank){
   return `<div class="card k">
     <div class="k-head">
       <p class="k-name">${rank ? `<span class="rank">${rank}</span>` : ""}${esc(k.name)}</p>
-      <button class="star" data-fav="${esc(k.id)}" aria-pressed="${fav}" aria-label="관심 유치원">★</button>
+      <span class="k-btns"><button class="cmpbtn" data-cmp="${esc(k.id)}" aria-pressed="${state.cmp.includes(k.id)}">${state.cmp.includes(k.id) ? "✓비교" : "＋비교"}</button><button class="star" data-fav="${esc(k.id)}" aria-pressed="${fav}" aria-label="관심 유치원">★</button></span>
     </div>
     <div class="badges">
       <span class="badge ${dist(k) != null && dist(k) <= 2 ? "near" : ""}">${distText(k)}</span>
@@ -458,7 +483,7 @@ function engCard(k){
   const fav = state.favs.has(k.id);
   return `<div class="card k">
     <div class="k-head"><p class="k-name">${esc(k.name)}</p>
-      <button class="star" data-fav="${esc(k.id)}" aria-pressed="${fav}" aria-label="관심">★</button></div>
+      <span class="k-btns"><button class="cmpbtn" data-cmp="${esc(k.id)}" aria-pressed="${state.cmp.includes(k.id)}">${state.cmp.includes(k.id) ? "✓비교" : "＋비교"}</button><button class="star" data-fav="${esc(k.id)}" aria-pressed="${fav}" aria-label="관심">★</button></span></div>
     <div class="badges">
       <span class="badge ${dist(k) != null && dist(k) <= 2 ? "near" : ""}">${distText(k)}</span>
       <span class="badge">${esc(k.area)}</span>
@@ -499,7 +524,72 @@ function renderEng(){
   $("#engList").innerHTML = list.length ? list.map(engCard).join("") : `<div class="card empty">조건에 맞는 곳이 없어요.</div>`;
 }
 
+/* ---------- 비교 ---------- */
+function findById(id){
+  return state.data.find(k => k.id === id) || (state.eng || []).find(k => k.id === id) || null;
+}
+function dlHTML(rows){
+  return rows.length ? `<dl>${rows.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>` : "–";
+}
+function renderCmp(){
+  const items = state.cmp.map(findById).filter(Boolean);
+  $("#cmpCount").textContent = state.cmp.length ? `(${state.cmp.length})` : "";
+  if (!items.length){
+    $("#cmpBody").innerHTML = `<div class="card empty">아직 담은 곳이 없어요.<br>유치원·영어유치원 목록에서 <b>＋비교</b>를 눌러 주세요.</div>`;
+    return;
+  }
+  const isEng = k => k.id.startsWith("eng:");
+  const note = k => state.notes[k.id] || {};
+  const won = v => { const n = num(v); return n == null ? null : n; };
+  // 숫자 비교에서 가장 좋은 값 강조
+  const bestOf = (fn, pick) => { const vals = items.map(fn).filter(v => v != null); return vals.length > 1 ? pick(...vals) : null; };
+  const nearest = bestOf(k => dist(k), Math.min);
+  const mostVac = bestOf(k => isEng(k) ? null : seat(k).vac, Math.max);
+  const cheapest = bestOf(k => won(note(k).fee), Math.min);
+  const mark = (v, best, text) => v != null && v === best ? `<span class="best">${text} 👍</span>` : text;
+  const s = k => isEng(k) ? null : seat(k);
+  const rows = [
+    ["sec", "기본"],
+    ["구분", k => isEng(k) ? "영어유치원(학원)" : esc(k.establish || "유치원")],
+    ["거리", k => mark(dist(k), nearest, distText(k))],
+    ["주소", k => esc(k.addr)],
+    ["운영시간", k => esc(k.hours || "–")],
+    ["sec", "모집·반"],
+    [AGE.sy + 1 + " 예상 여석", k => { if (isEng(k)) return "–"; const v = seat({ ...k }).vac; return mark(v, mostVac, fmt(v)); }],
+    [`만${AGE.next}세 정원/학급`, k => isEng(k) ? (has(k.cap) ? `학원 정원 ${k.cap}` : "–") : `${fmt(k.cap[AGE.next])}명 / ${fmt(k.cls[AGE.next])}학급`],
+    ["현원(3·4·5세)", k => isEng(k) ? "–" : `${fmt(k.cur[3])} · ${fmt(k.cur[4])} · ${fmt(k.cur[5])}`],
+    ["sec", "비용·설명회 (직접 입력)"],
+    ["월 부모부담(원)", k => `<input type="text" inputmode="numeric" data-note="${esc(k.id)}" data-f="fee" value="${esc(note(k).fee || "")}" placeholder="예: 450000">${cheapest != null && won(note(k).fee) === cheapest ? '<div class="best">가장 저렴 👍</div>' : ""}${isEng(k) && k.fees.length ? `<div class="more">신고 수강료: ${esc(k.fees.join(" / "))}</div>` : ""}`],
+    ["입학설명회", k => `<input type="text" data-note="${esc(k.id)}" data-f="session" value="${esc(note(k).session || "")}" placeholder="예: 11/8(토) 10시">`],
+    ["메모", k => `<textarea data-note="${esc(k.id)}" data-f="memo" placeholder="상담·방문 후기">${esc(note(k).memo || "")}</textarea>`],
+    ["찾아보기", k => `<div class="links" style="flex-direction:column;gap:2px;margin:0">
+        <a target="_blank" rel="noopener" href="https://search.naver.com/search.naver?query=${encodeURIComponent(k.name + " 원비")}">원비 검색</a>
+        <a target="_blank" rel="noopener" href="https://search.naver.com/search.naver?query=${encodeURIComponent(k.name + " 입학설명회 " + (AGE.sy + 1))}">설명회 검색</a>
+        ${isEng(k) ? "" : `<a target="_blank" rel="noopener" href="https://www.go-firstschool.go.kr">처음학교로</a>`}
+        ${k.tel ? `<a href="tel:${esc(k.tel.replace(/[^0-9-]/g, ""))}">📞 ${esc(k.tel)}</a>` : ""}</div>`],
+    ["sec", "생활"],
+    ["통학차량", k => isEng(k) ? "–" : k.bus ? (k.bus.on ? "운영" + (k.bus.cars ? ` ${k.bus.cars}대` : "") : "미운영") : "–"],
+    ["방과후", k => isEng(k) ? "–" : dlHTML(extraRows(k.after))],
+    ["급식", k => isEng(k) ? "–" : dlHTML(extraRows(k.meal))],
+    ["수업일수", k => isEng(k) ? "–" : dlHTML(extraRows(k.lesson))],
+    ["sec", "시설·교사·안전"],
+    ["건물", k => isEng(k) ? "–" : dlHTML(extraRows(k.building))],
+    ["교실면적", k => isEng(k) ? "–" : dlHTML(extraRows(k.classArea))],
+    ["교직원", k => isEng(k) ? "–" : dlHTML(extraRows(k.teachers))],
+    ["안전점검·교육", k => isEng(k) ? "–" : dlHTML(extraRows(k.safety))],
+    ["환경위생", k => isEng(k) ? "–" : dlHTML(extraRows(k.hygiene))]
+  ];
+  $("#cmpBody").innerHTML = `<div class="cmp-wrap"><table class="cmp">
+    <thead><tr><th></th>${items.map(k => `<td>${esc(k.name)}<br><button class="rm" data-cmp="${esc(k.id)}">빼기 ✕</button></td>`).join("")}</tr></thead>
+    <tbody>${rows.map(([h, f]) => h === "sec"
+      ? `<tr class="sec"><th>${f}</th>${items.map(() => "<td></td>").join("")}</tr>`
+      : `<tr><th>${h}</th>${items.map(k => `<td>${f(k)}</td>`).join("")}</tr>`).join("")}</tbody>
+  </table></div>`;
+}
+
 function render(){
+  $("#cmpCount").textContent = state.cmp.length ? `(${state.cmp.length})` : "";
+  if (state.tab === "cmp"){ renderCmp(); return; }
   if (state.tab === "eng"){ renderEng(); return; }
   const list = filtered();
   const withVac = list.filter(k => { const v = seat(k).vac; return has(v) && v > 0; });
@@ -639,9 +729,9 @@ document.querySelectorAll("#areaChips [data-area]").forEach(b => b.onclick = () 
 });
 $("#region").addEventListener("change", e => { state.region = e.target.value; render(); });
 function setHome(h){
-  state.home = h; store.set("kg.home", h);
+  state.home = h;
   $("#homeLabel").textContent = h.label;
-  $("#useGeo").textContent = h === DONGCHEON || h.label === DONGCHEON.label ? "📍 내 위치 기준" : "🏠 동천동 기준으로";
+  $("#useGeo").textContent = h === DONGCHEON || h.label === DONGCHEON.label ? "📍 내 위치 기준" : "🏠 우리 집 기준으로";
   render();
 }
 $("#useGeo").onclick = () => {
@@ -649,7 +739,7 @@ $("#useGeo").onclick = () => {
   if (!navigator.geolocation){ msg("이 브라우저는 위치 기능을 지원하지 않아요.", "err"); return; }
   navigator.geolocation.getCurrentPosition(
     p => { setHome({ lat: p.coords.latitude, lng: p.coords.longitude, label: "내 위치" }); msg("현재 위치 기준으로 거리를 계산했어요.", "ok"); },
-    () => msg("위치 권한이 없어 동천동 기준을 유지할게요.", "err"),
+    () => msg("위치 권한이 없어 우리 집 기준을 유지할게요.", "err"),
     { enableHighAccuracy: false, timeout: 10000 });
 };
 $("#q").addEventListener("input", e => { state.q = e.target.value; render(); });
@@ -665,12 +755,30 @@ $("#engSure").addEventListener("change", e => { state.engSure = e.target.checked
 $("#onlyBus").addEventListener("change", e => { state.onlyBus = e.target.checked; render(); });
 $("#sort").addEventListener("change", e => { state.sort = e.target.value; render(); });
 document.addEventListener("click", e => {
+  const c = e.target.closest("[data-cmp]");
+  if (c){
+    const id = c.dataset.cmp, i = state.cmp.indexOf(id);
+    if (i >= 0) state.cmp.splice(i, 1);
+    else if (state.cmp.length >= 4){ msg("비교는 최대 4곳까지 담을 수 있어요.", "err"); return; }
+    else state.cmp.push(id);
+    store.set("kg.cmp", state.cmp);
+    render();
+    return;
+  }
   const b = e.target.closest("[data-fav]"); if (!b) return;
   const id = b.dataset.fav;
   state.favs.has(id) ? state.favs.delete(id) : state.favs.add(id);
   store.set("kg.favs", [...state.favs]);
   render();
 });
+
+document.addEventListener("input", e => {
+  const t = e.target; if (!t.dataset || !t.dataset.note) return;
+  const n = state.notes[t.dataset.note] = state.notes[t.dataset.note] || {};
+  n[t.dataset.f] = t.value;
+  store.set("kg.notes", state.notes);
+});
+document.addEventListener("change", e => { if (e.target.dataset && e.target.dataset.f === "fee") render(); });
 
 /* ---------- 시작 ---------- */
 setupUI();

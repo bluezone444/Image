@@ -18,8 +18,8 @@ const EXTRAS = [
   { field: '_meal', endpoint: 'schoolMeal' }           // 급식운영현황
 ];
 
-// 기준점: 용인시 수지구 동천동 행정복지센터 부근
-const HOME = { lat: 37.3369, lng: 127.0866 };
+// 기준점: 우리 집 동천센트럴자이 (대략 좌표)
+const HOME = { lat: 37.3343, lng: 127.0862 };
 const RADIUS_KM = 5;
 
 // 동천동 반경 5km가 걸치는 구
