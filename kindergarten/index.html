@@ -80,6 +80,10 @@ h2 small{font-weight:400;color:var(--muted);font-size:13px}
 .links a{color:var(--accent);text-decoration:none;font-weight:600}
 .more{font-size:12px;color:var(--muted);margin-top:6px}
 details.setup summary{cursor:pointer;font-weight:700}
+details.extra summary{cursor:pointer;color:var(--accent);font-weight:600}
+details.extra dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:4px 0 6px}
+details.extra dt{color:var(--muted)} details.extra dd{margin:0;color:var(--ink)}
+.ex-t{font-weight:700;color:var(--ink);margin-top:6px}
 .note{font-size:13px;color:var(--muted)}
 .msg{padding:10px 12px;border-radius:10px;font-size:14px;margin:8px 0}
 .msg.err{background:var(--bad-soft);color:var(--bad)}
@@ -133,6 +137,7 @@ footer{color:var(--muted);font-size:12px;margin-top:24px}
       <option value="pri">사립</option>
     </select>
     <label class="tg"><input type="checkbox" id="onlyOpen"> 여석 있는 곳만</label>
+    <label class="tg"><input type="checkbox" id="onlyBus"> 통학차량 있는 곳만</label>
   </div>
 
   <div class="stats" id="stats"></div>
@@ -152,7 +157,7 @@ footer{color:var(--muted);font-size:12px;margin-top:24px}
   <div id="list"></div>
 
   <footer>
-    데이터: 유치원알리미(교육부) Open API 기본현황(basicInfo2). 정원·현원은 공시 기준일 값이라 실제 모집 인원과 다를 수 있어요.
+    데이터: 유치원알리미(교육부) Open API 기본현황(basicInfo2)·통학차량·방과후 과정·급식 현황. 정원·현원은 공시 기준일 값이라 실제 모집 인원과 다를 수 있어요.
     “예상 여석(2027)”은 <b>만4세 정원 − 현재 만3세 현원(그대로 진급 예정)</b>으로 계산한 추정치예요. 정확한 모집 인원은 처음학교로·각 유치원 모집요강에서 꼭 확인하세요.
     거리는 기준점(동천동 행정복지센터 부근)에서의 직선거리예요. Apps Script로 실행하면 주소를 좌표로 바꿔 정확히 계산하고, 좌표가 없으면 동 중심 기준으로 “약 ○km”로 표시해요.
   </footer>
@@ -203,7 +208,7 @@ const store = {
 
 const state = {
   mode: "next", area: "5", region: "",
-  home: store.get("kg.home", DONGCHEON), q: "", type: "", onlyOpen: false, sort: "score",
+  home: store.get("kg.home", DONGCHEON), q: "", type: "", onlyOpen: false, onlyBus: false, sort: "score",
   favs: new Set(store.get("kg.favs", [])),
   data: [], updated: null
 };
@@ -243,6 +248,27 @@ function distText(k){
   if (!k.pos.exact) return d < 1 ? "약 1km 이내" : "약 " + d.toFixed(1) + "km";
   return d < 1 ? Math.round(d * 1000) + "m" : d.toFixed(1) + "km";
 }
+// 통학차량: Y/N 운영여부 + 운행 차량 수
+function busOf(b){
+  if (!b) return null;
+  const yn = String(b.vhcl_oprn_yn || "").toUpperCase();
+  if (!yn) return null;
+  return { on: yn === "Y", cars: num(b.opra_vhcnt) };
+}
+// 부가 정보 표시용 이름 (모르는 항목은 원래 이름 그대로)
+const EXTRA_LABELS = {
+  indpsclcnt: "방과후 독립편성 학급", connsclcnt: "오후재편성 학급", afsc_pros_lsn_tm: "방과후 운영시간",
+  afsc_ptcp_kpcnt: "방과후 참여 원아", fll_pd_tchr_cnt: "방과후 전담교사", shcnt_tchr_cnt: "방과후 강사",
+  mlsr_oprn_way_tp_cd: "급식 운영방식", cons_ents_nm: "위탁업체", al_kpcnt: "급식 원아 수",
+  mlsr_kpcnt: "급식 원아 수", ntrt_tchr_agmt_yn: "영양교사 배치", snge_agmt_ntrt_thcnt: "단독 영양사",
+  cprt_agmt_ntrt_thcnt: "공동 영양사", ckcnt: "조리사", cmcnt: "조리인력", mas_mspl_dclr_yn: "집단급식소 신고"
+};
+const SKIP_KEYS = /^(key|kindercode|kindername|officeedu|subofficeedu|establish|addr|telno|hpaddr|opertime|pbnttmng|region|_.*)$/;
+function extraRows(obj){
+  if (!obj) return [];
+  return Object.keys(obj).filter(k => !SKIP_KEYS.test(k) && obj[k] !== "" && obj[k] != null)
+    .map(k => [EXTRA_LABELS[k] || k, obj[k] === "Y" ? "예" : obj[k] === "N" ? "아니요" : obj[k]]);
+}
 function normalize(raw, regionName){
   const addr = String(raw.addr || "");
   const area = areaOf(addr, regionName);
@@ -259,7 +285,10 @@ function normalize(raw, regionName){
     cap: { 3: num(raw.ag3fpcnt), 4: num(raw.ag4fpcnt), 5: num(raw.ag5fpcnt), mix: num(raw.mixfpcnt) },
     cur: { 3: num(raw.ppcnt3), 4: num(raw.ppcnt4), 5: num(raw.ppcnt5), mix: num(raw.mixppcnt) },
     cls: { 3: num(raw.clcnt3), 4: num(raw.clcnt4), 5: num(raw.clcnt5), mix: num(raw.mixclcnt) },
-    pbnt: String(raw.pbnttmng || "")
+    pbnt: String(raw.pbnttmng || ""),
+    bus: busOf(raw._bus),
+    after: raw._after || null,
+    meal: raw._meal || null
   };
 }
 function extractList(json){
@@ -316,6 +345,7 @@ function filtered(){
     if (state.area === "fav" && !state.favs.has(k.id)) return false;
     if (state.type === "pub" && !k.isPublic) return false;
     if (state.type === "pri" && k.isPublic) return false;
+    if (state.onlyBus && !(k.bus && k.bus.on)) return false;
     if (state.onlyOpen){ const v = seat(k).vac; if (!(has(v) && v > 0)) return false; }
     if (q && !(k.name.includes(q) || k.addr.includes(q))) return false;
     return true;
@@ -350,6 +380,7 @@ function cardHTML(k, rank){
       <span class="badge">${esc(k.area)}</span>
       ${k.establish ? `<span class="badge ${k.isPublic ? "pub" : ""}">${esc(k.establish)}</span>` : ""}
       ${has(s.cls) && s.cls > 0 ? `<span class="badge">${s.cls}학급</span>` : ""}
+      ${k.bus ? `<span class="badge ${k.bus.on ? "pub" : ""}">${k.bus.on ? "🚌 통학차량" + (k.bus.cars ? " " + k.bus.cars + "대" : "") : "통학차량 없음"}</span>` : ""}
     </div>
     <p class="addr">${esc(k.addr)}</p>
     <div class="meter">
@@ -361,12 +392,20 @@ function cardHTML(k, rank){
     ${rank ? `<p class="why">${esc(reasons(k))}</p>` : ""}
     ${mix}
     <div class="more">현원 전체: 만3세 ${fmt(k.cur[3])} · 만4세 ${fmt(k.cur[4])} · 만5세 ${fmt(k.cur[5])}${k.hours ? " · 운영 " + esc(k.hours) : ""}</div>
+    ${extraHTML(k)}
     <div class="links">
       ${k.tel ? `<a href="tel:${esc(k.tel.replace(/[^0-9-]/g, ""))}">📞 ${esc(k.tel)}</a>` : ""}
       ${href ? `<a href="${esc(href)}" target="_blank" rel="noopener">홈페이지</a>` : ""}
       <a href="https://map.naver.com/p/search/${encodeURIComponent(k.name + " " + k.area)}" target="_blank" rel="noopener">지도</a>
     </div>
   </div>`;
+}
+
+function extraHTML(k){
+  const parts = [["방과후 과정", extraRows(k.after)], ["급식", extraRows(k.meal)]].filter(p => p[1].length);
+  if (!parts.length) return "";
+  return `<details class="more extra"><summary>방과후·급식 정보</summary>${parts.map(([t, rows]) =>
+    `<div class="ex-t">${t}</div><dl>${rows.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>`).join("")}</details>`;
 }
 
 function render(){
@@ -524,6 +563,7 @@ $("#useGeo").onclick = () => {
 $("#q").addEventListener("input", e => { state.q = e.target.value; render(); });
 $("#type").addEventListener("change", e => { state.type = e.target.value; render(); });
 $("#onlyOpen").addEventListener("change", e => { state.onlyOpen = e.target.checked; render(); });
+$("#onlyBus").addEventListener("change", e => { state.onlyBus = e.target.checked; render(); });
 $("#sort").addEventListener("change", e => { state.sort = e.target.value; render(); });
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-fav]"); if (!b) return;
@@ -536,7 +576,7 @@ document.addEventListener("click", e => {
 /* ---------- 시작 ---------- */
 setupUI();
 const cached = store.get("kg.cache", null);
-if (cached && cached.rows && cached.rows.length && "pos" in cached.rows[0]){ state.data = cached.rows; state.updated = cached.updated; }
+if (cached && cached.rows && cached.rows.length && "bus" in cached.rows[0]){ state.data = cached.rows; state.updated = cached.updated; }
 setHome(state.home);
 if (isGAS) loadFromGAS();
 else if (!state.data.length) $("#setup").open = true;

@@ -9,7 +9,14 @@
  */
 
 const API_KEY = '여기에_유치원알리미_인증키';
-const API_URL = 'https://e-childschoolinfo.moe.go.kr/api/notice/basicInfo2.do';
+const API_BASE = 'https://e-childschoolinfo.moe.go.kr/api/notice/';
+
+// 기본현황에 더해 붙여 줄 정보 (유치원알리미 Open API 목록에서)
+const EXTRAS = [
+  { field: '_bus', endpoint: 'schoolBus' },            // 통학차량현황
+  { field: '_after', endpoint: 'afterSchoolPresent' }, // 방과후 과정 편성 운영 현황
+  { field: '_meal', endpoint: 'schoolMeal' }           // 급식운영현황
+];
 
 // 기준점: 용인시 수지구 동천동 행정복지센터 부근
 const HOME = { lat: 37.3369, lng: 127.0866 };
@@ -28,16 +35,17 @@ const COLUMNS = [
   ['만3세 학급', 'clcnt3'], ['만4세 학급', 'clcnt4'], ['만5세 학급', 'clcnt5'], ['혼합 학급', 'mixclcnt'],
   ['만3세 정원', 'ag3fpcnt'], ['만4세 정원', 'ag4fpcnt'], ['만5세 정원', 'ag5fpcnt'], ['혼합 정원', 'mixfpcnt'],
   ['만3세 현원', 'ppcnt3'], ['만4세 현원', 'ppcnt4'], ['만5세 현원', 'ppcnt5'], ['혼합 현원', 'mixppcnt'],
-  ['2027 예상여석(만4세)', '_vac'], ['공시차수', 'pbnttmng']
+  ['2027 예상여석(만4세)', '_vac'], ['통학차량', '_busText'], ['공시차수', 'pbnttmng']
 ];
 
-function fetchRegion_(r) {
+function fetchRegion_(r, endpoint) {
+  endpoint = endpoint || 'basicInfo2';
   const cache = CacheService.getScriptCache();
-  const cacheKey = 'kg_' + r.sgg;
+  const cacheKey = 'kg_' + endpoint + '_' + r.sgg;
   const hit = cache.get(cacheKey);
   if (hit) return JSON.parse(hit);
 
-  const url = API_URL + '?key=' + encodeURIComponent(API_KEY) + '&sidoCode=' + r.sido + '&sggCode=' + r.sgg;
+  const url = API_BASE + endpoint + '.do?key=' + encodeURIComponent(API_KEY) + '&sidoCode=' + r.sido + '&sggCode=' + r.sgg;
   const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
   if (res.getResponseCode() !== 200) throw new Error(r.name + ' HTTP ' + res.getResponseCode());
   const json = JSON.parse(res.getContentText());
@@ -91,7 +99,15 @@ function addCoords_(items, maxLookups) {
 function allItems_(maxLookups) {
   const items = [];
   REGIONS.forEach(function (r) {
-    fetchRegion_(r).forEach(function (k) { k.region = r.name; items.push(k); });
+    const base = fetchRegion_(r);
+    EXTRAS.forEach(function (x) {
+      let rows = [];
+      try { rows = fetchRegion_(r, x.endpoint); } catch (e) { /* 부가 정보는 실패해도 계속 */ }
+      const byCode = {};
+      rows.forEach(function (row) { if (row.kindercode) byCode[row.kindercode] = row; });
+      base.forEach(function (k) { if (byCode[k.kindercode]) k[x.field] = byCode[k.kindercode]; });
+    });
+    base.forEach(function (k) { k.region = r.name; items.push(k); });
   });
   addCoords_(items, maxLookups);
   return items;
@@ -115,6 +131,8 @@ function updateSheet() {
   items.forEach(function (k) {
     const cap4 = parseInt(k.ag4fpcnt, 10), cur3 = parseInt(k.ppcnt3, 10);
     k._vac = isNaN(cap4) || isNaN(cur3) ? '' : cap4 - cur3;
+    const bus = k._bus || {};
+    k._busText = bus.vhcl_oprn_yn ? (bus.vhcl_oprn_yn === 'Y' ? '운영' + (bus.opra_vhcnt ? ' ' + bus.opra_vhcnt + '대' : '') : '미운영') : '';
   });
   items.sort(function (a, b) { return (a._dist == null ? 999 : a._dist) - (b._dist == null ? 999 : b._dist); });
   const near = items.filter(function (k) { return k._dist != null && k._dist <= RADIUS_KM; });
