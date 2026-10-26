@@ -11,6 +11,8 @@ import sys
 import time
 import urllib.parse
 import urllib.request
+import xml.etree.ElementTree as ET
+from email.utils import parsedate_to_datetime
 
 API_KEY = os.environ.get("CHILDSCHOOL_KEY") or "5164059cb25a4827b42a677c4af10a04"
 API_BASE = "https://e-childschoolinfo.moe.go.kr/api/notice/"
@@ -205,6 +207,43 @@ def community(k):
     return {"posts": len(posts), "fees": fees[:6], "pros": pros, "cons": cons, "facilities": facs}
 
 
+# 사건·사고 보도: 구글 뉴스 RSS (키 필요 없음)
+NEWS_KM = 7
+INCIDENT = re.compile(r"학대|폭행|폭언|방임|사고|부상|다쳐|숨져|사망|식중독|집단 ?감염|화재|추락|질식|"
+                      r"행정처분|과태료|과징금|비리|횡령|유용|불법|위반|폐원|수사|입건|송치|고소|고발|기소|징역|벌금")
+LOCAL = re.compile(r"용인|성남|수지|분당|기흥|동천|판교|죽전")
+
+
+def incident_news(k):
+    name = str(k.get("kindername") or k.get("name") or "")
+    city = "용인" if "용인" in str(k.get("addr")) else "성남" if "성남" in str(k.get("addr")) else ""
+    qs = urllib.parse.urlencode({"q": f'"{name}" {city}', "hl": "ko", "gl": "KR", "ceid": "KR:ko"})
+    try:
+        req = urllib.request.Request(f"https://news.google.com/rss/search?{qs}", headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=20) as res:
+            root = ET.fromstring(res.read())
+    except Exception as e:  # noqa: BLE001
+        print(f"  뉴스 검색 실패 {name}: {e}", file=sys.stderr)
+        return []
+    finally:
+        time.sleep(1.0)
+    out, key = [], name.replace(" ", "")
+    for it in root.iter("item"):
+        title = (it.findtext("title") or "").strip()
+        desc = strip_tags(it.findtext("description") or "")
+        if key not in title.replace(" ", "") or not INCIDENT.search(title):
+            continue  # 제목에 유치원 이름과 사건 단어가 같이 있어야 함
+        if not LOCAL.search(title + " " + desc):
+            continue  # 다른 지역 동명 유치원 기사 제외
+        try:
+            date = parsedate_to_datetime(it.findtext("pubDate")).strftime("%Y.%m.%d")
+        except Exception:  # noqa: BLE001
+            date = ""
+        src = it.find("source")
+        out.append({"title": title, "link": it.findtext("link"), "date": date, "source": src.text if src is not None else ""})
+    return out[:6]
+
+
 def homepage_facilities(url):
     """유치원 홈페이지 첫 화면에서 시설 키워드 찾기."""
     if not url:
@@ -370,6 +409,15 @@ def main():
             k["_facilities"] = facs
     if not (NAVER_ID and NAVER_SECRET):
         print("NAVER_CLIENT_ID/SECRET 없음 → 커뮤니티 수집 건너뜀")
+
+    targets = [k for k in items + (english or []) if k.get("_dist") is not None and k["_dist"] <= NEWS_KM]
+    flagged = 0
+    for k in targets:
+        news = incident_news(k)
+        if news:
+            k["_news"] = news
+            flagged += 1
+    print(f"사건·사고 보도 확인 {len(targets)}곳 중 {flagged}곳")
 
     with open(GEO_CACHE, "w", encoding="utf-8") as f:
         json.dump(cache, f, ensure_ascii=False, indent=0, sort_keys=True)

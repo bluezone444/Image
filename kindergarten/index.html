@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>하윤이 유치원 찾기</title>
-<meta name="theme-color" content="#2B6B55">
+<meta name="theme-color" content="#F3F6F4">
+<meta name="color-scheme" content="light only">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,20 +21,8 @@
   --font-body:"IBM Plex Sans KR",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;
   --r-lg:18px; --r-md:12px; --r-sm:8px;
   --fs-xs:12px; --fs-sm:13px; --fs-md:15px; --fs-lg:17px; --fs-xl:22px; --fs-2xl:28px;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#101513; --surface:#171E1B; --ink:#E5ECE8; --muted:#9AA6A0; --faint:#6E7A75; --line:#28332E;
-    --chip:#1E2823; --accent:#7FC6AA; --accent-ink:#0E1714; --accent-soft:#1C3128;
-    --sun:#F0C55A; --sun-soft:#352C16; --warn:#E8A273; --warn-soft:#382A1F; --bad:#EE9393; --bad-soft:#3A2222;
-    color-scheme:dark;
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#101513; --surface:#171E1B; --ink:#E5ECE8; --muted:#9AA6A0; --faint:#6E7A75; --line:#28332E;
-  --chip:#1E2823; --accent:#7FC6AA; --accent-ink:#0E1714; --accent-soft:#1C3128;
-  --sun:#F0C55A; --sun-soft:#352C16; --warn:#E8A273; --warn-soft:#382A1F; --bad:#EE9393; --bad-soft:#3A2222;
-  color-scheme:dark;
+  /* 휴대폰 다크 모드와 상관없이 항상 밝은 테마 */
+  color-scheme:light;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -156,6 +145,14 @@ details.extra dl{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin
 details.extra dt{color:var(--muted)} details.extra dd{margin:0}
 .ex-t{font-weight:700;color:var(--ink);margin-top:8px;font-size:var(--fs-sm)}
 .fee{font-size:var(--fs-sm);background:var(--chip);border-radius:var(--r-sm);padding:8px 10px;white-space:pre-wrap;word-break:break-all}
+
+/* 사건·사고 보도 */
+.badge.alert{background:var(--bad-soft);color:var(--bad);font-weight:700}
+.news{border:1px solid color-mix(in srgb,var(--bad) 35%,transparent);background:var(--bad-soft);border-radius:var(--r-md);padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.news-h{margin:0;font-weight:700;color:var(--bad);font-size:var(--fs-sm)}
+.news ul{margin:0;padding-left:16px;font-size:var(--fs-sm);display:flex;flex-direction:column;gap:3px}
+.news a{color:var(--ink)} .news small{color:var(--muted)}
+.news-n{margin:0;font-size:var(--fs-xs);color:var(--muted)}
 
 /* 시설·커뮤니티 */
 .badge.fac{background:var(--sun-soft);color:var(--ink);text-decoration:none;font-weight:500}
@@ -326,6 +323,7 @@ footer p{margin:0;max-width:70ch}
         <label class="tg gen-only"><input type="checkbox" id="onlyBus"> 통학차량</label>
         <label class="tg gen-only"><input type="checkbox" id="onlyAfter"> 방과후</label>
         <label class="tg gen-only"><input type="checkbox" id="onlyCctv"> CCTV</label>
+        <label class="tg"><input type="checkbox" id="hideNews"> 사고 보도 있는 곳 빼기</label>
       </div>
       <p class="note">통학시간은 오픈스트리트맵 도로 기준 예상치예요. 실시간 교통은 반영되지 않으니 카드의 길찾기로 네이버 지도에서 확인하세요.</p>
     </div>
@@ -437,7 +435,7 @@ const store = {
 const state = {
   mode: "next", area: "5", region: "",
   home: DONGCHEON, cmp: store.get("kg.cmp", []), notes: store.get("kg.notes", {}), q: "", type: "", onlyOpen: false, onlyBus: false, sort: "score",
-  tab: "rec", travelMode: "car", maxMin: "15", limit: "20", onlyAfter: false, onlyCctv: false, eng: null, engSort: "time", engSure: true, engOk: new Set(store.get("kg.engOk", [])),
+  tab: "rec", travelMode: "car", maxMin: "15", limit: "20", onlyAfter: false, onlyCctv: false, hideNews: false, eng: null, engSort: "time", engSure: true, engOk: new Set(store.get("kg.engOk", [])),
   rec: Object.assign({ preset: "balance", weights: null, wantIn: "540", wantOut: "1080", range: "20" }, store.get("kg.rec2", {})),
   favs: new Set(store.get("kg.favs", [])),
   data: [], updated: null
@@ -577,7 +575,7 @@ function normalize(raw, regionName){
     meal: raw._meal || null,
     building: raw._building || null, classArea: raw._classArea || null, teachers: raw._teachers || null,
     lesson: raw._lesson || null, safety: raw._safety || null, hygiene: raw._hygiene || null,
-    facilities: raw._facilities || {}, community: raw._community || null, years: raw._years || null
+    facilities: raw._facilities || {}, community: raw._community || null, years: raw._years || null, news: raw._news || []
   };
 }
 function extractList(json){
@@ -677,7 +675,7 @@ function cardHTML(k, rank){
       <span class="k-btns"><button class="cmpbtn" data-cmp="${esc(k.id)}" aria-pressed="${state.cmp.includes(k.id)}">${state.cmp.includes(k.id) ? "✓비교" : "＋비교"}</button><button class="star" data-fav="${esc(k.id)}" aria-pressed="${fav}" aria-label="관심 유치원">★</button></span>
     </div>
     <div class="badges">
-      ${travelBadge(k)}<span class="badge ${dist(k) != null && dist(k) <= 2 ? "near" : ""}">${distText(k)}</span>
+      ${newsBadge(k)}${travelBadge(k)}<span class="badge ${dist(k) != null && dist(k) <= 2 ? "near" : ""}">${distText(k)}</span>
       <span class="badge">${esc(k.area)}</span>
       ${k.establish ? `<span class="badge ${k.isPublic ? "pub" : ""}">${esc(k.establish)}</span>` : ""}
       ${has(s.cls) && s.cls > 0 ? `<span class="badge">${s.cls}학급</span>` : ""}
@@ -693,6 +691,7 @@ function cardHTML(k, rank){
     ${rank ? `<p class="why">${esc(reasons(k))}</p>` : ""}
     ${mix}
     <div class="more">현원 전체: 만3세 ${fmt(k.cur[3])} · 만4세 ${fmt(k.cur[4])} · 만5세 ${fmt(k.cur[5])}${k.hours ? " · 운영 " + esc(k.hours) : ""}</div>
+    ${newsHTML(k)}
     ${facilityChips(k)}
     ${communityHTML(k)}
     ${extraHTML(k)}
@@ -707,6 +706,18 @@ function cardHTML(k, rank){
 }
 
 /* ---------- 시설·커뮤니티·로드뷰 ---------- */
+// 사건·사고 보도: 이름이 제목에 들어간 기사만. 동명 유치원일 수 있어 확인 필요
+function newsBadge(k){
+  return k.news && k.news.length ? `<span class="badge alert">⚠ 관련 보도 ${k.news.length}건</span>` : "";
+}
+function newsHTML(k){
+  if (!k.news || !k.news.length) return "";
+  return `<div class="news">
+    <p class="news-h">⚠ 사건·사고 관련 보도 ${k.news.length}건</p>
+    <ul>${k.news.slice(0, 4).map(n => `<li><a href="${esc(n.link)}" target="_blank" rel="noopener">${esc(n.title)}</a> <small>${esc(n.date || "")}${n.source ? " · " + esc(n.source) : ""}</small></li>`).join("")}</ul>
+    <p class="news-n">뉴스 검색으로 자동 수집했어요. 다른 지역의 같은 이름 유치원이거나 이미 해결된 일일 수 있으니 기사를 직접 확인하세요.</p>
+  </div>`;
+}
 function roadviewLink(k){
   return k.pos ? `<a href="https://map.kakao.com/link/roadview/${k.pos.lat},${k.pos.lng}" target="_blank" rel="noopener">로드뷰</a>` : "";
 }
@@ -769,7 +780,7 @@ function normalizeEng(r){
   return { id: "eng:" + r.id, name: String(r.name || ""), addr, area: r.region || areaOf(addr),
     pos: coordOf(r, addr), travel: { car: num1(r._car_min), walk: num1(r._walk_min) }, tel: String(r.tel || "").trim(), cap: num(r.cap),
     courses: r.courses || [], fees: (r.fees || []).filter(f => String(f).trim()), sure: ENG_LIKELY.test(String(r.name || "")),
-    facilities: r._facilities || {}, community: r._community || null };
+    facilities: r._facilities || {}, community: r._community || null, news: r._news || [] };
 }
 function engCard(k){
   const fav = state.favs.has(k.id);
@@ -777,7 +788,7 @@ function engCard(k){
     <div class="k-head"><p class="k-name">${esc(k.name)}</p>
       <span class="k-btns"><button class="cmpbtn" data-cmp="${esc(k.id)}" aria-pressed="${state.cmp.includes(k.id)}">${state.cmp.includes(k.id) ? "✓비교" : "＋비교"}</button><button class="star" data-fav="${esc(k.id)}" aria-pressed="${fav}" aria-label="관심">★</button></span></div>
     <div class="badges">
-      ${travelBadge(k)}<span class="badge ${dist(k) != null && dist(k) <= 2 ? "near" : ""}">${distText(k)}</span>
+      ${newsBadge(k)}${travelBadge(k)}<span class="badge ${dist(k) != null && dist(k) <= 2 ? "near" : ""}">${distText(k)}</span>
       <span class="badge">${esc(k.area)}</span>
       <span class="badge ${k.sure || state.engOk.has(k.id) ? "pub" : ""}">${state.engOk.has(k.id) ? "영유 확인함" : k.sure ? "영유 유력(이름·브랜드)" : "유아 과정 가능 영어학원"}</span>
       ${has(k.cap) ? `<span class="badge">정원 ${k.cap}명</span>` : ""}
@@ -785,6 +796,7 @@ function engCard(k){
     <p class="addr">${esc(k.addr)}</p>
     ${k.courses.length ? `<div class="more">교습과정: ${esc(k.courses.join(", "))}</div>` : ""}
     ${k.fees.length ? `<div class="fee">교육청 신고 수강료\n${esc(k.fees.join("\n"))}</div>` : ""}
+    ${newsHTML(k)}
     ${facilityChips(k)}
     ${communityHTML(k)}
     <div class="links">
@@ -809,7 +821,9 @@ function renderEng(){
     if (state.area === "fav" && !state.favs.has(k.id)) return false;
     if (state.region && k.area !== state.region) return false;
     if (state.engSure && !k.sure && !state.engOk.has(k.id)) return false;
+    if (state.hideNews && k.news && k.news.length) return false;
     if (!travelOk(k)) return false;
+    if (state.hideNews && k.news && k.news.length) return false;
     if (q && !(k.name.includes(q) || k.addr.includes(q))) return false;
     return true;
   });
@@ -879,6 +893,7 @@ function renderCmp(){
   const s = k => isEng(k) ? null : seat(k);
   const rows = [
     ["sec", "기본"],
+    ["관련 보도", k => k.news && k.news.length ? `<span class="badge alert">⚠ ${k.news.length}건</span><ul class="mini">${k.news.slice(0, 2).map(n => `<li><a href="${esc(n.link)}" target="_blank" rel="noopener">${esc(n.title)}</a></li>`).join("")}</ul>` : "없음"],
     ["구분", k => isEng(k) ? "영어유치원(학원)" : esc(k.establish || "유치원")],
     ["거리", k => mark(dist(k), nearest, distText(k))],
     ["통학(차량)", k => { const t = travel(k, "car"); return mark(t, fastest, t == null ? "–" : mins(t)); }],
@@ -1079,13 +1094,14 @@ function recCard(r, i){
   const scored = r.parts.filter(p => p.wt && p.s != null);
   const pros = scored.filter(p => p.s >= .7).sort((a, b) => b.wt * b.s - a.wt * a.s).slice(0, 3);
   const cons = scored.filter(p => p.wt >= 2 && p.s <= .4).sort((a, b) => b.wt - a.wt).slice(0, 2);
+  if (k.news && k.news.length) cons.unshift({ text: `사건·사고 관련 보도 ${k.news.length}건 (아래 기사 확인)` });
   const inCmp = state.cmp.includes(k.id);
   return `<article class="card rec${i === 0 ? " first" : ""}">
     <div class="rec-top">
       <div class="rec-rank">${i + 1}</div>
       <div style="min-width:0">
         <p class="rec-name">${esc(k.name)}</p>
-        <div class="badges" style="margin-top:4px">${travelBadge(k)}<span class="badge ${k.isPublic ? "pub" : ""}">${esc(k.establish)}</span><span class="badge">${esc(k.area)}</span></div>
+        <div class="badges" style="margin-top:4px">${newsBadge(k)}${travelBadge(k)}<span class="badge ${k.isPublic ? "pub" : ""}">${esc(k.establish)}</span><span class="badge">${esc(k.area)}</span></div>
       </div>
       <div class="match"><b>${r.score}</b><small>점 / 100</small></div>
     </div>
@@ -1093,6 +1109,7 @@ function recCard(r, i){
       <div class="pro"><h4>장점</h4><ul>${pros.length ? pros.map(p => `<li>${esc(p.text)}</li>`).join("") : "<li>두드러진 장점이 적어요</li>"}</ul></div>
       ${cons.length ? `<div class="con"><h4>확인할 점</h4><ul>${cons.map(p => `<li>${esc(p.text)}</li>`).join("")}</ul></div>` : ""}
     </div>
+    ${newsHTML(k)}
     <details class="bd"><summary>기준별 점수 보기</summary>
       <div class="breakdown">${r.parts.filter(p => p.wt).map(p => `<span>${p.c.label}</span>
         <div class="bb"><i class="${p.s != null && p.s < .4 ? "lo" : ""}" style="width:${p.s == null ? 0 : Math.round(p.s * 100)}%"></i></div>
@@ -1146,6 +1163,7 @@ function filterSummary(){
   if (state.onlyBus) parts.push("통학차량");
   if (state.onlyAfter) parts.push("방과후");
   if (state.onlyCctv) parts.push("CCTV");
+  if (state.hideNews) parts.push("사고 보도 제외");
   if (state.type) parts.push(state.type === "pub" ? "국공립" : "사립");
   $("#filterSummary").textContent = parts.length ? "· " + parts.join(", ") : "";
 }
@@ -1328,6 +1346,7 @@ $("#travelMode").addEventListener("change", e => { state.travelMode = e.target.v
 $("#maxMin").addEventListener("change", e => { state.maxMin = e.target.value; render(); });
 $("#limit").addEventListener("change", e => { state.limit = e.target.value; render(); });
 $("#onlyAfter").addEventListener("change", e => { state.onlyAfter = e.target.checked; render(); });
+$("#hideNews").addEventListener("change", e => { state.hideNews = e.target.checked; render(); });
 $("#onlyCctv").addEventListener("change", e => { state.onlyCctv = e.target.checked; render(); });
 $("#onlyBus").addEventListener("change", e => { state.onlyBus = e.target.checked; render(); });
 $("#sort").addEventListener("change", e => { state.sort = e.target.value; render(); });
