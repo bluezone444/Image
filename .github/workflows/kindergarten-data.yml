@@ -29,6 +29,8 @@ jobs:
           python-version: "3.12"
       - name: 데이터 내려받기 + hayoon.html 만들기
         run: python kindergarten/build.py
+        env:
+          NEIS_KEY: ${{ secrets.NEIS_KEY }}  # 저장소 Settings → Secrets → Actions 에 등록
       - name: 결과 커밋
         run: |
           git config user.name "github-actions[bot]"
