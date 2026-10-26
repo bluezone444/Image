@@ -159,6 +159,36 @@ def geocode(addr, cache):
     return point
 
 
+# 통학 예상시간: OSRM(오픈스트리트맵 도로망) — 실시간 교통은 반영 안 됨
+ROUTERS = {
+    "car": "https://router.project-osrm.org/table/v1/driving/",
+    "walk": "https://routing.openstreetmap.de/routed-foot/table/v1/foot/",
+}
+
+
+def commute_times(points):
+    for mode, base in ROUTERS.items():
+        done = 0
+        for i in range(0, len(points), 80):  # URL 길이 제한 때문에 나눠서 요청
+            chunk = points[i:i + 80]
+            coords = ";".join([f"{HOME[1]},{HOME[0]}"] + [f"{k['_lng']},{k['_lat']}" for k in chunk])
+            url = f"{base}{coords}?sources=0&annotations=duration,distance"
+            try:
+                res = get_json(url, headers={"User-Agent": "hayoon-kindergarten-finder/1.0"}, tries=3)
+            except Exception as e:  # noqa: BLE001
+                print(f"  {mode} 경로 계산 실패: {e}", file=sys.stderr)
+                continue
+            durs, dists = res.get("durations", [[]])[0], res.get("distances", [[]])[0]
+            for j, k in enumerate(chunk, start=1):
+                if j < len(durs) and durs[j] is not None:
+                    k[f"_{mode}_min"] = round(durs[j] / 60, 1)
+                    if j < len(dists) and dists[j] is not None:
+                        k[f"_{mode}_km"] = round(dists[j] / 1000, 2)
+                    done += 1
+            time.sleep(1.5)
+        print(f"통학시간({mode}) {done}/{len(points)}")
+
+
 def locate_home(cache):
     global HOME
     for q in HOME_QUERIES:
@@ -214,12 +244,22 @@ def main():
 
     found = 0
     for k in items + (english or []):
-        p = geocode(str(k.get("addr") or ""), cache) if k.get("addr") else None
+        p = None
+        try:  # 유치원알리미 기본현황에 위도·경도가 들어 있음
+            p = (float(k["lttdcdnt"]), float(k["lngtcdnt"])) if k.get("lttdcdnt") else None
+        except (TypeError, ValueError):
+            p = None
+        if not p and k.get("addr"):
+            p = geocode(str(k["addr"]), cache)
+        if not p:  # 주소로 못 찾으면 이름으로 (OSM에 유치원 이름이 등록된 경우가 많음)
+            name = str(k.get("kindername") or k.get("name") or "")
+            p = geocode(f"{name} {k.get('region', '')}", cache) if name else None
         if p:
             k["_lat"], k["_lng"] = p
             k["_dist"] = round(km(HOME, p), 2)
             found += 1
     print(f"좌표 확인 {found}/{len(items) + len(english or [])}")
+    commute_times([k for k in items + (english or []) if "_lat" in k])
 
     with open(GEO_CACHE, "w", encoding="utf-8") as f:
         json.dump(cache, f, ensure_ascii=False, indent=0, sort_keys=True)
