@@ -52,6 +52,12 @@ body:not([data-tab="eng"]) .eng-only{display:none!important}
 body:not([data-tab="cmp"]) .cmp-only{display:none!important}
 body:not([data-tab="rec"]) .rec-only{display:none!important}
 body:not([data-tab="dabin"]) .dabin-only{display:none!important}
+body:not([data-tab="eng23"]) .eng23-only{display:none!important}
+body[data-tab="eng23"] .list-only,body[data-tab="eng23"] .cls-seg{display:none!important}
+.e23-group{display:flex;flex-direction:column;gap:10px}
+.e23 .verdict-chip{display:inline-block;font-size:var(--fs-xs);font-weight:700;padding:3px 9px;border-radius:999px}
+.e23 .ok{background:var(--accent-soft);color:var(--accent)} .e23 .no{background:var(--bad-soft);color:var(--bad)} .e23 .maybe{background:var(--sun-soft);color:var(--ink)}
+.e23 dl.facts a{font-size:var(--fs-xs);color:var(--faint)}
 body[data-tab="cmp"] .list-only,body[data-tab="rec"] .list-only,body[data-tab="dabin"] .list-only{display:none!important}
 body[data-tab="eng"] .cls-seg,body[data-tab="cmp"] .cls-seg,body[data-tab="dabin"] .cls-seg,body[data-tab="dabin"] .kid{display:none!important}
 
@@ -283,6 +289,7 @@ footer p{margin:0;max-width:70ch}
       <button role="tab" data-tab="eng" aria-selected="false">영어유치원</button>
       <button role="tab" data-tab="cmp" aria-selected="false">비교 <span class="count" id="cmpCount"></span></button>
       <button role="tab" data-tab="dabin" aria-selected="false">엄마 PICK</button>
+      <button role="tab" data-tab="eng23" aria-selected="false">23년생 영어</button>
     </nav>
   </header>
 
@@ -324,6 +331,16 @@ footer p{margin:0;max-width:70ch}
       <div class="crit" id="recCriteria"></div>
     </details>
     <div class="list" id="recList"></div>
+  </section>
+
+  <!-- 2023년생이 내년에 다닐 수 있는 영어 학원 -->
+  <section class="eng23-only" style="display:flex;flex-direction:column;gap:14px">
+    <div class="dabin-head">
+      <p class="section-label">2023년생 · 2027년 3월 기준 (한국 나이 5세)</p>
+      <h2>내년에 영어 배울 수 있는 곳</h2>
+      <p>동천동 주변 영어학원 중 2023년생(5세반)을 받는지 공식 홈페이지·설명회 후기·학원 정보 사이트로 확인했어요. 모집 상황은 해마다 바뀌니 전화로 꼭 다시 확인하세요.</p>
+    </div>
+    <div id="eng23Body" class="e23-group"></div>
   </section>
 
   <!-- 안다빈 전용 비교 -->
@@ -1508,6 +1525,68 @@ function renderDabin(){
     <ol class="qlist">${DABIN_Q[p.type].map(q => `<li>${esc(q)}</li>`).join("")}</ol></div>`).join("");
 }
 
+/* ---------- 2023년생 영어 (5세반 가능 여부) ---------- */
+const ENG23 = [
+  { group: "종일 영어유치원 · 2023년생(5세반) 받음", items: [
+    { name: "제이리어학원 수지캠퍼스", find: "제이리", ok: "ok", type: "종일 영어유치원",
+      facts: [["5세반", "2027년 3월 5세 모집 중 (6·7세는 신규·대기 마감)", "https://www.jlpedu.com/%EB%B3%B5%EC%A0%9C-2026-reservation-b"],
+              ["입학", "5세는 1:1 면담 15분 · 정원 10명", "https://m.blog.naver.com/teachersusie/223383280985"],
+              ["수업", "5세는 오감활동 중심 말하기 · 원어민 선생님", "https://m.blog.naver.com/learns_academy/223572077990"]], link: "https://www.jlpedu.com/" },
+    { name: "인투어학원 수지캠퍼스", find: "인투", ok: "ok", type: "종일 영어유치원",
+      facts: [["5세반", "유치부 5·6·7세반 각각 다른 시간표, 방과후 활동", "https://m.blog.naver.com/learns_academy/223765100490"],
+              ["특징", "수지에서 16년째 운영, 매년 대기 · 2025년 9월 풍덕천동 단독 건물로 이전", "https://we-kidspot.com/%EC%98%81%EC%96%B4%EC%9C%A0%EC%B9%98%EC%9B%90/%EA%B2%BD%EA%B8%B0/%EC%9A%A9%EC%9D%B8%EC%8B%9C-%EC%88%98%EC%A7%80%EA%B5%AC/%EC%A3%BC%EC%9D%B8%ED%88%AC%EC%96%B4%ED%95%99%EC%9B%90-304/"]], link: "https://in2english.co.kr/" },
+    { name: "폴리 수지캠퍼스 (ECP)", find: "폴리어학원", ok: "ok", type: "종일 영어유치원",
+      facts: [["5세반", "한 반 12명 · 2023년생은 인터뷰만 (레벨테스트 없음)", "https://m.blog.naver.com/teachersusie/223313118202"],
+              ["비용", "월 약 161만원 (교재 포함, 2026 설명회 기준)", "https://m.blog.naver.com/crs0802/224053504468"],
+              ["시간", "9시 등원 · 14:40 하원 · 방과후 16:15", "https://m.blog.naver.com/crs0802/224053504468"]] },
+    { name: "성민프리미어 (수지)", find: "성민프리미어", ok: "ok", type: "종일 영어유치원",
+      facts: [["5세반", "1개 반뿐이라 자리 적음 · 교사 1:7", "https://m.blog.naver.com/sororo23/224064375251"],
+              ["비용", "5세반 월 약 178만원 (방과후·교재 포함)", "https://m.blog.naver.com/sororo23/224064375251"],
+              ["시간", "8:40 등원 가능 · 정규 9:30~15:30", "https://m.blog.naver.com/sororo23/224064375251"]] },
+    { name: "ASPP (ASPK 프리스쿨)", find: "", ok: "ok", type: "영어 프리스쿨 (4~5세)",
+      facts: [["5세반", "4~5세 프리스쿨 · 한 반 16명 · 6~7세는 ASPK 킨더로 연결", "https://m.blog.naver.com/lmydr/222514481260"],
+              ["위치", "상현역 근처 (국제학교 킨더 계열, 미국식 STEM 유치부 3~7세)", "https://m.blog.naver.com/eattravelwrite/223517145134"],
+              ["비용", "ASPK 종일반 월 230~240만원 수준 (2025 후기)", "https://m.blog.naver.com/pudding1125/223729596501"]] }
+  ]},
+  { group: "유치원 끝나고 다니는 유아 영어 (오후반·특별반)", items: [
+    { name: "힘스프렌즈어학원", find: "힘스프렌즈", ok: "ok", type: "유치부 오후반·특별반",
+      facts: [["2023년생", "만3세 대상 Little GrapeSEED 과정 운영 (만4~5세는 GrapeSEED)", "https://m.blog.naver.com/himsfriends/223448967350"],
+              ["과정", "리딩·영어·몬테소리 영어(유치부) 등 7개 과정 · 시간당 약 10,238원 (교육청 등록 기준)", "https://hakwonbi.com/academy/31286"],
+              ["위치", "동천동 동천로178번길 13 · 집에서 약 700m", ""]] },
+    { name: "지키즈 잉글리쉬 (수지)", find: "G키즈", ok: "ok", type: "유치부 영어",
+      facts: [["2023년생", "'수지 5세 영어 추천' 학부모 후기 · 영어유치부 운영", "https://m.blog.naver.com/zjvlsia8520/224052321508"]] },
+    { name: "키즈온캠퍼스", find: "키즈온캠퍼스", ok: "no", type: "오후 유치부 (Semi-Kinder)",
+      facts: [["2023년생", "✗ 오후 유치부는 6·7세부터 · 2023년생은 2028년부터 가능", "https://m.blog.naver.com/mykoc/224373733111"]] }
+  ]},
+  { group: "가깝지만 5세반 여부 확인 필요", items: [
+    { name: "엘리프 수지 제1 국제캠퍼스", find: "엘리프", ok: "maybe", type: "영어학원 (집에서 290m)",
+      facts: [["확인", "학원 정보는 있지만 5세 모집 여부는 공개 글에서 확인 안 됨 · 가장 가까우니 전화 문의 추천", "https://academy.prompie.com/academies/detail/858lgom/%EC%97%98%EB%A6%AC%ED%94%84%EC%88%98%EC%A7%80%EC%A0%9C1%EA%B5%AD%EC%A0%9C%EC%BA%A0%ED%8D%BC%EC%8A%A4%EC%96%B4%ED%95%99%EC%9B%90/"]] },
+    { name: "윌리스어학원", find: "윌리스", ok: "maybe", type: "영어학원 (집에서 530m)",
+      facts: [["확인", "동천동 · 유아 과정 등록돼 있으나 5세반 여부 미확인", "https://www.edufindkorea.com/edu/detail.php?uid=85125&schoolgubun=%ED%95%99%EC%9B%90"]] },
+    { name: "스프라웃어학원", find: "스프라웃", ok: "maybe", type: "영어학원 (약 1.7km)", facts: [["확인", "유아 과정 등록 · 5세반 여부 미확인", ""]] },
+    { name: "레드우드국제교육학원", find: "레드우드", ok: "maybe", type: "영어학원 (약 1.7km)", facts: [["확인", "공개 자료 거의 없음 · 정원 14명 소규모", ""]] },
+    { name: "링키영어 동천래미안이스트팰리스점", find: "", ok: "maybe", type: "유아·초등 영어 공부방", facts: [["확인", "동천동 아파트 단지 내 · 대상 연령 확인 필요", "https://learns.academy/academies/9IFK4FN539/"]] }
+  ]}
+];
+function renderEng23(){
+  const VERDICT = { ok: ["ok", "2023년생 가능"], no: ["no", "2023년생 불가"], maybe: ["maybe", "확인 필요"] };
+  $("#eng23Body").innerHTML = ENG23.map(g => `<h2>${esc(g.group)}</h2>` + g.items.map(it => {
+    const pool = state.eng || [];
+    const k = it.find ? (pool.find(x => x.name === it.find) || pool.find(x => x.name.includes(it.find))) : null;
+    const [cls, label] = VERDICT[it.ok];
+    return `<article class="card place e23">
+      <div class="k-head"><div><span class="kind">${esc(it.type)}</span><h3>${esc(it.name)}</h3></div><span class="verdict-chip ${cls}">${label}</span></div>
+      ${k ? `<div class="badges">${travelBadge(k)}<span class="badge">${distText(k)}</span></div>` : ""}
+      <dl class="facts">${it.facts.map(([a, b, u]) => `<dt>${esc(a)}</dt><dd>${esc(b)}${u ? ` <a href="${esc(u)}" target="_blank" rel="noopener">출처</a>` : ""}</dd>`).join("")}</dl>
+      <div class="links">
+        ${it.link ? `<a href="${esc(it.link)}" target="_blank" rel="noopener">홈페이지</a>` : ""}
+        <a href="https://search.naver.com/search.naver?query=${encodeURIComponent(it.name + " 5세")}" target="_blank" rel="noopener">네이버 검색</a>
+        ${k ? roadviewLink(k) : ""}${k && k.tel && k.tel !== "null" ? `<span>${esc(k.tel)}</span>` : ""}
+      </div>
+    </article>`;
+  }).join("")).join("") + `<p class="note">2026-10-26 기준 공개 글로 확인한 내용이에요. 학원은 누리과정 지원이 없고, 정원·모집은 해마다 달라져요.</p>`;
+}
+
 function filterSummary(){
   const parts = [];
   if (state.maxMin) parts.push(`${state.travelMode === "walk" ? "도보" : "차량"} ${state.maxMin}분 이내`);
@@ -1523,6 +1602,7 @@ function filterSummary(){
 function render(){
   filterSummary();
   $("#cmpCount").textContent = state.cmp.length || "";
+  if (state.tab === "eng23"){ renderEng23(); return; }
   if (state.tab === "dabin"){ renderDabin(); return; }
   if (state.tab === "rec"){ renderRec(); return; }
   if (state.tab === "cmp"){ renderCmp(); return; }
