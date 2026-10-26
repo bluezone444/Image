@@ -90,6 +90,12 @@ details.extra dt{color:var(--muted)} details.extra dd{margin:0;color:var(--ink)}
 .msg.ok{background:var(--accent-soft);color:var(--accent)}
 .empty{text-align:center;color:var(--muted);padding:28px 8px}
 ol.steps{padding-left:20px;margin:6px 0} ol.steps li{margin:4px 0}
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--line);margin:4px 0 14px}
+.tabs button{flex:1;border:0;background:none;color:var(--muted);font:inherit;font-size:15px;font-weight:700;padding:10px 4px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
+.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+body[data-tab="eng"] .gen-only{display:none!important}
+body:not([data-tab="eng"]) .eng-only{display:none!important}
+.fee{font-size:13px;background:var(--chip);border-radius:8px;padding:6px 10px;margin:6px 0;white-space:pre-wrap;word-break:break-all}
 footer{color:var(--muted);font-size:12px;margin-top:24px}
 @media (max-width:420px){.stats b{font-size:17px}.kid b{font-size:15px}}
 </style>
@@ -104,14 +110,19 @@ footer{color:var(--muted);font-size:12px;margin-top:24px}
     <div><small>내년 3월 입학 (<span id="schoolYearNext">2027</span>학년도)</small><b>만 <span id="classNext">4</span>세반</b><small>처음학교로 모집은 보통 11월경</small></div>
   </div>
 
-  <details class="card setup" id="setup">
+  <div class="tabs" role="tablist">
+    <button role="tab" data-tab="gen" aria-selected="true">🏫 유치원</button>
+    <button role="tab" data-tab="eng" aria-selected="false">🔤 영어유치원</button>
+  </div>
+
+  <details class="card setup gen-only" id="setup">
     <summary>데이터 불러오기 설정</summary>
     <div id="setupBody"></div>
   </details>
 
   <div id="msg"></div>
 
-  <div class="seg" role="group" aria-label="대상 반">
+  <div class="seg gen-only" role="group" aria-label="대상 반">
     <button data-mode="next" aria-pressed="true">2027년 입학 · 만4세반</button>
     <button data-mode="now" aria-pressed="false">지금 · 만3세반</button>
   </div>
@@ -126,27 +137,40 @@ footer{color:var(--muted);font-size:12px;margin-top:24px}
     <button class="chip" id="useGeo" type="button">📍 내 위치 기준</button>
   </div>
   <div class="row" style="margin-bottom:12px">
-    <input type="search" id="q" placeholder="유치원 이름·주소 검색" style="flex:1 1 200px">
+    <input type="search" id="q" placeholder="이름·주소 검색" style="flex:1 1 200px">
     <select id="region" style="width:auto">
       <option value="">구 전체</option>
       <option>수지구</option><option>분당구</option><option>기흥구</option>
     </select>
-    <select id="type" style="width:auto">
+    <select id="type" class="gen-only" style="width:auto">
       <option value="">설립 전체</option>
       <option value="pub">국공립</option>
       <option value="pri">사립</option>
     </select>
-    <label class="tg"><input type="checkbox" id="onlyOpen"> 여석 있는 곳만</label>
-    <label class="tg"><input type="checkbox" id="onlyBus"> 통학차량 있는 곳만</label>
+    <label class="tg gen-only"><input type="checkbox" id="onlyOpen"> 여석 있는 곳만</label>
+    <label class="tg gen-only"><input type="checkbox" id="onlyBus"> 통학차량 있는 곳만</label>
   </div>
 
-  <div class="stats" id="stats"></div>
+  <div class="eng-only">
+    <div class="card note">영어유치원은 법적으로 <b>유아 대상 영어학원</b>이라 유치원알리미에는 없어요. 경기도교육청 학원 등록 정보(나이스)에서 <b>유아 과정이 등록됐거나 이름에 유아·키즈 등이 들어간 영어학원</b>을 골라 보여 줘요. 누리과정 지원금 대상이 아니고, 수강료는 교육청에 신고된 금액이에요.</div>
+    <div class="stats" id="engStats"></div>
+    <div class="row" style="margin-bottom:8px">
+      <select id="engSort" style="width:auto">
+        <option value="near">가까운 순</option>
+        <option value="name">이름순</option>
+      </select>
+      <label class="tg"><input type="checkbox" id="engSure"> 유아 과정 등록된 곳만</label>
+    </div>
+    <div id="engList"></div>
+  </div>
 
-  <h2 id="topTitle">추천 TOP 5 <small id="topSub"></small></h2>
-  <div id="top"></div>
+  <div class="stats gen-only" id="stats"></div>
 
-  <h2>전체 목록 <small id="listSub"></small></h2>
-  <div class="row" style="margin-bottom:8px">
+  <h2 id="topTitle" class="gen-only">추천 TOP 5 <small id="topSub"></small></h2>
+  <div id="top" class="gen-only"></div>
+
+  <h2 class="gen-only">전체 목록 <small id="listSub"></small></h2>
+  <div class="row gen-only" style="margin-bottom:8px">
     <select id="sort" style="width:auto">
       <option value="score">추천순</option>
       <option value="vac">여석 많은 순</option>
@@ -154,9 +178,10 @@ footer{color:var(--muted);font-size:12px;margin-top:24px}
       <option value="name">이름순</option>
     </select>
   </div>
-  <div id="list"></div>
+  <div id="list" class="gen-only"></div>
 
   <footer>
+    영어유치원 데이터: 나이스 교육정보 개방 포털 학원교습소정보(경기도교육청).
     데이터: 유치원알리미(교육부) Open API 기본현황(basicInfo2)·통학차량·방과후 과정·급식 현황. 정원·현원은 공시 기준일 값이라 실제 모집 인원과 다를 수 있어요.
     “예상 여석(2027)”은 <b>만4세 정원 − 현재 만3세 현원(그대로 진급 예정)</b>으로 계산한 추정치예요. 정확한 모집 인원은 처음학교로·각 유치원 모집요강에서 꼭 확인하세요.
     거리는 기준점(동천동 행정복지센터 부근)에서의 직선거리예요. Apps Script로 실행하면 주소를 좌표로 바꿔 정확히 계산하고, 좌표가 없으면 동 중심 기준으로 “약 ○km”로 표시해요.
@@ -220,6 +245,7 @@ const store = {
 const state = {
   mode: "next", area: "5", region: "",
   home: store.get("kg.home", DONGCHEON), q: "", type: "", onlyOpen: false, onlyBus: false, sort: "score",
+  tab: "gen", eng: null, engSort: "near", engSure: false,
   favs: new Set(store.get("kg.favs", [])),
   data: [], updated: null
 };
@@ -422,7 +448,59 @@ function extraHTML(k){
     `<div class="ex-t">${t}</div><dl>${rows.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>`).join("")}</details>`;
 }
 
+function normalizeEng(r){
+  const addr = String(r.addr || "");
+  return { id: "eng:" + r.id, name: String(r.name || ""), addr, area: r.region || areaOf(addr),
+    pos: coordOf(r, addr), tel: String(r.tel || "").trim(), cap: num(r.cap),
+    courses: r.courses || [], fees: r.fees || [], sure: r.basis === "유아 과정 등록" };
+}
+function engCard(k){
+  const fav = state.favs.has(k.id);
+  return `<div class="card k">
+    <div class="k-head"><p class="k-name">${esc(k.name)}</p>
+      <button class="star" data-fav="${esc(k.id)}" aria-pressed="${fav}" aria-label="관심">★</button></div>
+    <div class="badges">
+      <span class="badge ${dist(k) != null && dist(k) <= 2 ? "near" : ""}">${distText(k)}</span>
+      <span class="badge">${esc(k.area)}</span>
+      <span class="badge ${k.sure ? "pub" : ""}">${k.sure ? "유아 과정 등록" : "이름으로 추정"}</span>
+      ${has(k.cap) ? `<span class="badge">정원 ${k.cap}명</span>` : ""}
+    </div>
+    <p class="addr">${esc(k.addr)}</p>
+    ${k.courses.length ? `<div class="more">교습과정: ${esc(k.courses.join(", "))}</div>` : ""}
+    ${k.fees.length ? `<div class="fee">💰 신고 수강료\n${esc(k.fees.join("\n"))}</div>` : ""}
+    <div class="links">
+      ${k.tel ? `<a href="tel:${esc(k.tel.replace(/[^0-9-]/g, ""))}">📞 ${esc(k.tel)}</a>` : ""}
+      <a href="https://map.naver.com/p/search/${encodeURIComponent(k.name + " " + k.area)}" target="_blank" rel="noopener">지도</a>
+      <a href="https://search.naver.com/search.naver?query=${encodeURIComponent(k.name + " 영어유치원 후기")}" target="_blank" rel="noopener">후기 검색</a>
+    </div>
+  </div>`;
+}
+function renderEng(){
+  if (state.eng === null){
+    $("#engStats").innerHTML = "";
+    $("#engList").innerHTML = `<div class="card empty">영어유치원 데이터가 아직 없어요.<br>나이스 인증키가 등록되면 자동으로 채워져요.</div>`;
+    return;
+  }
+  const q = state.q.trim(), lim = parseFloat(state.area);
+  const list = state.eng.filter(k => {
+    if (!isNaN(lim)){ const d = dist(k); if (d == null || d > lim) return false; }
+    if (state.area === "fav" && !state.favs.has(k.id)) return false;
+    if (state.region && k.area !== state.region) return false;
+    if (state.engSure && !k.sure) return false;
+    if (q && !(k.name.includes(q) || k.addr.includes(q))) return false;
+    return true;
+  });
+  const dd = k => { const d = dist(k); return d == null ? 999 : d; };
+  list.sort(state.engSort === "name" ? (a, b) => a.name.localeCompare(b.name, "ko") : (a, b) => dd(a) - dd(b));
+  $("#engStats").innerHTML = `
+    <div class="stat"><b>${list.length}</b><small>영어유치원</small></div>
+    <div class="stat"><b>${list.filter(k => k.sure).length}</b><small>유아 과정 등록</small></div>
+    <div class="stat"><b>${list.filter(k => k.fees.length).length}</b><small>수강료 공개</small></div>`;
+  $("#engList").innerHTML = list.length ? list.map(engCard).join("") : `<div class="card empty">조건에 맞는 곳이 없어요.</div>`;
+}
+
 function render(){
+  if (state.tab === "eng"){ renderEng(); return; }
   const list = filtered();
   const withVac = list.filter(k => { const v = seat(k).vac; return has(v) && v > 0; });
   const total = withVac.reduce((a, k) => a + seat(k).vac, 0);
@@ -577,6 +655,13 @@ $("#useGeo").onclick = () => {
 $("#q").addEventListener("input", e => { state.q = e.target.value; render(); });
 $("#type").addEventListener("change", e => { state.type = e.target.value; render(); });
 $("#onlyOpen").addEventListener("change", e => { state.onlyOpen = e.target.checked; render(); });
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  state.tab = b.dataset.tab; document.body.dataset.tab = state.tab;
+  document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", String(x === b)));
+  render();
+});
+$("#engSort").addEventListener("change", e => { state.engSort = e.target.value; render(); });
+$("#engSure").addEventListener("change", e => { state.engSure = e.target.checked; render(); });
 $("#onlyBus").addEventListener("change", e => { state.onlyBus = e.target.checked; render(); });
 $("#sort").addEventListener("change", e => { state.sort = e.target.value; render(); });
 document.addEventListener("click", e => {
@@ -601,6 +686,7 @@ document.querySelector('.seg button[data-mode="now"]').textContent = `지금 · 
 if (window.KG_DATA && Array.isArray(window.KG_DATA.items)){
   state.data = window.KG_DATA.items.map(x => normalize(x, x.region));
   state.updated = window.KG_DATA.updated;
+  if (Array.isArray(window.KG_DATA.english)) state.eng = window.KG_DATA.english.map(normalizeEng);
   $("#setup").hidden = true;
 }
 setHome(state.home);

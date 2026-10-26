@@ -23,6 +23,13 @@ REGIONS = [
 ]
 EXTRAS = {"_bus": "schoolBus", "_after": "afterSchoolPresent", "_meal": "schoolMeal"}
 
+# 영어유치원 = 법적으로 '유아 대상 영어학원' → 유치원알리미가 아닌 나이스(NEIS) 학원교습소정보에 있음
+NEIS_KEY = os.environ.get("NEIS_KEY") or ""
+NEIS_URL = "https://open.neis.go.kr/hub/acaInsTiInfo"
+GU = re.compile(r"(수지구|분당구|기흥구)")
+YOUNG = re.compile(r"유아|유치|영유|킨더|kinder|키즈|kids|프리스쿨|pre-?school|토들러|toddler", re.I)
+ENGLISH = re.compile(r"영어|외국어|국제화|english|어학", re.I)
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 GEO_CACHE = os.path.join(HERE, "geo_cache.json")
 
@@ -51,6 +58,67 @@ def fetch(endpoint, region):
     if not items and endpoint == "basicInfo2" and status and str(status).upper() != "SUCCESS":
         raise SystemExit(f"API 오류: {region['name']} {status}")
     return items
+
+
+def fetch_neis(extra):
+    rows, page = [], 1
+    while True:
+        qs = urllib.parse.urlencode({"KEY": NEIS_KEY, "Type": "json", "pIndex": page, "pSize": 1000,
+                                     "ATPT_OFCDC_SC_CODE": "J10", **extra})  # J10 = 경기도교육청
+        data = get_json(f"{NEIS_URL}?{qs}")
+        if "acaInsTiInfo" not in data:
+            result = data.get("RESULT", {})
+            if result.get("CODE") == "INFO-200":  # 데이터 없음
+                break
+            raise RuntimeError(f"NEIS 오류: {result}")
+        head, body = data["acaInsTiInfo"][0]["head"], data["acaInsTiInfo"][1]["row"]
+        rows.extend(body)
+        total = head[0]["list_total_count"]
+        print(f"  NEIS {extra or '전체'} {len(rows)}/{total}")
+        if len(rows) >= total or not body:
+            break
+        page += 1
+    return rows
+
+
+def english_kindergartens():
+    """수지·분당·기흥의 유아 대상 영어학원(영어유치원) 목록. 학원 1곳에 과정이 여러 줄이라 묶어서 정리."""
+    if not NEIS_KEY:
+        print("NEIS_KEY 없음 → 영어유치원 건너뜀")
+        return None
+    rows = fetch_neis({"REALM_SC_NM": "국제화"}) or fetch_neis({})
+    academies = {}
+    for r in rows:
+        addr = " ".join(x for x in (r.get("FA_RDNMA"), r.get("FA_RDNDA")) if x)
+        gu = GU.search(addr or r.get("ADMST_ZONE_NM") or "")
+        if not gu:
+            continue
+        if r.get("REG_STTUS_NM") and r["REG_STTUS_NM"] not in ("개원", "등록"):
+            continue
+        course = " ".join(str(r.get(k) or "") for k in ("LE_ORD_NM", "LE_CRSE_LIST_NM", "LE_CRSE_NM"))
+        name = str(r.get("ACA_NM") or "")
+        if not ENGLISH.search(course + name + str(r.get("REALM_SC_NM") or "")):
+            continue
+        by_course, by_name = bool(YOUNG.search(course)), bool(YOUNG.search(name))
+        if not (by_course or by_name):
+            continue
+        key = r.get("ACA_ASNUM") or name + addr
+        a = academies.setdefault(key, {
+            "id": key, "name": name, "addr": addr, "region": gu.group(1),
+            "tel": r.get("FA_TELNO") or r.get("TELNO") or "", "cap": r.get("TOFOR_SMTOT"),
+            "courses": [], "fees": [], "basis": "이름으로 추정", "branch": r.get("BRHS_ACA_YN"),
+            "estbl": r.get("ESTBL_YMD") or r.get("REG_YMD") or "",
+        })
+        if r.get("LE_CRSE_NM") and r["LE_CRSE_NM"] not in a["courses"]:
+            a["courses"].append(r["LE_CRSE_NM"])
+        fee = r.get("PSNBY_THCC_CNTNT")
+        if fee and fee not in a["fees"]:
+            a["fees"].append(fee)
+        if by_course:
+            a["basis"] = "유아 과정 등록"
+    out = list(academies.values())
+    print(f"영어유치원 후보 {len(out)}곳")
+    return out
 
 
 def km(a, b):
@@ -107,19 +175,25 @@ def main():
     if not items:
         raise SystemExit("유치원 데이터가 비어 있어요")
 
+    try:
+        english = english_kindergartens()
+    except Exception as e:  # noqa: BLE001  영어유치원이 실패해도 일반 유치원은 만든다
+        print(f"영어유치원 수집 실패: {e}", file=sys.stderr)
+        english = None
+
     found = 0
-    for k in items:
+    for k in items + (english or []):
         p = geocode(str(k.get("addr") or ""), cache) if k.get("addr") else None
         if p:
             k["_lat"], k["_lng"] = p
             k["_dist"] = round(km(HOME, p), 2)
             found += 1
-    print(f"좌표 확인 {found}/{len(items)}")
+    print(f"좌표 확인 {found}/{len(items) + len(english or [])}")
 
     with open(GEO_CACHE, "w", encoding="utf-8") as f:
         json.dump(cache, f, ensure_ascii=False, indent=0, sort_keys=True)
 
-    payload = {"updated": time.strftime("%Y-%m-%d %H:%M", time.gmtime(time.time() + 9 * 3600)), "items": items}
+    payload = {"updated": time.strftime("%Y-%m-%d %H:%M", time.gmtime(time.time() + 9 * 3600)), "items": items, "english": english}
     with open(os.path.join(HERE, "data.json"), "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False)
 
