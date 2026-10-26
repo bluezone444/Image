@@ -2,154 +2,274 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>하윤이 유치원 찾기</title>
-<meta name="theme-color" content="#2f6f5e">
+<meta name="theme-color" content="#2B6B55">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
 <style>
+/* 레이아웃: 원아수첩 한 권 — 고정 머리말(이름·나이·탭) 아래로 한 줄 기둥처럼 이어지는 목록 */
 :root{
-  --bg:#f6f5f2; --card:#ffffff; --ink:#1d1d1b; --muted:#6b6a66; --line:#e4e2dc;
-  --accent:#2f6f5e; --accent-soft:#e3efe9; --warn:#b5531c; --warn-soft:#f8e9df;
-  --bad:#a33a3a; --bad-soft:#f6e1e1; --star:#d9a400; --chip:#efede8;
+  --bg:#F3F6F4; --surface:#FFFFFF; --ink:#1C2421; --muted:#5E6A65; --faint:#8C9792; --line:#DCE3DF;
+  --chip:#EAF0EC; --accent:#2B6B55; --accent-ink:#FFFFFF; --accent-soft:#E0EEE7;
+  --sun:#D99A1E; --sun-soft:#FBF0D6; --warn:#B4581F; --warn-soft:#F7E6D8; --bad:#A63D3D; --bad-soft:#F5E1E1;
+  --font-display:"Gowun Dodum","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  --font-body:"IBM Plex Sans KR",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;
+  --r-lg:18px; --r-md:12px; --r-sm:8px;
+  --fs-xs:12px; --fs-sm:13px; --fs-md:15px; --fs-lg:17px; --fs-xl:22px; --fs-2xl:28px;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#151614; --card:#1f201d; --ink:#ecebe6; --muted:#a19f98; --line:#33342f;
-    --accent:#7cc4ab; --accent-soft:#22352e; --warn:#e9a072; --warn-soft:#3a2a20;
-    --bad:#ec8f8f; --bad-soft:#3b2323; --star:#f2c84b; --chip:#2a2b27;
+    --bg:#101513; --surface:#171E1B; --ink:#E5ECE8; --muted:#9AA6A0; --faint:#6E7A75; --line:#28332E;
+    --chip:#1E2823; --accent:#7FC6AA; --accent-ink:#0E1714; --accent-soft:#1C3128;
+    --sun:#F0C55A; --sun-soft:#352C16; --warn:#E8A273; --warn-soft:#382A1F; --bad:#EE9393; --bad-soft:#3A2222;
+    color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#151614; --card:#1f201d; --ink:#ecebe6; --muted:#a19f98; --line:#33342f;
-  --accent:#7cc4ab; --accent-soft:#22352e; --warn:#e9a072; --warn-soft:#3a2a20;
-  --bad:#ec8f8f; --bad-soft:#3b2323; --star:#f2c84b; --chip:#2a2b27;
+  --bg:#101513; --surface:#171E1B; --ink:#E5ECE8; --muted:#9AA6A0; --faint:#6E7A75; --line:#28332E;
+  --chip:#1E2823; --accent:#7FC6AA; --accent-ink:#0E1714; --accent-soft:#1C3128;
+  --sun:#F0C55A; --sun-soft:#352C16; --warn:#E8A273; --warn-soft:#382A1F; --bad:#EE9393; --bad-soft:#3A2222;
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);
-  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;
-  font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
-.wrap{max-width:760px;margin:0 auto;padding:20px 16px 48px}
-h1{font-size:22px;margin:0 0 2px;letter-spacing:-.02em}
-.sub{color:var(--muted);font-size:14px;margin:0 0 16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
-.kid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.kid div{background:var(--chip);border-radius:10px;padding:10px 12px}
-.kid b{display:block;font-size:17px}
-.kid small{color:var(--muted);font-size:12px}
-.seg{display:flex;background:var(--chip);border-radius:10px;padding:3px;margin-bottom:10px}
-.seg button{flex:1;border:0;background:transparent;color:var(--ink);padding:9px 6px;border-radius:8px;font:inherit;font-size:14px;cursor:pointer}
-.seg button[aria-pressed="true"]{background:var(--card);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.12)}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-.chip{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
-.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--card);font-weight:600}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:var(--fs-md);line-height:1.55;letter-spacing:-.005em}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a{color:var(--accent)}
+.wrap{max-width:720px;margin:0 auto;padding-block:0 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+
+/* 머리말 */
+.masthead{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:14px max(16px,env(safe-area-inset-left,0px)) 0;border-bottom:1px solid var(--line)}
+.title-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--font-display);font-weight:400;font-size:var(--fs-xl);margin:0;letter-spacing:-.01em}
+h1 b{color:var(--accent);font-weight:400}
+.sub{color:var(--muted);font-size:var(--fs-sm);margin:2px 0 0;display:flex;gap:6px;flex-wrap:wrap}
+.sub span.dot::before{content:"·";margin-right:6px;color:var(--faint)}
+.tabs{display:flex;gap:2px;margin-top:10px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:1 0 auto;border:0;background:none;color:var(--muted);font-size:var(--fs-md);font-weight:600;padding:10px 12px 11px;cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs .count{font-size:var(--fs-xs);color:var(--accent);font-variant-numeric:tabular-nums}
+
+/* 탭별 보이기 */
+body:not([data-tab="gen"]) .gen-only{display:none!important}
+body:not([data-tab="eng"]) .eng-only{display:none!important}
+body:not([data-tab="cmp"]) .cmp-only{display:none!important}
+body:not([data-tab="rec"]) .rec-only{display:none!important}
+body[data-tab="cmp"] .list-only,body[data-tab="rec"] .list-only{display:none!important}
+body[data-tab="eng"] .cls-seg,body[data-tab="cmp"] .cls-seg{display:none!important}
+
+/* 아이 정보 */
+.kid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;margin-top:4px}
+.kid div{background:var(--surface);padding:10px 14px;display:flex;flex-direction:column;gap:1px}
+.kid small{color:var(--muted);font-size:var(--fs-xs)}
+.kid b{font-family:var(--font-display);font-weight:400;font-size:var(--fs-lg)}
+
+/* 공통 조각 */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px 16px}
+.panel>summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.panel>summary::-webkit-details-marker{display:none}
+.panel>summary::after{content:"";width:8px;height:8px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(45deg);margin-right:4px;transition:transform .15s}
+.panel[open]>summary::after{transform:rotate(-135deg)}
+.panel>summary small{font-weight:400;color:var(--muted);font-size:var(--fs-sm);margin-right:auto}
+.seg{display:flex;background:var(--chip);border-radius:var(--r-md);padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;padding:9px 6px;border-radius:9px;font-size:var(--fs-sm);font-weight:500;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:700;box-shadow:0 1px 2px color-mix(in srgb,var(--ink) 14%,transparent)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 13px;font-size:var(--fs-sm);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg);font-weight:600}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-input[type=search],input[type=text],select,textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;width:100%}
-textarea{min-height:90px;font-size:12px;font-family:ui-monospace,Menlo,monospace}
-label.tg{display:flex;gap:6px;align-items:center;font-size:14px;white-space:nowrap}
-.btn{border:0;background:var(--accent);color:var(--card);font:inherit;font-weight:600;padding:10px 14px;border-radius:10px;cursor:pointer}
+.search-row #q{flex:1 1 100%}
+.search-row select{flex:1 1 0}
+@media (min-width:560px){.search-row #q{flex:1 1 auto;width:auto}.search-row select{flex:0 0 auto}}
+input[type=search],input[type=text],select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 12px;width:100%;font-size:var(--fs-md)}
+select{width:auto;padding-right:28px}
+textarea{min-height:90px;font-size:var(--fs-xs);font-family:ui-monospace,Menlo,monospace}
+label.tg{display:inline-flex;gap:6px;align-items:center;font-size:var(--fs-sm);white-space:nowrap;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface);cursor:pointer}
+label.tg:has(input:checked){border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
+label.tg input{accent-color:var(--accent);margin:0}
+.btn{border:0;background:var(--accent);color:var(--accent-ink);font-weight:600;padding:10px 14px;border-radius:var(--r-sm);cursor:pointer}
 .btn.ghost{background:var(--chip);color:var(--ink)}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 14px}
-.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
-.stat b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
-.stat small{color:var(--muted);font-size:12px}
-h2{font-size:16px;margin:20px 0 8px}
-h2 small{font-weight:400;color:var(--muted);font-size:13px}
-.k{position:relative}
-.k-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
-.k-name{font-size:16px;font-weight:700;margin:0}
-.rank{display:inline-block;min-width:22px;height:22px;line-height:22px;text-align:center;border-radius:6px;background:var(--accent);color:var(--card);font-size:12px;font-weight:700;margin-right:6px}
-.star{border:0;background:none;font-size:22px;line-height:1;cursor:pointer;color:var(--line);padding:0 2px}
-.star[aria-pressed="true"]{color:var(--star)}
-.badges{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
-.badge{font-size:12px;padding:2px 8px;border-radius:6px;background:var(--chip);color:var(--muted)}
-.badge.near{background:var(--accent-soft);color:var(--accent);font-weight:600}
-.badge.pub{background:var(--accent-soft);color:var(--accent)}
-.addr{color:var(--muted);font-size:13px;margin:0 0 8px}
-.meter{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;margin:8px 0}
-.meter div{border-radius:10px;background:var(--chip);padding:6px 4px}
-.meter b{display:block;font-size:17px;font-variant-numeric:tabular-nums}
-.meter small{font-size:11px;color:var(--muted)}
+.note{font-size:var(--fs-sm);color:var(--muted);margin:0}
+#msg:empty{display:none}
+.msg{padding:10px 12px;border-radius:var(--r-md);font-size:var(--fs-sm)}
+.msg.err{background:var(--bad-soft);color:var(--bad)}
+.msg.ok{background:var(--accent-soft);color:var(--accent)}
+.empty{text-align:center;color:var(--muted);padding:28px 12px}
+ol.steps{padding-left:20px;margin:6px 0} ol.steps li{margin:4px 0}
+h2{font-size:var(--fs-lg);font-weight:700;margin:10px 0 0;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+h2 small{font-weight:400;color:var(--muted);font-size:var(--fs-sm)}
+.section-label{font-size:var(--fs-xs);letter-spacing:.06em;color:var(--faint);font-weight:600;margin:0}
+
+/* 요약 숫자 */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface);overflow:hidden}
+.stat{padding:10px 14px;border-left:1px solid var(--line)}
+.stat:first-child{border-left:0}
+.stat b{display:block;font-size:var(--fs-xl);font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+.stat small{color:var(--muted);font-size:var(--fs-xs)}
+
+/* 필터 */
+.filters{display:flex;flex-direction:column;gap:10px}
+.fgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+.fgrid label{font-size:var(--fs-xs);color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.fgrid select{width:100%}
+@media (max-width:440px){.fgrid{grid-template-columns:1fr 1fr}}
+
+/* 유치원 카드 */
+.list{display:flex;flex-direction:column;gap:10px}
+.k{display:flex;flex-direction:column;gap:8px}
+.k-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.k-name{font-size:var(--fs-lg);font-weight:700;margin:0;display:flex;align-items:baseline;gap:8px;min-width:0}
+.rank{font-family:var(--font-display);color:var(--accent);font-size:var(--fs-xl);line-height:1;min-width:20px}
+.k-btns{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.star{border:0;background:none;font-size:20px;line-height:1;cursor:pointer;color:var(--line);padding:2px}
+.star[aria-pressed="true"]{color:var(--sun)}
+.cmpbtn{border:1px solid var(--line);background:var(--surface);color:var(--muted);font-size:var(--fs-xs);font-weight:600;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.cmpbtn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.badges{display:flex;flex-wrap:wrap;gap:5px}
+.badge{font-size:var(--fs-xs);padding:2px 8px;border-radius:6px;background:var(--chip);color:var(--muted);white-space:nowrap}
+.badge.near,.badge.pub{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.badge.time{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.addr{color:var(--muted);font-size:var(--fs-sm);margin:0}
+.meter{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center}
+.meter div{border-radius:var(--r-md);background:var(--chip);padding:8px 4px}
+.meter b{display:block;font-size:var(--fs-lg);font-variant-numeric:tabular-nums;font-weight:700}
+.meter small{font-size:11px;color:var(--muted);line-height:1.3;display:block}
 .meter .ok{background:var(--accent-soft)} .meter .ok b{color:var(--accent)}
 .meter .tight{background:var(--warn-soft)} .meter .tight b{color:var(--warn)}
 .meter .full{background:var(--bad-soft)} .meter .full b{color:var(--bad)}
-.bar{height:6px;border-radius:3px;background:var(--chip);overflow:hidden;margin-top:2px}
+.bar{height:4px;border-radius:2px;background:var(--chip);overflow:hidden}
 .bar i{display:block;height:100%;background:var(--accent)}
-.why{font-size:13px;color:var(--accent);margin:4px 0 0}
-.links{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;margin-top:8px}
+.why{font-size:var(--fs-sm);color:var(--accent);margin:0}
+.links{display:flex;gap:14px;flex-wrap:wrap;font-size:var(--fs-sm)}
 .links a{color:var(--accent);text-decoration:none;font-weight:600}
-.more{font-size:12px;color:var(--muted);margin-top:6px}
-details.setup summary{cursor:pointer;font-weight:700}
-details.extra summary{cursor:pointer;color:var(--accent);font-weight:600}
-details.extra dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:4px 0 6px}
-details.extra dt{color:var(--muted)} details.extra dd{margin:0;color:var(--ink)}
-.ex-t{font-weight:700;color:var(--ink);margin-top:6px}
-.note{font-size:13px;color:var(--muted)}
-.msg{padding:10px 12px;border-radius:10px;font-size:14px;margin:8px 0}
-.msg.err{background:var(--bad-soft);color:var(--bad)}
-.msg.ok{background:var(--accent-soft);color:var(--accent)}
-.empty{text-align:center;color:var(--muted);padding:28px 8px}
-ol.steps{padding-left:20px;margin:6px 0} ol.steps li{margin:4px 0}
-.tabs{display:flex;gap:0;border-bottom:2px solid var(--line);margin:4px 0 14px}
-.tabs button{flex:1;border:0;background:none;color:var(--muted);font:inherit;font-size:15px;font-weight:700;padding:10px 4px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
-.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
-body[data-tab="eng"] .gen-only,body[data-tab="cmp"] .gen-only,body[data-tab="cmp"] .list-only{display:none!important}
-body:not([data-tab="eng"]) .eng-only{display:none!important}
-body:not([data-tab="cmp"]) .cmp-only{display:none!important}
-.k-btns{display:flex;gap:4px;align-items:center}
-.cmpbtn{border:1px solid var(--line);background:var(--card);color:var(--accent);font:inherit;font-size:12px;font-weight:700;border-radius:8px;padding:3px 8px;cursor:pointer;white-space:nowrap}
-.cmpbtn[aria-pressed="true"]{background:var(--accent);color:var(--card);border-color:var(--accent)}
-.cmp-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -16px;padding:0 16px}
-table.cmp{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%}
-table.cmp th,table.cmp td{border-bottom:1px solid var(--line);padding:8px;vertical-align:top;text-align:left;background:var(--card)}
-table.cmp th{position:sticky;left:0;z-index:1;color:var(--muted);font-weight:600;min-width:84px;max-width:96px;background:var(--bg)}
-table.cmp td{min-width:150px;max-width:190px}
-table.cmp thead td{font-weight:700;font-size:14px}
-table.cmp tr.sec th,table.cmp tr.sec td{background:var(--chip);color:var(--ink);font-weight:700;padding:5px 8px}
+.more{font-size:var(--fs-xs);color:var(--muted)}
+details.extra summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:var(--fs-sm)}
+details.extra dl{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin:4px 0 6px;font-size:var(--fs-sm)}
+details.extra dt{color:var(--muted)} details.extra dd{margin:0}
+.ex-t{font-weight:700;color:var(--ink);margin-top:8px;font-size:var(--fs-sm)}
+.fee{font-size:var(--fs-sm);background:var(--chip);border-radius:var(--r-sm);padding:8px 10px;white-space:pre-wrap;word-break:break-all}
+
+/* 비교표 */
+.cmp-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface)}
+table.cmp{border-collapse:separate;border-spacing:0;font-size:var(--fs-sm);min-width:100%}
+table.cmp th,table.cmp td{border-bottom:1px solid var(--line);padding:9px 10px;vertical-align:top;text-align:left;background:var(--surface)}
+table.cmp th{position:sticky;left:0;z-index:1;color:var(--muted);font-weight:500;min-width:86px;max-width:96px;background:var(--bg);border-right:1px solid var(--line)}
+table.cmp td{min-width:150px;max-width:190px;font-variant-numeric:tabular-nums}
+table.cmp thead td{font-weight:700;font-size:var(--fs-md)}
+table.cmp tr.sec th,table.cmp tr.sec td{background:var(--chip);color:var(--ink);font-weight:700;padding:6px 10px;font-size:var(--fs-xs);letter-spacing:.04em}
 table.cmp .best{color:var(--accent);font-weight:700}
-table.cmp input,table.cmp textarea{font-size:13px;padding:6px 8px;border-radius:8px}
+table.cmp input,table.cmp textarea{font-size:var(--fs-sm);padding:6px 8px}
 table.cmp textarea{min-height:60px;font-family:inherit}
 table.cmp dl{margin:0;line-height:1.6} table.cmp dt{display:inline;color:var(--muted)} table.cmp dt::after{content:" "}
 table.cmp dd{display:inline;margin:0} table.cmp dd::after{content:"\A";white-space:pre}
-.rm{border:0;background:none;color:var(--bad);font:inherit;font-size:12px;cursor:pointer;padding:0}
-.filters summary{cursor:pointer;font-weight:700}
-.filters summary small{font-weight:400;color:var(--muted)}
-.fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
-.fgrid label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
-@media (max-width:420px){.fgrid{grid-template-columns:1fr 1fr}}
-.badge.time{background:var(--accent-soft);color:var(--accent);font-weight:700}
-.fee{font-size:13px;background:var(--chip);border-radius:8px;padding:6px 10px;margin:6px 0;white-space:pre-wrap;word-break:break-all}
-footer{color:var(--muted);font-size:12px;margin-top:24px}
-@media (max-width:420px){.stats b{font-size:17px}.kid b{font-size:15px}}
+.rm{border:0;background:none;color:var(--bad);font-size:var(--fs-xs);cursor:pointer;padding:0}
+
+/* 맞춤 추천 */
+.rec-intro{display:flex;flex-direction:column;gap:4px}
+.rec-intro p{margin:0;color:var(--muted);font-size:var(--fs-sm);max-width:60ch}
+.rec-intro h2{font-family:var(--font-display);font-weight:400;font-size:var(--fs-xl);line-height:1.35;margin:4px 0 2px;text-wrap:balance;word-break:keep-all}
+.prefs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+.prefs label{font-size:var(--fs-xs);color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.prefs select{width:100%}
+@media (max-width:440px){.prefs{grid-template-columns:1fr 1fr}}
+.crit{display:flex;flex-direction:column;margin-top:12px;border-top:1px solid var(--line)}
+.crit-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.crit-row:last-child{border-bottom:0}
+.crit-row b{font-size:var(--fs-md);font-weight:600}
+.crit-row small{display:block;color:var(--muted);font-size:var(--fs-xs)}
+.w{display:flex;background:var(--chip);border-radius:999px;padding:2px}
+.w button{border:0;background:none;padding:5px 9px;border-radius:999px;font-size:var(--fs-xs);color:var(--muted);cursor:pointer;white-space:nowrap}
+.w button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.rec{display:flex;flex-direction:column;gap:12px}
+.rec-top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:start}
+.rec-rank{font-family:var(--font-display);font-size:34px;line-height:1;color:var(--accent);min-width:28px;text-align:center}
+.rec-name{margin:0;font-size:var(--fs-lg);font-weight:700}
+.match{text-align:right}
+.match b{display:block;font-size:var(--fs-2xl);font-weight:700;line-height:1;font-variant-numeric:tabular-nums;color:var(--ink)}
+.match small{font-size:var(--fs-xs);color:var(--muted)}
+.rec.first{border-color:var(--accent);border-width:1.5px}
+.points{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:440px){.points{grid-template-columns:1fr}}
+.points ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-size:var(--fs-sm)}
+.points li{display:flex;gap:6px;align-items:baseline}
+.points .pro li::before{content:"";flex:0 0 6px;height:6px;border-radius:50%;background:var(--accent);transform:translateY(-2px)}
+.points .con li::before{content:"";flex:0 0 6px;height:6px;border-radius:50%;background:var(--warn);transform:translateY(-2px)}
+.points h4{margin:0 0 4px;font-size:var(--fs-xs);color:var(--faint);font-weight:600;letter-spacing:.04em}
+.breakdown{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:5px 10px;align-items:center;font-size:var(--fs-xs);color:var(--muted)}
+.breakdown .bb{height:6px;background:var(--chip);border-radius:3px;overflow:hidden}
+.breakdown .bb i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.breakdown .bb i.lo{background:var(--warn)}
+.breakdown span:last-child{font-variant-numeric:tabular-nums}
+details.bd summary{cursor:pointer;font-size:var(--fs-sm);color:var(--muted)}
+details.bd[open] summary{margin-bottom:8px}
+
+footer{color:var(--muted);font-size:var(--fs-xs);line-height:1.7;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:14px;margin-top:10px}
+footer p{margin:0;max-width:70ch}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
-<body>
+<body data-tab="rec">
 <div class="wrap">
-  <h1>🌱 하윤이 유치원 찾기</h1>
-  <p class="sub">🏠 <span id="homeLabel">동천센트럴자이</span> 반경 <span id="radiusLabel">5</span>km · <span id="kidAge">2023.4.15생</span></p>
+  <header class="masthead">
+    <div class="title-row">
+      <h1><b>하윤</b>이 유치원 찾기</h1>
+    </div>
+    <p class="sub"><span>우리 집 <span id="homeLabel">동천센트럴자이</span></span><span class="dot"><span id="kidAge">2023.4.15생</span></span><span class="dot">반경 <span id="radiusLabel">5</span>km</span></p>
+    <nav class="tabs" role="tablist" aria-label="보기">
+      <button role="tab" data-tab="rec" aria-selected="true">맞춤 추천</button>
+      <button role="tab" data-tab="gen" aria-selected="false">유치원</button>
+      <button role="tab" data-tab="eng" aria-selected="false">영어유치원</button>
+      <button role="tab" data-tab="cmp" aria-selected="false">비교 <span class="count" id="cmpCount"></span></button>
+    </nav>
+  </header>
 
-  <div class="card kid">
-    <div><small>하윤이 지금 (<span id="schoolYear">2026</span>학년도)</small><b>만 <span id="classNow">3</span>세반</b><small>2023년생 반 기준</small></div>
-    <div><small>내년 3월 입학 (<span id="schoolYearNext">2027</span>학년도)</small><b>만 <span id="classNext">4</span>세반</b><small>처음학교로 모집은 보통 11월경</small></div>
+  <div class="kid">
+    <div><small>지금 · <span id="schoolYear">2026</span>학년도</small><b>만 <span id="classNow">3</span>세반</b></div>
+    <div><small>내년 3월 입학 · <span id="schoolYearNext">2027</span>학년도</small><b>만 <span id="classNext">4</span>세반</b></div>
   </div>
 
-  <div class="tabs" role="tablist">
-    <button role="tab" data-tab="gen" aria-selected="true">🏫 유치원</button>
-    <button role="tab" data-tab="eng" aria-selected="false">🔤 영어유치원</button>
-    <button role="tab" data-tab="cmp" aria-selected="false">⚖️ 비교 <span id="cmpCount"></span></button>
-  </div>
-
-  <details class="card setup gen-only" id="setup">
+  <details class="panel setup gen-only" id="setup">
     <summary>데이터 불러오기 설정</summary>
     <div id="setupBody"></div>
   </details>
 
   <div id="msg"></div>
 
-  <div class="seg gen-only" role="group" aria-label="대상 반">
+  <div class="seg cls-seg" role="group" aria-label="대상 반">
     <button data-mode="next" aria-pressed="true">2027년 입학 · 만4세반</button>
     <button data-mode="now" aria-pressed="false">지금 · 만3세반</button>
   </div>
+
+  <!-- 맞춤 추천 -->
+  <section class="rec-only" style="display:flex;flex-direction:column;gap:14px">
+    <div class="rec-intro">
+      <p class="section-label">하윤이에게 맞는 순서</p>
+      <h2 id="recHeadline">조건을 정하면 바로 순위가 바뀌어요</h2>
+      <p>통학, 학비, 등·하원 시간, 입학 가능성, 시설과 안전을 공개 데이터로 점수 매겨 합쳤어요. 기준마다 중요도를 고르면 다시 계산해요.</p>
+    </div>
+    <div class="chips" id="recPresets" aria-label="추천 방식"></div>
+    <details class="panel" id="recPanel">
+      <summary>추천 기준 <small id="recSummary"></small></summary>
+      <div class="prefs">
+        <label for="wantIn">희망 등원
+          <select id="wantIn"><option value="480">8:00</option><option value="510">8:30</option><option value="540" selected>9:00</option></select></label>
+        <label for="wantOut">희망 하원
+          <select id="wantOut"><option value="840">14:00</option><option value="960">16:00</option><option value="1020" selected>17:00</option><option value="1080">18:00</option><option value="1140">19:00</option></select></label>
+        <label for="recRange">후보 범위
+          <select id="recRange"><option value="10">차로 10분</option><option value="15">차로 15분</option><option value="20" selected>차로 20분</option><option value="0">전체</option></select></label>
+      </div>
+      <div class="crit" id="recCriteria"></div>
+    </details>
+    <div class="list" id="recList"></div>
+  </section>
 
   <div class="chips list-only" id="areaChips">
     <button class="chip" data-area="2" aria-pressed="false">2km</button>
@@ -158,66 +278,68 @@ footer{color:var(--muted);font-size:12px;margin-top:24px}
     <button class="chip" data-area="7" aria-pressed="false">7km</button>
     <button class="chip" data-area="all" aria-pressed="false">전체</button>
     <button class="chip" data-area="fav" aria-pressed="false">★ 관심</button>
-    <button class="chip" id="useGeo" type="button">📍 내 위치 기준</button>
+    <button class="chip" id="useGeo" type="button">내 위치 기준</button>
   </div>
-  <div class="row list-only" style="margin-bottom:12px">
-    <input type="search" id="q" placeholder="이름·주소 검색" style="flex:1 1 200px">
-    <select id="region" style="width:auto">
+  <div class="row list-only search-row">
+    <input type="search" id="q" placeholder="이름이나 주소로 찾기">
+    <select id="region">
       <option value="">구 전체</option>
       <option>수지구</option><option>분당구</option><option>기흥구</option>
     </select>
-    <select id="type" class="gen-only" style="width:auto">
+    <select id="type" class="gen-only">
       <option value="">설립 전체</option>
       <option value="pub">국공립</option>
       <option value="pri">사립</option>
     </select>
   </div>
-  <details class="card list-only filters" id="filters" open>
-    <summary>🔎 필터 <small id="filterSummary"></small></summary>
-    <div class="fgrid">
-      <label>이동 수단
-        <select id="travelMode"><option value="car">🚗 차량</option><option value="walk">🚶 도보</option></select></label>
-      <label>최대 통학시간
-        <select id="maxMin"><option value="">제한 없음</option><option value="5">5분</option><option value="10">10분</option><option value="15" selected>15분</option><option value="20">20분</option><option value="30">30분</option><option value="45">45분</option></select></label>
-      <label class="gen-only">표시 개수
-        <select id="limit"><option value="10">10곳</option><option value="20" selected>20곳</option><option value="0">전체</option></select></label>
+  <details class="panel list-only" id="filters" open>
+    <summary>필터 <small id="filterSummary"></small></summary>
+    <div class="filters">
+      <div class="fgrid">
+        <label for="travelMode">이동 수단
+          <select id="travelMode"><option value="car">차량</option><option value="walk">도보</option></select></label>
+        <label for="maxMin">최대 통학시간
+          <select id="maxMin"><option value="">제한 없음</option><option value="5">5분</option><option value="10">10분</option><option value="15" selected>15분</option><option value="20">20분</option><option value="30">30분</option><option value="45">45분</option></select></label>
+        <label for="limit" class="gen-only">표시 개수
+          <select id="limit"><option value="10">10곳</option><option value="20" selected>20곳</option><option value="0">전체</option></select></label>
+      </div>
+      <div class="row">
+        <label class="tg gen-only"><input type="checkbox" id="onlyOpen"> 여석 있음</label>
+        <label class="tg gen-only"><input type="checkbox" id="onlyBus"> 통학차량</label>
+        <label class="tg gen-only"><input type="checkbox" id="onlyAfter"> 방과후</label>
+        <label class="tg gen-only"><input type="checkbox" id="onlyCctv"> CCTV</label>
+      </div>
+      <p class="note">통학시간은 오픈스트리트맵 도로 기준 예상치예요. 실시간 교통은 반영되지 않으니 카드의 길찾기로 네이버 지도에서 확인하세요.</p>
     </div>
-    <div class="row" style="margin-top:8px">
-      <label class="tg gen-only"><input type="checkbox" id="onlyOpen"> 여석 있는 곳만</label>
-      <label class="tg gen-only"><input type="checkbox" id="onlyBus"> 통학차량 운영</label>
-      <label class="tg gen-only"><input type="checkbox" id="onlyAfter"> 방과후 운영</label>
-      <label class="tg gen-only"><input type="checkbox" id="onlyCctv"> CCTV 설치</label>
-    </div>
-    <p class="note" style="margin:6px 0 0">통학시간은 오픈스트리트맵 도로 기준 예상치예요(실시간 교통 미반영). 실제 경로는 카드의 <b>🧭 길찾기</b>로 네이버 지도에서 확인하세요.</p>
   </details>
 
-  <div class="cmp-only">
-    <p class="note">목록에서 <b>＋비교</b>를 눌러 최대 4곳까지 담아요. 원비·설명회 날짜·메모는 직접 적어 두면 이 휴대폰에 저장돼요(유치원알리미 API에 원비·설명회 정보가 없어서예요).</p>
+  <div class="cmp-only" style="display:flex;flex-direction:column;gap:12px">
+    <p class="note">목록이나 추천에서 <b>＋비교</b>를 눌러 최대 4곳까지 담아요. 원비·설명회 날짜·메모는 직접 적으면 이 휴대폰에 저장돼요. 공개 API에는 원비와 설명회 정보가 없어요.</p>
     <div id="cmpBody"></div>
   </div>
 
-  <div class="eng-only">
-    <div class="card note">영어유치원은 법적으로 <b>유아 대상 영어학원</b>이라 유치원알리미에는 없어요. 경기도교육청 학원 등록 정보(나이스)에서 <b>유아 과정이 등록됐거나 이름에 유아·키즈 등이 들어간 영어학원</b>을 골라 보여 줘요. 누리과정 지원금 대상이 아니고, 수강료는 교육청에 신고된 금액이에요.</div>
+  <div class="eng-only" style="display:flex;flex-direction:column;gap:12px">
+    <p class="note">영어유치원은 법적으로 <b>유아 대상 영어학원</b>이라 유치원알리미에 없어요. 경기도교육청 학원 등록 정보(나이스)에서 유아 과정이 등록됐거나 이름에 유아·키즈 같은 말이 들어간 영어학원을 골랐어요. 누리과정 지원 대상이 아니고, 수강료는 교육청에 신고된 금액이에요.</p>
     <div class="stats" id="engStats"></div>
-    <div class="row" style="margin-bottom:8px">
-      <select id="engSort" style="width:auto">
+    <div class="row">
+      <select id="engSort">
         <option value="time">통학시간 순</option>
         <option value="near">가까운 순</option>
         <option value="name">이름순</option>
       </select>
       <label class="tg"><input type="checkbox" id="engSure"> 유아 과정 등록된 곳만</label>
     </div>
-    <div id="engList"></div>
+    <div class="list" id="engList"></div>
   </div>
 
   <div class="stats gen-only" id="stats"></div>
 
   <h2 id="topTitle" class="gen-only">추천 TOP 5 <small id="topSub"></small></h2>
-  <div id="top" class="gen-only"></div>
+  <div id="top" class="list gen-only"></div>
 
   <h2 class="gen-only">전체 목록 <small id="listSub"></small></h2>
-  <div class="row gen-only" style="margin-bottom:8px">
-    <select id="sort" style="width:auto">
+  <div class="row gen-only">
+    <select id="sort">
       <option value="score">추천순</option>
       <option value="vac">여석 많은 순</option>
       <option value="time">통학시간 순</option>
@@ -225,13 +347,12 @@ footer{color:var(--muted);font-size:12px;margin-top:24px}
       <option value="name">이름순</option>
     </select>
   </div>
-  <div id="list" class="gen-only"></div>
+  <div id="list" class="list gen-only"></div>
 
   <footer>
-    영어유치원 데이터: 나이스 교육정보 개방 포털 학원교습소정보(경기도교육청).
-    데이터: 유치원알리미(교육부) Open API 기본현황(basicInfo2)·통학차량·방과후 과정·급식 현황. 정원·현원은 공시 기준일 값이라 실제 모집 인원과 다를 수 있어요.
-    “예상 여석(2027)”은 <b>만4세 정원 − 현재 만3세 현원(그대로 진급 예정)</b>으로 계산한 추정치예요. 정확한 모집 인원은 처음학교로·각 유치원 모집요강에서 꼭 확인하세요.
-    거리는 우리 집(동천센트럴자이)에서의 직선거리예요. Apps Script로 실행하면 주소를 좌표로 바꿔 정확히 계산하고, 좌표가 없으면 동 중심 기준으로 “약 ○km”로 표시해요.
+    <p>유치원 데이터: 유치원알리미(교육부) Open API의 기본현황, 통학차량, 방과후, 급식, 건물, 교실면적, 교직원, 수업일수, 안전, 환경위생 공시. 영어유치원: 나이스 교육정보 개방 포털 학원교습소정보(경기도교육청).</p>
+    <p>예상 여석은 내년 반 정원에서 지금 한 살 아래 반 현원(그대로 진급할 아이들)을 뺀 추정치예요. 정확한 모집 인원과 원비, 설명회 일정은 처음학교로와 각 유치원에서 확인하세요.</p>
+    <p>거리는 우리 집에서의 직선거리, 통학시간은 오픈스트리트맵 경로 기준 예상치예요.</p>
   </footer>
 </div>
 
@@ -293,7 +414,8 @@ const store = {
 const state = {
   mode: "next", area: "5", region: "",
   home: DONGCHEON, cmp: store.get("kg.cmp", []), notes: store.get("kg.notes", {}), q: "", type: "", onlyOpen: false, onlyBus: false, sort: "score",
-  tab: "gen", travelMode: "car", maxMin: "15", limit: "20", onlyAfter: false, onlyCctv: false, eng: null, engSort: "near", engSure: false,
+  tab: "rec", travelMode: "car", maxMin: "15", limit: "20", onlyAfter: false, onlyCctv: false, eng: null, engSort: "time", engSure: false,
+  rec: Object.assign({ preset: "balance", weights: null, wantIn: "540", wantOut: "1020", range: "20" }, store.get("kg.rec", {})),
   favs: new Set(store.get("kg.favs", [])),
   data: [], updated: null
 };
@@ -352,7 +474,7 @@ function routeLink(k){
   if (!k.pos) return "";
   const h = state.home, mode = state.travelMode === "walk" ? "walk" : "car";
   const url = `nmap://route/${mode}?slat=${h.lat}&slng=${h.lng}&sname=${encodeURIComponent(h.label)}&dlat=${k.pos.lat}&dlng=${k.pos.lng}&dname=${encodeURIComponent(k.name)}&appname=hayoon.kindergarten`;
-  return `<a href="${url}">🧭 길찾기</a>`;
+  return `<a href="${url}">길찾기</a>`;
 }
 function distText(k){
   const d = dist(k);
@@ -549,7 +671,7 @@ function cardHTML(k, rank){
     <div class="more">현원 전체: 만3세 ${fmt(k.cur[3])} · 만4세 ${fmt(k.cur[4])} · 만5세 ${fmt(k.cur[5])}${k.hours ? " · 운영 " + esc(k.hours) : ""}</div>
     ${extraHTML(k)}
     <div class="links">
-      ${k.tel ? `<a href="tel:${esc(k.tel.replace(/[^0-9-]/g, ""))}">📞 ${esc(k.tel)}</a>` : ""}
+      ${k.tel ? `<a href="tel:${esc(k.tel.replace(/[^0-9-]/g, ""))}">${esc(k.tel)}</a>` : ""}
       ${href ? `<a href="${esc(href)}" target="_blank" rel="noopener">홈페이지</a>` : ""}
       ${routeLink(k)}
       <a href="https://map.naver.com/p/search/${encodeURIComponent(k.name + " " + k.area)}" target="_blank" rel="noopener">지도</a>
@@ -586,7 +708,7 @@ function engCard(k){
     ${k.courses.length ? `<div class="more">교습과정: ${esc(k.courses.join(", "))}</div>` : ""}
     ${k.fees.length ? `<div class="fee">💰 신고 수강료\n${esc(k.fees.join("\n"))}</div>` : ""}
     <div class="links">
-      ${k.tel ? `<a href="tel:${esc(k.tel.replace(/[^0-9-]/g, ""))}">📞 ${esc(k.tel)}</a>` : ""}
+      ${k.tel ? `<a href="tel:${esc(k.tel.replace(/[^0-9-]/g, ""))}">${esc(k.tel)}</a>` : ""}
       ${routeLink(k)}
       <a href="https://map.naver.com/p/search/${encodeURIComponent(k.name + " " + k.area)}" target="_blank" rel="noopener">지도</a>
       <a href="https://search.naver.com/search.naver?query=${encodeURIComponent(k.name + " 영어유치원 후기")}" target="_blank" rel="noopener">후기 검색</a>
@@ -640,7 +762,7 @@ function dlHTML(rows){
 }
 function renderCmp(){
   const items = state.cmp.map(findById).filter(Boolean);
-  $("#cmpCount").textContent = state.cmp.length ? `(${state.cmp.length})` : "";
+  $("#cmpCount").textContent = state.cmp.length || "";
   if (!items.length){
     $("#cmpBody").innerHTML = `<div class="card empty">아직 담은 곳이 없어요.<br>유치원·영어유치원 목록에서 <b>＋비교</b>를 눌러 주세요.</div>`;
     return;
@@ -678,7 +800,7 @@ function renderCmp(){
         <a target="_blank" rel="noopener" href="https://search.naver.com/search.naver?query=${encodeURIComponent(k.name + " 원비")}">원비 검색</a>
         <a target="_blank" rel="noopener" href="https://search.naver.com/search.naver?query=${encodeURIComponent(k.name + " 입학설명회 " + (AGE.sy + 1))}">설명회 검색</a>
         ${isEng(k) ? "" : `<a target="_blank" rel="noopener" href="https://www.go-firstschool.go.kr">처음학교로</a>`}
-        ${k.tel ? `<a href="tel:${esc(k.tel.replace(/[^0-9-]/g, ""))}">📞 ${esc(k.tel)}</a>` : ""}</div>`],
+        ${k.tel ? `<a href="tel:${esc(k.tel.replace(/[^0-9-]/g, ""))}">${esc(k.tel)}</a>` : ""}</div>`],
     ["sec", "생활"],
     ["통학차량", k => isEng(k) ? "–" : k.bus ? (k.bus.on ? "운영" + (k.bus.cars ? ` ${k.bus.cars}대` : "") : "미운영") : "–"],
     ["방과후", k => isEng(k) ? "–" : dlHTML(extraRows(k.after))],
@@ -702,6 +824,172 @@ function renderCmp(){
   </table></div>`;
 }
 
+/* ---------- 맞춤 추천 ---------- */
+// 각 기준은 0~1 점수(s)와 근거 문장(text)을 돌려줌. 데이터가 없으면 s=null
+const clamp = v => Math.max(0, Math.min(1, v));
+const toMin = (h, m) => +h * 60 + +m;
+const fmtMin = m => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`;
+function hoursOf(k){
+  const spans = [k.hours, k.after && hhmm(k.after.oper_time || "")].filter(Boolean)
+    .map(t => /(\d{1,2}):(\d{2})\s*~\s*(\d{1,2}):(\d{2})/.exec(t)).filter(Boolean)
+    .map(m => [toMin(m[1], m[2]), toMin(m[3], m[4])]);
+  if (!spans.length) return null;
+  return { open: Math.min(...spans.map(x => x[0])), close: Math.max(...spans.map(x => x[1])) };
+}
+const CRITERIA = [
+  { id: "commute", label: "통학", desc: "집에서 차로 걸리는 시간", fn: k => {
+      const t = travel(k, "car") != null ? travel(k, "car") : dist(k) != null ? dist(k) * 2.5 : null;
+      if (t == null) return { s: null };
+      return { s: clamp(1 - (t - 5) / 20), text: `차로 ${mins(t)}${travel(k, "car") == null ? "(추정)" : ""}, ${distText(k)}` };
+    } },
+  { id: "cost", label: "학비 부담", desc: "국공립이거나 직접 적은 원비가 낮을수록 유리", fn: k => {
+      const fee = num((state.notes[k.id] || {}).fee);
+      if (fee) return { s: clamp(1 - (fee - 100000) / 700000), text: `원비 월 ${Math.round(fee / 10000)}만원(직접 입력)` };
+      if (k.isPublic) return { s: 1, text: "국공립이라 학비 부담이 적어요" };
+      if (/법인/.test(k.establish)) return { s: .4, text: "사립(법인)이라 원비 확인이 필요해요" };
+      return { s: .3, text: "사립이라 원비 확인이 필요해요" };
+    } },
+  { id: "pickup", label: "하원 시간", desc: "희망 하원 시각까지 맡길 수 있는지", fn: k => {
+      const h = hoursOf(k), want = +state.rec.wantOut;
+      if (!h) return { s: null };
+      return { s: h.close >= want ? 1 : clamp(1 - (want - h.close) / 180), text: `${fmtMin(h.close)}까지 운영${h.close >= want ? "" : `(희망 ${fmtMin(want)})`}` };
+    } },
+  { id: "dropoff", label: "등원 시간", desc: "희망 등원 시각에 문을 여는지", fn: k => {
+      const h = hoursOf(k), want = +state.rec.wantIn;
+      if (!h) return { s: null };
+      return { s: h.open <= want ? 1 : clamp(1 - (h.open - want) / 60), text: `${fmtMin(h.open)}부터 등원` };
+    } },
+  { id: "seat", label: "입학 가능성", desc: "내년 반 예상 여석", fn: k => {
+      const v = seat(k).vac;
+      if (!has(v)) return { s: null };
+      return v > 0 ? { s: .35 + .65 * clamp(v / 12), text: `예상 여석 ${v}명` } : { s: 0, text: "예상 여석이 없어 대기 가능성이 커요" };
+    } },
+  { id: "bus", label: "통학차량", desc: "차량 운행 여부", fn: k => k.bus
+      ? { s: k.bus.on ? 1 : 0, text: k.bus.on ? `통학차량 ${k.bus.cars || ""}대 운행`.replace(" 대", "") : "통학차량이 없어요" } : { s: null } },
+  { id: "space", label: "공간 여유", desc: "원아 1인당 교실 면적", fn: k => {
+      const a = perKid(k);
+      return a == null ? { s: null } : { s: clamp((a - 3) / 3.5), text: `원아 1인당 교실 ${a.toFixed(1)}㎡` };
+    } },
+  { id: "teacher", label: "교사 비율", desc: "교사 1명당 원아 수", fn: k => {
+      const r = kidsPerTeacher(k);
+      return r == null ? { s: null } : { s: clamp((16 - r) / 8), text: `교사 1명당 원아 ${r.toFixed(1)}명` };
+    } },
+  { id: "safety", label: "안전", desc: "CCTV, 놀이시설 검사, 공기질, 소방점검", fn: k => {
+      const sf = k.safety, hy = k.hygiene;
+      if (!sf && !hy) return { s: null };
+      const checks = [
+        sf && ["CCTV", sf.cctv_ist_yn === "Y"],
+        sf && sf.plyg_ck_rs_cd && ["놀이시설 적합", sf.plyg_ck_rs_cd === "적합"],
+        sf && ["소방점검", sf.fire_safe_yn === "Y"],
+        hy && hy.arql_chk_rslt_tp_cd && ["공기질 적합", hy.arql_chk_rslt_tp_cd === "적합"]
+      ].filter(Boolean);
+      const ok = checks.filter(c => c[1]);
+      const cctv = sf && sf.cctv_ist_yn === "Y" ? `CCTV ${num(sf.cctv_ist_total) || ""}대`.replace(" 대", "") : null;
+      return { s: checks.length ? ok.length / checks.length : null,
+        text: [cctv, ...ok.map(c => c[0]).filter(x => x !== "CCTV")].filter(Boolean).join(", ") || "안전 점검 기록이 부족해요" };
+    } },
+  { id: "newbuild", label: "건물 연식", desc: "최근 지은 건물일수록", fn: k => {
+      const y = k.building && num(k.building.archyy);
+      return !y ? { s: null } : { s: clamp((y - 1990) / 30), text: `${y}년 건물` };
+    } }
+];
+const W_LABELS = ["무관", "보통", "중요", "매우"];
+const PRESETS = {
+  balance: { label: "균형", w: { commute: 3, cost: 2, pickup: 2, dropoff: 1, seat: 3, bus: 1, space: 1, teacher: 1, safety: 2, newbuild: 0 } },
+  work:    { label: "맞벌이", w: { commute: 2, cost: 1, pickup: 3, dropoff: 3, seat: 3, bus: 2, space: 1, teacher: 1, safety: 2, newbuild: 0 }, wantIn: "480", wantOut: "1080" },
+  near:    { label: "가까운 곳", w: { commute: 3, cost: 1, pickup: 1, dropoff: 1, seat: 2, bus: 0, space: 0, teacher: 0, safety: 1, newbuild: 0 } },
+  budget:  { label: "학비 절약", w: { commute: 2, cost: 3, pickup: 1, dropoff: 1, seat: 2, bus: 1, space: 0, teacher: 1, safety: 1, newbuild: 0 } },
+  quality: { label: "시설·안전", w: { commute: 1, cost: 1, pickup: 1, dropoff: 0, seat: 2, bus: 0, space: 3, teacher: 3, safety: 3, newbuild: 2 } }
+};
+const weights = () => state.rec.weights || PRESETS[state.rec.preset || "balance"].w;
+function saveRec(){ store.set("kg.rec", state.rec); }
+
+function evaluate(k){
+  const w = weights();
+  let sum = 0, total = 0;
+  const parts = CRITERIA.map(c => {
+    const r = c.fn(k), wt = w[c.id] || 0;
+    if (wt) { sum += wt * (r.s == null ? .5 : r.s); total += wt; }
+    return { c, wt, s: r.s, text: r.text };
+  });
+  return { k, score: total ? Math.round(sum / total * 100) : 0, parts };
+}
+function recCandidates(){
+  const lim = parseFloat(state.rec.range);
+  return state.data.filter(k => {
+    if (!offersTarget(k)) return false;
+    if (isNaN(lim) || !lim) return true;
+    const t = travel(k, "car");
+    if (t != null) return t <= lim;
+    const d = dist(k);
+    return d != null && d * 2.5 <= lim;
+  });
+}
+function recCard(r, i){
+  const k = r.k;
+  const scored = r.parts.filter(p => p.wt && p.s != null);
+  const pros = scored.filter(p => p.s >= .7).sort((a, b) => b.wt * b.s - a.wt * a.s).slice(0, 3);
+  const cons = scored.filter(p => p.wt >= 2 && p.s <= .4).sort((a, b) => b.wt - a.wt).slice(0, 2);
+  const inCmp = state.cmp.includes(k.id);
+  return `<article class="card rec${i === 0 ? " first" : ""}">
+    <div class="rec-top">
+      <div class="rec-rank">${i + 1}</div>
+      <div style="min-width:0">
+        <p class="rec-name">${esc(k.name)}</p>
+        <div class="badges" style="margin-top:4px">${travelBadge(k)}<span class="badge ${k.isPublic ? "pub" : ""}">${esc(k.establish)}</span><span class="badge">${esc(k.area)}</span></div>
+      </div>
+      <div class="match"><b>${r.score}</b><small>점 / 100</small></div>
+    </div>
+    <div class="points">
+      <div class="pro"><h4>장점</h4><ul>${pros.length ? pros.map(p => `<li>${esc(p.text)}</li>`).join("") : "<li>두드러진 장점이 적어요</li>"}</ul></div>
+      ${cons.length ? `<div class="con"><h4>확인할 점</h4><ul>${cons.map(p => `<li>${esc(p.text)}</li>`).join("")}</ul></div>` : ""}
+    </div>
+    <details class="bd"><summary>기준별 점수 보기</summary>
+      <div class="breakdown">${r.parts.filter(p => p.wt).map(p => `<span>${p.c.label}</span>
+        <div class="bb"><i class="${p.s != null && p.s < .4 ? "lo" : ""}" style="width:${p.s == null ? 0 : Math.round(p.s * 100)}%"></i></div>
+        <span>${p.s == null ? "정보 없음" : Math.round(p.s * 100)}</span>`).join("")}</div>
+    </details>
+    <div class="links">
+      <button class="cmpbtn" data-cmp="${esc(k.id)}" aria-pressed="${inCmp}">${inCmp ? "✓ 비교에 담김" : "＋비교"}</button>
+      ${routeLink(k)}
+      ${k.tel ? `<a href="tel:${esc(k.tel.replace(/[^0-9-]/g, ""))}">${esc(k.tel)}</a>` : ""}
+      <a href="https://search.naver.com/search.naver?query=${encodeURIComponent(k.name + " 입학설명회")}" target="_blank" rel="noopener">설명회 검색</a>
+    </div>
+  </article>`;
+}
+function renderRecControls(){
+  const w = weights();
+  $("#recPresets").innerHTML = Object.entries(PRESETS).map(([id, p]) =>
+    `<button class="chip" data-preset="${id}" aria-pressed="${!state.rec.weights && state.rec.preset === id}">${p.label}</button>`).join("") +
+    (state.rec.weights ? `<button class="chip" aria-pressed="true" disabled>직접 설정</button>` : "");
+  $("#recCriteria").innerHTML = CRITERIA.map(c => `<div class="crit-row">
+      <div><b>${c.label}</b><small>${c.desc}</small></div>
+      <div class="w" role="group" aria-label="${c.label} 중요도">${W_LABELS.map((l, v) =>
+        `<button data-crit="${c.id}" data-w="${v}" aria-pressed="${(w[c.id] || 0) === v}">${l}</button>`).join("")}</div>
+    </div>`).join("");
+  const top = CRITERIA.filter(c => (w[c.id] || 0) === 3).map(c => c.label);
+  $("#recSummary").textContent = top.length ? "· 매우 중요: " + top.join(", ") : "";
+  $("#wantIn").value = state.rec.wantIn; $("#wantOut").value = state.rec.wantOut; $("#recRange").value = state.rec.range;
+}
+// 받침 있으면 "이", 없으면 "가"
+function josa(word){
+  const c = word.charCodeAt(word.length - 1) - 0xAC00;
+  return c >= 0 && c <= 11171 && c % 28 ? "이" : "가";
+}
+function renderRec(){
+  renderRecControls();
+  if (!state.data.length){
+    $("#recList").innerHTML = `<div class="card empty">유치원 데이터가 아직 없어요.</div>`;
+    return;
+  }
+  const ranked = recCandidates().map(evaluate).sort((a, b) => b.score - a.score).slice(0, 10);
+  $("#recHeadline").textContent = ranked.length
+    ? `${ranked[0].k.name}${josa(ranked[0].k.name)} 지금 기준으로 가장 잘 맞아요`
+    : "조건에 맞는 유치원이 없어요";
+  $("#recList").innerHTML = ranked.length ? ranked.map(recCard).join("")
+    : `<div class="card empty">후보 범위를 넓혀 보세요.</div>`;
+}
+
 function filterSummary(){
   const parts = [];
   if (state.maxMin) parts.push(`${state.travelMode === "walk" ? "도보" : "차량"} ${state.maxMin}분 이내`);
@@ -715,7 +1003,8 @@ function filterSummary(){
 
 function render(){
   filterSummary();
-  $("#cmpCount").textContent = state.cmp.length ? `(${state.cmp.length})` : "";
+  $("#cmpCount").textContent = state.cmp.length || "";
+  if (state.tab === "rec"){ renderRec(); return; }
   if (state.tab === "cmp"){ renderCmp(); return; }
   if (state.tab === "eng"){ renderEng(); return; }
   const list = filtered();
@@ -860,7 +1149,7 @@ $("#region").addEventListener("change", e => { state.region = e.target.value; re
 function setHome(h){
   state.home = h;
   $("#homeLabel").textContent = h.label;
-  $("#useGeo").textContent = h === DONGCHEON || h.label === DONGCHEON.label ? "📍 내 위치 기준" : "🏠 우리 집 기준으로";
+  $("#useGeo").textContent = h === DONGCHEON || h.label === DONGCHEON.label ? "내 위치 기준" : "우리 집 기준으로";
   render();
 }
 $("#useGeo").onclick = () => {
@@ -881,6 +1170,10 @@ document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
 });
 $("#engSort").addEventListener("change", e => { state.engSort = e.target.value; render(); });
 $("#engSure").addEventListener("change", e => { state.engSure = e.target.checked; render(); });
+["wantIn", "wantOut", "recRange"].forEach(id => $("#" + id).addEventListener("change", e => {
+  state.rec[{ wantIn: "wantIn", wantOut: "wantOut", recRange: "range" }[id]] = e.target.value;
+  saveRec(); render();
+}));
 $("#travelMode").addEventListener("change", e => { state.travelMode = e.target.value; render(); });
 $("#maxMin").addEventListener("change", e => { state.maxMin = e.target.value; render(); });
 $("#limit").addEventListener("change", e => { state.limit = e.target.value; render(); });
@@ -889,6 +1182,19 @@ $("#onlyCctv").addEventListener("change", e => { state.onlyCctv = e.target.check
 $("#onlyBus").addEventListener("change", e => { state.onlyBus = e.target.checked; render(); });
 $("#sort").addEventListener("change", e => { state.sort = e.target.value; render(); });
 document.addEventListener("click", e => {
+  const pr = e.target.closest("[data-preset]");
+  if (pr){
+    const p = PRESETS[pr.dataset.preset];
+    state.rec.preset = pr.dataset.preset; state.rec.weights = null;
+    if (p.wantIn) state.rec.wantIn = p.wantIn;
+    if (p.wantOut) state.rec.wantOut = p.wantOut;
+    saveRec(); render(); return;
+  }
+  const cw = e.target.closest("[data-crit]");
+  if (cw){
+    state.rec.weights = Object.assign({}, weights(), { [cw.dataset.crit]: +cw.dataset.w });
+    saveRec(); render(); return;
+  }
   const c = e.target.closest("[data-cmp]");
   if (c){
     const id = c.dataset.cmp, i = state.cmp.indexOf(id);
