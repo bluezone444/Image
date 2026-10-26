@@ -786,8 +786,27 @@ def main():
 
 
 if __name__ == "__main__":
+    only = [a.split("=", 1)[1] for a in sys.argv if a.startswith("--only=")]
+    if DEBUG and only and only[0] == "dump":  # probe.txt 둘째 줄부터 적힌 주소를 통째로 읽어 숫자 줄 출력
+        with open(os.path.join(HERE, "probe.txt"), encoding="utf-8") as f:
+            urls = [ln.strip() for ln in f.readlines()[1:] if ln.strip().startswith("http")]
+        for u in urls:
+            try:
+                html, final = fetch_text(u)
+            except Exception as e:  # noqa: BLE001
+                print(f"\n#### {u} 실패 {e}")
+                continue
+            text = page_text(html)
+            lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
+            keep = [ln for ln in lines if re.search(r"\d", ln) and re.search(r"원|만|시|분|세|비|등원|하원|지원|부담|교육비|수강료|교습", ln)][:160]
+            print(f"\n#### {u} → {final} ({len(text)}자)")
+            print(" | ".join(x[:150] for x in keep)[:9000])
+            if "e-childschoolinfo.moe.go.kr" in u:
+                links = sorted(set(re.findall(r'href="(/[^"]*(?:presch|kinder)[^"]*)"', html)))
+                print("  [링크]", links[:60])
+            time.sleep(1.0)
+        sys.exit(0)
     if DEBUG:  # 4곳 집중 수집만 빠르게 점검
-        only = [a.split("=", 1)[1] for a in sys.argv if a.startswith("--only=")]
         for t in DEEP_TARGETS:
             if only and t["key"] not in only[0].split(","):
                 continue
