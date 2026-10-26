@@ -277,7 +277,7 @@ footer p{margin:0;max-width:70ch}
         <label for="wantIn">희망 등원
           <select id="wantIn"><option value="480">8:00</option><option value="510">8:30</option><option value="540" selected>9:00</option></select></label>
         <label for="wantOut">희망 하원
-          <select id="wantOut"><option value="840">14:00</option><option value="960">16:00</option><option value="1020">17:00</option><option value="1080" selected>18:00</option><option value="1140">19:00</option></select></label>
+          <select id="wantOut"><option value="840">14:00 이후</option><option value="960" selected>16:00 이후</option><option value="1020">17:00 이후</option><option value="1080">18:00 이후</option><option value="1140">19:00 이후</option></select></label>
         <label for="recRange">후보 범위
           <select id="recRange"><option value="10">차로 10분</option><option value="15">차로 15분</option><option value="20" selected>차로 20분</option><option value="0">전체</option></select></label>
       </div>
@@ -436,7 +436,7 @@ const state = {
   mode: "next", area: "5", region: "",
   home: DONGCHEON, cmp: store.get("kg.cmp", []), notes: store.get("kg.notes", {}), q: "", type: "", onlyOpen: false, onlyBus: false, sort: "score",
   tab: "rec", travelMode: "car", maxMin: "15", limit: "20", onlyAfter: false, onlyCctv: false, hideNews: false, eng: null, engSort: "time", engSure: true, engOk: new Set(store.get("kg.engOk", [])),
-  rec: Object.assign({ preset: "balance", weights: null, wantIn: "540", wantOut: "1080", range: "20" }, store.get("kg.rec2", {})),
+  rec: Object.assign({ preset: "balance", weights: null, wantIn: "540", wantOut: "960", range: "20" }, store.get("kg.rec3", {})),
   favs: new Set(store.get("kg.favs", [])),
   data: [], updated: null
 };
@@ -1058,7 +1058,7 @@ const CRITERIA = [
 ];
 const W_LABELS = ["무관", "보통", "중요", "매우"];
 const PRESETS = {
-  balance: { label: "하윤이 기본", w: { commute: 2, cost: 1, pickup: 3, dropoff: 1, seat: 2, quality: 3, after: 3, bus: 1, space: 1, teacher: 1, safety: 2, newbuild: 0 }, wantOut: "1080" },
+  balance: { label: "하윤이 기본", w: { commute: 2, cost: 1, pickup: 3, dropoff: 1, seat: 2, quality: 3, after: 3, bus: 1, space: 1, teacher: 1, safety: 2, newbuild: 0 }, wantOut: "960" },
   work:    { label: "맞벌이", w: { commute: 2, cost: 1, pickup: 3, dropoff: 3, seat: 3, quality: 2, after: 3, bus: 2, space: 1, teacher: 1, safety: 2, newbuild: 0 }, wantIn: "480", wantOut: "1080" },
   edu:     { label: "교육 중심", w: { commute: 1, cost: 1, pickup: 2, dropoff: 0, seat: 2, quality: 3, after: 2, bus: 0, space: 2, teacher: 3, safety: 2, newbuild: 1 } },
   near:    { label: "가까운 곳", w: { commute: 3, cost: 1, pickup: 1, dropoff: 1, seat: 2, quality: 1, after: 1, bus: 0, space: 0, teacher: 0, safety: 1, newbuild: 0 } },
@@ -1066,7 +1066,7 @@ const PRESETS = {
   facility:{ label: "시설·안전", w: { commute: 1, cost: 1, pickup: 1, dropoff: 0, seat: 2, quality: 1, after: 1, bus: 0, space: 3, teacher: 2, safety: 3, newbuild: 2 } }
 };
 const weights = () => state.rec.weights || PRESETS[state.rec.preset || "balance"].w;
-function saveRec(){ store.set("kg.rec2", state.rec); }
+function saveRec(){ store.set("kg.rec3", state.rec); }
 
 function evaluate(k){
   const w = weights();
