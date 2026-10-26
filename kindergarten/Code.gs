@@ -8,7 +8,7 @@
  * 5) 배포 → 새 배포 → 유형: 웹 앱 → 액세스: 나만 → 배포 → 링크를 휴대폰에서 열기
  */
 
-const API_KEY = '여기에_유치원알리미_인증키';
+const API_KEY = '5164059cb25a4827b42a677c4af10a04';
 const API_BASE = 'https://e-childschoolinfo.moe.go.kr/api/notice/';
 
 // 기본현황에 더해 붙여 줄 정보 (유치원알리미 Open API 목록에서)

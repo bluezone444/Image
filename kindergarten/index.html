@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>동천동 유치원 찾기</title>
+<title>하윤이 유치원 찾기</title>
 <meta name="theme-color" content="#2f6f5e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -96,12 +96,12 @@ footer{color:var(--muted);font-size:12px;margin-top:24px}
 </head>
 <body>
 <div class="wrap">
-  <h1>우리 아이 유치원 찾기</h1>
-  <p class="sub"><span id="homeLabel">수지구 동천동</span> 반경 <span id="radiusLabel">5</span>km · 2023년 4월생 · 유치원 모집 현황</p>
+  <h1>🌱 하윤이 유치원 찾기</h1>
+  <p class="sub"><span id="homeLabel">수지구 동천동</span> 반경 <span id="radiusLabel">5</span>km · <span id="kidAge">2023.4.15생</span></p>
 
   <div class="card kid">
-    <div><small>지금 (2026학년도)</small><b>만 3세반</b><small>2023년생 = 2026년 만3세반</small></div>
-    <div><small>내년 3월 입학 (2027학년도)</small><b>만 4세반</b><small>처음학교로 모집은 보통 11월경</small></div>
+    <div><small>하윤이 지금 (<span id="schoolYear">2026</span>학년도)</small><b>만 <span id="classNow">3</span>세반</b><small>2023년생 반 기준</small></div>
+    <div><small>내년 3월 입학 (<span id="schoolYearNext">2027</span>학년도)</small><b>만 <span id="classNext">4</span>세반</b><small>처음학교로 모집은 보통 11월경</small></div>
   </div>
 
   <details class="card setup" id="setup">
@@ -176,6 +176,17 @@ const REGIONS = [
 const API = "https://e-childschoolinfo.moe.go.kr/api/notice/basicInfo2.do";
 
 // 기준점: 동천동 행정복지센터 부근 (📍 버튼으로 현재 위치로 바꿀 수 있어요)
+// 하윤이 정보
+const KID = { name: "하윤", birth: new Date(2023, 3, 15) };
+function kidInfo(today){
+  const b = KID.birth;
+  let months = (today.getFullYear() - b.getFullYear()) * 12 + today.getMonth() - b.getMonth();
+  if (today.getDate() < b.getDate()) months--;
+  // 학년도는 3월 시작, 반은 출생연도 기준 (학년도 − 출생연도)
+  const sy = today.getMonth() >= 2 ? today.getFullYear() : today.getFullYear() - 1;
+  return { years: Math.floor(months / 12), months: months % 12, total: months, sy,
+           now: sy - b.getFullYear(), next: sy + 1 - b.getFullYear() };
+}
 const DONGCHEON = { lat: 37.3369, lng: 127.0866, label: "수지구 동천동" };
 
 // 좌표가 없을 때 쓰는 동 중심 대략 좌표 → "약 ○km"로 표시
@@ -302,18 +313,21 @@ function extractList(json){
 /* ---------- 대상 반 기준 여석 계산 ---------- */
 // next: 2027 만4세반 → 만4세 정원 − 현재 만3세 현원(진급 예정)
 // now : 2026 만3세반 → 만3세 정원 − 만3세 현원
+// 하윤이 나이에 맞춰 반이 바뀜 (지금은 만3세반, 내년은 만4세반)
+const AGE = kidInfo(new Date());
 function seat(k){
+  const a = AGE.now, n = AGE.next;
   if (state.mode === "next"){
-    const cap = k.cap[4], stay = k.cur[3];
+    const cap = k.cap[n], stay = k.cur[a];
     return { cap, cur: stay, vac: has(cap) && has(stay) ? cap - stay : null,
-             capLabel: "만4세 정원", curLabel: "진급 예정(현 만3세)", cls: k.cls[4] };
+             capLabel: `만${n}세 정원`, curLabel: `진급 예정(현 만${a}세)`, cls: k.cls[n] };
   }
-  const cap = k.cap[3], cur = k.cur[3];
+  const cap = k.cap[a], cur = k.cur[a];
   return { cap, cur, vac: has(cap) && has(cur) ? cap - cur : null,
-           capLabel: "만3세 정원", curLabel: "만3세 현원", cls: k.cls[3] };
+           capLabel: `만${a}세 정원`, curLabel: `만${a}세 현원`, cls: k.cls[a] };
 }
 function offersTarget(k){
-  const age = state.mode === "next" ? 4 : 3;
+  const age = state.mode === "next" ? AGE.next : AGE.now;
   return (k.cap[age] || 0) > 0 || (k.cls[age] || 0) > 0 || (k.cap.mix || 0) > 0 || (k.cls.mix || 0) > 0;
 }
 function score(k){
@@ -423,7 +437,7 @@ function render(){
     return;
   }
   const top = sorted(list, "score").slice(0, 5);
-  $("#topSub").textContent = state.mode === "next" ? "가까움 + 2027 예상 여석 + 국공립" : "가까움 + 현재 여석 + 국공립";
+  $("#topSub").textContent = state.mode === "next" ? `가까움 + ${AGE.sy + 1} 예상 여석 + 국공립` : "가까움 + 현재 여석 + 국공립";
   $("#top").innerHTML = top.length ? top.map((k, i) => cardHTML(k, i + 1)).join("") : `<div class="card empty">조건에 맞는 유치원이 없어요.</div>`;
   const rest = sorted(list, state.sort);
   $("#listSub").textContent = `${rest.length}곳${state.updated ? " · " + state.updated + " 불러옴" : ""}`;
@@ -577,6 +591,18 @@ document.addEventListener("click", e => {
 setupUI();
 const cached = store.get("kg.cache", null);
 if (cached && cached.rows && cached.rows.length && "bus" in cached.rows[0]){ state.data = cached.rows; state.updated = cached.updated; }
+const kid = kidInfo(new Date());
+$("#kidAge").textContent = `2023.4.15생 · 만 ${kid.years}세 ${kid.months}개월`;
+$("#schoolYear").textContent = kid.sy; $("#schoolYearNext").textContent = kid.sy + 1;
+$("#classNow").textContent = kid.now; $("#classNext").textContent = kid.next;
+document.querySelector('.seg button[data-mode="next"]').textContent = `${kid.sy + 1}년 입학 · 만${kid.next}세반`;
+document.querySelector('.seg button[data-mode="now"]').textContent = `지금 · 만${kid.now}세반`;
+
+if (window.KG_DATA && Array.isArray(window.KG_DATA.items)){
+  state.data = window.KG_DATA.items.map(x => normalize(x, x.region));
+  state.updated = window.KG_DATA.updated;
+  $("#setup").hidden = true;
+}
 setHome(state.home);
 if (isGAS) loadFromGAS();
 else if (!state.data.length) $("#setup").open = true;
