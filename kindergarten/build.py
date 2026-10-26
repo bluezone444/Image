@@ -37,6 +37,32 @@ GU = re.compile(r"(수지구|분당구|기흥구)")
 YOUNG = re.compile(r"유아|유치|영유|킨더|kinder|키즈|kids|프리스쿨|pre-?school|토들러|toddler", re.I)
 ENGLISH = re.compile(r"영어|외국어|국제화|english|어학", re.I)
 
+# 커뮤니티 정보: 네이버 검색 API(블로그·카페글). developers.naver.com 에서 발급
+NAVER_ID = os.environ.get("NAVER_CLIENT_ID") or ""
+NAVER_SECRET = os.environ.get("NAVER_CLIENT_SECRET") or ""
+COMMUNITY_KM = 3.5  # 집에서 이 거리 안의 유치원만 수집 (호출량 절약)
+
+FACILITY_WORDS = {
+    "수영장": r"수영장|수영 ?수업|생존수영",
+    "실내 놀이터": r"실내 ?놀이터|실내 ?놀이실",
+    "체육관·강당": r"체육관|체육실|강당|유희실",
+    "텃밭": r"텃밭|농장|농작물",
+    "숲 체험": r"숲 ?체험|숲 ?놀이|숲 ?유치원|숲교실",
+    "생태 학습": r"생태",
+    "도서실": r"도서실|도서관|책 ?놀이터",
+    "요리실": r"요리실|쿠킹",
+    "과학실": r"과학실|과학 ?놀이",
+    "미술실": r"미술실|아틀리에",
+    "음악실": r"음악실",
+    "옥상·실외 놀이터": r"옥상 ?놀이터|실외 ?놀이터|바깥 ?놀이터|놀이터",
+    "모래·물놀이": r"모래 ?놀이|물놀이",
+    "원어민 영어": r"원어민",
+    "CCTV 실시간": r"실시간 ?(CCTV|cctv|영상)|키즈노트|키즈 ?캠",
+}
+PRO_WORDS = re.compile(r"좋아|좋았|좋은|만족|추천|친절|꼼꼼|깨끗|넓|최고|따뜻|세심|잘 ?챙|즐거워|행복")
+CON_WORDS = re.compile(r"아쉬|단점|불만|비싸|좁|멀어|힘들|별로|걱정|실망|불친절|대기")
+FEE_RE = re.compile(r"(원비|교육비|학비|수업료|부모 ?부담금|한 ?달|월)\D{0,12}?(\d{2,3})\s*만\s*원?")
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 GEO_CACHE = os.path.join(HERE, "geo_cache.json")
 
@@ -128,6 +154,75 @@ def english_kindergartens():
     out = list(academies.values())
     print(f"영어유치원 후보 {len(out)}곳")
     return out
+
+
+def strip_tags(t):
+    return re.sub(r"<[^>]+>", "", t or "").replace("&quot;", '"').replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
+
+
+def naver(kind, query, display=10):
+    qs = urllib.parse.urlencode({"query": query, "display": display, "sort": "sim"})
+    data = get_json(f"https://openapi.naver.com/v1/search/{kind}.json?{qs}",
+                    headers={"X-Naver-Client-Id": NAVER_ID, "X-Naver-Client-Secret": NAVER_SECRET}, tries=3)
+    time.sleep(0.15)
+    return data.get("items", [])
+
+
+def community(k):
+    """블로그·카페 검색 결과 요약: 원비 언급, 좋은 점/아쉬운 점 문장, 시설 키워드. 모든 항목에 출처 링크."""
+    name = str(k.get("kindername") or k.get("name") or "")
+    area = "수지" if "수지" in str(k.get("addr")) else "분당" if "분당" in str(k.get("addr")) else ""
+    posts, seen = [], set()
+    for kind, q in (("blog", f"{name} 원비"), ("blog", f"{name} {area} 후기"), ("cafearticle", f"{name} {area}")):
+        try:
+            for it in naver(kind, q):
+                link = it.get("link")
+                text = strip_tags(it.get("title")) + " · " + strip_tags(it.get("description"))
+                if link in seen or name.replace("유치원", "")[:3] not in text:
+                    continue  # 다른 유치원 글은 제외
+                seen.add(link)
+                posts.append({"text": text, "link": link, "date": it.get("postdate", ""), "kind": kind})
+        except Exception as e:  # noqa: BLE001
+            print(f"  네이버 검색 실패 {q}: {e}", file=sys.stderr)
+    fees, pros, cons, facs = [], [], [], {}
+    for p in posts:
+        for m in FEE_RE.finditer(p["text"]):
+            v = int(m.group(2))
+            if 10 <= v <= 300:  # 월 10만~300만원 범위만 원비로 봄
+                fees.append({"won": v * 10000, "text": p["text"][max(0, m.start() - 25):m.end() + 15], "link": p["link"], "date": p["date"]})
+        for sent in re.split(r"[.!?…\n]", p["text"]):
+            sent = sent.strip()
+            if len(sent) < 8:
+                continue
+            if CON_WORDS.search(sent) and len(cons) < 4:
+                cons.append({"text": sent[:90], "link": p["link"], "date": p["date"]})
+            elif PRO_WORDS.search(sent) and len(pros) < 4:
+                pros.append({"text": sent[:90], "link": p["link"], "date": p["date"]})
+        for label, pat in FACILITY_WORDS.items():
+            if re.search(pat, p["text"]) and label not in facs:
+                facs[label] = {"source": "커뮤니티", "link": p["link"]}
+    return {"posts": len(posts), "fees": fees[:6], "pros": pros, "cons": cons, "facilities": facs}
+
+
+def homepage_facilities(url):
+    """유치원 홈페이지 첫 화면에서 시설 키워드 찾기."""
+    if not url:
+        return {}
+    url = url.strip()
+    if not url.startswith("http"):
+        url = "http://" + url
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=15) as res:
+            raw = res.read(600_000)
+        text = raw.decode("utf-8", "ignore")
+        if "�" in text[:2000]:
+            text = raw.decode("euc-kr", "ignore")
+    except Exception:  # noqa: BLE001
+        return {}
+    text = re.sub(r"<script.*?</script>|<style.*?</style>", " ", text, flags=re.S)
+    text = strip_tags(text)
+    return {label: {"source": "홈페이지", "link": url} for label, pat in FACILITY_WORDS.items() if re.search(pat, text)}
 
 
 def km(a, b):
@@ -260,6 +355,20 @@ def main():
             found += 1
     print(f"좌표 확인 {found}/{len(items) + len(english or [])}")
     commute_times([k for k in items + (english or []) if "_lat" in k])
+
+    near = [k for k in items + (english or []) if k.get("_dist") is not None and k["_dist"] <= COMMUNITY_KM]
+    print(f"홈페이지·커뮤니티 수집 대상 {len(near)}곳")
+    for k in near:
+        facs = homepage_facilities(k.get("hpaddr"))
+        if NAVER_ID and NAVER_SECRET:
+            c = community(k)
+            for label, v in c["facilities"].items():
+                facs.setdefault(label, v)
+            k["_community"] = {kk: c[kk] for kk in ("posts", "fees", "pros", "cons")}
+        if facs:
+            k["_facilities"] = facs
+    if not (NAVER_ID and NAVER_SECRET):
+        print("NAVER_CLIENT_ID/SECRET 없음 → 커뮤니티 수집 건너뜀")
 
     with open(GEO_CACHE, "w", encoding="utf-8") as f:
         json.dump(cache, f, ensure_ascii=False, indent=0, sort_keys=True)

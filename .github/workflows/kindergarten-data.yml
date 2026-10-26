@@ -31,6 +31,8 @@ jobs:
         run: python kindergarten/build.py
         env:
           NEIS_KEY: ${{ secrets.NEIS_KEY }}  # 저장소 Settings → Secrets → Actions 에 등록
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
       - name: 결과 커밋
         run: |
           git config user.name "github-actions[bot]"

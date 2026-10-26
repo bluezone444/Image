@@ -157,6 +157,24 @@ details.extra dt{color:var(--muted)} details.extra dd{margin:0}
 .ex-t{font-weight:700;color:var(--ink);margin-top:8px;font-size:var(--fs-sm)}
 .fee{font-size:var(--fs-sm);background:var(--chip);border-radius:var(--r-sm);padding:8px 10px;white-space:pre-wrap;word-break:break-all}
 
+/* 시설·커뮤니티 */
+.badge.fac{background:var(--sun-soft);color:var(--ink);text-decoration:none;font-weight:500}
+.fac-text{margin:2px 0 6px;font-size:var(--fs-sm);line-height:1.6}
+.comm{display:flex;flex-direction:column;gap:6px;border-top:1px dashed var(--line);padding-top:10px}
+.comm h4{margin:4px 0 0;font-size:var(--fs-xs);color:var(--faint);font-weight:600}
+.comm ul,ul.mini{margin:0;padding-left:16px;font-size:var(--fs-sm);display:flex;flex-direction:column;gap:3px}
+.comm ul.con li::marker{color:var(--warn)} .comm ul.pro li::marker{color:var(--accent)}
+.comm a,ul.mini a{font-size:var(--fs-xs);color:var(--faint)}
+.comm-fee{margin:0;font-size:var(--fs-sm)} .comm-fee b{font-size:var(--fs-md)} .comm-fee small{color:var(--muted)}
+.picker{display:flex;flex-direction:column;gap:6px}
+.pick-list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;background:var(--surface)}
+.pick-list:empty{display:none}
+.pick{display:flex;justify-content:space-between;align-items:center;gap:10px;border:0;border-bottom:1px solid var(--line);background:var(--surface);padding:10px 12px;text-align:left;cursor:pointer}
+.pick:last-child{border-bottom:0}
+.pick b{display:block;font-size:var(--fs-md)} .pick small{color:var(--muted);font-size:var(--fs-xs)}
+.pick-act{font-size:var(--fs-xs);font-weight:700;color:var(--accent);white-space:nowrap}
+.pick[aria-pressed="true"] .pick-act{color:var(--muted)}
+
 /* 비교표 */
 .cmp-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface)}
 table.cmp{border-collapse:separate;border-spacing:0;font-size:var(--fs-sm);min-width:100%}
@@ -314,7 +332,12 @@ footer p{margin:0;max-width:70ch}
   </details>
 
   <div class="cmp-only" style="display:flex;flex-direction:column;gap:12px">
-    <p class="note">목록이나 추천에서 <b>＋비교</b>를 눌러 최대 4곳까지 담아요. 원비·설명회 날짜·메모는 직접 적으면 이 휴대폰에 저장돼요. 공개 API에는 원비와 설명회 정보가 없어요.</p>
+    <p class="note">유치원과 영어유치원을 섞어서 최대 4곳까지 담을 수 있어요. 아래에서 이름으로 찾거나 목록·추천의 <b>＋비교</b>를 누르세요. 원비·설명회 날짜·메모는 직접 적으면 이 휴대폰에 저장돼요. 공개 API에는 원비와 설명회 정보가 없어요.</p>
+    <div class="picker">
+      <label for="cmpSearch" class="section-label">유치원·영어유치원 이름으로 담기</label>
+      <input type="search" id="cmpSearch" placeholder="예: 동천, 키즈, 어학원" autocomplete="off">
+      <div id="cmpResults" class="pick-list"></div>
+    </div>
     <div id="cmpBody"></div>
   </div>
 
@@ -553,7 +576,8 @@ function normalize(raw, regionName){
     after: raw._after || null,
     meal: raw._meal || null,
     building: raw._building || null, classArea: raw._classArea || null, teachers: raw._teachers || null,
-    lesson: raw._lesson || null, safety: raw._safety || null, hygiene: raw._hygiene || null
+    lesson: raw._lesson || null, safety: raw._safety || null, hygiene: raw._hygiene || null,
+    facilities: raw._facilities || {}, community: raw._community || null
   };
 }
 function extractList(json){
@@ -669,21 +693,72 @@ function cardHTML(k, rank){
     ${rank ? `<p class="why">${esc(reasons(k))}</p>` : ""}
     ${mix}
     <div class="more">현원 전체: 만3세 ${fmt(k.cur[3])} · 만4세 ${fmt(k.cur[4])} · 만5세 ${fmt(k.cur[5])}${k.hours ? " · 운영 " + esc(k.hours) : ""}</div>
+    ${facilityChips(k)}
+    ${communityHTML(k)}
     ${extraHTML(k)}
     <div class="links">
       ${k.tel ? `<a href="tel:${esc(k.tel.replace(/[^0-9-]/g, ""))}">${esc(k.tel)}</a>` : ""}
       ${href ? `<a href="${esc(href)}" target="_blank" rel="noopener">홈페이지</a>` : ""}
       ${routeLink(k)}
+      ${roadviewLink(k)}
       <a href="https://map.naver.com/p/search/${encodeURIComponent(k.name + " " + k.area)}" target="_blank" rel="noopener">지도</a>
     </div>
+  </div>`;
+}
+
+/* ---------- 시설·커뮤니티·로드뷰 ---------- */
+function roadviewLink(k){
+  return k.pos ? `<a href="https://map.kakao.com/link/roadview/${k.pos.lat},${k.pos.lng}" target="_blank" rel="noopener">로드뷰</a>` : "";
+}
+const area = v => num1(String(v || "").replace(/[^0-9.]/g, ""));
+const comma = n => Math.round(n).toLocaleString("ko-KR");
+// 공시 데이터로 시설을 문장으로 설명
+function facilityText(k){
+  const b = k.building || {}, c = k.classArea || {}, out = [];
+  const y = num(b.archyy);
+  if (y || b.floorcnt) out.push(`${y ? y + "년에 지은 " : ""}${b.floorcnt ? String(b.floorcnt).replace(/\s+/g, " ").replace("/ ", ", ") + " " : ""}건물${area(b.bldgprusarea) ? `(연면적 ${comma(area(b.bldgprusarea))}㎡)` : ""}`);
+  if (num(c.crcnt)) out.push(`교실 ${num(c.crcnt)}개${area(c.clsrarea) ? `, 교실 면적 합계 ${comma(area(c.clsrarea))}㎡` : ""}`);
+  const rooms = [["체육장", c.phgrindrarea], ["보건실", c.hlsparea], ["조리실·급식실", c.ktchmssparea], ["기타 공간", c.otsparea]]
+    .filter(([, v]) => area(v)).map(([n, v]) => `${n} ${comma(area(v))}㎡`);
+  if (rooms.length) out.push(rooms.join(", "));
+  const a = perKid(k);
+  if (a) out.push(`원아 1명당 교실 ${a.toFixed(1)}㎡`);
+  if (k.safety && k.safety.cctv_ist_yn === "Y") out.push(`CCTV 실내 ${num(k.safety.cctv_ist_in) || 0}대·실외 ${num(k.safety.cctv_ist_out) || 0}대`);
+  return out.join(". ") + (out.length ? "." : "");
+}
+function facilityChips(k){
+  const f = Object.entries(k.facilities || {});
+  return f.length ? `<div class="badges">${f.map(([label, v]) =>
+    `<a class="badge fac" href="${esc(v.link)}" target="_blank" rel="noopener" title="${esc(v.source)}에서 확인">${esc(label)}</a>`).join("")}</div>` : "";
+}
+const feeRange = k => {
+  const f = k.community && k.community.fees;
+  if (!f || !f.length) return null;
+  const v = f.map(x => x.won).sort((a, b) => a - b);
+  return { min: v[0], max: v[v.length - 1], mid: v[Math.floor(v.length / 2)], n: v.length };
+};
+const manwon = w => `${Math.round(w / 10000)}만원`;
+function communityHTML(k){
+  const c = k.community;
+  if (!c || !c.posts) return "";
+  const fr = feeRange(k);
+  const li = arr => arr.map(x => `<li>${esc(x.text)} <a href="${esc(x.link)}" target="_blank" rel="noopener">${x.date ? esc(x.date.slice(0, 4) + "." + x.date.slice(4, 6)) : "출처"}</a></li>`).join("");
+  return `<div class="comm">
+    <p class="section-label">블로그·카페 글 ${c.posts}건에서 모음 · 확인되지 않은 개인 의견이에요</p>
+    ${fr ? `<p class="comm-fee">원비 언급 <b>${fr.min === fr.max ? manwon(fr.min) : manwon(fr.min) + "~" + manwon(fr.max)}</b> <small>(${fr.n}건)</small></p>` : ""}
+    ${c.pros.length ? `<h4>좋다는 이야기</h4><ul class="pro">${li(c.pros)}</ul>` : ""}
+    ${c.cons.length ? `<h4>아쉽다는 이야기</h4><ul class="con">${li(c.cons)}</ul>` : ""}
   </div>`;
 }
 
 function extraHTML(k){
   const parts = [["방과후 과정", extraRows(k.after)], ["급식", extraRows(k.meal)], ["건물·교실", extraRows(k.building).concat(extraRows(k.classArea))],
     ["교직원", extraRows(k.teachers)], ["안전", extraRows(k.safety)], ["환경위생", extraRows(k.hygiene)]].filter(p => p[1].length);
-  if (!parts.length) return "";
-  return `<details class="more extra"><summary>상세 정보 (방과후·급식·시설·교사·안전)</summary>${parts.map(([t, rows]) =>
+  const ft = facilityText(k);
+  if (!parts.length && !ft) return "";
+  return `<details class="more extra"><summary>상세 정보 (시설·방과후·급식·교사·안전)</summary>
+    ${ft ? `<div class="ex-t">시설</div><p class="fac-text">${esc(ft)}</p>` : ""}
+    ${parts.map(([t, rows]) =>
     `<div class="ex-t">${t}</div><dl>${rows.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>`).join("")}</details>`;
 }
 
@@ -691,7 +766,8 @@ function normalizeEng(r){
   const addr = String(r.addr || "");
   return { id: "eng:" + r.id, name: String(r.name || ""), addr, area: r.region || areaOf(addr),
     pos: coordOf(r, addr), travel: { car: num1(r._car_min), walk: num1(r._walk_min) }, tel: String(r.tel || "").trim(), cap: num(r.cap),
-    courses: r.courses || [], fees: r.fees || [], sure: r.basis === "유아 과정 등록" };
+    courses: r.courses || [], fees: r.fees || [], sure: r.basis === "유아 과정 등록",
+    facilities: r._facilities || {}, community: r._community || null };
 }
 function engCard(k){
   const fav = state.favs.has(k.id);
@@ -706,10 +782,13 @@ function engCard(k){
     </div>
     <p class="addr">${esc(k.addr)}</p>
     ${k.courses.length ? `<div class="more">교습과정: ${esc(k.courses.join(", "))}</div>` : ""}
-    ${k.fees.length ? `<div class="fee">💰 신고 수강료\n${esc(k.fees.join("\n"))}</div>` : ""}
+    ${k.fees.length ? `<div class="fee">교육청 신고 수강료\n${esc(k.fees.join("\n"))}</div>` : ""}
+    ${facilityChips(k)}
+    ${communityHTML(k)}
     <div class="links">
       ${k.tel ? `<a href="tel:${esc(k.tel.replace(/[^0-9-]/g, ""))}">${esc(k.tel)}</a>` : ""}
       ${routeLink(k)}
+      ${roadviewLink(k)}
       <a href="https://map.naver.com/p/search/${encodeURIComponent(k.name + " " + k.area)}" target="_blank" rel="noopener">지도</a>
       <a href="https://search.naver.com/search.naver?query=${encodeURIComponent(k.name + " 영어유치원 후기")}" target="_blank" rel="noopener">후기 검색</a>
     </div>
@@ -743,7 +822,7 @@ function renderEng(){
 }
 
 /* ---------- 비교 ---------- */
-const totalKids = k => [k.cur[3], k.cur[4], k.cur[5], k.cur.mix].reduce((a, v) => a + (v || 0), 0);
+const totalKids = k => k.cur ? [k.cur[3], k.cur[4], k.cur[5], k.cur.mix].reduce((a, v) => a + (v || 0), 0) : 0;
 function perKid(k){
   const area = k.classArea && num1(String(k.classArea.clsrarea).replace(/[^0-9.]/g, "")), n = totalKids(k);
   return area && n ? area / n : null;
@@ -760,7 +839,21 @@ function findById(id){
 function dlHTML(rows){
   return rows.length ? `<dl>${rows.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>` : "–";
 }
+function renderPicker(){
+  const q = ($("#cmpSearch").value || "").trim();
+  if (!q){ $("#cmpResults").innerHTML = ""; return; }
+  const pool = state.data.concat(state.eng || []);
+  const dd = k => { const d = dist(k); return d == null ? 999 : d; };
+  const hits = pool.filter(k => k.name.includes(q) || k.addr.includes(q)).sort((a, b) => dd(a) - dd(b)).slice(0, 8);
+  $("#cmpResults").innerHTML = hits.length ? hits.map(k => {
+    const on = state.cmp.includes(k.id);
+    return `<button class="pick" data-cmp="${esc(k.id)}" aria-pressed="${on}">
+      <span><b>${esc(k.name)}</b><small>${k.id.startsWith("eng:") ? "영어유치원" : esc(k.establish || "유치원")} · ${distText(k)}</small></span>
+      <span class="pick-act">${on ? "담김" : "＋담기"}</span></button>`;
+  }).join("") : `<p class="note">찾는 곳이 없어요.</p>`;
+}
 function renderCmp(){
+  renderPicker();
   const items = state.cmp.map(findById).filter(Boolean);
   $("#cmpCount").textContent = state.cmp.length || "";
   if (!items.length){
@@ -778,6 +871,7 @@ function renderCmp(){
   const bestRatio = bestOf(k => isEng(k) ? null : kidsPerTeacher(k), Math.min);
   const mostVac = bestOf(k => isEng(k) ? null : seat(k).vac, Math.max);
   const cheapest = bestOf(k => won(note(k).fee), Math.min);
+  const cheapestComm = bestOf(k => { const fr = feeRange(k); return fr ? fr.mid : null; }, Math.min);
   const mark = (v, best, text) => v != null && v === best ? `<span class="best">${text} 👍</span>` : text;
   const s = k => isEng(k) ? null : seat(k);
   const rows = [
@@ -792,6 +886,10 @@ function renderCmp(){
     [AGE.sy + 1 + " 예상 여석", k => { if (isEng(k)) return "–"; const v = seat({ ...k }).vac; return mark(v, mostVac, fmt(v)); }],
     [`만${AGE.next}세 정원/학급`, k => isEng(k) ? (has(k.cap) ? `학원 정원 ${k.cap}` : "–") : `${fmt(k.cap[AGE.next])}명 / ${fmt(k.cls[AGE.next])}학급`],
     ["현원(3·4·5세)", k => isEng(k) ? "–" : `${fmt(k.cur[3])} · ${fmt(k.cur[4])} · ${fmt(k.cur[5])}`],
+    ["sec", "원비·커뮤니티"],
+    ["원비 언급", k => { const fr = feeRange(k); return fr ? mark(fr.mid, cheapestComm, `${fr.min === fr.max ? manwon(fr.min) : manwon(fr.min) + "~" + manwon(fr.max)}<div class="more">블로그·카페 ${fr.n}건</div>`) : (isEng(k) && k.fees.length ? `<div class="more">신고 수강료: ${esc(k.fees.join(" / "))}</div>` : "–"); }],
+    ["좋다는 이야기", k => k.community && k.community.pros.length ? `<ul class="mini">${k.community.pros.slice(0, 2).map(x => `<li>${esc(x.text)} <a href="${esc(x.link)}" target="_blank" rel="noopener">출처</a></li>`).join("")}</ul>` : "–"],
+    ["아쉽다는 이야기", k => k.community && k.community.cons.length ? `<ul class="mini">${k.community.cons.slice(0, 2).map(x => `<li>${esc(x.text)} <a href="${esc(x.link)}" target="_blank" rel="noopener">출처</a></li>`).join("")}</ul>` : "–"],
     ["sec", "비용·설명회 (직접 입력)"],
     ["월 부모부담(원)", k => `<input type="text" inputmode="numeric" data-note="${esc(k.id)}" data-f="fee" value="${esc(note(k).fee || "")}" placeholder="예: 450000">${cheapest != null && won(note(k).fee) === cheapest ? '<div class="best">가장 저렴 👍</div>' : ""}${isEng(k) && k.fees.length ? `<div class="more">신고 수강료: ${esc(k.fees.join(" / "))}</div>` : ""}`],
     ["입학설명회", k => `<input type="text" data-note="${esc(k.id)}" data-f="session" value="${esc(note(k).session || "")}" placeholder="예: 11/8(토) 10시">`],
@@ -800,6 +898,7 @@ function renderCmp(){
         <a target="_blank" rel="noopener" href="https://search.naver.com/search.naver?query=${encodeURIComponent(k.name + " 원비")}">원비 검색</a>
         <a target="_blank" rel="noopener" href="https://search.naver.com/search.naver?query=${encodeURIComponent(k.name + " 입학설명회 " + (AGE.sy + 1))}">설명회 검색</a>
         ${isEng(k) ? "" : `<a target="_blank" rel="noopener" href="https://www.go-firstschool.go.kr">처음학교로</a>`}
+        ${roadviewLink(k)}
         ${k.tel ? `<a href="tel:${esc(k.tel.replace(/[^0-9-]/g, ""))}">${esc(k.tel)}</a>` : ""}</div>`],
     ["sec", "생활"],
     ["통학차량", k => isEng(k) ? "–" : k.bus ? (k.bus.on ? "운영" + (k.bus.cars ? ` ${k.bus.cars}대` : "") : "미운영") : "–"],
@@ -807,6 +906,8 @@ function renderCmp(){
     ["급식", k => isEng(k) ? "–" : dlHTML(extraRows(k.meal))],
     ["수업일수", k => isEng(k) ? "–" : dlHTML(extraRows(k.lesson))],
     ["sec", "시설·교사·안전"],
+    ["시설 설명", k => isEng(k) ? "–" : esc(facilityText(k) || "–")],
+    ["시설 키워드", k => facilityChips(k) || "–"],
     ["원아 1인당 교실", k => { const a = perKid(k); return a == null ? "–" : mark(a, roomiest, a.toFixed(1) + "㎡"); }],
     ["교사 1인당 원아", k => { const r = kidsPerTeacher(k); return r == null ? "–" : mark(r, bestRatio, r.toFixed(1) + "명"); }],
     ["CCTV", k => isEng(k) || !k.safety ? "–" : k.safety.cctv_ist_yn === "Y" ? `${fmt(num(k.safety.cctv_ist_total))}대` : "없음"],
@@ -845,6 +946,8 @@ const CRITERIA = [
   { id: "cost", label: "학비 부담", desc: "국공립이거나 직접 적은 원비가 낮을수록 유리", fn: k => {
       const fee = num((state.notes[k.id] || {}).fee);
       if (fee) return { s: clamp(1 - (fee - 100000) / 700000), text: `원비 월 ${Math.round(fee / 10000)}만원(직접 입력)` };
+      const fr = feeRange(k);
+      if (fr) return { s: clamp(1 - (fr.mid - 100000) / 700000), text: `원비 월 ${manwon(fr.mid)} 안팎(블로그·카페 ${fr.n}건 언급)` };
       if (k.isPublic) return { s: 1, text: "국공립이라 학비 부담이 적어요" };
       if (/법인/.test(k.establish)) return { s: .4, text: "사립(법인)이라 원비 확인이 필요해요" };
       return { s: .3, text: "사립이라 원비 확인이 필요해요" };
@@ -1174,6 +1277,7 @@ $("#engSure").addEventListener("change", e => { state.engSure = e.target.checked
   state.rec[{ wantIn: "wantIn", wantOut: "wantOut", recRange: "range" }[id]] = e.target.value;
   saveRec(); render();
 }));
+$("#cmpSearch").addEventListener("input", renderPicker);
 $("#travelMode").addEventListener("change", e => { state.travelMode = e.target.value; render(); });
 $("#maxMin").addEventListener("change", e => { state.maxMin = e.target.value; render(); });
 $("#limit").addEventListener("change", e => { state.limit = e.target.value; render(); });
