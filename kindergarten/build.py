@@ -244,6 +244,40 @@ def incident_news(k):
     return out[:6]
 
 
+# 교육청 공식 공개: 경기도교육청 '감사결과공개' 게시판 (사립유치원 감사결과·위반 공표 실명 게시)
+GOE_BOARD = "https://www.goe.go.kr/goe/na/ntt/selectNttList.do?mi=10275&bbsId=1965"
+
+
+def goe_audit_posts(max_pages=40):
+    posts, seen = [], set()
+    for page in range(1, max_pages + 1):
+        try:
+            req = urllib.request.Request(f"{GOE_BOARD}&currPage={page}", headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=30) as res:
+                html = res.read().decode("utf-8", "ignore")
+        except Exception as e:  # noqa: BLE001
+            print(f"  교육청 게시판 {page}쪽 실패: {e}", file=sys.stderr)
+            break
+        found = 0
+        for m in re.finditer(r'<a[^>]+(?:href="([^"]*selectNttInfo[^"]*)"|data-id="(\d+)")[^>]*>(.*?)</a>', html, re.S):
+            title = re.sub(r"\s+", " ", strip_tags(m.group(3))).strip()
+            key = m.group(1) or m.group(2)
+            if not title or key in seen:
+                continue
+            seen.add(key)
+            href = m.group(1)
+            link = urllib.parse.urljoin(GOE_BOARD, href.replace("&amp;", "&")) if href else GOE_BOARD
+            posts.append({"title": title, "link": link})
+            found += 1
+        if page == 1:
+            print(f"  교육청 게시판 1쪽 예시: {[p['title'] for p in posts[:5]]}")
+        if not found:
+            break
+        time.sleep(0.5)
+    print(f"교육청 감사결과 게시글 {len(posts)}건 수집")
+    return posts
+
+
 def homepage_facilities(url):
     """유치원 홈페이지 첫 화면에서 시설 키워드 찾기."""
     if not url:
@@ -409,6 +443,19 @@ def main():
             k["_facilities"] = facs
     if not (NAVER_ID and NAVER_SECRET):
         print("NAVER_CLIENT_ID/SECRET 없음 → 커뮤니티 수집 건너뜀")
+
+    audits = goe_audit_posts()
+    if audits:
+        hit = 0
+        for k in items:  # 유치원 이름이 게시글 제목에 그대로 들어간 경우만
+            key = str(k.get("kindername") or "").replace(" ", "")
+            if len(key) < 4:
+                continue
+            rel = [a for a in audits if key in a["title"].replace(" ", "")]
+            if rel:
+                k["_audit"] = rel[:5]
+                hit += 1
+        print(f"교육청 감사·처분 공개 일치 {hit}곳")
 
     targets = [k for k in items + (english or []) if k.get("_dist") is not None and k["_dist"] <= NEWS_KM]
     flagged = 0
