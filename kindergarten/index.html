@@ -74,6 +74,16 @@ body[data-tab="eng"] .cls-seg,body[data-tab="cmp"] .cls-seg,body[data-tab="dabin
 .verdict{font-size:var(--fs-xs);color:var(--muted)}
 table.cmp td.win{background:var(--accent-soft)}
 table.cmp .src{display:block;font-size:11px;color:var(--faint);margin-top:2px}
+.deep{display:flex;flex-direction:column;gap:8px}
+.deep>summary{cursor:pointer;list-style:none;display:flex;flex-direction:column;gap:2px}
+.deep>summary::-webkit-details-marker{display:none}
+.deep>summary b{font-size:var(--fs-lg)} .deep>summary small{color:var(--muted);font-size:var(--fs-xs)}
+.deep h4{margin:10px 0 2px;font-size:var(--fs-xs);color:var(--faint);font-weight:600;letter-spacing:.04em}
+dl.facts{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;margin:0;font-size:var(--fs-sm)}
+dl.facts dt{color:var(--muted)} dl.facts dd{margin:0}
+.topic{font-size:var(--fs-sm)} .topic b{display:block;margin-top:6px}
+.topic ul{margin:2px 0 0;padding-left:16px;display:flex;flex-direction:column;gap:3px}
+.topic a,.deep ul.mini a+small{font-size:var(--fs-xs);color:var(--faint)}
 .qlist{margin:0;padding-left:18px;font-size:var(--fs-sm);display:flex;flex-direction:column;gap:3px}
 
 /* 아이 정보 */
@@ -265,7 +275,7 @@ footer p{margin:0;max-width:70ch}
       <button role="tab" data-tab="gen" aria-selected="false">유치원</button>
       <button role="tab" data-tab="eng" aria-selected="false">영어유치원</button>
       <button role="tab" data-tab="cmp" aria-selected="false">비교 <span class="count" id="cmpCount"></span></button>
-      <button role="tab" data-tab="dabin" aria-selected="false">안다빈</button>
+      <button role="tab" data-tab="dabin" aria-selected="false">엄마 PICK</button>
     </nav>
   </header>
 
@@ -312,18 +322,16 @@ footer p{margin:0;max-width:70ch}
   <!-- 안다빈 전용 비교 -->
   <section class="dabin-only" style="display:flex;flex-direction:column;gap:14px">
     <div class="dabin-head">
-      <p class="section-label">안다빈 전용 · 4곳 정밀 비교</p>
+      <p class="section-label">엄마(안다빈)가 고른 4곳 · 하윤이 기준 집중 분석</p>
       <h2>단지 어린이집, 폴리, 성민, 베스아이</h2>
-      <p>공시 데이터가 있는 항목은 숫자로, 없는 항목은 제도상 기준과 확인할 질문으로 정리했어요. 칸이 초록색이면 그 줄에서 가장 유리한 곳이에요.</p>
-      <div class="birth">
-        <label for="dabinBirth">다빈이 생년월일</label>
-        <input type="date" id="dabinBirth">
-        <b id="dabinAge"></b>
-      </div>
+      <p>공시 데이터, 각 원 홈페이지, 웹 검색으로 찾은 글, 뉴스를 모아 정리했어요. 비교표에서 초록 칸은 그 줄에서 가장 유리한 곳이에요. 웹에서 모은 문장은 출처 링크를 눌러 원문을 확인하세요.</p>
+      <p class="birth"><b id="dabinAge"></b></p>
     </div>
     <div class="place-grid" id="dabinCards"></div>
     <h2>항목별 비교 <small>표를 옆으로 밀어 보세요</small></h2>
     <div id="dabinTable"></div>
+    <h2>곳별 집중 분석 <small>공시·홈페이지·웹·뉴스</small></h2>
+    <div class="list" id="dabinDeep"></div>
     <h2>상담 때 물어볼 것</h2>
     <div class="place-grid" id="dabinQs"></div>
   </section>
@@ -1219,17 +1227,13 @@ function dabinPlaces(){
   const poly = (state.eng || []).find(k => k.name === "폴리어학원" && /풍덕천로 122/.test(k.addr)) ||
                (state.eng || []).find(k => /폴리/.test(k.name));
   return [
-    { ...DAYCARE },
-    poly ? { ...poly, type: "eng", note: "수지 폴리 2곳 중 풍덕천로 122(하나로프라자) 지점 기준. 문정로 13(중수프라자) 지점도 있어요." } : { id: "dabin:poly", type: "eng", name: "폴리어학원", area: "수지구", addr: "", news: [] },
-    gen("성민유치원") ? { ...gen("성민유치원"), type: "kg", alias: "성민프리미어", note: "'성민프리미어'라는 이름은 공시 목록에 없어 수지 성민유치원(홈페이지 sungmin-i.com) 기준으로 비교했어요." } : null,
-    gen("베스아이유치원") ? { ...gen("베스아이유치원"), type: "kg" } : null
+    { ...DAYCARE, deepKey: "daycare" },
+    poly ? { ...poly, type: "eng", deepKey: "poly", note: "수지 폴리 2곳 중 풍덕천로 122(하나로프라자) 지점 기준. 문정로 13(중수프라자) 지점도 있어요." } : { id: "dabin:poly", type: "eng", deepKey: "poly", name: "폴리어학원", area: "수지구", addr: "", news: [], fees: [] },
+    gen("성민유치원") ? { ...gen("성민유치원"), type: "kg", deepKey: "sungmin", alias: "성민프리미어", note: "'성민프리미어'라는 이름은 공시 목록에 없어 수지 성민유치원(홈페이지 sungmin-i.com) 기준으로 비교했어요." } : null,
+    gen("베스아이유치원") ? { ...gen("베스아이유치원"), type: "kg", deepKey: "besti" } : null
   ].filter(Boolean);
 }
-function dabinAge(){
-  const v = store.get("kg.dabinBirth", "");
-  const b = v ? new Date(v + "T00:00:00") : null;
-  return b && !isNaN(b) ? kidInfo(new Date(), b) : null;
-}
+function dabinAge(){ return AGE; }
 function seatFor(k, ag){
   const a = ag ? ag.now : AGE.now, n = ag ? ag.next : AGE.next;
   const cap = k.cap[n], stay = k.cur[a];
@@ -1293,17 +1297,71 @@ function dabinRows(ag){
         ${roadviewLink(k)}${k.tel ? `<span>${esc(k.tel)}</span>` : ""}</div>` }]
   ];
 }
+// 곳별 집중 분석: 공시 핵심 + 웹·홈페이지 문장(출처) + 뉴스
+const TOPIC_ORDER = ["비용", "시간", "차량", "프로그램", "모집·설명회", "시설", "교사", "후기"];
+function officialFacts(p){
+  if (p.type === "daycare") return [
+    ["소관", "보건복지부·용인시 (국공립 어린이집)"],
+    ["운영", "평일 07:30~19:30 기본, 종일반·맞춤반"],
+    ["교육과정", "만3~5세 누리과정 (유치원과 동일한 국가 공통과정)"],
+    ["교사 대 아동 법정 상한", "만3세 1:15, 만4세 이상 1:20"],
+    ["비용", "누리과정 보육료 정부 지원, 특성화·필요경비는 원마다 다름"],
+    ["입소", "아이사랑 포털 입소대기 순번, 국공립은 대기가 긴 편"],
+    ["안전", "어린이집 CCTV 설치 의무"]
+  ];
+  if (p.type === "eng") return [
+    ["등록", `경기도교육청 학원 (교습과정: ${esc((p.courses || []).join(", ") || "–")})`],
+    ["학원 전체 정원", has(p.cap) ? `${p.cap}명` : "–"],
+    ["주소", esc(p.addr || "–")],
+    ["학비 지원", "누리과정·유아학비 지원 대상 아님"],
+    ["교육청 신고 수강료", p.fees && p.fees.length ? esc(p.fees.join(" / ")) : "공개 자료 비어 있음 (상담 필수)"]
+  ];
+  const h = hoursOf(p), q = quality(p), st = seatFor(p, AGE), a = perKid(p), r = kidsPerTeacher(p), t = p.teachers || {};
+  const years = p.years || {};
+  const tenure = ["yy1_undr_thcnt", "yy1_abv_yy2_undr_thcnt", "yy2_abv_yy4_undr_thcnt", "yy4_abv_yy6_undr_thcnt", "yy6_abv_thcnt"].map(f => num(years[f]) || 0);
+  return [
+    ["설립", esc(p.establish)],
+    ["운영시간", h ? `${fmtMin(h.open)}~${fmtMin(h.close)} (방과후 포함)` : "–"],
+    [`${AGE.sy + 1} 만${AGE.next}세`, has(st.vac) ? `정원 ${st.cap}명 · 진급 예정 ${st.stay}명 · 예상 여석 ${st.vac}명 · ${fmt(st.cls)}학급` : "–"],
+    ["현원", `만3세 ${fmt(p.cur[3])} · 만4세 ${fmt(p.cur[4])} · 만5세 ${fmt(p.cur[5])}명`],
+    ["교사", `원장 ${fmt(num(t.drcnt))} · 일반교사 ${fmt(num(t.gnrl_thcnt))} · 기간제 ${fmt(num(t.shcnt_thcnt))} · 정교사1급 ${fmt(num(t.rgth_gd1_qacnt))} / 2급 ${fmt(num(t.rgth_gd2_qacnt))}`],
+    ["교사 근속", tenure.some(Boolean) ? `1년 미만 ${tenure[0]} · 1~2년 ${tenure[1]} · 2~4년 ${tenure[2]} · 4~6년 ${tenure[3]} · 6년 이상 ${tenure[4]}명` : "–"],
+    ["교육의 질", q.s != null ? `${Math.round(q.s * 100)}점 (${esc(q.text)})` : "–"],
+    ["교사 1명당 아이", r ? `${r.toFixed(1)}명` : "–"],
+    ["방과후", esc(afterSchool(p).text || "–")],
+    ["시설", esc(facilityText(p) || "–")],
+    ["원아 1명당 교실", a ? `${a.toFixed(1)}㎡` : "–"],
+    ["급식", extraRows(p.meal).map(([x, y]) => `${x} ${esc(y)}`).join(" · ") || "–"],
+    ["통학차량", p.bus ? (p.bus.on ? `운행 ${p.bus.cars || ""}대` : "없음") : "–"],
+    ["안전", extraRows(p.safety).slice(0, 6).map(([x, y]) => `${x} ${esc(y)}`).join(" · ") || "–"],
+    ["환경위생", extraRows(p.hygiene).slice(0, 4).map(([x, y]) => `${x} ${esc(y)}`).join(" · ") || "–"]
+  ];
+}
+function deepHTML(p, i){
+  const d = (window.KG_DATA && window.KG_DATA.deep && window.KG_DATA.deep[p.deepKey]) || null;
+  const facts = officialFacts(p);
+  const topics = d ? TOPIC_ORDER.filter(t => d.facts[t] && d.facts[t].length) : [];
+  return `<details class="card deep"${i === 0 ? " open" : ""}>
+    <summary><span class="kind">${p.type === "daycare" ? "국공립 어린이집" : p.type === "eng" ? "영어유치원(학원)" : "사립 유치원"}</span><b>${esc(p.alias || p.name)}</b>
+      <small>${d ? `웹 문장 ${topics.reduce((a, t) => a + d.facts[t].length, 0)}개 · 출처 ${d.sources.length}곳 · 뉴스 ${d.news.length}건` : "웹 수집 전"}</small></summary>
+    <h4>${p.type === "kg" ? "유치원알리미 공시" : p.type === "eng" ? "교육청 학원 등록 정보" : "제도 기준"}</h4>
+    <dl class="facts">${facts.map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join("")}</dl>
+    ${topics.length ? `<h4>홈페이지·웹에서 찾은 내용</h4>${topics.map(t => `<div class="topic"><b>${t}</b><ul>${d.facts[t].slice(0, 5).map(f =>
+        `<li>${esc(f.text)} <a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.kind)}</a></li>`).join("")}</ul></div>`).join("")}`
+      : `<p class="note">${d ? "웹에서 이 곳을 다룬 글을 찾지 못했어요." : "다음 데이터 갱신 때 홈페이지·웹 내용이 채워져요."}</p>`}
+    ${d && d.news.length ? `<h4>관련 뉴스</h4><ul class="mini">${d.news.map(n => `<li><a href="${esc(n.link)}" target="_blank" rel="noopener">${esc(n.title)}</a> <small>${esc(n.date)}</small></li>`).join("")}</ul>` : ""}
+    ${d && d.sources.length ? `<h4>참고한 페이지</h4><ul class="mini">${d.sources.map(s => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a> <small>${esc(s.kind)}</small></li>`).join("")}</ul>` : ""}
+    ${d ? `<p class="note">웹 내용은 ${esc(d.collected)}에 자동 수집했어요. 개인 블로그·카페 글은 시점과 사실 여부를 원문에서 확인하세요.</p>` : ""}
+  </details>`;
+}
 const DABIN_Q = {
   daycare: ["만4·5세 반이 따로 있는지, 반별 인원과 담임 수", "입소 대기 순번과 단지 입주민 우선 입소 여부", "특성화 활동 종류와 월 필요경비", "초등 입학 전 유치원으로 옮기는 아이가 많은지"],
   eng: ["월 원비 + 교재비 + 차량비 + 방과후비 합계", "하루 일과와 실제 하원 시각, 오후 연장반 유무", "담임 구성(원어민·한국인)과 교사 근속", "누리과정 지원이 없는 점, 초등 연계반 유무"],
   kg: [`${AGE.sy + 1}년 만4세 모집 인원과 처음학교로 일정`, "월 부모부담금 (방과후·특성화·차량 포함 총액)", "통학차량이 동천센트럴자이에 서는지", "방과후 반 하원 시각과 담당 교사"]
 };
 function renderDabin(){
-  const birthEl = $("#dabinBirth");
-  const saved = store.get("kg.dabinBirth", "");
-  if (birthEl.value !== saved && document.activeElement !== birthEl) birthEl.value = saved;
   const ag = dabinAge();
-  $("#dabinAge").textContent = ag ? `만 ${ag.years}세 ${ag.months}개월 · 내년 만${ag.next}세반` : "생일을 넣으면 반 기준이 맞춰져요 (지금은 하윤이 기준)";
+  $("#dabinAge").textContent = `하윤이 만 ${ag.years}세 ${ag.months}개월 · ${ag.sy + 1}년 3월 만${ag.next}세반 입학 기준`;
   const places = dabinPlaces();
   if (!state.data.length){ $("#dabinTable").innerHTML = `<div class="card empty">데이터를 불러오는 중이에요.</div>`; return; }
   const rows = dabinRows(ag);
@@ -1347,6 +1405,7 @@ function renderDabin(){
       ${p.note ? `<p class="verdict">${esc(p.note)}</p>` : ""}
     </article>`;
   }).join("");
+  $("#dabinDeep").innerHTML = places.map(deepHTML).join("");
   $("#dabinQs").innerHTML = places.map(p => `<div class="card place"><h3>${esc(p.alias || p.name)}</h3>
     <ol class="qlist">${DABIN_Q[p.type].map(q => `<li>${esc(q)}</li>`).join("")}</ol></div>`).join("");
 }
@@ -1538,7 +1597,7 @@ $("#engSure").addEventListener("change", e => { state.engSure = e.target.checked
   saveRec(); render();
 }));
 $("#cmpSearch").addEventListener("input", renderPicker);
-$("#dabinBirth").addEventListener("change", e => { store.set("kg.dabinBirth", e.target.value); render(); });
+
 $("#travelMode").addEventListener("change", e => { state.travelMode = e.target.value; render(); });
 $("#maxMin").addEventListener("change", e => { state.maxMin = e.target.value; render(); });
 $("#limit").addEventListener("change", e => { state.limit = e.target.value; render(); });

@@ -379,6 +379,153 @@ def locate_home(cache):
     return False
 
 
+# ---------- 엄마(안다빈) 픽 4곳 집중 수집 ----------
+DEEP_TARGETS = [
+    {"key": "daycare", "names": ["동천센트럴자이", "동천자이", "센트럴자이"], "home": None,
+     "queries": ["동천센트럴자이 어린이집", "시립동천자이2차어린이집", "용인시립 동천센트럴자이어린이집", "동천센트럴자이 국공립 어린이집 후기"]},
+    {"key": "poly", "names": ["폴리", "POLY", "Poly"], "home": None,
+     "queries": ["수지 폴리어학원 유치부", "폴리어학원 수지 킨더 원비", "POLY 수지 풍덕천 하나로프라자", "수지 폴리 영어유치원 후기"]},
+    {"key": "sungmin", "names": ["성민"], "home": "http://www.sungmin-i.com",
+     "queries": ["성민프리미어 유치원", "성민유치원 수지 풍덕천", "성민유치원 수지 원비 후기", "sungmin-i.com 성민유치원"]},
+    {"key": "besti", "names": ["베스아이", "best-i", "BEST-I"], "home": "http://best-i.kg.kr",
+     "queries": ["베스아이유치원", "베스아이유치원 수지 원비", "베스아이유치원 후기 동천", "best-i.kg.kr 유치원"]},
+]
+TOPICS = {
+    "비용": r"원비|교육비|수업료|수강료|부모 ?부담|납부|입학금|등록금|재료비|교재비|차량비|만 ?원",
+    "시간": r"등원|하원|운영 ?시간|일과|연장|종일|\d{1,2}[:시]\s?\d{0,2}",
+    "차량": r"차량|셔틀|노선|운행|탑승",
+    "프로그램": r"특성화|프로그램|커리큘럼|교육과정|영어|체육|미술|음악|숲|코딩|발레|수영|원어민|몬테소리|프로젝트|놀이 ?중심|리딩|파닉스",
+    "모집·설명회": r"설명회|모집|입학|입소|대기|처음학교로|상담|견학",
+    "시설": r"수영장|놀이터|강당|체육관|텃밭|도서|교실|실내|옥상|정원|시설",
+    "교사": r"교사|선생님|원장|담임|원어민|자격",
+    "후기": r"좋아|만족|추천|아쉬|단점|불만|친절|꼼꼼|비싸",
+}
+UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
+      "Accept-Language": "ko-KR,ko;q=0.9"}
+
+
+def fetch_text(url, limit=800_000):
+    req = urllib.request.Request(url, headers=UA)
+    with urllib.request.urlopen(req, timeout=20) as res:
+        ctype = res.headers.get("Content-Type", "")
+        if "pdf" in ctype or "image" in ctype:
+            return "", ""
+        raw = res.read(limit)
+    html = raw.decode("utf-8", "ignore")
+    if html.count("�") > 20:
+        html = raw.decode("euc-kr", "ignore")
+    return html, res.geturl()
+
+
+def page_text(html):
+    html = re.sub(r"<script.*?</script>|<style.*?</style>|<noscript.*?</noscript>", " ", html, flags=re.S | re.I)
+    html = re.sub(r"<(br|p|div|li|tr|h\d)[^>]*>", "\n", html, flags=re.I)
+    return re.sub(r"[ \t\r\f\v]+", " ", strip_tags(html))
+
+
+def web_search(query):
+    """Bing·DuckDuckGo 검색 결과 링크 (키 없이)."""
+    links = []
+    try:
+        html, _ = fetch_text("https://www.bing.com/search?" + urllib.parse.urlencode({"q": query, "setlang": "ko", "cc": "KR"}))
+        links += re.findall(r'<li class="b_algo".*?<a[^>]+href="(https?://[^"]+)"', html, re.S)
+    except Exception as e:  # noqa: BLE001
+        print(f"  bing 실패 {query}: {e}", file=sys.stderr)
+    time.sleep(1.0)
+    try:
+        html, _ = fetch_text("https://html.duckduckgo.com/html/?" + urllib.parse.urlencode({"q": query, "kl": "kr-kr"}))
+        for u in re.findall(r'class="result__a"[^>]+href="([^"]+)"', html):
+            m = re.search(r"uddg=([^&]+)", u)
+            links.append(urllib.parse.unquote(m.group(1)) if m else u)
+    except Exception as e:  # noqa: BLE001
+        print(f"  ddg 실패 {query}: {e}", file=sys.stderr)
+    time.sleep(1.0)
+    out = []
+    for u in links:
+        u = u.replace("&amp;", "&")
+        if "blog.naver.com" in u and "m.blog" not in u:
+            u = u.replace("://blog.naver.com", "://m.blog.naver.com")
+        if u not in out and not re.search(r"bing\.com|duckduckgo|microsoft|youtube\.com|\.pdf$", u):
+            out.append(u)
+    return out
+
+
+def homepage_pages(home):
+    pages = [home]
+    try:
+        html, base = fetch_text(home)
+    except Exception as e:  # noqa: BLE001
+        print(f"  홈페이지 실패 {home}: {e}", file=sys.stderr)
+        return []
+    for href, text in re.findall(r'<a[^>]+href="([^"#]+)"[^>]*>(.*?)</a>', html, re.S):
+        t = strip_tags(text)
+        if re.search(r"소개|교육|프로그램|일과|모집|입학|시설|안내|오시는|특성화|방과후|차량|공지|원비|교육비|하루", t):
+            u = urllib.parse.urljoin(base, href.replace("&amp;", "&"))
+            if urllib.parse.urlparse(u).netloc == urllib.parse.urlparse(base).netloc and u not in pages:
+                pages.append(u)
+    return pages[:14]
+
+
+def deep_collect(target):
+    names = target["names"]
+    found = {t: [] for t in TOPICS}
+    sources, seen_sent = [], set()
+    urls = (homepage_pages(target["home"]) if target["home"] else [])
+    official = set(urls)
+    for q in target["queries"]:
+        for u in web_search(q)[:6]:
+            if u not in urls:
+                urls.append(u)
+    for u in urls[:30]:
+        try:
+            html, final = fetch_text(u)
+        except Exception:  # noqa: BLE001
+            continue
+        text = page_text(html)
+        if u not in official and not any(n in text for n in names):
+            continue  # 대상과 상관없는 페이지 제외
+        title = strip_tags((re.search(r"<title[^>]*>(.*?)</title>", html, re.S | re.I) or [None, ""])[1]).strip()[:80]
+        kind = "공식 홈페이지" if u in official else ("블로그" if "blog" in u else "카페" if "cafe" in u else "웹")
+        hits = 0
+        for sent in re.split(r"[\n。!?]|(?<=[다요음])\.\s", text):
+            sent = sent.strip(" -·•|")
+            if not (12 <= len(sent) <= 170) or sent in seen_sent:
+                continue
+            if u not in official and not any(n in sent for n in names) and not re.search(r"원비|하원|등원|차량|설명회|특성화|수영|원어민", sent):
+                continue
+            for topic, pat in TOPICS.items():
+                if re.search(pat, sent) and len(found[topic]) < 10:
+                    found[topic].append({"text": sent, "url": final or u, "kind": kind})
+                    seen_sent.add(sent)
+                    hits += 1
+                    break
+        if hits:
+            sources.append({"url": final or u, "title": title or u, "kind": kind, "hits": hits})
+        time.sleep(0.4)
+    news = []
+    for q in target["queries"][:2]:
+        qs = urllib.parse.urlencode({"q": q, "hl": "ko", "gl": "KR", "ceid": "KR:ko"})
+        try:
+            req = urllib.request.Request(f"https://news.google.com/rss/search?{qs}", headers=UA)
+            with urllib.request.urlopen(req, timeout=20) as res:
+                root = ET.fromstring(res.read())
+            for it in root.iter("item"):
+                title = (it.findtext("title") or "").strip()
+                if any(n in title for n in names) and title not in [n["title"] for n in news]:
+                    try:
+                        date = parsedate_to_datetime(it.findtext("pubDate")).strftime("%Y.%m.%d")
+                    except Exception:  # noqa: BLE001
+                        date = ""
+                    news.append({"title": title, "link": it.findtext("link"), "date": date})
+        except Exception as e:  # noqa: BLE001
+            print(f"  뉴스 실패 {q}: {e}", file=sys.stderr)
+        time.sleep(1.0)
+    total = sum(len(v) for v in found.values())
+    print(f"  집중 수집 {target['key']}: 페이지 {len(sources)}곳, 문장 {total}개, 뉴스 {len(news)}건")
+    return {"facts": found, "sources": sources[:15], "news": news[:8],
+            "collected": time.strftime("%Y-%m-%d", time.gmtime(time.time() + 9 * 3600))}
+
+
 def main():
     cache = {}
     if os.path.exists(GEO_CACHE):
@@ -469,7 +616,14 @@ def main():
     with open(GEO_CACHE, "w", encoding="utf-8") as f:
         json.dump(cache, f, ensure_ascii=False, indent=0, sort_keys=True)
 
-    payload = {"updated": time.strftime("%Y-%m-%d %H:%M", time.gmtime(time.time() + 9 * 3600)), "items": items, "english": english,
+    deep = {}
+    for t in DEEP_TARGETS:
+        try:
+            deep[t["key"]] = deep_collect(t)
+        except Exception as e:  # noqa: BLE001
+            print(f"  집중 수집 실패 {t['key']}: {e}", file=sys.stderr)
+
+    payload = {"updated": time.strftime("%Y-%m-%d %H:%M", time.gmtime(time.time() + 9 * 3600)), "items": items, "english": english, "deep": deep,
                "home": {"lat": HOME[0], "lng": HOME[1], "label": HOME_NAME, "exact": home_exact}}
     with open(os.path.join(HERE, "data.json"), "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False)
