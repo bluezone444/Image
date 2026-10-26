@@ -789,7 +789,28 @@ if __name__ == "__main__":
     only = [a.split("=", 1)[1] for a in sys.argv if a.startswith("--only=")]
     if DEBUG and only and only[0] == "dump":  # probe.txt 둘째 줄부터 적힌 주소를 통째로 읽어 숫자 줄 출력
         with open(os.path.join(HERE, "probe.txt"), encoding="utf-8") as f:
-            urls = [ln.strip() for ln in f.readlines()[1:] if ln.strip().startswith("http")]
+            raw = [ln.strip() for ln in f.readlines()[1:]]
+        urls = [ln for ln in raw if ln.startswith("http")]
+        # "q:검색어|이름" 줄은 검색해서 상위 페이지의 5세·유치부 관련 줄만 출력
+        AGE_RE = re.compile(r"5세|다섯 ?살|만 ?3세|23년생|2023년생|유치부|킨더|kinder|영유|6세|7세|프리스쿨|preschool|종일반|반일반|오후반")
+        for ln in raw:
+            if not ln.startswith("q:"):
+                continue
+            q, _, nm = ln[2:].partition("|")
+            res = web_search(q)
+            print(f"\n==== [검색] {q} → {res[:6]}")
+            for u in res[:5]:
+                try:
+                    html, final = fetch_text(u)
+                except Exception as e:  # noqa: BLE001
+                    continue
+                text = page_text(html)
+                if nm and nm not in text:
+                    continue
+                hits = [x.strip()[:160] for x in text.split("\n") if AGE_RE.search(x) and (not nm or len(x) < 400)][:25]
+                if hits:
+                    print(f"  -- {final[:100]}\n     " + " | ".join(hits))
+                time.sleep(0.5)
         for u in urls:
             try:
                 html, final = fetch_text(u)
