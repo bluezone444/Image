@@ -917,9 +917,14 @@ function renderCmp(){
     ["안전점검·교육", k => isEng(k) ? "–" : dlHTML(extraRows(k.safety))],
     ["환경위생", k => isEng(k) ? "–" : dlHTML(extraRows(k.hygiene))]
   ];
+  // 커뮤니티 데이터가 하나도 없으면 관련 행은 빼기
+  const hasComm = items.some(k => k.community && k.community.posts);
+  const engFees = items.some(k => isEng(k) && k.fees.length);
+  const shown = rows.filter(([h]) => hasComm || !(["좋다는 이야기", "아쉽다는 이야기"].includes(h) || (h === "원비 언급" && !engFees)))
+    .filter(([h, f]) => !(h === "sec" && f === "원비·커뮤니티" && !hasComm && !engFees));
   $("#cmpBody").innerHTML = `<div class="cmp-wrap"><table class="cmp">
     <thead><tr><th></th>${items.map(k => `<td>${esc(k.name)}<br><button class="rm" data-cmp="${esc(k.id)}">빼기 ✕</button></td>`).join("")}</tr></thead>
-    <tbody>${rows.map(([h, f]) => h === "sec"
+    <tbody>${shown.map(([h, f]) => h === "sec"
       ? `<tr class="sec"><th>${f}</th>${items.map(() => "<td></td>").join("")}</tr>`
       : `<tr><th>${h}</th>${items.map(k => `<td>${f(k)}</td>`).join("")}</tr>`).join("")}</tbody>
   </table></div>`;
