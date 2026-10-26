@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>동천동 유치원 찾기</title>
+<meta name="theme-color" content="#2f6f5e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <style>
 :root{
   --bg:#f6f5f2; --card:#ffffff; --ink:#1d1d1b; --muted:#6b6a66; --line:#e4e2dc;
@@ -90,7 +93,7 @@ footer{color:var(--muted);font-size:12px;margin-top:24px}
 <body>
 <div class="wrap">
   <h1>우리 아이 유치원 찾기</h1>
-  <p class="sub">수지구 동천동 기준 · 2023년 4월생 · 수지구·분당구(+기흥구) 유치원 모집 현황</p>
+  <p class="sub"><span id="homeLabel">수지구 동천동</span> 반경 <span id="radiusLabel">5</span>km · 2023년 4월생 · 유치원 모집 현황</p>
 
   <div class="card kid">
     <div><small>지금 (2026학년도)</small><b>만 3세반</b><small>2023년생 = 2026년 만3세반</small></div>
@@ -110,15 +113,20 @@ footer{color:var(--muted);font-size:12px;margin-top:24px}
   </div>
 
   <div class="chips" id="areaChips">
-    <button class="chip" data-area="near" aria-pressed="true">동천동 인근</button>
-    <button class="chip" data-area="수지구" aria-pressed="false">수지구 전체</button>
-    <button class="chip" data-area="분당구" aria-pressed="false">분당구 전체</button>
-    <button class="chip" data-area="기흥구" aria-pressed="false">기흥구</button>
+    <button class="chip" data-area="2" aria-pressed="false">2km</button>
+    <button class="chip" data-area="3" aria-pressed="false">3km</button>
+    <button class="chip" data-area="5" aria-pressed="true">5km</button>
+    <button class="chip" data-area="7" aria-pressed="false">7km</button>
     <button class="chip" data-area="all" aria-pressed="false">전체</button>
     <button class="chip" data-area="fav" aria-pressed="false">★ 관심</button>
+    <button class="chip" id="useGeo" type="button">📍 내 위치 기준</button>
   </div>
   <div class="row" style="margin-bottom:12px">
     <input type="search" id="q" placeholder="유치원 이름·주소 검색" style="flex:1 1 200px">
+    <select id="region" style="width:auto">
+      <option value="">구 전체</option>
+      <option>수지구</option><option>분당구</option><option>기흥구</option>
+    </select>
     <select id="type" style="width:auto">
       <option value="">설립 전체</option>
       <option value="pub">국공립</option>
@@ -146,7 +154,7 @@ footer{color:var(--muted);font-size:12px;margin-top:24px}
   <footer>
     데이터: 유치원알리미(교육부) Open API 기본현황(basicInfo2). 정원·현원은 공시 기준일 값이라 실제 모집 인원과 다를 수 있어요.
     “예상 여석(2027)”은 <b>만4세 정원 − 현재 만3세 현원(그대로 진급 예정)</b>으로 계산한 추정치예요. 정확한 모집 인원은 처음학교로·각 유치원 모집요강에서 꼭 확인하세요.
-    거리 구분은 주소(동·도로명) 기준의 대략적인 분류예요.
+    거리는 기준점(동천동 행정복지센터 부근)에서의 직선거리예요. Apps Script로 실행하면 주소를 좌표로 바꿔 정확히 계산하고, 좌표가 없으면 동 중심 기준으로 “약 ○km”로 표시해요.
   </footer>
 </div>
 
@@ -158,19 +166,32 @@ footer{color:var(--muted);font-size:12px;margin-top:24px}
 const REGIONS = [
   { name: "수지구", sido: "41", sgg: "41465", on: true },
   { name: "분당구", sido: "41", sgg: "41135", on: true },
-  { name: "기흥구", sido: "41", sgg: "41463", on: false }
+  { name: "기흥구", sido: "41", sgg: "41463", on: true }
 ];
 const API = "https://e-childschoolinfo.moe.go.kr/api/notice/basicInfo2.do";
 
-// 동천동 기준 거리 구분 (주소의 법정동 → 없으면 도로명으로 판단)
-const TIERS = [
-  { label: "우리 동네", dongs: ["동천동"], roads: ["동천로", "손곡로"] },
-  { label: "바로 옆", dongs: ["풍덕천동", "고기동", "구미동", "금곡동"], roads: ["풍덕천로", "고기로", "구미로", "미금로", "금곡로"] },
-  { label: "가까운 편", dongs: ["신봉동", "성복동", "상현동", "죽전동", "정자동", "동원동", "궁내동", "수내동"], roads: ["신봉", "성복", "상현로", "죽전로", "정자일로", "정자로", "수내로"] }
+// 기준점: 동천동 행정복지센터 부근 (📍 버튼으로 현재 위치로 바꿀 수 있어요)
+const DONGCHEON = { lat: 37.3369, lng: 127.0866, label: "수지구 동천동" };
+
+// 좌표가 없을 때 쓰는 동 중심 대략 좌표 → "약 ○km"로 표시
+const DONG_CENTER = {
+  "동천동":[37.337,127.087],"풍덕천동":[37.322,127.095],"신봉동":[37.327,127.068],"성복동":[37.315,127.072],
+  "상현동":[37.302,127.081],"죽전동":[37.325,127.112],"고기동":[37.357,127.057],
+  "구미동":[37.343,127.112],"금곡동":[37.350,127.105],"동원동":[37.360,127.095],"궁내동":[37.355,127.096],
+  "정자동":[37.367,127.110],"수내동":[37.377,127.115],"서현동":[37.385,127.130],"이매동":[37.393,127.128],
+  "야탑동":[37.410,127.130],"분당동":[37.365,127.142],"율동":[37.383,127.150],"판교동":[37.392,127.098],
+  "백현동":[37.390,127.110],"삼평동":[37.400,127.108],"운중동":[37.390,127.077],"대장동":[37.365,127.075],
+  "보정동":[37.315,127.110],"마북동":[37.300,127.125],"언남동":[37.293,127.115],"청덕동":[37.290,127.135],
+  "신갈동":[37.278,127.110],"구갈동":[37.275,127.117],"상갈동":[37.265,127.105],"영덕동":[37.265,127.080],
+  "동백동":[37.275,127.150],"중동":[37.268,127.158],"서천동":[37.250,127.090]
+};
+const ROAD_DONG = [
+  ["동천로","동천동"],["손곡로","동천동"],["풍덕천로","풍덕천동"],["고기로","고기동"],["신봉","신봉동"],
+  ["성복","성복동"],["상현로","상현동"],["죽전로","죽전동"],["포은대로","죽전동"],["구미로","구미동"],
+  ["미금로","구미동"],["금곡로","금곡동"],["정자일로","정자동"],["정자로","정자동"],["수내로","수내동"],
+  ["서현로","서현동"],["판교로","판교동"],["대왕판교로","삼평동"],["보정로","보정동"],["마북로","마북동"],
+  ["동백","동백동"],["신갈로","신갈동"],["영덕","영덕동"]
 ];
-const AREA_TIER = { "수지구": 3, "분당구": 3, "기흥구": 4 };
-const TIER_LABEL = ["우리 동네", "바로 옆", "가까운 편", "같은 생활권", "조금 멀어요"];
-const TIER_POINTS = [40, 30, 20, 8, 0];
 
 const isGAS = typeof google !== "undefined" && google.script && google.script.run;
 
@@ -181,7 +202,8 @@ const store = {
 };
 
 const state = {
-  mode: "next", area: "near", q: "", type: "", onlyOpen: false, sort: "score",
+  mode: "next", area: "5", region: "",
+  home: store.get("kg.home", DONGCHEON), q: "", type: "", onlyOpen: false, sort: "score",
   favs: new Set(store.get("kg.favs", [])),
   data: [], updated: null
 };
@@ -201,10 +223,25 @@ function areaOf(addr, fallback){
   for (const a of ["수지구", "분당구", "기흥구"]) if (addr.includes(a)) return a;
   return fallback || "기타";
 }
-function tierOf(addr, area){
-  for (let t = 0; t < TIERS.length; t++) if (TIERS[t].dongs.some(d => addr.includes(d))) return t;
-  for (let t = 0; t < TIERS.length; t++) if (TIERS[t].roads.some(r => addr.includes(r))) return t;
-  return AREA_TIER[area] != null ? AREA_TIER[area] : 4;
+function coordOf(raw, addr){
+  const lat = parseFloat(raw._lat || raw.lttdcdnt || raw.la), lng = parseFloat(raw._lng || raw.lngtcdnt || raw.lo);
+  if (lat > 30 && lat < 40 && lng > 120 && lng < 135) return { lat, lng, exact: true };
+  let dong = Object.keys(DONG_CENTER).find(d => new RegExp("[\\s(,]" + d).test(addr));
+  if (!dong){ const r = ROAD_DONG.find(([road]) => addr.includes(road)); if (r) dong = r[1]; }
+  return dong ? { lat: DONG_CENTER[dong][0], lng: DONG_CENTER[dong][1], exact: false } : null;
+}
+function km(a, b){
+  const R = 6371, toR = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * toR, dLng = (b.lng - a.lng) * toR;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * toR) * Math.cos(b.lat * toR) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+function dist(k){ return k.pos ? km(state.home, k.pos) : null; }
+function distText(k){
+  const d = dist(k);
+  if (d == null) return "거리 모름";
+  if (!k.pos.exact) return d < 1 ? "약 1km 이내" : "약 " + d.toFixed(1) + "km";
+  return d < 1 ? Math.round(d * 1000) + "m" : d.toFixed(1) + "km";
 }
 function normalize(raw, regionName){
   const addr = String(raw.addr || "");
@@ -215,7 +252,7 @@ function normalize(raw, regionName){
     name: String(raw.kindername || "(이름 없음)"),
     establish: est,
     isPublic: /공립|국립/.test(est),
-    addr, area, tier: tierOf(addr, area),
+    addr, area, pos: coordOf(raw, addr),
     tel: String(raw.telno || "").trim(),
     home: String(raw.hpaddr || "").trim(),
     hours: String(raw.opertime || "").trim(),
@@ -252,7 +289,8 @@ function offersTarget(k){
 }
 function score(k){
   const s = seat(k);
-  let sc = TIER_POINTS[k.tier];
+  const d = dist(k);
+  let sc = d == null ? 5 : Math.max(0, 45 - d * 9);
   if (has(s.vac)) sc += s.vac > 0 ? Math.min(s.vac, 10) * 3 : -25;
   if (k.isPublic) sc += 5;
   if (state.favs.has(k.id)) sc += 100;
@@ -260,7 +298,7 @@ function score(k){
 }
 function reasons(k){
   const s = seat(k), r = [];
-  if (k.tier <= 2) r.push(TIER_LABEL[k.tier]);
+  if (k.pos) r.push(distText(k));
   if (has(s.vac) && s.vac > 0) r.push(`예상 여석 ${s.vac}명`);
   if (k.isPublic) r.push("국공립(학비 부담 적음)");
   if (!has(s.vac) && (k.cap.mix || 0) > 0) r.push("혼합연령반 운영");
@@ -272,9 +310,10 @@ function filtered(){
   const q = state.q.trim();
   return state.data.filter(k => {
     if (!offersTarget(k)) return false;
-    if (state.area === "near" && k.tier > 2) return false;
+    const lim = parseFloat(state.area);
+    if (!isNaN(lim)){ const d = dist(k); if (d == null || d > lim) return false; }
+    if (state.region && k.area !== state.region) return false;
     if (state.area === "fav" && !state.favs.has(k.id)) return false;
-    if (["수지구", "분당구", "기흥구"].includes(state.area) && k.area !== state.area) return false;
     if (state.type === "pub" && !k.isPublic) return false;
     if (state.type === "pri" && k.isPublic) return false;
     if (state.onlyOpen){ const v = seat(k).vac; if (!(has(v) && v > 0)) return false; }
@@ -285,8 +324,9 @@ function filtered(){
 function sorted(list, by){
   const a = list.slice();
   const vac = k => { const v = seat(k).vac; return has(v) ? v : -999; };
-  if (by === "vac") a.sort((x, y) => vac(y) - vac(x) || x.tier - y.tier);
-  else if (by === "near") a.sort((x, y) => x.tier - y.tier || vac(y) - vac(x));
+  const dd = k => { const d = dist(k); return d == null ? 999 : d; };
+  if (by === "vac") a.sort((x, y) => vac(y) - vac(x) || dd(x) - dd(y));
+  else if (by === "near") a.sort((x, y) => dd(x) - dd(y) || vac(y) - vac(x));
   else if (by === "name") a.sort((x, y) => x.name.localeCompare(y.name, "ko"));
   else a.sort((x, y) => score(y) - score(x) || x.name.localeCompare(y.name, "ko"));
   return a;
@@ -306,7 +346,7 @@ function cardHTML(k, rank){
       <button class="star" data-fav="${esc(k.id)}" aria-pressed="${fav}" aria-label="관심 유치원">★</button>
     </div>
     <div class="badges">
-      <span class="badge ${k.tier <= 2 ? "near" : ""}">${TIER_LABEL[k.tier]}</span>
+      <span class="badge ${dist(k) != null && dist(k) <= 2 ? "near" : ""}">${distText(k)}</span>
       <span class="badge">${esc(k.area)}</span>
       ${k.establish ? `<span class="badge ${k.isPublic ? "pub" : ""}">${esc(k.establish)}</span>` : ""}
       ${has(s.cls) && s.cls > 0 ? `<span class="badge">${s.cls}학급</span>` : ""}
@@ -461,7 +501,26 @@ function pressGroup(sel, attr, val){
   document.querySelectorAll(sel).forEach(b => b.setAttribute("aria-pressed", String(b.dataset[attr] === val)));
 }
 document.querySelectorAll(".seg button").forEach(b => b.onclick = () => { state.mode = b.dataset.mode; pressGroup(".seg button", "mode", state.mode); render(); });
-document.querySelectorAll("#areaChips .chip").forEach(b => b.onclick = () => { state.area = b.dataset.area; pressGroup("#areaChips .chip", "area", state.area); render(); });
+document.querySelectorAll("#areaChips [data-area]").forEach(b => b.onclick = () => {
+  state.area = b.dataset.area; pressGroup("#areaChips [data-area]", "area", state.area);
+  if (!isNaN(parseFloat(state.area))) $("#radiusLabel").textContent = state.area;
+  render();
+});
+$("#region").addEventListener("change", e => { state.region = e.target.value; render(); });
+function setHome(h){
+  state.home = h; store.set("kg.home", h);
+  $("#homeLabel").textContent = h.label;
+  $("#useGeo").textContent = h === DONGCHEON || h.label === DONGCHEON.label ? "📍 내 위치 기준" : "🏠 동천동 기준으로";
+  render();
+}
+$("#useGeo").onclick = () => {
+  if (state.home.label !== DONGCHEON.label){ setHome(DONGCHEON); return; }
+  if (!navigator.geolocation){ msg("이 브라우저는 위치 기능을 지원하지 않아요.", "err"); return; }
+  navigator.geolocation.getCurrentPosition(
+    p => { setHome({ lat: p.coords.latitude, lng: p.coords.longitude, label: "내 위치" }); msg("현재 위치 기준으로 거리를 계산했어요.", "ok"); },
+    () => msg("위치 권한이 없어 동천동 기준을 유지할게요.", "err"),
+    { enableHighAccuracy: false, timeout: 10000 });
+};
 $("#q").addEventListener("input", e => { state.q = e.target.value; render(); });
 $("#type").addEventListener("change", e => { state.type = e.target.value; render(); });
 $("#onlyOpen").addEventListener("change", e => { state.onlyOpen = e.target.checked; render(); });
@@ -477,8 +536,8 @@ document.addEventListener("click", e => {
 /* ---------- 시작 ---------- */
 setupUI();
 const cached = store.get("kg.cache", null);
-if (cached && cached.rows && cached.rows.length){ state.data = cached.rows; state.updated = cached.updated; }
-render();
+if (cached && cached.rows && cached.rows.length && "pos" in cached.rows[0]){ state.data = cached.rows; state.updated = cached.updated; }
+setHome(state.home);
 if (isGAS) loadFromGAS();
 else if (!state.data.length) $("#setup").open = true;
 })();
