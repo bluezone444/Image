@@ -567,7 +567,10 @@ function travelOk(k){
   const m = parseFloat(state.maxMin);
   if (isNaN(m) || !hasTravelData() || state.home.label !== DONGCHEON.label) return true;
   const t = travel(k);
-  return t != null && t <= m;
+  if (t != null) return t <= m;
+  // 경로 계산이 안 된 곳은 거리로 대략 추정 (차 1km ≈ 2.5분)해서 목록에서 빠지지 않게
+  const d = dist(k);
+  return d == null || (state.travelMode === "walk" ? d * 15 : d * 2.5 + 2) <= m;
 }
 function routeLink(k){
   if (!k.pos) return "";
@@ -861,7 +864,7 @@ function extraHTML(k){
 }
 
 // 교육청 자료엔 '영어유치원' 구분이 없어서 이름·대표 브랜드로 추정
-const ENG_LIKELY = /키즈|kids|킨더|kinder|유치부|영유|국제캠퍼스|인터내셔널|international|프리스쿨|pre-?school|토들러|폴리|poly|SLP|에스엘피|엘리프|ELIF|킨더슐레|아이스쿨/i;
+const ENG_LIKELY = /키즈|kids|킨더|kinder|유치부|영유|국제캠퍼스|인터내셔널|international|프리스쿨|pre-?school|토들러|폴리|poly|SLP|에스엘피|엘리프|ELIF|킨더슐레|아이스쿨|제이리/i;
 function normalizeEng(r){
   const addr = String(r.addr || "");
   return { id: "eng:" + r.id, name: String(r.name || ""), addr, area: r.region || areaOf(addr),
