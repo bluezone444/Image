@@ -819,7 +819,7 @@ if __name__ == "__main__":
                 continue
             text = page_text(html)
             lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
-            keep = [ln for ln in lines if re.search(r"\d", ln) and re.search(r"원|만|시|분|세|비|등원|하원|지원|부담|교육비|수강료|교습", ln)][:160]
+            keep = [ln for ln in lines if re.search(r"\d", ln) and re.search(r"원|만|시|분|세|비|등원|하원|지원|부담|교육비|수강료|교습|설립|사원|인원|명|번호|대표|매출|법인|자본|연금|입사|퇴사|업력", ln)][:160]
             print(f"\n#### {u} → {final} ({len(text)}자)")
             print(" | ".join(x[:150] for x in keep)[:9000])
             if "e-childschoolinfo.moe.go.kr" in u:
