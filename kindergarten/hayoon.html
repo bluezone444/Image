@@ -568,7 +568,10 @@ function travelOk(k){
   const m = parseFloat(state.maxMin);
   if (isNaN(m) || !hasTravelData() || state.home.label !== DONGCHEON.label) return true;
   const t = travel(k);
-  return t != null && t <= m;
+  if (t != null) return t <= m;
+  // 경로 계산이 안 된 곳은 거리로 대략 추정 (차 1km ≈ 2.5분)해서 목록에서 빠지지 않게
+  const d = dist(k);
+  return d == null || (state.travelMode === "walk" ? d * 15 : d * 2.5 + 2) <= m;
 }
 function routeLink(k){
   if (!k.pos) return "";
@@ -862,7 +865,33 @@ function extraHTML(k){
 }
 
 // 교육청 자료엔 '영어유치원' 구분이 없어서 이름·대표 브랜드로 추정
-const ENG_LIKELY = /키즈|kids|킨더|kinder|유치부|영유|국제캠퍼스|인터내셔널|international|프리스쿨|pre-?school|토들러|폴리|poly|SLP|에스엘피|엘리프|ELIF|킨더슐레|아이스쿨/i;
+// 직접 조사한 종일 영어유치원 정보 (이름이 이 키를 포함하면 카드에 표시)
+const ENG_NOTES = {
+  "제이리어학원": { title: "제이리 수지캠퍼스 · 학습식 종일 영유", facts: [
+    ["2023년생", "✓ 2027년 5세반 신입 모집 (예비5세 = 2023년생만 선발) · 6·7세 신규는 마감", "https://www.jlpedu.com/%EB%B3%B5%EC%A0%9C-2026-reservation-b"],
+    ["형태", "종일 영어유치부 · 리딩·쓰기 위주 학습식 · 원어민 담임", "https://m.blog.naver.com/learns_academy/223572077990"],
+    ["5세반", "오감활동·말하기 중심, 파닉스·알파벳 소리 → 연말엔 알파벳 쓰기·단순 문장 읽기 · 방과후는 놀이 중심", "https://m.blog.naver.com/aquans/224096933362"],
+    ["정원", "5세 반당 10~12명 (6·7세 12명)", "https://www.jlpedu.com/placement"],
+    ["입학", "5세는 1:1 면담 약 15분 (레벨테스트)", "https://m.blog.naver.com/teachersusie/223383280985"],
+    ["숙제", "5세는 2학기부터 음가 복습·주 2회 도서 대여 · 6·7세는 매일 독서·쓰기 과제", "https://m.blog.naver.com/momonest/224457847477"],
+    ["원비", "월 약 150만원 (주 5회 하루 4시간 기준, 학원정보 사이트 표기 · 연도 미확인) · 누리과정 지원 없음", "https://learns.academy/academies/294c6b9f-80d7-45c0-b2f6-0e007c05ef8c"],
+    ["셔틀", "상현·성복동 방면 유아부 노선 운영 · 동천동 노선은 문의 필요", "https://www.jlpedu.com/copy-of-shuttle"],
+    ["위치·전화", "수지구 성복1로 189 1·2층 (성복동) · 031-526-9777", ""]
+  ]},
+  "G키즈": { title: "지키즈 잉글리쉬 · 종일 영어유치부", facts: [
+    ["형태", "9:30~15:00 종일반 (하루 5~6시간)", "https://m.blog.naver.com/zjvlsia8520/224052321508"],
+    ["2023년생", "'수지 5세 영어' 학부모 후기 있음 · 모집은 문의", "https://m.blog.naver.com/zjvlsia8520/224052321508"]
+  ]},
+  "아뜰리에": { title: "아뜰리에영어키즈 · 종일 영어유치부", facts: [["형태", "동천동 · 영어유치부 1~3년차 과정", ""]] }
+};
+function engNotes(k){
+  const key = Object.keys(ENG_NOTES).find(n => k.name.includes(n));
+  if (!key) return "";
+  const b = ENG_NOTES[key];
+  return `<div class="brief"><h4>조사 내용 · ${esc(b.title)}</h4><dl class="facts">${b.facts.map(([a, v, u]) =>
+    `<dt>${esc(a)}</dt><dd>${esc(v)}${u ? ` <a href="${esc(u)}" target="_blank" rel="noopener">출처</a>` : ""}</dd>`).join("")}</dl></div>`;
+}
+const ENG_LIKELY = /키즈|kids|킨더|kinder|유치부|영유|국제캠퍼스|인터내셔널|international|프리스쿨|pre-?school|토들러|폴리|poly|SLP|에스엘피|엘리프|ELIF|킨더슐레|아이스쿨|제이리/i;
 function normalizeEng(r){
   const addr = String(r.addr || "");
   return { id: "eng:" + r.id, name: String(r.name || ""), addr, area: r.region || areaOf(addr),
@@ -884,6 +913,7 @@ function engCard(k){
     <p class="addr">${esc(k.addr)}</p>
     ${k.courses.length ? `<div class="more">교습과정: ${esc(k.courses.join(", "))}</div>` : ""}
     ${k.fees.length ? `<div class="fee">교육청 신고 수강료\n${esc(k.fees.join("\n"))}</div>` : ""}
+    ${engNotes(k)}
     ${newsHTML(k)}
     ${facilityChips(k)}
     ${communityHTML(k)}
