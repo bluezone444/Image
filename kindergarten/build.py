@@ -394,6 +394,8 @@ DEEP_TARGETS = [
      "queries": ["성민프리미어학원 수지", "성민프리미어스쿨 원비", "성민프리미어스쿨 후기"]},
     {"key": "besti", "names": ["베스아이", "best-i", "BEST-I"], "home": "http://best-i.kg.kr",
      "queries": ["베스아이유치원", "베스아이유치원 수지 원비", "베스아이유치원 후기"]},
+    {"key": "iddeul", "names": ["아이뜰", "iddeul"], "home": "http://www.iddeulkinder.co.kr",
+     "queries": ["수지아이뜰유치원", "수지아이뜰유치원 원비", "수지아이뜰유치원 후기"]},
 ]
 TOPICS = {
     "비용": r"원비|교육비|수업료|수강료|부모 ?부담|납부|입학금|등록금|재료비|교재비|차량비|만 ?원",
