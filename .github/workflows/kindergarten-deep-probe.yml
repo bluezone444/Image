@@ -19,7 +19,7 @@ jobs:
           python-version: "3.12"
       - name: 4곳 집중 수집만 실행 (기록 확인용, 커밋 없음)
         run: python kindergarten/build.py --deep-only "--only=$(cat kindergarten/probe.txt | head -1)"
-      - name: 유튜브 영상 정보·자막 (probe.txt에 yt: 줄이 있을 때)
+      - name: "유튜브 영상 정보·자막 (probe.txt에 yt 줄이 있을 때)"
         if: always()
         run: |
           if grep -q '^yt:' kindergarten/probe.txt; then
