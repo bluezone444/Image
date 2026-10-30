@@ -346,7 +346,7 @@ footer p{margin:0;max-width:70ch}
   <!-- 안다빈 전용 비교 -->
   <section class="dabin-only" style="display:flex;flex-direction:column;gap:14px">
     <div class="dabin-head">
-      <p class="section-label">엄마(안다빈)가 고른 4곳 · 하윤이 기준 집중 분석</p>
+      <p class="section-label">엄마(안다빈)가 고른 5곳 · 하윤이 기준 집중 분석</p>
       <h2>단지 어린이집, 폴리, 성민, 베스아이</h2>
       <p>공시 데이터, 각 원 홈페이지, 웹 검색으로 찾은 글, 뉴스를 모아 정리했어요. 비교표에서 초록 칸은 그 줄에서 가장 유리한 곳이에요. 웹에서 모은 문장은 출처 링크를 눌러 원문을 확인하세요.</p>
       <p class="birth"><b id="dabinAge"></b></p>
@@ -1276,7 +1276,7 @@ function renderRec(){
     : `<div class="card empty">후보 범위를 넓혀 보세요.</div>`;
 }
 
-/* ---------- 안다빈 전용 4곳 비교 ---------- */
+/* ---------- 안다빈 전용 5곳 비교 ---------- */
 // 어린이집은 유치원알리미·나이스에 없어서 제도 기준값과 직접 입력칸으로 채움
 const DAYCARE = {
   id: "dabin:daycare", type: "daycare", name: "동천센트럴자이 시립 어린이집", area: "수지구",
@@ -1300,7 +1300,8 @@ function dabinPlaces(){
     poly ? { ...poly, type: "eng", deepKey: "poly", alias: "폴리 수지캠퍼스 (ECP 유치부)", note: "유치부(ECP) 설명회가 열린 풍덕천로 122 하나로프라자 7층 '폴리어학원' 기준이에요. 문정로 13 중수프라자 '수지폴리어학원'은 초등부 위주이고, 유치부 일부 반이 별관을 쓴다는 후기도 있어요." }
          : { id: "dabin:poly", type: "eng", deepKey: "poly", name: "수지폴리어학원", area: "수지구", addr: "", news: [], fees: [] },
     { ...sungmin, type: "eng", deepKey: "sungmin", alias: "성민프리미어", note: "성민프리미어는 수지(진산로11번길 2, 풍덕천동)와 수원(장안구 천천동)에 있어요. 수원 지점 이야기는 빼고 수지 지점 기준으로 정리했어요." },
-    gen("베스아이유치원") ? { ...gen("베스아이유치원"), type: "kg", deepKey: "besti" } : null
+    gen("베스아이유치원") ? { ...gen("베스아이유치원"), type: "kg", deepKey: "besti" } : null,
+    gen("수지아이뜰유치원") ? { ...gen("수지아이뜰유치원"), type: "kg", deepKey: "iddeul" } : null
   ].filter(Boolean);
 }
 // 수집 기록에서 확인한 핵심 숫자 (2026-10-26 기준, 출처 링크)
