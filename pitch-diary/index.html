@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pitch Diary</title>
+<style>
+:root{
+  --bg:#f3f6f1; --surface:#ffffff; --surface-2:#eef2ec; --ink:#16201a; --muted:#5d6b62;
+  --line:#d9e1d6; --brand:#1f8a4c; --brand-ink:#ffffff; --pitch:#2f9e5a; --pitch-2:#278a4e;
+  --win:#1f8a4c; --draw:#8a8f2a; --loss:#c2413a; --shadow:0 1px 2px rgba(0,0,0,.06),0 4px 14px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1511; --surface:#17201a; --surface-2:#1e2a22; --ink:#e7eee9; --muted:#9aa9a0;
+    --line:#2a3830; --brand:#3cc178; --brand-ink:#08130c; --pitch:#1d6b3e; --pitch-2:#185c35;
+    --win:#3cc178; --draw:#c8cd52; --loss:#ef6b62; --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1511; --surface:#17201a; --surface-2:#1e2a22; --ink:#e7eee9; --muted:#9aa9a0;
+  --line:#2a3830; --brand:#3cc178; --brand-ink:#08130c; --pitch:#1d6b3e; --pitch-2:#185c35;
+  --win:#3cc178; --draw:#c8cd52; --loss:#ef6b62; --shadow:0 1px 2px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Malgun Gothic",sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:880px;margin:0 auto;padding:0 16px 96px}
+
+/* header / pitch hero */
+.hero{position:relative;overflow:hidden;color:#fff;
+  background:repeating-linear-gradient(90deg,var(--pitch) 0 48px,var(--pitch-2) 48px 96px)}
+.hero::before{content:"";position:absolute;inset:14px;border:2px solid rgba(255,255,255,.35);border-radius:4px;pointer-events:none}
+.hero::after{content:"";position:absolute;left:50%;top:50%;width:120px;height:120px;margin:-60px 0 0 -60px;border:2px solid rgba(255,255,255,.35);border-radius:50%;pointer-events:none}
+.hero-in{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:28px 16px 24px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.hero h1{margin:0;font-size:26px;letter-spacing:-.02em}
+.hero p{margin:2px 0 0;opacity:.9;font-size:14px}
+.hero .actions{display:flex;gap:8px}
+.ghost{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:999px;padding:7px 12px;cursor:pointer;font-size:13px}
+.ghost:hover{background:rgba(255,255,255,.26)}
+
+/* tabs */
+.tabs{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;gap:4px;padding:10px 0;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tab{flex:1;background:none;border:0;padding:9px 6px;border-radius:10px;cursor:pointer;color:var(--muted);font-weight:600}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.section-title{font-size:13px;font-weight:700;color:var(--muted);margin:22px 0 8px;letter-spacing:.02em}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stat{padding:14px}
+.stat .k{font-size:12px;color:var(--muted)}
+.stat .v{font-size:24px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat .s{font-size:12px;color:var(--muted)}
+.wdl{padding:14px}
+.bar{display:flex;height:14px;border-radius:999px;overflow:hidden;background:var(--surface-2);margin:10px 0 8px}
+.bar span{display:block;height:100%}
+.legend{display:flex;gap:14px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.form{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.chip{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:7px;font-size:12px;font-weight:800;color:#fff}
+.W{background:var(--win)} .D{background:var(--draw)} .L{background:var(--loss)} .N{background:var(--muted)}
+.rank{padding:6px 14px}
+.rank-row{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.rank-row:last-child{border-bottom:0}
+.rank-row b{font-variant-numeric:tabular-nums}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* list */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.toolbar select,.toolbar input{flex:1;min-width:120px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 10px}
+.ticket{display:flex;overflow:hidden;margin-bottom:12px;cursor:pointer}
+.ticket .stub{width:8px;flex:none}
+.ticket .body{flex:1;padding:14px 16px;min-width:0}
+.ticket .meta{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+.score{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin:8px 0 6px}
+.team{font-weight:700;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.team.home{text-align:right}
+.team.mine::after{content:" ★";color:var(--brand);font-size:12px}
+.team.home.mine::after{content:""}
+.team.home.mine::before{content:"★ ";color:var(--brand);font-size:12px}
+.goals{font-size:26px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.ticket .foot{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.ticket .memo{font-size:13px;margin-top:6px;color:var(--ink);opacity:.85;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ticket .thumb{width:92px;flex:none;background-size:cover;background-position:center;border-left:1px dashed var(--line)}
+.stars{color:#e6a817;letter-spacing:1px}
+.empty{text-align:center;padding:48px 16px;color:var(--muted)}
+.empty .ball{font-size:44px}
+
+/* form */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field.full{grid-column:1/-1}
+.field label{font-size:12px;font-weight:700;color:var(--muted)}
+.field input,.field select,.field textarea{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 11px}
+.field textarea{min-height:96px;resize:vertical}
+.scorebox{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
+.scorebox input{text-align:center;font-size:22px;font-weight:800}
+.seg{display:flex;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{flex:1;border:0;background:none;padding:7px;border-radius:8px;cursor:pointer;color:var(--muted);font-weight:600}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.rate{display:flex;gap:4px}
+.rate button{border:0;background:none;font-size:26px;cursor:pointer;color:var(--line);padding:0 2px;line-height:1}
+.rate button.on{color:#e6a817}
+.photo-prev{margin-top:8px;max-width:100%;max-height:220px;border-radius:10px;display:none}
+.btns{display:flex;gap:8px;padding:0 16px 16px}
+.btn{border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer}
+.btn.primary{background:var(--brand);color:var(--brand-ink);flex:1}
+.btn.sub{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:none;color:var(--loss);border:1px solid var(--loss)}
+
+.fab{position:fixed;right:20px;bottom:20px;z-index:10;width:58px;height:58px;border-radius:50%;border:0;background:var(--brand);color:var(--brand-ink);font-size:30px;box-shadow:0 6px 20px rgba(0,0,0,.25);cursor:pointer}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
+.toast.show{opacity:1}
+[hidden]{display:none!important}
+
+@media (max-width:640px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .two{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .ticket .thumb{width:70px}
+  .team{font-size:14px}
+  .goals{font-size:22px}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-in">
+    <div>
+      <h1>⚽ Pitch Diary</h1>
+      <p>나만의 축구 직관 · 집관 일기</p>
+    </div>
+    <div class="actions">
+      <button class="ghost" id="themeBtn" type="button">테마</button>
+      <button class="ghost" id="exportBtn" type="button">백업</button>
+      <button class="ghost" id="importBtn" type="button">복원</button>
+      <input type="file" id="importFile" accept="application/json" hidden>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="home" aria-selected="true">기록장</button>
+    <button class="tab" role="tab" data-tab="stats" aria-selected="false">통계</button>
+    <button class="tab" role="tab" data-tab="write" aria-selected="false">경기 기록</button>
+  </nav>
+
+  <!-- 기록장 -->
+  <section id="tab-home">
+    <div class="toolbar">
+      <select id="fSeason"></select>
+      <select id="fResult">
+        <option value="">전체 결과</option>
+        <option value="W">승리</option>
+        <option value="D">무승부</option>
+        <option value="L">패배</option>
+      </select>
+      <select id="fType">
+        <option value="">직관 + 집관</option>
+        <option value="stadium">직관만</option>
+        <option value="home">집관만</option>
+      </select>
+      <input id="fQuery" type="search" placeholder="팀·경기장·메모 검색">
+    </div>
+    <div id="list"></div>
+  </section>
+
+  <!-- 통계 -->
+  <section id="tab-stats" hidden>
+    <div class="toolbar"><select id="sSeason"></select></div>
+    <div class="stats" id="statTiles"></div>
+    <div class="section-title">내 팀 승·무·패</div>
+    <div class="card wdl" id="wdl"></div>
+    <div class="two">
+      <div>
+        <div class="section-title">많이 간 경기장</div>
+        <div class="card rank" id="rankStadium"></div>
+      </div>
+      <div>
+        <div class="section-title">많이 만난 상대</div>
+        <div class="card rank" id="rankOpp"></div>
+      </div>
+    </div>
+    <div class="section-title">내가 뽑은 MOM</div>
+    <div class="card rank" id="rankMom"></div>
+  </section>
+
+  <!-- 경기 기록 -->
+  <section id="tab-write" hidden>
+    <form class="card" id="form" autocomplete="off">
+      <div class="form-grid">
+        <div class="field">
+          <label for="date">날짜</label>
+          <input type="date" id="date" required>
+        </div>
+        <div class="field">
+          <label for="comp">대회</label>
+          <select id="comp"></select>
+        </div>
+        <div class="field full">
+          <label>관람 방식</label>
+          <div class="seg" id="typeSeg">
+            <button type="button" data-v="stadium" class="on">🏟️ 직관</button>
+            <button type="button" data-v="home">📺 집관</button>
+          </div>
+        </div>
+        <div class="field full">
+          <label>스코어 (홈 : 원정)</label>
+          <div class="scorebox">
+            <input id="homeTeam" list="teams" placeholder="홈 팀" required style="font-size:15px;font-weight:700;text-align:right">
+            <span></span>
+            <input id="awayTeam" list="teams" placeholder="원정 팀" required style="font-size:15px;font-weight:700;text-align:left">
+          </div>
+          <div class="scorebox">
+            <input id="homeScore" type="number" min="0" max="99" inputmode="numeric" value="0">
+            <span style="font-weight:900;font-size:22px">:</span>
+            <input id="awayScore" type="number" min="0" max="99" inputmode="numeric" value="0">
+          </div>
+          <datalist id="teams"></datalist>
+        </div>
+        <div class="field">
+          <label for="myTeam">내가 응원한 팀</label>
+          <select id="myTeam"><option value="">중립 (응원팀 없음)</option></select>
+        </div>
+        <div class="field">
+          <label for="stadium">경기장</label>
+          <input id="stadium" list="stadiums" placeholder="예) 서울월드컵경기장">
+          <datalist id="stadiums"></datalist>
+        </div>
+        <div class="field">
+          <label for="seat">좌석 / 장소</label>
+          <input id="seat" placeholder="예) N석 응원석, 집 거실">
+        </div>
+        <div class="field">
+          <label for="with">함께 본 사람</label>
+          <input id="with" placeholder="예) 친구 2명">
+        </div>
+        <div class="field">
+          <label for="weather">날씨</label>
+          <select id="weather">
+            <option value="">-</option><option>☀️ 맑음</option><option>⛅ 구름</option><option>🌧️ 비</option><option>❄️ 눈</option><option>🌬️ 강풍</option><option>🏠 실내</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="mom">나의 MOM</label>
+          <input id="mom" placeholder="오늘의 선수">
+        </div>
+        <div class="field full">
+          <label for="scorers">득점자</label>
+          <input id="scorers" placeholder="예) 김OO 23', 이OO 78' (PK)">
+        </div>
+        <div class="field full">
+          <label>오늘 경기 만족도</label>
+          <div class="rate" id="rate"></div>
+        </div>
+        <div class="field full">
+          <label for="memo">일기</label>
+          <textarea id="memo" placeholder="오늘 경기는 어땠나요?"></textarea>
+        </div>
+        <div class="field full">
+          <label for="photo">사진 (티켓, 경기장)</label>
+          <input id="photo" type="file" accept="image/*">
+          <img id="photoPrev" class="photo-prev" alt="">
+        </div>
+      </div>
+      <div class="btns">
+        <button type="button" class="btn danger" id="delBtn" hidden>삭제</button>
+        <button type="button" class="btn sub" id="cancelBtn">취소</button>
+        <button type="submit" class="btn primary" id="saveBtn">저장하기</button>
+      </div>
+    </form>
+  </section>
+</main>
+
+<button class="fab" id="fab" type="button" aria-label="새 경기 기록">+</button>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+const KEY = 'pitch-diary.v1';
+const THEME_KEY = 'pitch-diary.theme';
+
+const COMPS = ['K리그1','K리그2','코리아컵','AFC 챔피언스리그','A매치','프리미어리그','라리가','분데스리가','세리에A','리그1','UEFA 챔피언스리그','월드컵','친선경기','기타'];
+const TEAMS = ['FC서울','울산 HD','전북 현대','포항 스틸러스','수원 FC','강원 FC','김천 상무','대전 하나시티즌','광주 FC','제주 SK','대구 FC','FC안양','수원 삼성','부산 아이파크','인천 유나이티드','전남 드래곤즈','성남 FC','부천 FC','대한민국','토트넘','맨체스터 시티','리버풀','아스널','바이에른 뮌헨','파리 생제르맹','레알 마드리드','바르셀로나'];
+const STADIUMS = ['서울월드컵경기장','울산문수축구경기장','전주월드컵경기장','포항스틸야드','수원종합운동장','춘천송암스포츠타운','강릉종합운동장','김천종합운동장','대전월드컵경기장','광주축구전용구장','제주월드컵경기장','대구iM뱅크PARK','안양종합운동장','수원월드컵경기장','부산구덕운동장','인천축구전용경기장','광양축구전용구장','탄천종합운동장','부천종합운동장','고양종합운동장'];
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// ---------- storage ----------
+function load(){ try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } }
+let data = load();
+function save(){
+  try { localStorage.setItem(KEY, JSON.stringify(data)); return true; }
+  catch { toast('저장 공간이 부족해요. 사진을 줄이거나 백업 후 정리해 주세요.'); return false; }
+}
+
+// ---------- theme ----------
+function applyTheme(t){ if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; }
+try { applyTheme(localStorage.getItem(THEME_KEY)); } catch {}
+$('#themeBtn').onclick = () => {
+  const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  applyTheme(next); try { localStorage.setItem(THEME_KEY, next); } catch {}
+};
+
+// ---------- helpers ----------
+function resultOf(m){
+  if (!m.myTeam) return 'N';
+  const mine = m.myTeam === m.homeTeam ? m.homeScore : m.awayScore;
+  const opp  = m.myTeam === m.homeTeam ? m.awayScore : m.homeScore;
+  return mine > opp ? 'W' : mine < opp ? 'L' : 'D';
+}
+const RES_LABEL = {W:'승',D:'무',L:'패',N:'-'};
+const RES_COLOR = {W:'var(--win)',D:'var(--draw)',L:'var(--loss)',N:'var(--muted)'};
+function sorted(arr){ return [...arr].sort((a,b) => b.date.localeCompare(a.date) || b.created - a.created); }
+function seasons(){ return [...new Set(data.map(m => m.date.slice(0,4)))].sort().reverse(); }
+function fmtDate(d){
+  const dt = new Date(d + 'T00:00:00');
+  return `${dt.getFullYear()}.${String(dt.getMonth()+1).padStart(2,'0')}.${String(dt.getDate()).padStart(2,'0')} (${'일월화수목금토'[dt.getDay()]})`;
+}
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2200); }
+function fillSeasonSelect(sel){
+  const v = sel.value;
+  sel.innerHTML = '<option value="">전체 시즌</option>' + seasons().map(s => `<option value="${s}">${s} 시즌</option>`).join('');
+  sel.value = seasons().includes(v) ? v : '';
+}
+
+// ---------- tabs ----------
+function showTab(name){
+  document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === name));
+  ['home','stats','write'].forEach(n => $('#tab-' + n).hidden = n !== name);
+  $('#fab').hidden = name === 'write';
+  if (name === 'home') renderList();
+  if (name === 'stats') renderStats();
+  window.scrollTo({top:0});
+}
+document.querySelectorAll('.tab').forEach(b => b.onclick = () => { if (b.dataset.tab === 'write') openForm(); else showTab(b.dataset.tab); });
+$('#fab').onclick = () => openForm();
+
+// ---------- list ----------
+['#fSeason','#fResult','#fType'].forEach(s => $(s).onchange = renderList);
+$('#fQuery').oninput = renderList;
+
+function renderList(){
+  fillSeasonSelect($('#fSeason'));
+  const season = $('#fSeason').value, res = $('#fResult').value, type = $('#fType').value, q = $('#fQuery').value.trim().toLowerCase();
+  const items = sorted(data).filter(m =>
+    (!season || m.date.startsWith(season)) &&
+    (!res || resultOf(m) === res) &&
+    (!type || m.type === type) &&
+    (!q || [m.homeTeam,m.awayTeam,m.stadium,m.memo,m.mom,m.comp,m.scorers].join(' ').toLowerCase().includes(q))
+  );
+  const el = $('#list');
+  if (!data.length){
+    el.innerHTML = `<div class="empty"><div class="ball">⚽</div><p><b>아직 기록이 없어요</b><br>오른쪽 아래 + 버튼으로 첫 경기를 기록해 보세요.</p></div>`;
+    return;
+  }
+  if (!items.length){ el.innerHTML = `<div class="empty"><p>조건에 맞는 경기가 없어요.</p></div>`; return; }
+  el.innerHTML = items.map(m => {
+    const r = resultOf(m);
+    return `<article class="card ticket" data-id="${m.id}">
+      <div class="stub" style="background:${RES_COLOR[r]}"></div>
+      <div class="body">
+        <div class="meta">
+          <span>${fmtDate(m.date)}</span>
+          <span class="badge">${esc(m.comp)}</span>
+          <span class="badge">${m.type === 'home' ? '📺 집관' : '🏟️ 직관'}</span>
+          ${r !== 'N' ? `<span class="chip ${r}" style="width:22px;height:22px">${RES_LABEL[r]}</span>` : ''}
+        </div>
+        <div class="score">
+          <div class="team home ${m.myTeam === m.homeTeam ? 'mine' : ''}">${esc(m.homeTeam)}</div>
+          <div class="goals">${m.homeScore} : ${m.awayScore}</div>
+          <div class="team ${m.myTeam === m.awayTeam ? 'mine' : ''}">${esc(m.awayTeam)}</div>
+        </div>
+        <div class="foot">
+          <span>${m.stadium ? '📍 ' + esc(m.stadium) : ''}${m.weather ? ' · ' + esc(m.weather) : ''}</span>
+          <span>${m.mom ? 'MOM ' + esc(m.mom) + ' · ' : ''}<span class="stars">${'★'.repeat(m.rating || 0)}${'☆'.repeat(5 - (m.rating || 0))}</span></span>
+        </div>
+        ${m.memo ? `<div class="memo">${esc(m.memo)}</div>` : ''}
+      </div>
+      ${m.photo ? `<div class="thumb" style="background-image:url('${m.photo}')"></div>` : ''}
+    </article>`;
+  }).join('');
+  el.querySelectorAll('.ticket').forEach(t => t.onclick = () => openForm(t.dataset.id));
+}
+
+// ---------- stats ----------
+$('#sSeason').onchange = renderStats;
+function rankHtml(map, unit){
+  const rows = [...map.entries()].sort((a,b) => b[1] - a[1]).slice(0,5);
+  if (!rows.length) return `<div class="rank-row"><span style="color:var(--muted)">기록이 없어요</span></div>`;
+  return rows.map(([k,v],i) => `<div class="rank-row"><span>${i+1}. ${esc(k)}</span><b>${v}${unit}</b></div>`).join('');
+}
+function renderStats(){
+  fillSeasonSelect($('#sSeason'));
+  const season = $('#sSeason').value;
+  const ms = sorted(data).filter(m => !season || m.date.startsWith(season));
+  const stadiumN = ms.filter(m => m.type === 'stadium').length;
+  const withTeam = ms.filter(m => m.myTeam);
+  const c = {W:0,D:0,L:0};
+  let gf = 0, ga = 0;
+  withTeam.forEach(m => {
+    c[resultOf(m)]++;
+    const home = m.myTeam === m.homeTeam;
+    gf += home ? m.homeScore : m.awayScore;
+    ga += home ? m.awayScore : m.homeScore;
+  });
+  const decided = c.W + c.D + c.L;
+  const winRate = decided ? Math.round(c.W / decided * 100) : 0;
+  const points = c.W * 3 + c.D;
+  const totalGoals = ms.reduce((s,m) => s + m.homeScore + m.awayScore, 0);
+  const rated = ms.filter(m => m.rating);
+  const avgRating = rated.length ? (rated.reduce((s,m) => s + m.rating, 0) / rated.length).toFixed(1) : '-';
+
+  $('#statTiles').innerHTML = [
+    ['관람 경기', ms.length, `직관 ${stadiumN} · 집관 ${ms.length - stadiumN}`],
+    ['승률', decided ? winRate + '%' : '-', `승점 ${points} (경기당 ${decided ? (points/decided).toFixed(2) : '0'})`],
+    ['내 팀 득실', decided ? `${gf}:${ga}` : '-', `득실차 ${gf - ga > 0 ? '+' : ''}${gf - ga}`],
+    ['본 골', totalGoals, `경기당 ${ms.length ? (totalGoals/ms.length).toFixed(1) : 0}골 · 만족도 ${avgRating}`],
+  ].map(([k,v,s]) => `<div class="card stat"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
+
+  // streak (most recent same results, my team only)
+  let streak = '';
+  if (withTeam.length){
+    const first = resultOf(withTeam[0]); let n = 0;
+    for (const m of withTeam){ if (resultOf(m) === first) n++; else break; }
+    streak = `현재 <b>${n}경기 연속 ${RES_LABEL[first]}</b>`;
+  }
+  const pct = k => decided ? (c[k] / decided * 100) : 0;
+  $('#wdl').innerHTML = decided ? `
+    <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b style="font-size:18px">${c.W}승 ${c.D}무 ${c.L}패</b><span style="color:var(--muted);font-size:13px">${streak}</span></div>
+    <div class="bar"><span style="width:${pct('W')}%;background:var(--win)"></span><span style="width:${pct('D')}%;background:var(--draw)"></span><span style="width:${pct('L')}%;background:var(--loss)"></span></div>
+    <div class="legend"><span><i class="dot W"></i>승 ${Math.round(pct('W'))}%</span><span><i class="dot D"></i>무 ${Math.round(pct('D'))}%</span><span><i class="dot L"></i>패 ${Math.round(pct('L'))}%</span></div>
+    <div class="section-title" style="margin:14px 0 4px">최근 폼 (최신 → 과거)</div>
+    <div class="form">${withTeam.slice(0,10).map(m => `<span class="chip ${resultOf(m)}" title="${esc(m.homeTeam)} ${m.homeScore}:${m.awayScore} ${esc(m.awayTeam)}">${RES_LABEL[resultOf(m)]}</span>`).join('')}</div>
+  ` : `<span style="color:var(--muted)">응원팀을 지정한 경기가 아직 없어요.</span>`;
+
+  const st = new Map(), op = new Map(), mo = new Map();
+  ms.forEach(m => {
+    if (m.type === 'stadium' && m.stadium) st.set(m.stadium, (st.get(m.stadium) || 0) + 1);
+    if (m.myTeam){ const o = m.myTeam === m.homeTeam ? m.awayTeam : m.homeTeam; op.set(o, (op.get(o) || 0) + 1); }
+    if (m.mom) mo.set(m.mom, (mo.get(m.mom) || 0) + 1);
+  });
+  $('#rankStadium').innerHTML = rankHtml(st, '회');
+  $('#rankOpp').innerHTML = rankHtml(op, '경기');
+  $('#rankMom').innerHTML = rankHtml(mo, '회');
+}
+
+// ---------- form ----------
+$('#comp').innerHTML = COMPS.map(c => `<option>${c}</option>`).join('');
+let editingId = null, curType = 'stadium', curRating = 0, curPhoto = '';
+
+function knownTeams(){ return [...new Set([...data.flatMap(m => [m.homeTeam, m.awayTeam]), ...TEAMS])]; }
+function knownStadiums(){ return [...new Set([...data.map(m => m.stadium).filter(Boolean), ...STADIUMS])]; }
+
+function setType(v){ curType = v; document.querySelectorAll('#typeSeg button').forEach(b => b.classList.toggle('on', b.dataset.v === v)); }
+document.querySelectorAll('#typeSeg button').forEach(b => b.onclick = () => setType(b.dataset.v));
+
+function setRating(n){ curRating = n; document.querySelectorAll('#rate button').forEach((b,i) => b.classList.toggle('on', i < n)); }
+$('#rate').innerHTML = [1,2,3,4,5].map(n => `<button type="button" aria-label="${n}점">★</button>`).join('');
+document.querySelectorAll('#rate button').forEach((b,i) => b.onclick = () => setRating(curRating === i+1 ? 0 : i+1));
+
+function refreshMyTeam(keep){
+  const h = $('#homeTeam').value.trim(), a = $('#awayTeam').value.trim();
+  const sel = $('#myTeam'); const v = keep ?? sel.value;
+  sel.innerHTML = '<option value="">중립 (응원팀 없음)</option>' + [h,a].filter(Boolean).filter((t,i,arr) => arr.indexOf(t) === i).map(t => `<option>${esc(t)}</option>`).join('');
+  sel.value = [h,a].includes(v) ? v : '';
+}
+$('#homeTeam').oninput = () => refreshMyTeam();
+$('#awayTeam').oninput = () => refreshMyTeam();
+
+function lastMyTeam(){ const m = sorted(data).find(m => m.myTeam); return m ? m.myTeam : ''; }
+
+function openForm(id){
+  editingId = id || null;
+  const m = id ? data.find(x => x.id === id) : null;
+  $('#teams').innerHTML = knownTeams().map(t => `<option value="${esc(t)}">`).join('');
+  $('#stadiums').innerHTML = knownStadiums().map(t => `<option value="${esc(t)}">`).join('');
+  const fav = lastMyTeam();
+  $('#date').value = m ? m.date : new Date(Date.now() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+  $('#comp').value = m ? m.comp : (sorted(data)[0]?.comp || 'K리그1');
+  $('#homeTeam').value = m ? m.homeTeam : fav;
+  $('#awayTeam').value = m ? m.awayTeam : '';
+  $('#homeScore').value = m ? m.homeScore : 0;
+  $('#awayScore').value = m ? m.awayScore : 0;
+  ['stadium','seat','with','weather','mom','scorers','memo'].forEach(k => $('#' + k).value = m ? (m[k] || '') : '');
+  refreshMyTeam(m ? m.myTeam : fav);
+  setType(m ? m.type : 'stadium');
+  setRating(m ? (m.rating || 0) : 0);
+  curPhoto = m ? (m.photo || '') : '';
+  $('#photo').value = '';
+  $('#photoPrev').src = curPhoto; $('#photoPrev').style.display = curPhoto ? 'block' : 'none';
+  $('#delBtn').hidden = !m;
+  $('#saveBtn').textContent = m ? '수정 완료' : '저장하기';
+  showTab('write');
+}
+
+$('#photo').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const img = new Image(); const url = URL.createObjectURL(f);
+  img.onload = () => {
+    const max = 900, s = Math.min(1, max / Math.max(img.width, img.height));
+    const cv = document.createElement('canvas'); cv.width = Math.round(img.width * s); cv.height = Math.round(img.height * s);
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    curPhoto = cv.toDataURL('image/jpeg', .72);
+    $('#photoPrev').src = curPhoto; $('#photoPrev').style.display = 'block';
+    URL.revokeObjectURL(url);
+  };
+  img.src = url;
+};
+
+$('#form').onsubmit = e => {
+  e.preventDefault();
+  const homeTeam = $('#homeTeam').value.trim(), awayTeam = $('#awayTeam').value.trim();
+  if (!homeTeam || !awayTeam){ toast('홈 팀과 원정 팀을 입력해 주세요.'); return; }
+  if (homeTeam === awayTeam){ toast('홈 팀과 원정 팀이 같아요.'); return; }
+  const prev = editingId ? data.find(x => x.id === editingId) : null;
+  const m = {
+    id: editingId || (Date.now().toString(36) + Math.random().toString(36).slice(2,6)),
+    created: prev ? prev.created : Date.now(),
+    date: $('#date').value, comp: $('#comp').value, type: curType,
+    homeTeam, awayTeam,
+    homeScore: Math.max(0, parseInt($('#homeScore').value, 10) || 0),
+    awayScore: Math.max(0, parseInt($('#awayScore').value, 10) || 0),
+    myTeam: $('#myTeam').value,
+    stadium: $('#stadium').value.trim(), seat: $('#seat').value.trim(), with: $('#with').value.trim(),
+    weather: $('#weather').value, mom: $('#mom').value.trim(), scorers: $('#scorers').value.trim(),
+    rating: curRating, memo: $('#memo').value.trim(), photo: curPhoto,
+  };
+  const backup = data;
+  data = prev ? data.map(x => x.id === m.id ? m : x) : [...data, m];
+  if (!save()){ data = backup; return; }
+  toast(prev ? '수정했어요' : '경기를 기록했어요 ⚽');
+  showTab('home');
+};
+$('#cancelBtn').onclick = () => showTab('home');
+$('#delBtn').onclick = () => {
+  if (!editingId || !confirm('이 경기 기록을 삭제할까요?')) return;
+  data = data.filter(x => x.id !== editingId); save(); toast('삭제했어요'); showTab('home');
+};
+
+// ---------- backup ----------
+$('#exportBtn').onclick = () => {
+  const blob = new Blob([JSON.stringify({app:'pitch-diary', version:1, matches:data}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `pitch-diary-${new Date().toISOString().slice(0,10)}.json`; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$('#importBtn').onclick = () => $('#importFile').click();
+$('#importFile').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const j = JSON.parse(await f.text());
+    const arr = Array.isArray(j) ? j : j.matches;
+    if (!Array.isArray(arr)) throw 0;
+    const valid = arr.filter(m => m && m.id && m.date && m.homeTeam && m.awayTeam);
+    const ids = new Set(data.map(m => m.id));
+    const added = valid.filter(m => !ids.has(m.id));
+    data = [...data, ...added]; save();
+    toast(`${added.length}경기를 불러왔어요`); showTab('home');
+  } catch { toast('백업 파일을 읽을 수 없어요'); }
+  e.target.value = '';
+};
+
+renderList();
+})();
+</script>
+</body>
+</html>
