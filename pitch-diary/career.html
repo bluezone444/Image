@@ -193,6 +193,31 @@ table.hist th{color:var(--muted);font-weight:700;font-size:12px}
 .flashfx{position:fixed;inset:0;z-index:45;display:grid;place-items:center;pointer-events:none}
 .flashfx b{font-size:clamp(48px,14vw,96px);font-weight:900;color:#fff;text-shadow:0 6px 30px rgba(0,0,0,.45),0 0 0 #000;animation:goal 1.3s cubic-bezier(.3,1.4,.6,1) both;-webkit-text-stroke:2px var(--pitch-2)}
 #confetti{position:fixed;inset:0;pointer-events:none;z-index:50}
+.sit{display:flex;gap:10px;align-items:flex-start;background:var(--surface-2);border-radius:12px;padding:12px;margin-top:12px;font-size:14px;animation:fadeUp .4s ease both}
+.sit .ic{font-size:22px;line-height:1.2}
+.traits{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.trait{font-size:12px;font-weight:800;padding:3px 10px;border-radius:999px;border:1px solid var(--gold);color:var(--gold);animation:pop .4s ease both}
+.act:disabled{opacity:.5;cursor:default;transform:none}
+.ans.picked{border-color:var(--brand);box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 30%,transparent)}
+.ans:disabled{cursor:default}
+.mood{font-size:13px;color:var(--muted);margin:0 0 12px;animation:fadeUp .4s ease both}
+.writing{text-align:center;color:var(--muted);margin:18px 0 4px;font-weight:700}
+.opinion{margin-top:16px;animation:fadeUp .3s ease both}
+.opinion .scale{position:relative;height:12px;border-radius:999px;background:linear-gradient(90deg,var(--down),var(--surface-2) 50%,var(--up));margin-top:6px}
+.opinion .needle{position:absolute;top:-6px;left:50%;width:6px;height:24px;margin-left:-3px;border-radius:3px;background:var(--ink);box-shadow:0 0 0 2px var(--surface);transition:left 1.1s cubic-bezier(.3,1.5,.5,1)}
+.opinion .ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:6px}
+.fans{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.fans li{font-size:13px;background:var(--surface-2);border-radius:10px;padding:8px 10px;animation:fadeUp .35s ease both}
+.fans li b{color:var(--muted);font-size:12px;margin-right:4px}
+.twist{margin-top:10px;padding:10px 12px;border-radius:12px;border:1px dashed var(--gold);font-size:14px;animation:pop .45s ease both}
+.twist.coach{border-style:solid;border-color:var(--line)}
+.fx{position:fixed;inset:0;z-index:46;display:grid;place-items:center;background:rgba(5,15,9,.6);backdrop-filter:blur(3px);animation:fadeIn .25s ease both;cursor:pointer;padding:16px}
+.fx-card{background:var(--surface);color:var(--ink);border:2px solid var(--gold);border-radius:18px;padding:22px 24px;text-align:center;max-width:340px;animation:zoomIn .55s cubic-bezier(.3,1.5,.6,1) both;box-shadow:0 0 50px rgba(245,197,24,.45)}
+.fx-card .big{font-size:52px;line-height:1.2;animation:wiggle 1.6s ease-in-out infinite}
+.fx-card h3{margin:6px 0 4px;font-size:20px}
+.fx-eyebrow{color:var(--gold);font-weight:800;font-size:12px;letter-spacing:.08em}
+@keyframes fadeIn{from{opacity:0}}
+@keyframes zoomIn{from{opacity:0;transform:scale(.4) rotate(-8deg)}}
 [hidden]{display:none!important}
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}}
@@ -318,6 +343,27 @@ function load(){
     if (!['week','match','interview','nego','retired'].includes(r.phase)) r.phase = 'week';
     r.season = Object.assign(freshSeason(), r.season || {});
     if (!Array.isArray(r.season.ratings)) r.season.ratings = [];
+    r.traits = Array.isArray(r.traits) ? [...new Set(r.traits.filter(t => TRAITS[t]))] : [];
+    r.buff = clamp(Number(r.buff) || 0, -1, 1);
+    r.media = int(r.media, -2, 2, 0);
+    r.toneHist = Array.isArray(r.toneHist) ? r.toneHist.filter(t => TONES[t]).slice(-3) : [];
+    r.streak = r.streak && ['W','D','L'].includes(r.streak.t) ? {t:r.streak.t, n:int(r.streak.n, 0, 99, 0)} : {t:'', n:0};
+    r.rival = typeof r.rival === 'string' && RIVALS.includes(r.rival) ? r.rival : pick(RIVALS);
+    r.week = r.week && ACT_IDS.includes(r.week.need) && typeof r.week.text === 'string' ? {need:r.week.need, text:r.week.text.slice(0, 200)} : null;
+    r.prev = r.prev ? {rating:Number(r.prev.rating) || 0, goals:int(r.prev.goals, 0, 9, 0), mins:int(r.prev.mins, 0, 90, 0)} : null;
+    if (r.last){ const L = r.last; L.tg = int(L.tg, 0, 9, 0); L.og = int(L.og, 0, 9, 0); L.goals = int(L.goals, 0, 9, 0); L.assists = int(L.assists, 0, 9, 0); L.mins = int(L.mins, 0, 90, 0); L.rating = L.rating == null ? null : clamp(Number(L.rating) || 6, 3, 10); if (!CLUB[L.opp]) r.last = null; }
+    if (r.phase === 'interview' && !r.last) r.phase = 'week';
+    if (r.interview){
+      const iv = r.interview.set;
+      if (!iv || typeof iv.q !== 'string' || !Array.isArray(iv.a) || !iv.a.every(a => a && typeof a.t === 'string' && TONES[a.tone])) r.interview = null;
+      else if (r.interview.res){
+        const x = r.interview.res;
+        x.gi = int(x.gi, 0, 4, 2); r.interview.picked = int(r.interview.picked, -1, 3, -1);
+        x.fx = (Array.isArray(x.fx) ? x.fx : []).filter(f => Array.isArray(f) && typeof f[0] === 'string').map(f => [f[0], Number(f[1]) || 0, typeof f[2] === 'string' ? f[2] : '']);
+        x.fans = (Array.isArray(x.fans) ? x.fans : []).filter(Array.isArray).map(f => [String(f[0]), String(f[1])]);
+        ['h','said','twist','coach'].forEach(k => x[k] = String(x[k] ?? ''));
+      }
+    }
     return r;
   } catch { return null; }
 }
@@ -325,7 +371,8 @@ function newCareer(name, pos, club){
   const st = {}; STAT_KEYS.forEach(k => st[k] = clamp(POS[pos].base[k] + ri(-3, 3), 1, 99));
   S = {v:1, name, pos, club, age:19, year:new Date().getFullYear() + 1, round:0, stats:st, pop:8, trust:45, cond:100,
        salary:3000, earn:0, injury:0, fast:false, schedule:makeSchedule(club), season:freshSeason(), history:[], news:[], phase:'week',
-       last:null, interview:null, nego:null, best:{rating:0, salary:3000}};
+       last:null, interview:null, nego:null, best:{rating:0, salary:3000},
+       traits:[], buff:0, streak:{t:'', n:0}, media:0, toneHist:[], week:null, prev:null, rival:pick(RIVALS)};
   addNews(`[오피셜] ${club}, 19세 유망주 ${name} 영입… 연봉 ${money(3000)}`);
   save();
 }
@@ -339,14 +386,14 @@ function applyFx(e){
   }
   return out;
 }
-const chipsHtml = arr => arr.map(([l, d], i) => `<span class="chip ${d > 0 ? 'up' : 'down'}" style="animation-delay:${i*80}ms">${esc(l)} ${d > 0 ? '+' : ''}${d}</span>`).join('');
+const chipsHtml = arr => arr.map(([l, d, txt], i) => `<span class="chip ${d > 0 ? 'up' : 'down'}" style="animation-delay:${i*80}ms">${txt ? esc(txt) : `${esc(l)} ${d > 0 ? '+' : ''}${d}`}</span>`).join('');
 
 // ================= render: router =================
 const app = $('#app');
 function go(){
   save();
   if (!S) return renderStart();
-  ({week:renderHub, match:renderHub, interview:renderInterview, nego:renderNego, retired:renderRetired})[S.phase]();
+  ({week:renderHub, match:playMatch, interview:renderInterview, nego:renderNego, retired:renderRetired})[S.phase]();
   window.scrollTo({top:0});
 }
 
@@ -387,6 +434,7 @@ function profileHtml(){
       <div class="meter"><div class="top"><span>감독 신뢰</span><b>${S.trust}</b></div>${bar(S.trust,'var(--brand)')}</div>
       <div class="meter"><div class="top"><span>컨디션${S.injury ? ' 🤕' : ''}</span><b>${S.cond}</b></div>${bar(S.cond, S.cond < 35 ? 'var(--loss)' : '#4aa3df')}</div>
     </div>
+    ${S.traits.length || S.buff ? `<div class="traits">${S.buff ? `<span class="chip ${S.buff > 0 ? 'up' : 'down'}">${S.buff > 0 ? '🔥 자신감' : '😰 부담감'} ${S.buff > 0 ? '+' : ''}${S.buff.toFixed(1)}</span>` : ''}${S.traits.map(t => `<span class="trait" title="${esc(TRAITS[t].d)}">${TRAITS[t].i} ${esc(TRAITS[t].n)}</span>`).join('')}</div>` : ''}
     <div class="salary"><span>💰 연봉</span><b>${money(S.salary)}</b></div>
   </div>`;
 }
@@ -399,7 +447,7 @@ function actDesc(id){
   return {rest:'컨디션 +25', fan:'인기도↑ 컨디션−5', talk:'감독 신뢰 ±'}[id];
 }
 function renderHub(){
-  if (S.phase === 'match') S.phase = 'week';
+  if (!S.week){ S.week = makeWeek(); save(); }
   const opp = S.schedule[S.round], home = S.round % 2 === 0;
   const se = S.season, avg = se.ratings.length ? (se.ratings.reduce((a,b) => a+b, 0) / se.ratings.length).toFixed(2) : '-';
   app.innerHTML = `<section class="screen">
@@ -413,7 +461,8 @@ function renderHub(){
         <div class="vs-line">${crest(S.club)} ${esc(S.club)} <span class="hint">vs</span> ${crest(opp)} ${esc(opp)}</div>
         <span class="hint">${home ? '🏠 홈' : '🚌 원정'} · 상대 전력 ${CLUB[opp].s}</span>
       </div>
-      <p class="hint" style="margin:10px 0 0">${S.injury ? `🤕 부상 중이에요 (${S.injury}주). 휴식을 추천해요.` : '경기 전 무엇을 할까요? 선택하면 바로 경기가 시작돼요.'}</p>
+      <div class="sit"><span class="ic">📋</span><div><span class="lbl">이번 주 상황</span><br>${esc(S.week.text)}</div></div>
+      <p class="hint" style="margin:10px 0 0">${S.injury ? `🤕 부상 중 (${S.injury}주) · ` : ''}상황에 맞는 선택을 하면 좋은 일이 생길지도 몰라요. 선택하면 바로 경기가 시작돼요.</p>
       <div class="acts">${ACTS.map(([id,i,n], k) => `<button class="act" type="button" data-a="${id}" style="animation:rise .35s ${k*35}ms ease both"><span class="i">${i}</span><span class="n">${n}</span><span class="d">${actDesc(id)}</span></button>`).join('')}</div>
       <label class="hint" style="display:flex;gap:6px;align-items:center;margin-top:12px"><input type="checkbox" id="fast" ${S.fast ? 'checked' : ''}> 빠른 경기 (중계 생략)</label>
     </div>
@@ -438,34 +487,119 @@ function historyTable(){
 }
 
 // ---------- weekly action ----------
+// 매주 '상황'이 주어지고, 상황에 맞는 선택을 하면 적중 보너스 + 낮은 확률로 특별 보너스.
+const TRAITS = {
+  sho:{i:'🎯', n:'중거리 슈터', d:'골 확률 증가'},
+  pas:{i:'📦', n:'택배 패스', d:'도움 확률 증가'},
+  dri:{i:'💨', n:'탈압박 장인', d:'경기 평점 +0.2'},
+  def:{i:'🧱', n:'철벽', d:'출전 시 실점 감소'},
+  phy:{i:'🔋', n:'강철 체력', d:'경기 후 컨디션 소모 절반'},
+  fan:{i:'🤳', n:'팬서비스 장인', d:'팬 미팅 인기도 +3'},
+  talk:{i:'🗝️', n:'감독의 신임', d:'선발 확률 증가'},
+  rest:{i:'🧘', n:'회복의 달인', d:'휴식 컨디션 +10'},
+};
+const hasT = k => S.traits.includes(k);
+const ACT_IDS = ACTS.map(a => a[0]);
+const STYLE = {'FC서울':'possession','울산 HD':'highline','전북 현대':'physical','포항 스틸러스':'press','수원 FC':'counter','강원 FC':'press','김천 상무':'physical','대전 하나시티즌':'setpiece','광주 FC':'possession','제주 SK':'highline','대구 FC':'counter','FC안양':'setpiece'};
+const STYLE_SIT = {
+  highline:['sho','{opp}는 수비 라인을 높게 올린다. 뒷공간 1대1 찬스가 오면 무조건 결정지어야 한다.'],
+  press:['pas','{opp}의 전방 압박이 거세다. 공을 오래 끌면 바로 뺏긴다.'],
+  possession:['dri','{opp}는 점유율 축구를 한다. 공을 뺏은 순간 혼자 치고 나갈 수 있어야 한다.'],
+  physical:['def','{opp}는 거친 경합으로 유명하다. 공중볼과 몸싸움에서 밀리면 끝이다.'],
+  setpiece:['phy','{opp}는 세트피스 득점 1위. 박스 안에서 버틸 힘이 필요하다.'],
+  counter:['pas','{opp}는 내려앉아 역습만 노린다. 템포를 조절할 줄 알아야 뚫린다.'],
+};
+const EVENT_SIT = [
+  ['phy','🌧️ 경기 당일 폭우 예보. 미끄러운 잔디에서 균형을 잃지 않아야 한다.'],
+  ['fan','🎉 구단 창단 기념 주간이다. 팬들과 만날 행사가 줄줄이 잡혀 있다.'],
+  ['talk','📝 감독이 새 전술을 실험하려 한다. 내 역할을 확실히 알아둬야 한다.'],
+  ['rest','📅 주중 컵대회까지 겹친 살인 일정이다.'],
+  ['dri','🎥 분석관 메모: 상대 측면 수비가 1대1에 약하다.'],
+  ['pas','🧩 동료 공격수가 "좋은 패스만 오면 다 넣는다"고 큰소리쳤다.'],
+  ['sho','🥅 훈련장 슈팅 게임에서 꼴찌를 했다. 동료들이 놀리고 있다.'],
+  ['def','📼 지난 시즌 이 상대에게 내준 실점 영상을 감독이 다시 틀었다.'],
+];
+function wpick(list){ const tot = list.reduce((s, x) => s + x[0], 0); let r = Math.random() * tot; for (const x of list){ if ((r -= x[0]) < 0) return x; } return list[list.length - 1]; }
+function makeWeek(){
+  if (S.injury) return {need:'rest', text:'🤕 부상 부위가 아직 욱신거린다. 의무팀은 무리하지 말라고 한다.'};
+  const opp = S.schedule[S.round], c = [];
+  const [need, t] = STYLE_SIT[STYLE[opp] || 'press'];
+  c.push([3, need, '🔎 ' + t.replace('{opp}', opp)]);
+  if (S.cond < 50) c.push([3, 'rest', '🥵 몸이 무겁다. 트레이너가 내 다리를 보고 고개를 젓는다.']);
+  if (S.trust < 40) c.push([2, 'talk', '🤔 감독이 요즘 내 이름을 부르지 않는다. 무슨 생각인지 알아야 한다.']);
+  if (S.pop < 25) c.push([1, 'fan', '📉 구단 SNS 반응이 시들하다. 홍보팀이 도움을 요청했다.']);
+  if (S.prev && S.prev.mins && S.prev.rating < 6){
+    if (S.pos === 'GK' || S.pos === 'DF') c.push([2, 'def', '😣 지난 경기 실점 장면이 머릿속에서 떠나지 않는다.']);
+    else c.push([2, 'sho', '😤 지난 경기 슈팅이 번번이 빗나갔다. 감각을 되찾아야 한다.']);
+  }
+  const ev = pick(EVENT_SIT); c.push([1.5, ev[0], ev[1]]);
+  const [, n, text] = wpick(c);
+  return {need:n, text};
+}
 function growth(age){ return age <= 21 ? 2.2 : age <= 24 ? 1.7 : age <= 28 ? 1.1 : age <= 31 ? .6 : .3; }
-function doAction(id){
-  let msg = '';
+async function doAction(id){
+  if (S.phase !== 'week') return;
+  app.querySelectorAll('.act').forEach(b => b.disabled = true);
+  if (!S.week) S.week = makeWeek();
+  const hit = id === S.week.need, msgs = [];
+  let special = null;
   if (STAT_KEYS.includes(id)){
-    if (S.cond < 35 && Math.random() < .25){
+    if (S.cond < 35 && !hit && Math.random() < .25){
       S.injury = ri(1, 2); S.cond = clamp(S.cond - 10, 0, 100);
-      msg = `🤕 무리한 훈련으로 부상! ${S.injury}주 결장`; addNews(`${S.name}, 훈련 중 부상… ${S.injury}주 결장 예상`);
+      msgs.push(`🤕 무리한 훈련으로 부상! ${S.injury}주 결장`); addNews(`${S.name}, 훈련 중 부상… ${S.injury}주 결장 예상`);
     } else {
       const g = growth(S.age) * (S.cond / 100) * clamp((99 - S.stats[id]) / 40, .15, 1) * rand(.6, 1.5);
-      const gain = Math.max(0, Math.round(g));
+      let gain = Math.max(0, Math.round(g));
+      if (hit) gain = Math.max(1, Math.round(gain * 1.5));
       S.stats[id] = clamp(S.stats[id] + gain, 1, 99); S.cond = clamp(S.cond - 10, 0, 100);
-      msg = gain ? `${statName(id, S.pos)} +${gain}! 💪` : `${statName(id, S.pos)} 훈련… 이번엔 성과가 없었어요`;
+      msgs.push(gain ? `${statName(id, S.pos)} +${gain}! 💪` : `${statName(id, S.pos)} 훈련… 이번엔 성과가 없었어요`);
     }
   } else if (id === 'rest'){
-    S.cond = clamp(S.cond + 25, 0, 100); msg = '푹 쉬었어요. 컨디션 +25';
+    const g = 25 + (hasT('rest') ? 10 : 0) + (hit ? 10 : 0);
+    S.cond = clamp(S.cond + g, 0, 100);
+    if (hit && S.injury) S.injury--;
+    msgs.push(`푹 쉬었어요. 컨디션 +${g}`);
   } else if (id === 'fan'){
-    const g = ri(3, 6); S.pop = clamp(S.pop + g, 0, 100); S.cond = clamp(S.cond - 5, 0, 100); msg = `팬 미팅 대성공! 인기도 +${g}`;
+    const g = ri(3, 6) + (hasT('fan') ? 3 : 0) + (hit ? 3 : 0);
+    S.pop = clamp(S.pop + g, 0, 100); S.cond = clamp(S.cond - 5, 0, 100); msgs.push(`팬 미팅 대성공! 인기도 +${g}`);
     if (Math.random() < .3) addNews(`${S.name}의 팬 서비스, 팬들 사이에서 화제`);
   } else if (id === 'talk'){
-    const ok = Math.random() < .45 + S.trust / 200;
+    const ok = Math.random() < .45 + S.trust / 200 + (hit ? .2 : 0) + (hasT('talk') ? .05 : 0);
     const d = ok ? ri(3, 7) : -ri(2, 5); S.trust = clamp(S.trust + d, 0, 100);
-    msg = ok ? `감독: "네 열정은 잘 알겠다." 신뢰 +${d}` : `감독: "말보다 실력으로 보여줘." 신뢰 ${d}`;
+    msgs.push(ok ? `감독: "네 열정은 잘 알겠다." 신뢰 +${d}` : `감독: "말보다 실력으로 보여줘." 신뢰 ${d}`);
   }
-  toast(msg);
+  if (hit){
+    S.buff = clamp(S.buff + .2, -1, 1);
+    msgs.unshift('🎯 상황 적중!');
+    const roll = Math.random();
+    if (roll < .04) special = {i:'🌟', t:'잠재력 개방!', d:'모든 능력치 +1', go(){ STAT_KEYS.forEach(k => S.stats[k] = clamp(S.stats[k] + 1, 1, 99)); addNews(`${S.name}, 훈련장서 한 단계 성장… 코치진 감탄`); }};
+    else if (roll < .22) special = pickSpecial(id);
+    if (special) special.go();
+  }
+  S.phase = 'match'; save();
+  toast(msgs.join(' · '));
   const k = STAT_KEYS.includes(id) ? app.querySelector(`.ab[data-k="${id}"]`) : null;
   if (k){ k.querySelector('b').textContent = S.stats[id]; k.classList.add('flash'); }
-  S.phase = 'match'; save();
-  setTimeout(playMatch, RM ? 0 : 650);
+  if (special) await showSpecial(special); else await wait(650);
+  playMatch();
+}
+function pickSpecial(id){
+  const opts = [];
+  if (TRAITS[id] && !hasT(id)) opts.push([3, {i:TRAITS[id].i, t:`특성 획득: ${TRAITS[id].n}`, d:TRAITS[id].d, go(){ S.traits.push(id); addNews(`${S.name}, 새 무기 장착… '${TRAITS[id].n}' 면모 과시`); }}]);
+  if (STAT_KEYS.includes(id)) opts.push([2, {i:'⚡', t:'각성!', d:`${statName(id, S.pos)} +3 추가`, go(){ S.stats[id] = clamp(S.stats[id] + 3, 1, 99); }}]);
+  opts.push([1, {i:'👀', t:'감독이 훈련을 지켜봤다', d:'감독 신뢰 +6', go(){ S.trust = clamp(S.trust + 6, 0, 100); }}]);
+  opts.push([1, {i:'📱', t:'훈련 영상 바이럴', d:'인기도 +5', go(){ S.pop = clamp(S.pop + 5, 0, 100); addNews(`${S.name} 훈련 영상, SNS서 화제`); }}]);
+  opts.push([1, {i:'💚', t:'최상의 몸 상태', d:'컨디션 100 회복', go(){ S.cond = 100; }}]);
+  return wpick(opts)[1];
+}
+function showSpecial(sp){
+  return new Promise(res => {
+    const el = document.createElement('div'); el.className = 'fx';
+    el.innerHTML = `<div class="fx-card"><div class="fx-eyebrow">✨ 특별 보너스</div><div class="big">${sp.i}</div><h3>${esc(sp.t)}</h3><div class="hint">${esc(sp.d)}</div></div>`;
+    document.body.appendChild(el); confetti(['#f5c518','#ffe06b','#ffffff']);
+    let done = false; const close = () => { if (done) return; done = true; el.remove(); res(); };
+    el.onclick = close; setTimeout(close, RM ? 900 : 2600);
+  });
 }
 
 // ---------- match simulation ----------
@@ -474,7 +608,7 @@ function simulate(){
   let role = 'bench', from = 91;
   if (S.injury){ role = 'injured'; }
   else {
-    const pStart = clamp(.2 + (ovr - 55) / 35 + (S.trust - 50) / 120 + (S.cond - 60) / 250 - (CLUB[S.club].s - 70) / 60, .05, .97);
+    const pStart = clamp(.2 + (ovr - 55) / 35 + (S.trust - 50) / 120 + (S.cond - 60) / 250 - (CLUB[S.club].s - 70) / 60 + (hasT('talk') ? .1 : 0), .05, .97);
     if (S.cond >= 20 && Math.random() < pStart){ role = 'start'; from = 0; }
     else if (Math.random() < .45 && S.pos !== 'GK'){ role = 'sub'; from = ri(55, 80); }
   }
@@ -483,14 +617,15 @@ function simulate(){
   const ts = CLUB[S.club].s + myImpact + (home ? 2 : -2), os = CLUB[opp].s;
   let lt = 1.35 * Math.pow(ts / os, 2.4), lo = 1.35 * Math.pow(os / ts, 2.4);
   if (mins && (S.pos === 'GK' || S.pos === 'DF')) lo *= clamp(1 - (ovr - 55) / 160, .6, 1.1);
+  if (mins && hasT('def')) lo *= .9;
   const tg = Math.min(7, poisson(lt)), og = Math.min(7, poisson(lo));
   const ev = [];
   const sk = clamp(ovr / 65, .6, 1.6);
   for (let i = 0; i < tg; i++){
     const m = ri(1, 90), on = m >= from;
     let who = 'team', ast = false;
-    if (on && Math.random() < P.goalP * sk) who = 'me';
-    else if (on && Math.random() < P.astP * sk) ast = true;
+    if (on && Math.random() < P.goalP * sk * (hasT('sho') ? 1.25 : 1)) who = 'me';
+    else if (on && Math.random() < P.astP * sk * (hasT('pas') ? 1.3 : 1)) ast = true;
     ev.push({m, side:'us', who, ast});
   }
   for (let i = 0; i < og; i++) ev.push({m: ri(1, 90), side:'them'});
@@ -500,7 +635,7 @@ function simulate(){
   const res = tg > og ? 'W' : tg < og ? 'L' : 'D';
   let rating = null;
   if (mins){
-    rating = 6.0 + (ovr - 62) * .035 + (S.cond - 70) * .01 + goals * .9 + assists * .55 + (res === 'W' ? .35 : res === 'L' ? -.35 : 0) + rand(-.7, .7);
+    rating = 6.0 + (ovr - 62) * .035 + (S.cond - 70) * .01 + goals * .9 + assists * .55 + (res === 'W' ? .35 : res === 'L' ? -.35 : 0) + rand(-.7, .7) + S.buff + (hasT('dri') ? .2 : 0);
     if (S.pos === 'GK' || S.pos === 'DF'){ rating += (og === 0 ? .7 : -og * .2); }
     if (role === 'sub') rating = 6 + (rating - 6) * .7;
     rating = Math.round(clamp(rating, 3, 10) * 10) / 10;
@@ -515,7 +650,7 @@ function applyMatch(r){
     se.goals += r.goals; se.assists += r.assists; se.ratings.push(r.rating); if (r.cs) se.cs++;
     let dp = r.goals * 2 + r.assists + (r.rating >= 8 ? 3 : r.rating >= 7 ? 1 : r.rating < 5.5 ? -2 : 0) + (r.res === 'W' ? 1 : 0);
     let dt = r.rating >= 7.5 ? 3 : r.rating >= 6.5 ? 1 : r.rating < 5.5 ? -3 : 0;
-    fx.push(...applyFx({pop: dp, trust: dt, cond: r.role === 'start' ? -12 : -5}));
+    fx.push(...applyFx({pop: dp, trust: dt, cond: Math.round((r.role === 'start' ? -12 : -5) * (hasT('phy') ? .5 : 1))}));
     S.best.rating = Math.max(S.best.rating, r.rating);
     if (r.goals >= 3) addNews(`🎩 ${S.name} 해트트릭! ${S.club}, ${r.opp}에 ${r.tg}-${r.og} 대승`);
     else if (r.goals === 2) addNews(`⚽⚽ ${S.name} 멀티골… ${S.club} ${r.tg}-${r.og} ${r.res === 'W' ? '승리' : r.res === 'D' ? '무승부' : '패배'}`);
@@ -525,6 +660,10 @@ function applyMatch(r){
   } else {
     fx.push(...applyFx({cond: 8, pop: -1}));
   }
+  S.streak = S.streak.t === r.res ? {t:r.res, n:S.streak.n + 1} : {t:r.res, n:1};
+  S.prev = {rating:r.rating || 0, goals:r.goals, mins:r.mins};
+  S.media = clamp(S.media + ri(-1, 1), -2, 2);
+  S.buff = 0;
   S.last = {...r, fx};
 }
 async function playMatch(){
@@ -594,77 +733,211 @@ function countTo(el, to, dec){
 }
 
 // ---------- interview ----------
-// 각 답변: t(답변), e(효과), h(기사 제목), risk: [성공확률, 실패효과, 실패기사]
+// 답변마다 '말투(tone)'가 숨겨져 있고, 결과는 5단계(대박·호평·무난·역풍·대참사) 중 하나로 확률 결정.
+// 확률은 경기력, 인기도, 감독 신뢰, 숨겨진 언론 분위기, 같은 말투 반복 여부에 따라 바뀌고, 가끔 반전 이벤트가 끼어든다.
+const GRADES = ['jackpot','good','meh','bad','disaster'];
+const TONES = {
+  humble:[4,44,32,17,3], team:[3,40,38,17,2], emotional:[8,40,26,21,5], honest:[9,32,22,28,9],
+  bold:[14,28,14,28,16], funny:[12,30,22,26,10], evasive:[3,20,46,26,5], critical:[7,24,15,31,23], provoke:[17,22,9,30,22],
+};
+const RIVALS = ['한지후','박도윤','최시우','정민재','강하준','윤서진'];
+const QA = {
+  hero:{q:['{g}골로 {opp}전 승리를 이끌었습니다. 골 장면, 직접 설명해 주시겠어요?','평점 {rt}, 오늘 그라운드의 주인공이었는데요. 기분이 어떤가요?','요즘 "{N}의 포텐이 터졌다"는 말이 많은데, 본인 생각은요?','경기 끝나고 관중석을 한참 바라보던데, 무슨 생각을 했나요?'],
+    a:[['humble','동료들이 다 만들어줬어요. 저는 발만 갖다 댔습니다.'],['humble','운이 좋았습니다. 다음 경기가 더 중요해요.'],['bold','이게 제 원래 실력입니다. 이제 시작이에요.'],['bold','득점왕, 한번 노려보겠습니다.'],['emotional','팬분들 함성이 들리는 순간 소름이 돋았어요!'],['funny','몰래 연습한 세리머니 써먹어서 다행이에요.'],['team','감독님 전술이 완벽하게 맞아떨어졌어요.'],['provoke','{opp} 수비, 생각보다 별거 없더라고요.'],['honest','사실 전반엔 너무 못해서 교체될 줄 알았어요.']]},
+  heronw:{q:['골을 넣고도 웃지 못했습니다. 심정이 어떤가요?','개인 기록은 좋았지만 팀은 {sc}… 어떻게 보세요?','득점 후 세리머니를 하지 않았는데, 이유가 있나요?'],
+    a:[['humble','제 골은 의미 없어요. 팀이 못 이겼으니까요.'],['honest','뒤에서 조금만 더 버텨줬으면 했어요.'],['critical','심판 휘슬이 너무 빨랐어요.'],['team','다 같이 부족했습니다. 같이 반성하겠습니다.'],['bold','다음엔 두 골 넣어서 혼자라도 이기겠습니다.'],['emotional','멀리까지 와주신 팬분들께 죄송할 뿐이에요.'],['evasive','골 얘기는 나중에 하죠.'],['funny','세리머니는 이길 때를 위해 아껴뒀어요.']]},
+  poor:{q:['오늘 평점 {rt}로 부진했습니다. 원인이 뭐라고 보세요?','SNS에서 비판이 많은데, 보셨나요?','교체될 때 표정이 좋지 않았는데요?','오늘 몸이 무거워 보였는데, 컨디션 문제인가요?'],
+    a:[['honest','변명 안 하겠습니다. 제가 못했어요.'],['critical','잔디 상태가 너무 안 좋았어요.'],['critical','공이 저한테 거의 안 왔잖아요.'],['funny','오늘은 제 쌍둥이가 뛰었나 봐요.'],['evasive','SNS는 안 봅니다.'],['bold','다음 경기 끝나면 다들 사과하실 겁니다.'],['emotional','팬분들 실망시켜 드려서 잠이 안 올 것 같아요.'],['team','팀 전체가 리듬이 안 좋았어요.'],['humble','감독님 믿음에 보답 못 해 죄송합니다.']]},
+  loss:{q:['{opp}에 {sc}로 졌습니다. 패인을 꼽는다면?','오늘 결과로 순위 싸움이 어려워졌는데요?','경기 막판 팬들 야유가 들렸는데, 들으셨나요?'],
+    a:[['humble','제 책임입니다. 더 뛰었어야 했어요.'],['critical','심판 판정 하나가 경기를 바꿨어요.'],['critical','전술이 상대에게 읽혔다고 생각해요.'],['team','이럴 때일수록 뭉쳐야죠.'],['bold','다음 경기는 무조건 이깁니다. 약속할게요.'],['provoke','{opp}는 운으로 이긴 거예요.'],['funny','오늘 저녁은 쓴 걸로 먹어야겠네요.'],['emotional','야유도 사랑이라고 생각합니다. 죄송합니다.'],['honest','솔직히 준비가 부족했던 경기예요.']]},
+  win:{q:['{opp}전 {sc} 승리, 팀 분위기는 어떤가요?','다음 상대는 {next}인데요, 각오 한마디?','경기 전에 감독님이 뭐라고 하셨나요?'],
+    a:[['team','원팀의 힘이죠.'],['humble','아직 보완할 점이 많아요.'],['bold','이 기세면 우승도 가능합니다.'],['provoke','{next}요? 별로 안 무섭네요.'],['funny','이기면 회식이라고 하셔서 다들 눈빛이 달랐어요.'],['emotional','팬분들 응원가가 오늘따라 너무 좋았어요.'],['honest','솔직히 경기력은 별로였어요. 결과만 챙겼죠.'],['evasive','감독님 말씀은 라커룸의 비밀입니다.']]},
+  draw:{q:['{opp}와 {sc} 무승부, 만족하시나요?','승점 1점, 얻은 걸까요 잃은 걸까요?','막판 결정적 찬스를 놓쳤는데요?'],
+    a:[['team','지지 않은 것도 의미가 있어요.'],['honest','이겨야 했던 경기예요. 화가 납니다.'],['critical','마지막 찬스 때 패스가 안 왔어요.'],['humble','제가 결정지었어야 했어요.'],['bold','다음엔 확실히 이기겠습니다.'],['funny','무승부라 오늘은 반반 치킨 먹으려고요.'],['evasive','1점은 1점이죠.'],['emotional','끝까지 응원해 주신 팬분들 덕에 버텼어요.']]},
+  bench:{q:['오늘 출전하지 못했는데요, 몸 상태에 문제가 있나요?','벤치에서 경기를 지켜본 소감은?','출전 시간이 적어 이적설도 나오는데요?','몸 풀다가 끝내 투입되지 못했는데, 아쉽지 않나요?'],
+    a:[['humble','기회 주시면 언제든 준비돼 있습니다.'],['honest','솔직히 출전 시간이 더 필요해요.'],['critical','왜 못 뛰는지 저도 궁금합니다.'],['team','벤치에서도 팀 승리가 먼저예요.'],['funny','벤치가 생각보다 푹신하더라고요.'],['bold','훈련장에선 제가 제일 잘합니다.'],['evasive','이적설은 들은 바 없습니다.'],['emotional','팬분들이 제 이름 불러주셔서 울컥했어요.']]},
+  sub:{q:['교체 투입 {m}분 만에 해결사가 됐습니다!','이 정도면 선발로 뛰어야 하지 않나요?','투입되자마자 흐름이 바뀌었는데, 비결이 있나요?'],
+    a:[['humble','감독님이 넣어주신 타이밍이 좋았어요.'],['bold','다음엔 선발로 90분 보여드리죠.'],['critical','솔직히 처음부터 뛰고 싶었어요.'],['funny','벤치에서 몸 풀다가 감을 잡았어요.'],['team','선발 선수들이 상대를 지치게 해놔서요.'],['emotional','들어가자마자 팬들 함성에 다리가 떨렸어요.'],['provoke','{opp} 선수들 표정 보셨어요? 당황하더라고요.']]},
+  transfer:{q:['유럽 구단 관심설이 나오는데 사실인가요?','중동 구단에서 거액 제안이 왔다는 소문이 있는데요?'],
+    a:[['evasive','에이전트한테 물어보세요.'],['bold','더 큰 무대는 늘 꿈꿉니다.'],['team','지금은 {club}만 생각합니다.'],['funny','유럽 음식이 입에 맞을지 모르겠네요.'],['honest','제안이 오면 들어볼 생각은 있어요.'],['emotional','{club} 팬들을 두고 어딜 가겠어요.']]},
+  rival:{q:['{R} 선수와 비교가 많이 되는데요?','{R} 선수가 인터뷰에서 당신을 언급했는데, 들으셨나요?'],
+    a:[['humble','{R} 선수에게 배울 게 많아요.'],['provoke','비교 대상이 아니라고 생각합니다.'],['funny','얼굴은 제가 이기죠.'],['evasive','남 얘기는 안 하겠습니다.'],['bold','시즌 끝나면 답이 나와 있을 거예요.'],['honest','솔직히 의식이 안 된다면 거짓말이죠.']]},
+  love:{q:['열애설 기사가 났는데요, 사실인가요?'],
+    a:[['evasive','사생활은 노코멘트할게요.'],['funny','제 애인은 축구공입니다.'],['honest','좋은 감정으로 만나고 있어요.'],['emotional','팬분들께 먼저 말씀 못 드려 죄송해요.'],['critical','그런 기사는 선 넘었다고 생각해요.']]},
+  national:{q:['대표팀 발탁 가능성 얘기가 나오는데요?','대표팀 감독이 오늘 경기를 관전했다는데 알고 있었나요?'],
+    a:[['humble','아직 부족해요. 불러주시면 영광이죠.'],['bold','준비는 끝났습니다.'],['funny','태극마크 그려진 잠옷은 이미 있어요.'],['team','팀에서 잘하는 게 먼저예요.'],['emotional','어릴 때부터 꿈이었어요.'],['provoke','지금 대표팀 제 포지션, 솔직히 자신 있습니다.']]},
+  feud:{q:['감독님과 불화설이 있는데요?','훈련장에서 감독님과 언성을 높였다는 보도가 있었는데요?'],
+    a:[['team','감독님과 사이 아주 좋습니다.'],['honest','의견 차이는 있었지만 대화로 풀었어요.'],['critical','할 말은 많지만 참겠습니다.'],['funny','어제도 같이 국밥 먹었는데요?'],['evasive','그건 감독님께 물어보세요.']]},
+  chant:{q:['팬들이 새 응원가를 만들었다던데, 들어보셨나요?'],
+    a:[['emotional','듣자마자 울컥했어요. 평생 간직할게요.'],['funny','제가 직접 한 소절 불러드릴까요?'],['humble','과분한 사랑에 감사드려요.'],['bold','그 응원가가 더 크게 울리게 만들겠습니다.'],['evasive','아직 못 들어봤어요.']]},
+};
+const CURVEBALLS = ['transfer','rival','love','national','feud','chant'];
+const H = {
+  humble:{jackpot:['"이 선수 인성 뭐야"… {N} 겸손 인터뷰에 팬心 폭발','{N}의 한마디에 감독도 미소, "저런 선수가 팀을 바꾼다"'], good:['[인터뷰] {N} "동료 덕분"… 겸손한 태도 호평','{N}, 들뜨지 않는 프로 정신'], meh:['{N}, 무난한 소감 "다음 경기 집중"','[경기 후] {N} 짧은 소감 남겨'], bad:['"매번 똑같은 말만"… {N} 인터뷰에 팬들 시큰둥','{N}의 겸손, 일부선 "가식적" 반응'], disaster:['{N} 겸손 발언, 동료 실명 언급으로 역풍','"남 탓처럼 들린다" {N} 발언 해석 논란']},
+  team:{jackpot:['{N} "원팀" 발언에 라커룸 결속… 주장도 화답','{N} 한마디에 팀 분위기 반전'], good:['{N} "우리는 하나"… 팀워크 강조','{N}, 팀 퍼스트 정신 호평'], meh:['{N} "팀이 중요하다"','{N}, 무난한 팀 칭찬'], bad:['"뻔한 말" {N} 인터뷰에 반응 미지근','{N}, 팀 감싸기에 일부 팬 불만'], disaster:['{N} "다 같이 못했다"… 동료들 "왜 우리까지"','{N} 발언, 동료 감싼 듯 저격 논란']},
+  emotional:{jackpot:['{N}의 진심 인터뷰, 조회수 100만 돌파','"이런 선수 처음" {N} 팬 사랑에 감동 물결'], good:['{N}의 진심, 팬들 마음 움직였다','{N} "팬들 덕분"… 훈훈한 인터뷰'], meh:['{N}, 팬들에게 감사 인사','{N} "응원 감사하다"'], bad:['{N} 감성 인터뷰, "오글거린다" 반응도','"말보다 경기력" {N}에 쓴소리'], disaster:['{N}의 눈물, "연기 아니냐" 악플 세례','{N} 인터뷰 중 실언… 상대 팬 비하 오해 불러']},
+  honest:{jackpot:['{N}의 솔직 고백, 팬들 "이래서 좋아한다"','{N} 진솔함에 감독도 공개 신뢰'], good:['{N} 솔직한 인터뷰 호평','가식 없는 {N}, 팬들 응원'], meh:['{N}, 담담하게 소감','{N} "솔직히 말하면…"'], bad:['{N} 솔직함이 독? 내부 사정 노출 우려','{N} 발언, 팀 분위기 해친다 지적'], disaster:['{N} 폭탄 발언에 구단 발칵','{N} "솔직히" 한마디가 불화설로 번져']},
+  bold:{jackpot:['자신감 폭발 {N}, "이제 시작"… 팬들 열광','{N}의 패기, 리그 판도를 흔들다'], good:['{N} "목표는 더 높은 곳"… 당찬 포부','당돌한 {N}, 팬들 "이 맛에 축구 본다"'], meh:['{N}의 큰소리, 반응은 반반','{N} "더 보여주겠다"'], bad:['"건방지다" {N} 발언에 비판 여론','{N}, 자신감인가 오만인가'], disaster:['{N} 오만 발언 일파만파… 감독 "따로 얘기하겠다"','{N} 발언 캡처 확산, 상대 팬 조롱 쏟아져']},
+  funny:{jackpot:['{N} 입담 폭발, 예능 섭외 쇄도','"축구도 잘하고 말도 잘해" {N} 인터뷰 밈 등극'], good:['{N}의 유쾌한 인터뷰, 현장 웃음바다','분위기 메이커 {N}, 팬들 "귀엽다"'], meh:['{N}의 농담, 현장은 조용','{N} 가벼운 소감'], bad:['"지금 웃음이 나오나" {N} 농담에 싸늘한 시선','{N} 농담, 상황 안 맞는다 지적'], disaster:['{N} 농담이 실언으로… 사과문 게재','{N} 경솔한 농담, 비난 여론 확산']},
+  evasive:{jackpot:['{N}의 노련한 대처, "베테랑 같다" 호평','{N} 침묵이 더 화제… 신비주의 마케팅?'], good:['{N}, 노련하게 질문 피해','{N}의 절제된 인터뷰'], meh:['{N}, 말 아껴','{N} 짧게 답변'], bad:['{N} 성의 없는 답변에 실망','"뭘 숨기나" {N} 회피성 답변 의혹'], disaster:['{N} 회피 답변에 추측 기사 쏟아져','{N} 태도 논란, "기자 무시했다"']},
+  critical:{jackpot:['{N}의 작심 발언, 팬들 "속 시원하다" 지지 폭발','{N} 소신 발언에 연맹도 판정 재검토'], good:['{N} "할 말은 한다"… 팬들 공감','{N}의 직언, 일리 있다는 평가'], meh:['{N} 불만 토로, 반응은 엇갈려','{N} "아쉬움 남는다"'], bad:['{N} 남 탓 논란… "프로답지 못해"','{N}, 감독 저격? 라커룸 기류 심상치 않다'], disaster:['[단독] {N} 공개 비판에 구단 징계 검토','{N} 발언 후폭풍, 감독과 불화설까지']},
+  provoke:{jackpot:['{N}의 도발, 다음 경기 티켓 매진 행렬','{N} vs 상대팀 장외 설전, 리그 흥행 폭발'], good:['{N} 도발에 팬들 환호 "이게 축구지"','당돌한 {N}, 상대 팬도 인정'], meh:['{N}의 도발, 큰 반향 없어','{N} 신경전'], bad:['{N} 도발 논란… "예의 없다" 비판','{N}, 상대팀 자극해 역풍'], disaster:['{N} 도발에 상대팀 공식 항의','{N} 발언 일파만파, 연맹 경고 받아']},
+};
+const FANS = {
+  jackpot:['ㄹㅇ 우리 팀 보물이다','이 인터뷰 평생 소장각','유니폼 바로 샀습니다','이 선수 때문에 시즌권 끊음'],
+  good:['역시 믿고 보는 선수','멘트 좋다 ㅋㅋ','다음 경기도 응원함','태도가 맘에 든다'],
+  meh:['그렇구나…','무난하네','경기나 잘하자','인터뷰는 별 감흥 없음'],
+  bad:['아 이건 좀;;','말 조심하자','실망이다','굳이 저 말을…'],
+  disaster:['선 넘었네','사과해라 진짜','이적 가라','유니폼 환불하고 싶다'],
+};
+const FAN_IDS = ['N석지킴이','직관러','국밥러버','유니폼수집가','원정러','축구가좋아','시즌권12년차','막차응원단'];
+const COACH = {pos:['"좋은 태도다. 그대로 가자."','"오늘 인터뷰, 잘했다."','"그 마음 잊지 마라."'], neg:['"인터뷰는 나랑 상의하고 해라."','"말이 너무 많다."','"다음 주 면담 좀 하자."']};
+const TWISTS = [
+  {ok: gi => gi < 4, pre: gi => gi + 1, t: () => '✂️ 기자가 발언 일부만 잘라 보도했다… 의도와 다르게 퍼지고 있다.'},
+  {ok: gi => gi > 0, pre: gi => gi - 1, t: () => '🔄 반전! 상대 팀 레전드가 내 인터뷰를 공유하며 감쌌다.'},
+  {ok: () => true, post: gi => ({pop: gi <= 2 ? ri(4, 7) : -ri(3, 5)}), t: gi => gi <= 2 ? '📱 인터뷰 영상이 SNS에서 밈이 됐다!' : '📱 인터뷰 캡처가 조롱 짤로 돌고 있다…'},
+  {ok: gi => gi <= 1 && S.pop >= 25, post: () => ({pop: 3, money: ri(2, 8) * 100}), t: () => '📺 인터뷰를 본 브랜드에서 광고 제의가 왔다!'},
+  {ok: gi => gi !== 2, post: gi => ({trust: gi <= 1 ? 5 : -5}), t: gi => gi <= 1 ? '🧑‍🏫 다음 날 감독이 기자회견에서 내 인터뷰를 칭찬했다.' : '🧑‍🏫 다음 날 감독이 기자회견에서 내 발언에 불편함을 드러냈다.'},
+  {ok: () => true, post: () => ({cond: 10, buff: .2}), t: () => '🫂 주장이 SNS에 "우리 막내 믿는다" 메시지를 남겼다.'},
+];
+const MOOD = {'-2':'😶 기자석 분위기가 싸늘하다…','-1':'🤨 몇몇 기자들의 눈빛이 날카롭다.','0':'','1':'🙂 기자석 분위기가 나쁘지 않다.','2':'😊 오늘 기자들 표정이 밝다.'};
+
+function fillT(s, r){
+  const v = {N:S.name, opp:r.opp, sc:`${r.tg}-${r.og}`, g:r.goals, rt:r.rating, next:S.schedule[S.round + 1] || '다음 상대', club:S.club, m:r.mins, R:S.rival};
+  return s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ''));
+}
+function interviewCat(r){
+  if (r.role === 'bench') return 'bench';
+  if (r.role === 'sub' && (r.goals || r.assists)) return 'sub';
+  if (r.goals > 0 || r.rating >= 7.6) return r.res === 'W' ? 'hero' : 'heronw';
+  if (r.rating < 5.8) return 'poor';
+  return {W:'win', D:'draw', L:'loss'}[r.res];
+}
 function interviewSet(r){
-  const N = S.name, sc = `${r.tg}-${r.og}`;
-  if (r.role === 'bench') return {q:`오늘 출전 기회를 받지 못했는데, 심경이 어떤가요?`, a:[
-    {t:'솔직히 출전 시간이 더 필요합니다.', e:{pop:3,trust:-6}, h:`${N} "출전 시간 더 필요하다"… 감독과 미묘한 기류`},
-    {t:'벤치에서도 팀을 응원했어요. 기회는 올 겁니다.', e:{trust:5,pop:1}, h:`벤치에서도 웃은 ${N}, "기회는 온다"`},
-    {t:'훈련장에서 실력으로 증명하겠습니다.', e:{trust:4,cond:5}, h:`${N} "말 대신 훈련장에서 증명"… 감독도 주목`},
-    {t:'이 팀에 제 자리가 있는지 모르겠네요.', e:{pop:5,trust:-12}, h:`[단독] ${N}, 이적 시사 발언?… 구단 "확인 중"`, risk:[.5,{pop:-3,trust:-12},`${N}의 '이적 암시', 팬들 "실망스럽다"`]},
-  ]};
-  const hero = r.goals > 0 || r.rating >= 7.6;
-  if (hero && r.res !== 'L') return {q: r.goals ? `오늘 ${r.goals}골로 ${r.res === 'W' ? '승리를 이끌었' : '팀을 구했'}는데요, 소감 한마디 부탁드립니다!` : `평점 ${r.rating}, 오늘 경기 최고의 활약이었는데요?`, a:[
-    {t:'동료들이 잘 만들어줘서 저는 마무리만 했어요.', e:{pop:2,trust:4}, h:`[인터뷰] ${N} "동료들 덕분"… 겸손한 에이스`},
-    {t:'오늘은 제가 주인공이었죠! 다음 경기도 기대하세요.', e:{pop:8}, h:`자신감 폭발 ${N}, "다음도 기대하라"… 팬들 열광`, risk:[.55 + (r.rating - 7) * .1,{pop:-4,trust:-5},`"건방지다" ${N} 발언에 비판 여론`]},
-    {t:'팬 여러분 함성 덕분에 힘이 났습니다. 사랑합니다!', e:{pop:5}, h:`${N}의 팬 사랑 고백… SNS 화제`},
-    {t:'아직 부족합니다. 더 노력하겠습니다.', e:{trust:6,pop:1}, h:`${N} "아직 부족하다"… 감독도 칭찬한 프로 정신`},
-  ]};
-  if (r.res === 'L') return {q:`${r.opp}에 ${sc}로 졌습니다. 패배 원인이 뭐라고 보시나요?`, a:[
-    {t:'제 부족함 때문입니다. 책임지겠습니다.', e:{pop:2,trust:4}, h:`패배 떠안은 ${N}, "내 책임"… 책임감 돋보여`},
-    {t:'심판 판정이 너무 아쉬웠어요.', e:{pop:4}, h:`${N} "판정 아쉽다"… 팬들 "공감"`, risk:[.45,{pop:-3,trust:-4},`${N} 판정 불만 발언… 연맹 징계 검토`]},
-    {t:'솔직히 오늘 전술이 맞지 않았습니다.', e:{pop:1,trust:-10}, h:`${N}, 감독 전술 공개 비판… 불화설 솔솔`},
-    {t:'다음 경기에서 반드시 갚아주겠습니다!', e:{pop:3,trust:1}, h:`${N} "반드시 갚아준다"… 설욕 다짐`},
-  ]};
-  return {q: r.res === 'W' ? `${r.opp}전 ${sc} 승리! 팀 분위기는 어떤가요?` : `${r.opp}와 ${sc} 무승부, 아쉬움이 남을 것 같은데요?`, a:[
-    {t:'팀이 하나로 뭉친 결과입니다.', e:{trust:3,pop:1}, h:`${N} "원팀의 힘"… ${S.club} 분위기 최고조`},
-    {t:'제 플레이엔 만족하지 않아요. 더 보여드릴게요.', e:{trust:2,pop:2}, h:`욕심 많은 ${N}, "더 보여주겠다"`},
-    {t:`다음 상대요? 솔직히 별로 무섭지 않네요.`, e:{pop:7}, h:`${N}의 도발 "안 무섭다"… 다음 경기 흥행 예고`, risk:[.5,{pop:-4,trust:-3},`${N} 상대 도발 논란… "예의 없다" 비판`]},
-    {t:'늘 응원해 주시는 팬분들께 감사드려요.', e:{pop:3}, h:`${N} "팬들께 감사"… 훈훈한 인터뷰`},
-  ]};
+  let cat = interviewCat(r);
+  if (Math.random() < .15) cat = pick(CURVEBALLS);
+  let q = fillT(pick(QA[cat].q), r);
+  if (S.streak.n >= 3 && Math.random() < .5){
+    if (cat === 'loss' && S.streak.t === 'L') q = `${S.streak.n}연패입니다. 라커룸 분위기는 어떤가요?`;
+    if (cat === 'win' && S.streak.t === 'W') q = `${S.streak.n}연승 행진! 비결이 뭔가요?`;
+  }
+  const pool = [...QA[cat].a].sort(() => Math.random() - .5), chosen = [], tones = new Set();
+  for (const a of pool) if (chosen.length < 4 && !tones.has(a[0])){ chosen.push(a); tones.add(a[0]); }
+  for (const a of pool) if (chosen.length < 4 && !chosen.includes(a)) chosen.push(a);
+  return {q, cat, a: chosen.map(([tone, t]) => ({tone, t: fillT(t, r)}))};
+}
+function rollGrade(tone, r){
+  const w = [...TONES[tone]];
+  const pf = r.mins ? r.rating - 6.5 : -.5, up = Math.max(pf, 0), dn = Math.max(-pf, 0);
+  if (['bold','provoke','funny'].includes(tone)){ w[0] *= 1 + up * .6; w[1] *= 1 + up * .3; w[3] *= 1 + dn * .5; w[4] *= 1 + dn * .6; }
+  if (tone === 'critical' && r.res === 'L') w[1] *= 1.3;
+  if (tone === 'critical' && S.trust < 35) w[4] *= 1.5;
+  if (S.pop > 60){ w[0] *= 1.2; w[3] *= .8; w[4] *= .75; }
+  if (S.pop < 20) w[2] *= 1.6;
+  const f = 1 + S.media * .15;
+  w[0] *= f; w[1] *= f; w[3] /= f; w[4] /= f; if (S.media <= -2) w[4] *= 1.2;
+  if (S.toneHist.filter(t => t === tone).length >= 2){ w[0] *= .5; w[2] *= 1.6; w[3] *= 1.5; }
+  return wpick(w.map((x, i) => [x, i]))[1];
+}
+function toneFx(tone, gi){
+  const P = [[7,11],[2,5],[-1,1],[-5,-2],[-10,-6]][gi];
+  const e = {pop: ri(P[0], P[1]), trust:0, cond:0, buff:0}, good = gi <= 1, bad = gi >= 3;
+  switch (tone){
+    case 'humble': if (good) e.trust += ri(2, 4); if (gi === 4) e.trust -= 2; break;
+    case 'team': if (good) e.trust += ri(3, 6); if (gi === 4) e.trust -= 3; e.pop = Math.round(e.pop * .7); break;
+    case 'critical': e.trust -= good ? ri(1, 3) : bad ? (gi === 4 ? ri(8, 12) : ri(4, 7)) : 2; if (gi === 0) e.pop += 3; break;
+    case 'provoke': e.buff = good ? .3 : bad ? -.3 : 0; e.pop = Math.round(e.pop * 1.3); break;
+    case 'bold': e.buff = good ? .25 : bad ? -.25 : 0; if (gi === 4) e.trust -= 4; break;
+    case 'honest': if (gi === 0) e.trust += 5; if (gi === 3) e.trust -= 3; if (gi === 4) e.trust -= 8; break;
+    case 'funny': if (gi === 0) e.pop += 3; break;
+    case 'evasive': e.pop = Math.round(e.pop * .6); break;
+    case 'emotional': if (good) e.cond += 5; break;
+  }
+  return e;
+}
+function addBuff(b, fx){
+  if (!b) return;
+  S.buff = Math.round(clamp(S.buff + b, -1, 1) * 100) / 100;
+  fx.push([b > 0 ? '자신감' : '부담감', b, b > 0 ? '🔥 다음 경기 자신감↑' : '😰 다음 경기 부담감↑']);
 }
 function renderInterview(){
   const r = S.last;
-  if (!r || S.interview?.done){ return nextRound(); }
-  if (!S.interview) { S.interview = {set: interviewSet(r)}; save(); }
-  const iv = S.interview.set;
+  if (!r || r.role === 'injured' || (S.interview?.done && !S.interview.res)) return nextRound();
+  if (!S.interview){ S.interview = {set: interviewSet(r)}; save(); }
+  const iv = S.interview.set, mood = MOOD[String(S.media)] || '';
   app.innerHTML = `<section class="screen">
     <div class="section-title">🎤 경기 후 인터뷰 · vs ${esc(r.opp)} (${r.tg}-${r.og})</div>
     <div class="card pad">
+      ${mood ? `<p class="mood">${mood}</p>` : ''}
       <div class="mic"><div class="av">🎙️</div><div class="bubble"><small>스포츠 기자</small>${esc(iv.q)}</div></div>
       <div class="answers">
-        ${iv.a.map((a, i) => `<button class="ans" type="button" data-i="${i}" style="animation-delay:${150 + i*80}ms"><span class="k">${i+1}</span><span>${esc(a.t)}</span>${a.risk ? '<span class="tag">🎲 모험</span>' : ''}</button>`).join('')}
+        ${iv.a.map((a, i) => `<button class="ans" type="button" data-i="${i}" style="animation-delay:${150 + i*80}ms"><span class="k">${i+1}</span><span>${esc(a.t)}</span></button>`).join('')}
         <button class="ans" type="button" data-i="-1" style="animation-delay:${150 + iv.a.length*80}ms"><span class="k">…</span><span class="hint">인터뷰 사양하고 지나가기</span></button>
       </div>
       <div id="ivRes"></div>
     </div>
   </section>`;
+  if (S.interview.res){ lockAnswers(S.interview.picked); showIvResult(S.interview.res, false); return; }
   app.querySelectorAll('.ans').forEach(b => b.onclick = () => answer(Number(b.dataset.i)));
 }
-function answer(i){
-  const iv = S.interview.set;
-  let e, h, said;
-  if (i < 0){ e = {pop:-1}; h = `${S.name}, 취재진 질문에 묵묵부답`; said = '(말없이 지나간다)'; }
-  else {
-    const a = iv.a[i]; said = a.t;
-    if (a.risk && Math.random() >= a.risk[0]){ e = a.risk[1]; h = a.risk[2]; }
-    else { e = a.e; h = a.h; }
+function lockAnswers(i){
+  app.querySelectorAll('.ans').forEach(b => { b.disabled = true; b.onclick = null; if (Number(b.dataset.i) !== i) b.style.opacity = '.35'; else b.classList.add('picked'); });
+}
+async function answer(i){
+  if (S.interview.done) return;
+  const iv = S.interview.set, r = S.last;
+  const a = i < 0 ? {tone:'evasive', t:'(말없이 지나간다)'} : iv.a[i];
+  const tone = TONES[a.tone] ? a.tone : 'humble';
+  let gi = rollGrade(tone, r), twist = null;
+  if (Math.random() < .16){ const cand = TWISTS.filter(t => t.ok(gi)); if (cand.length) twist = pick(cand); }
+  const gi0 = gi;
+  if (twist?.pre) gi = twist.pre(gi);
+  const e = toneFx(tone, gi), fx = applyFx(e);
+  addBuff(e.buff, fx);
+  let twistText = '';
+  if (twist){
+    twistText = twist.t(gi0);
+    if (twist.post){
+      const pe = twist.post(gi);
+      fx.push(...applyFx(pe)); addBuff(pe.buff, fx);
+      if (pe.money){ S.earn += pe.money; twistText += ` (광고 수입 +${money(pe.money)})`; }
+    }
   }
-  const fx = applyFx(e);
+  const g = GRADES[gi], h = fillT(pick(H[tone][g]), r);
   addNews(h);
-  S.interview.done = true; save();
-  app.querySelectorAll('.ans').forEach(b => { b.disabled = true; if (Number(b.dataset.i) !== i) b.style.opacity = '.35'; });
-  const good = fx.reduce((s, [, d]) => s + d, 0) >= 0;
-  $('#ivRes').innerHTML = `<div class="paper"><div class="mast"><span>PITCH SPORTS</span><span>${S.year}시즌 ${S.round + 1}R</span></div>
-      <h3>${esc(h)}</h3><p>"${esc(said)}"</p></div>
-    <div class="chips">${chipsHtml(fx) || '<span class="chip">변화 없음</span>'}</div>
+  const ids = [...FAN_IDS].sort(() => Math.random() - .5), lines = [...FANS[g]].sort(() => Math.random() - .5);
+  const fans = [[ids[0], lines[0]], [ids[1], lines[1]]];
+  const dTrust = fx.filter(x => x[0] === '감독 신뢰').reduce((s, x) => s + x[1], 0);
+  const coach = dTrust && Math.random() < .6 ? pick(dTrust > 0 ? COACH.pos : COACH.neg) : '';
+  S.toneHist = [...S.toneHist, tone].slice(-3);
+  S.interview.done = true; S.interview.picked = i;
+  S.interview.res = {h, said:a.t, fx, fans, twist:twistText, coach, gi};
+  save();
+  lockAnswers(i);
+  await showIvResult(S.interview.res, true);
+}
+async function showIvResult(res, anim){
+  const box = $('#ivRes');
+  if (anim){
+    box.innerHTML = `<p class="writing">📝 기자가 기사를 쓰는 중<span class="dots"><span>●</span><span>●</span><span>●</span></span></p>`;
+    box.scrollIntoView({behavior: RM ? 'auto' : 'smooth', block:'nearest'});
+    await wait(1400);
+  }
+  const pos = [92, 72, 50, 28, 8][res.gi], d = anim ? 1 : 0;
+  box.innerHTML = `<div class="opinion"><div class="lbl">여론</div><div class="scale"><span class="needle" id="needle"></span></div><div class="ends"><span>😡 싸늘</span><span>😐 무덤덤</span><span>😍 열광</span></div></div>
+    <div class="paper" style="animation-delay:${d * 1.1}s"><div class="mast"><span>PITCH SPORTS</span><span>${S.year}시즌 ${S.round + 1}R</span></div>
+      <h3>${esc(res.h)}</h3><p>"${esc(res.said)}"</p></div>
+    ${res.twist ? `<div class="twist" style="animation-delay:${d * 1.6}s">${esc(res.twist)}</div>` : ''}
+    <ul class="fans">${res.fans.map((f, i) => `<li style="animation-delay:${d * (1.8 + i * .25)}s"><b>${esc(f[0])}</b> ${esc(f[1])}</li>`).join('')}</ul>
+    ${res.coach ? `<div class="twist coach" style="animation-delay:${d * 2.3}s">🧑‍🏫 감독: ${esc(res.coach)}</div>` : ''}
+    <div class="chips">${chipsHtml(res.fx) || '<span class="chip">변화 없음</span>'}</div>
     <button class="btn primary block" id="nextBtn" type="button">${S.round + 1 >= ROUNDS ? '시즌 종료 · 연봉협상으로 ▶' : '다음 주로 ▶'}</button>`;
-  if (good && fx.some(([l, d]) => l === '인기도' && d >= 5)) confetti(['#f5c518','#fff','#ffe06b']);
-  $('#ivRes').scrollIntoView({behavior: RM ? 'auto' : 'smooth', block:'nearest'});
+  requestAnimationFrame(() => requestAnimationFrame(() => { const n = $('#needle'); if (n) n.style.left = pos + '%'; }));
+  if (anim && res.gi === 0) setTimeout(() => confetti(['#f5c518','#ffffff','#ffe06b']), 1100);
   $('#nextBtn').onclick = nextRound;
 }
 function nextRound(){
-  S.round++; S.last = null; S.interview = null;
+  S.round++; S.last = null; S.interview = null; S.week = null;
   if (S.round >= ROUNDS){ startNego(); }
   else S.phase = 'week';
   go();
@@ -802,7 +1075,7 @@ function signContract(){
   if (S.age <= 23){ const k = STAT_KEYS.filter(k => POS[S.pos].w[k] > .1); const kk = pick(k); const g = ri(1, 3); S.stats[kk] = clamp(S.stats[kk] + g, 1, 99); msgs.push(`${statName(kk, S.pos)} +${g} 자연 성장`); }
   if (S.age >= 30){ STAT_KEYS.forEach(k => { const d = ri(0, Math.max(1, S.age - 29)); S.stats[k] = clamp(S.stats[k] - d, 1, 99); }); msgs.push('노쇠화로 능력치 하락'); }
   S.pop = Math.round(S.pop * .9); S.trust = Math.round(50 + (S.trust - 50) * .6); S.cond = 100; S.injury = 0;
-  S.season = freshSeason(); S.round = 0; S.schedule = makeSchedule(S.club); S.nego = null;
+  S.season = freshSeason(); S.round = 0; S.schedule = makeSchedule(S.club); S.nego = null; S.week = null; S.buff = 0;
   if (S.age >= RETIRE_AGE){ S.phase = 'retired'; addNews(`${S.name}, ${S.age}세로 현역 은퇴 선언`); }
   else { S.phase = 'week'; toast(`${S.year} 시즌 시작! ${msgs.join(' · ')}`); }
   go();
