@@ -43,7 +43,7 @@ button{-webkit-tap-highlight-color:transparent}
 .hero h1{margin:0;font-size:26px;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
 .hero h1 .logo{display:inline-block;animation:spin 6s linear infinite}
 .hero p{margin:2px 0 0;opacity:.9;font-size:14px}
-.hero .actions{display:flex;gap:6px}
+.hero .actions{display:flex;gap:6px;flex-wrap:wrap}
 .ghost{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:999px;padding:6px 11px;cursor:pointer;font-size:13px;transition:background .15s,transform .15s}
 .ghost:hover{background:rgba(255,255,255,.28)}
 .ghost:active{transform:scale(.95)}
@@ -254,6 +254,7 @@ section.view{animation:fadeUp .3s ease both}
         <p>나만의 축구 직관 · 집관 일기</p>
       </div>
       <div class="actions">
+        <a class="ghost" href="career.html" style="text-decoration:none">🎮 커리어</a>
         <button class="ghost" id="themeBtn" type="button">테마</button>
         <button class="ghost" id="exportBtn" type="button">백업</button>
         <button class="ghost" id="importBtn" type="button">복원</button>
