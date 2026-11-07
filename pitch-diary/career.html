@@ -263,6 +263,12 @@ const wait = ms => new Promise(r => setTimeout(r, RM ? 0 : ms));
 function poisson(l){ const L = Math.exp(-l); let k = 0, p = 1; do { k++; p *= Math.random(); } while (p > L); return k - 1; }
 function lsGet(k){ try { return localStorage.getItem(k); } catch { return null; } }
 function lsSet(k, v){ try { localStorage.setItem(k, v); return true; } catch { return false; } }
+function armed(btn, label){
+  if (btn.dataset.armed) return true;
+  const t = btn.textContent; btn.dataset.armed = '1'; btn.textContent = label;
+  setTimeout(() => { delete btn.dataset.armed; btn.textContent = t; }, 3000);
+  return false;
+}
 function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2200); }
 function money(m){
   m = Math.round(m);
@@ -843,7 +849,7 @@ function confetti(colors){
   requestAnimationFrame(tick);
 }
 
-$('#resetBtn').onclick = () => { if (S && !confirm('지금 커리어를 지우고 새로 시작할까요?')) return; S = null; lsSet(SAVE_KEY, ''); go(); };
+$('#resetBtn').onclick = e => { if (S && !armed(e.currentTarget, '한 번 더 누르면 초기화')) return; S = null; lsSet(SAVE_KEY, ''); go(); };
 
 S = load();
 go();

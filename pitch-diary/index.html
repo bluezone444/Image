@@ -546,6 +546,12 @@ function fmtDate(d){
   return `${dt.getFullYear()}.${String(dt.getMonth()+1).padStart(2,'0')}.${String(dt.getDate()).padStart(2,'0')} (${'일월화수목금토'[dt.getDay()]})`;
 }
 function todayStr(){ const d = new Date(); return new Date(d - d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
+function armed(btn, label){
+  if (btn.dataset.armed) return true;
+  const t = btn.textContent; btn.dataset.armed = '1'; btn.textContent = label;
+  setTimeout(() => { delete btn.dataset.armed; btn.textContent = t; }, 3000);
+  return false;
+}
 function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2400); }
 function fillSeasonSelect(sel){
   const v = sel.value, list = seasons();
@@ -922,7 +928,7 @@ function openForm(id){
   curPhoto = m ? m.photo : '';
   $('#photo').value = '';
   $('#photoPrev').src = curPhoto; $('#photoPrev').style.display = curPhoto ? 'block' : 'none';
-  $('#delBtn').hidden = !m;
+  $('#delBtn').hidden = !m; delete $('#delBtn').dataset.armed; $('#delBtn').textContent = '삭제';
   $('#saveBtn').textContent = m ? '수정 완료' : '저장하기';
   refreshMyTeam(m ? m.myTeam : fav);
   showTab('write');
@@ -968,7 +974,7 @@ $('#form').onsubmit = async e => {
 };
 $('#cancelBtn').onclick = () => showTab('home');
 $('#delBtn').onclick = () => {
-  if (!editingId || !confirm('이 경기 기록을 삭제할까요?')) return;
+  if (!editingId || !armed($('#delBtn'), '한 번 더 누르면 삭제')) return;
   data = data.filter(x => x.id !== editingId); save(); renderHero(gameState(data)); toast('삭제했어요'); showTab('home');
 };
 
@@ -1062,10 +1068,9 @@ $('#importFile').onchange = async e => {
     const added = valid.filter(m => !ids.has(m.id)).slice(0, room);
     const skipped = arr.length - added.length;
     if (!added.length){ toast('새로 불러올 경기가 없어요.'); return; }
-    if (!confirm(`${added.length}경기를 불러올까요?${skipped ? ` (중복·잘못된 항목 ${skipped}개는 건너뜀)` : ''}`)) return;
     const backup = data; data = [...data, ...added];
     if (!save()){ data = backup; return; }
-    renderHero(gameState(data)); toast(`${added.length}경기를 불러왔어요`); showTab('home');
+    renderHero(gameState(data)); toast(`${added.length}경기를 불러왔어요${skipped ? ` (건너뜀 ${skipped}개)` : ''}`); showTab('home');
   } catch { toast('백업 파일을 읽을 수 없어요'); }
 };
 
