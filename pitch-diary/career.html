@@ -10,6 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Jua&family=Noto+Sans+KR:wght@400;700;900&display=swap">
 <script src="vendor/three.min.js"></script>
+<script src="vendor/GLTFLoader.js"></script>
+<script src="vendor/player-glb.js"></script>
 <style>
 /* 레이아웃 컨셉: 야간 경기장 위에 떠 있는 세로형 게임 HUD — 상단 자원 바, 가운데 장면, 하단 도크 */
 :root{
@@ -78,7 +80,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .tier-gold{background:linear-gradient(135deg,#ffe58a,#d19a00)}
 .tier-icon{background:linear-gradient(135deg,#ffd6ff,#8f7bff,#4fd1ff);background-size:200% 200%;animation:holo 3s ease infinite;color:#1a0b3a}
 .icon-btn{margin-left:auto;width:38px;height:38px;border-radius:12px;border:2px solid var(--edge);background:var(--panel);font-size:17px}
-.hud-res{display:grid;grid-template-columns:repeat(3,1fr) .9fr 1fr;gap:5px}
+.hud-res{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
 .res{display:flex;align-items:center;gap:5px;background:var(--panel);border:1px solid var(--edge);border-radius:10px;padding:4px 7px;min-width:0}
 .res .ic{font-size:13px}
 .res .bar{flex:1;height:6px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;min-width:14px}
@@ -198,6 +200,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .pcard .top{display:flex;justify-content:space-between;align-items:flex-start}
 .pcard .ovr{font-family:var(--f-display);font-size:52px;line-height:.9}
 .pcard .pp{font-family:var(--f-display);font-size:18px;display:block}
+.pcard .avatar .ico{width:84px;height:84px;opacity:.75}
 .pcard .avatar{font-size:76px;text-align:center;line-height:1.1;margin-top:-6px;filter:drop-shadow(0 6px 0 rgba(0,0,0,.2))}
 .pcard .nm{font-family:var(--f-display);font-size:24px;text-align:center;border-bottom:2px solid rgba(0,0,0,.2);padding-bottom:4px;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pcard .st{display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;font-family:var(--f-display);font-size:16px}
@@ -446,6 +449,24 @@ table.hist th{color:var(--muted);font-weight:700;font-size:12px}
 .dock button{font-size:11px}
 @media (max-width:400px){ .shop-grid{grid-template-columns:repeat(2,1fr)} .viewer.tall{height:360px} }
 
+/* ---------- 아이콘 · 자원 라벨 ---------- */
+.ico{width:1.1em;height:1.1em;flex:none;vertical-align:-.18em}
+.ico.big{width:30px;height:30px;color:var(--gold)}
+.res{flex-direction:column;align-items:stretch;gap:2px;padding:5px 7px}
+.res .rt{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap}
+.res .rt .ico{width:13px;height:13px}
+.res:nth-child(1) .rt .ico{color:var(--gold)} .res:nth-child(2) .rt .ico{color:var(--cyan)} .res:nth-child(3) .rt .ico{color:var(--turf)} .res.xp .rt .ico{color:var(--cyan)} .res.money .rt .ico{color:var(--gold)}
+.res .rv{display:flex;align-items:center;gap:5px}
+.res.money b{font-size:14px}
+.dock button .i .ico{width:22px;height:22px}
+.act .i .ico{width:28px;height:28px}
+.icon-btn .ico{width:20px;height:20px}
+.si-i .ico{width:30px;height:30px}
+.mgr-face .ico{width:58%;height:58%;color:var(--gold)}
+.speech .ico,.memo .ico,.twist .ico,.offer .ico{color:var(--gold)}
+.note-head .ico{color:#6b5a32}
+.f-front b .ico{color:var(--gold)}
+
 @keyframes enter{from{opacity:0;transform:translateY(14px) scale(.98)}}
 @keyframes dealIn{from{opacity:0;transform:translateY(18px) rotate(-2deg) scale(.92)}}
 @keyframes slideIn{from{opacity:0;transform:translateX(-16px)}}
@@ -492,6 +513,9 @@ const SAVE_KEY = 'pitch-career.v1', SFX_KEY = 'pitch-career.sfx';
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ROUNDS = 11, RETIRE_AGE = 36, MIN_SALARY = 2400;
 
+// 아이콘: Lucide (ISC License) — https://lucide.dev
+const ICONS = {"star": "<path d=\"M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z\" />", "handshake": "<path d=\"m11 17 2 2a1 1 0 1 0 3-3\" /> <path d=\"m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4\" /> <path d=\"m21 3 1 11h-2\" /> <path d=\"M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3\" /> <path d=\"M3 4h8\" />", "zap": "<path d=\"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z\" />", "gem": "<path d=\"M6 3h12l4 6-10 13L2 9Z\" /> <path d=\"M11 3 8 9l4 13 4-13-3-6\" /> <path d=\"M2 9h20\" />", "wallet": "<path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\" /> <path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\" />", "volume-2": "<path d=\"M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z\" /> <path d=\"M16 9a5 5 0 0 1 0 6\" /> <path d=\"M19.364 18.364a9 9 0 0 0 0-12.728\" />", "volume-x": "<path d=\"M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z\" /> <line x1=\"22\" x2=\"16\" y1=\"9\" y2=\"15\" /> <line x1=\"16\" x2=\"22\" y1=\"9\" y2=\"15\" />", "goal": "<path d=\"M12 13V2l8 4-8 4\" /> <path d=\"M20.561 10.222a9 9 0 1 1-12.55-5.29\" /> <path d=\"M8.002 9.997a5 5 0 1 0 8.9 2.02\" />", "user-round": "<circle cx=\"12\" cy=\"8\" r=\"5\" /> <path d=\"M20 21a8 8 0 0 0-16 0\" />", "shopping-bag": "<path d=\"M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z\" /> <path d=\"M3 6h18\" /> <path d=\"M16 10a4 4 0 0 1-8 0\" />", "shield": "<path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\" />", "globe": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20\" /> <path d=\"M2 12h20\" />", "newspaper": "<path d=\"M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2\" /> <path d=\"M18 14h-8\" /> <path d=\"M15 18h-5\" /> <path d=\"M10 6h8v4h-8V6Z\" />", "target": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <circle cx=\"12\" cy=\"12\" r=\"6\" /> <circle cx=\"12\" cy=\"12\" r=\"2\" />", "arrow-right-left": "<path d=\"m16 3 4 4-4 4\" /> <path d=\"M20 7H4\" /> <path d=\"m8 21-4-4 4-4\" /> <path d=\"M4 17h16\" />", "wind": "<path d=\"M12.8 19.6A2 2 0 1 0 14 16H2\" /> <path d=\"M17.5 8a2.5 2.5 0 1 1 2 4H2\" /> <path d=\"M9.8 4.4A2 2 0 1 1 11 8H2\" />", "shield-half": "<path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\" /> <path d=\"M12 22V2\" />", "dumbbell": "<path d=\"M14.4 14.4 9.6 9.6\" /> <path d=\"M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z\" /> <path d=\"m21.5 21.5-1.4-1.4\" /> <path d=\"M3.9 3.9 2.5 2.5\" /> <path d=\"M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z\" />", "bed": "<path d=\"M2 4v16\" /> <path d=\"M2 8h18a2 2 0 0 1 2 2v10\" /> <path d=\"M2 17h20\" /> <path d=\"M6 8v9\" />", "users": "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\" /> <circle cx=\"9\" cy=\"7\" r=\"4\" /> <path d=\"M22 21v-2a4 4 0 0 0-3-3.87\" /> <path d=\"M16 3.13a4 4 0 0 1 0 7.75\" />", "message-circle": "<path d=\"M7.9 20A9 9 0 1 0 4 16.1L2 22Z\" />", "flame": "<path d=\"M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z\" />", "heart-handshake": "<path d=\"M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z\" /> <path d=\"M12 5 9.04 7.96a2.17 2.17 0 0 0 0 3.08c.82.82 2.13.85 3 .07l2.07-1.9a2.82 2.82 0 0 1 3.79 0l2.96 2.66\" /> <path d=\"m18 15-2-2\" /> <path d=\"m15 18-2-2\" />", "brain": "<path d=\"M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z\" /> <path d=\"M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z\" /> <path d=\"M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4\" /> <path d=\"M17.599 6.5a3 3 0 0 0 .399-1.375\" /> <path d=\"M6.003 5.125A3 3 0 0 0 6.401 6.5\" /> <path d=\"M3.477 10.896a4 4 0 0 1 .585-.396\" /> <path d=\"M19.938 10.5a4 4 0 0 1 .585.396\" /> <path d=\"M6 18a4 4 0 0 1-1.967-.516\" /> <path d=\"M19.967 17.484A4 4 0 0 1 18 18\" />", "sparkles": "<path d=\"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z\" /> <path d=\"M20 3v4\" /> <path d=\"M22 5h-4\" /> <path d=\"M4 17v2\" /> <path d=\"M5 18H3\" />", "tornado": "<path d=\"M21 4H3\" /> <path d=\"M18 8H6\" /> <path d=\"M19 12H9\" /> <path d=\"M16 16h-6\" /> <path d=\"M11 20H9\" />", "sprout": "<path d=\"M7 20h10\" /> <path d=\"M10 20c5.5-2.5.8-6.4 3-10\" /> <path d=\"M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z\" /> <path d=\"M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z\" />", "sun": "<circle cx=\"12\" cy=\"12\" r=\"4\" /> <path d=\"M12 2v2\" /> <path d=\"M12 20v2\" /> <path d=\"m4.93 4.93 1.41 1.41\" /> <path d=\"m17.66 17.66 1.41 1.41\" /> <path d=\"M2 12h2\" /> <path d=\"M20 12h2\" /> <path d=\"m6.34 17.66-1.41 1.41\" /> <path d=\"m19.07 4.93-1.41 1.41\" />", "clover": "<path d=\"M16.17 7.83 2 22\" /> <path d=\"M4.02 12a2.827 2.827 0 1 1 3.81-4.17A2.827 2.827 0 1 1 12 4.02a2.827 2.827 0 1 1 4.17 3.81A2.827 2.827 0 1 1 19.98 12a2.827 2.827 0 1 1-3.81 4.17A2.827 2.827 0 1 1 12 19.98a2.827 2.827 0 1 1-4.17-3.81A1 1 0 1 1 4 12\" /> <path d=\"m7.83 7.83 8.34 8.34\" />", "cloud": "<path d=\"M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z\" />", "cloud-rain": "<path d=\"M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242\" /> <path d=\"M16 14v6\" /> <path d=\"M8 14v6\" /> <path d=\"M12 16v6\" />", "skull": "<path d=\"m12.5 17-.5-1-.5 1h1z\" /> <path d=\"M15 22a1 1 0 0 0 1-1v-1a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20v1a1 1 0 0 0 1 1z\" /> <circle cx=\"15\" cy=\"12\" r=\"1\" /> <circle cx=\"9\" cy=\"12\" r=\"1\" />", "fast-forward": "<polygon points=\"13 19 22 12 13 5 13 19\" /> <polygon points=\"2 19 11 12 2 5 2 19\" />", "trophy": "<path d=\"M6 9H4.5a2.5 2.5 0 0 1 0-5H6\" /> <path d=\"M18 9h1.5a2.5 2.5 0 0 0 0-5H18\" /> <path d=\"M4 22h16\" /> <path d=\"M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22\" /> <path d=\"M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22\" /> <path d=\"M18 2H6v7a6 6 0 0 0 12 0V2Z\" />", "calendar-days": "<path d=\"M8 2v4\" /> <path d=\"M16 2v4\" /> <rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" /> <path d=\"M3 10h18\" /> <path d=\"M8 14h.01\" /> <path d=\"M12 14h.01\" /> <path d=\"M16 14h.01\" /> <path d=\"M8 18h.01\" /> <path d=\"M12 18h.01\" /> <path d=\"M16 18h.01\" />", "clipboard-list": "<rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\" /> <path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\" /> <path d=\"M12 11h4\" /> <path d=\"M12 16h4\" /> <path d=\"M8 11h.01\" /> <path d=\"M8 16h.01\" />", "mic": "<path d=\"M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z\" /> <path d=\"M19 10v2a7 7 0 0 1-14 0v-2\" /> <line x1=\"12\" x2=\"12\" y1=\"19\" y2=\"22\" />", "briefcase": "<path d=\"M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16\" /> <rect width=\"20\" height=\"14\" x=\"2\" y=\"6\" rx=\"2\" />", "coins": "<circle cx=\"8\" cy=\"8\" r=\"6\" /> <path d=\"M18.09 10.37A6 6 0 1 1 10.34 18\" /> <path d=\"M7 6h1v4\" /> <path d=\"m16.71 13.88.7.71-2.82 2.82\" />", "gauge": "<path d=\"m12 14 4-4\" /> <path d=\"M3.34 19a10 10 0 1 1 17.32 0\" />", "heart": "<path d=\"M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z\" />", "shirt": "<path d=\"M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z\" />", "footprints": "<path d=\"M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z\" /> <path d=\"M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z\" /> <path d=\"M16 17h4\" /> <path d=\"M4 13h4\" />", "glasses": "<circle cx=\"6\" cy=\"15\" r=\"4\" /> <circle cx=\"18\" cy=\"15\" r=\"4\" /> <path d=\"M14 15a2 2 0 0 0-2-2 2 2 0 0 0-2 2\" /> <path d=\"M2.5 13 5 7c.7-1.3 1.4-2 3-2\" /> <path d=\"M21.5 13 19 7c-.7-1.3-1.5-2-3-2\" />", "crown": "<path d=\"M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z\" /> <path d=\"M5 21h14\" />", "watch": "<circle cx=\"12\" cy=\"12\" r=\"6\" /> <polyline points=\"12 10 12 12 13 13\" /> <path d=\"m16.13 7.66-.81-4.05a2 2 0 0 0-2-1.61h-2.68a2 2 0 0 0-2 1.61l-.78 4.05\" /> <path d=\"m7.88 16.36.8 4a2 2 0 0 0 2 1.61h2.72a2 2 0 0 0 2-1.61l.81-4.05\" />", "hand": "<path d=\"M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2\" /> <path d=\"M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2\" /> <path d=\"M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8\" /> <path d=\"M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15\" />", "sticker": "<path d=\"M15.5 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z\" /> <path d=\"M14 3v4a2 2 0 0 0 2 2h4\" /> <path d=\"M8 13h.01\" /> <path d=\"M16 13h.01\" /> <path d=\"M10 16s.8 1 2 1c1.3 0 2-1 2-1\" />", "scissors": "<circle cx=\"6\" cy=\"6\" r=\"3\" /> <path d=\"M8.12 8.12 12 12\" /> <path d=\"M20 4 8.12 15.88\" /> <circle cx=\"6\" cy=\"18\" r=\"3\" /> <path d=\"M14.8 14.8 20 20\" />", "cup-soda": "<path d=\"m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8\" /> <path d=\"M5 8h14\" /> <path d=\"M7 15a6.47 6.47 0 0 1 5 0 6.47 6.47 0 0 0 5 0\" /> <path d=\"m12 8 1-6h2\" />", "graduation-cap": "<path d=\"M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z\" /> <path d=\"M22 10v6\" /> <path d=\"M6 12.5V16a6 3 0 0 0 12 0v-3.5\" />", "megaphone": "<path d=\"m3 11 18-5v12L3 14v-3z\" /> <path d=\"M11.6 16.8a3 3 0 1 1-5.8-1.6\" />", "package": "<path d=\"M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z\" /> <path d=\"M12 22V12\" /> <path d=\"m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7\" /> <path d=\"m7.5 4.27 9 5.15\" />", "hard-hat": "<path d=\"M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5\" /> <path d=\"M14 6a6 6 0 0 1 6 6v3\" /> <path d=\"M4 15v-3a6 6 0 0 1 6-6\" /> <rect x=\"2\" y=\"15\" width=\"20\" height=\"4\" rx=\"1\" />", "link": "<path d=\"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71\" /> <path d=\"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71\" />", "pen-tool": "<path d=\"M15.707 21.293a1 1 0 0 1-1.414 0l-1.586-1.586a1 1 0 0 1 0-1.414l5.586-5.586a1 1 0 0 1 1.414 0l1.586 1.586a1 1 0 0 1 0 1.414z\" /> <path d=\"m18 13-1.375-6.874a1 1 0 0 0-.746-.776L3.235 2.028a1 1 0 0 0-1.207 1.207L5.35 15.879a1 1 0 0 0 .776.746L13 18\" /> <path d=\"m2.3 2.3 7.286 7.286\" /> <circle cx=\"11\" cy=\"11\" r=\"2\" />"};
+const ic = (n, cls = "") => `<svg class="ico ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ""}</svg>`;
 // ================= 데이터 =================
 // [구단, 전력, 색, 재정, 감독, 감독 성향, 홈구장]
 const CLUBS = [
@@ -567,12 +591,14 @@ const MGR = {
     appeal:{record:1.1, pop:.9, loyal:1.3, transfer:.7}, failPct:{transfer:-10}, failTrust:{transfer:-6}, youth:true,
     pos:['"쑥쑥 크는구나. 보기 좋다."','"그 겸손함이 널 키울 거다."'], neg:['"아직 그런 말 할 때 아니다."','"기본부터 다시 하자."']},
 };
+const MGR_IC = {charisma:'flame', warm:'heart-handshake', tactician:'brain', showman:'sparkles', maverick:'tornado', mentor:'sprout'};
 const MOOD_FACE = {'-2':'😡 폭발 직전','-1':'😒 언짢음','0':'😐 평온','1':'🙂 기분 좋음','2':'😆 싱글벙글'};
+Object.entries(MGR_IC).forEach(([k, n]) => MGR[k].i = ic(n));
 const POS = {
-  FW:{name:'공격수', base:{sho:58,pas:48,dri:55,def:30,phy:52}, w:{sho:.4,dri:.25,pas:.15,phy:.15,def:.05}, goalP:.34, astP:.2, av:'🏃'},
-  MF:{name:'미드필더', base:{sho:48,pas:58,dri:53,def:45,phy:50}, w:{pas:.35,dri:.2,sho:.15,def:.15,phy:.15}, goalP:.16, astP:.32, av:'🧠'},
-  DF:{name:'수비수', base:{sho:30,pas:47,dri:40,def:58,phy:57}, w:{def:.45,phy:.25,pas:.15,sho:.1,dri:.05}, goalP:.06, astP:.08, av:'🛡️'},
-  GK:{name:'골키퍼', base:{sho:15,pas:42,dri:25,def:60,phy:55}, w:{def:.6,phy:.25,pas:.15,sho:0,dri:0}, goalP:0, astP:.02, av:'🧤'},
+  FW:{name:'공격수', base:{sho:58,pas:48,dri:55,def:30,phy:52}, w:{sho:.4,dri:.25,pas:.15,phy:.15,def:.05}, goalP:.34, astP:.2, av:'target'},
+  MF:{name:'미드필더', base:{sho:48,pas:58,dri:53,def:45,phy:50}, w:{pas:.35,dri:.2,sho:.15,def:.15,phy:.15}, goalP:.16, astP:.32, av:'brain'},
+  DF:{name:'수비수', base:{sho:30,pas:47,dri:40,def:58,phy:57}, w:{def:.45,phy:.25,pas:.15,sho:.1,dri:.05}, goalP:.06, astP:.08, av:'shield-half'},
+  GK:{name:'골키퍼', base:{sho:15,pas:42,dri:25,def:60,phy:55}, w:{def:.6,phy:.25,pas:.15,sho:0,dri:0}, goalP:0, astP:.02, av:'hand'},
 };
 const STAT_KEYS = ['sho','pas','dri','def','phy'];
 const statName = (k, pos) => ({sho:'슈팅',pas:'패스',dri:'드리블',def: pos === 'GK' ? '선방' : '수비',phy:'피지컬'})[k];
@@ -823,18 +849,18 @@ function go(){
 }
 function hud(){
   const ovr = ovrOf(S.stats, S.pos);
-  const res = (ic, v, c, lab) => `<div class="res" title="${lab}"><span class="ic" aria-label="${lab}">${ic}</span><div class="bar"><i style="width:${v}%;background:${c}"></i></div><b>${v}</b></div>`;
+  const res = (icon, v, c, lab) => `<div class="res" title="${lab}"><div class="rt">${ic(icon)}<span>${lab}</span></div><div class="rv"><div class="bar"><i style="width:${v}%;background:${c}"></i></div><b>${v}</b></div></div>`;
   return `<header class="hud"><div class="hud-in">
     <div class="hud-me"><span class="ovr-badge tier-${tierOf(ovr)}">${ovr}</span>
       <div style="min-width:0"><b>${esc(S.name)}</b><small>${POS[S.pos].name} · ${S.age}세 · ${esc(S.club)}</small></div>
-      <button class="icon-btn" id="sfxBtn" type="button" aria-label="효과음 켜기/끄기">${sfxOn ? '🔊' : '🔇'}</button></div>
-    <div class="hud-res">${res('⭐', S.pop, 'var(--gold)', '인기도')}${res('🤝', S.trust, 'var(--cyan)', '감독 신뢰')}${res('⚡', S.cond, S.cond < 35 ? 'var(--hot)' : 'var(--turf)', '컨디션')}
-      <div class="res money xp" title="개인 경험치"><span class="ic">🔷</span><b>${(S.xp || 0) >= 1000 ? ((S.xp || 0) / 1000).toFixed(1) + 'k' : (S.xp || 0)}</b></div>
-      <div class="res money" title="연봉 ${money(S.salary)}"><span class="ic">💰</span><b>${S.salary >= 10000 ? (S.salary / 10000).toFixed(S.salary >= 100000 ? 0 : 1) + '억' : (S.salary / 1000).toFixed(S.salary % 1000 ? 1 : 0) + '천만'}</b></div></div>
+      <button class="icon-btn" id="sfxBtn" type="button" aria-label="효과음 켜기/끄기">${ic(sfxOn ? 'volume-2' : 'volume-x')}</button></div>
+    <div class="hud-res">${res('star', S.pop, 'var(--gold)', '인기')}${res('handshake', S.trust, 'var(--cyan)', '신뢰')}${res('zap', S.cond, S.cond < 35 ? 'var(--hot)' : 'var(--turf)', '컨디션')}
+      <div class="res money xp" title="개인 경험치 (상점에서 사용)"><div class="rt">${ic('gem')}<span>경험치</span></div><b>${(S.xp || 0) >= 1000 ? ((S.xp || 0) / 1000).toFixed(1) + 'k' : (S.xp || 0)}</b></div>
+      <div class="res money" title="연봉 ${money(S.salary)}"><div class="rt">${ic('wallet')}<span>연봉</span></div><b>${S.salary >= 10000 ? (S.salary / 10000).toFixed(S.salary >= 100000 ? 0 : 1) + '억' : (S.salary / 1000).toFixed(S.salary % 1000 ? 1 : 0) + '천만'}</b></div></div>
     <div class="hud-stats">${STAT_KEYS.map(k => { const v = S.stats[k], d = UI.prev ? v - UI.prev[k] : 0; return `<div class="hs ${d > 0 ? 'upd' : d < 0 ? 'dnd' : ''} ${v >= 75 ? 'hi' : v >= 60 ? 'mid' : ''}"><span>${statName(k, S.pos)}</span><b>${v}</b>${d ? `<i>${d > 0 ? '▲' : '▼'}${Math.abs(d)}</i>` : ''}</div>`; }).join('')}</div>
   </div></header>`;
 }
-function bindHud(){ UI.prev = {...S.stats}; const b = $('#sfxBtn'); if (b) b.onclick = () => { sfxOn = !sfxOn; lsSet(SFX_KEY, sfxOn ? 'on' : 'off'); b.textContent = sfxOn ? '🔊' : '🔇'; }; }
+function bindHud(){ UI.prev = {...S.stats}; const b = $('#sfxBtn'); if (b) b.onclick = () => { sfxOn = !sfxOn; lsSet(SFX_KEY, sfxOn ? 'on' : 'off'); b.innerHTML = ic(sfxOn ? 'volume-2' : 'volume-x'); }; }
 function frame(inner, dock){
   disposeViewer();
   root.innerHTML = hud() + `<main class="wrap"><div class="screen stack">${inner}</div></main>` + (dock ? dockHtml() : '');
@@ -842,7 +868,7 @@ function frame(inner, dock){
   window.scrollTo({top:0});
 }
 function dockHtml(){
-  return `<nav class="dock"><div class="dock-in">${[['match','⚽','경기'],['player','🧍','내 선수'],['shop','🛍️','상점'],['club','🏟️','구단'],['world','🌍','세계'],['news','📰','뉴스']].map(([k,i,n]) => `<button type="button" data-t="${k}" aria-selected="${UI.tab === k}"><span class="i">${i}</span>${n}</button>`).join('')}</div></nav>`;
+  return `<nav class="dock"><div class="dock-in">${[['match','goal','경기'],['player','user-round','내 선수'],['shop','shopping-bag','상점'],['club','shield','구단'],['world','globe','세계'],['news','newspaper','뉴스']].map(([k,i,n]) => `<button type="button" data-t="${k}" aria-selected="${UI.tab === k}"><span class="i">${ic(i)}</span>${n}</button>`).join('')}</div></nav>`;
 }
 function bindDock(){ root.querySelectorAll('.dock button').forEach(b => b.onclick = () => { UI.tab = b.dataset.t; renderHub(); }); }
 
@@ -877,9 +903,9 @@ function renderCreate(){
       <div class="label">NEW CAREER</div>
       <div class="panel pad stack">
         <div class="field"><label class="label" for="nm">선수 이름</label><input id="nm" maxlength="12" placeholder="예) 김민재" value="${esc(nm)}"></div>
-        <div class="field"><span class="label">포지션</span><div class="pos-grid">${Object.entries(POS).map(([k,p]) => `<button type="button" class="pos ${k === pos ? 'on' : ''}" data-p="${k}"><b>${k}</b><small>${p.av} ${p.name}</small></button>`).join('')}</div></div>
+        <div class="field"><span class="label">포지션</span><div class="pos-grid">${Object.entries(POS).map(([k,p]) => `<button type="button" class="pos ${k === pos ? 'on' : ''}" data-p="${k}"><b>${k}</b><small>${ic(p.av)} ${p.name}</small></button>`).join('')}</div></div>
       </div>
-      <div class="label">🧑 외모 · 드래그하면 돌려볼 수 있어요</div>
+      <div class="label">${ic('user-round')} 외모 · 드래그하면 돌려볼 수 있어요</div>
       <div class="panel pad stack"><div class="viewer" id="cv"></div>${lookControls(look)}</div>
       <div class="label">입단 구단 · 감독 성향을 확인하세요</div>
       <div class="club-grid">${CLUBS.map(([n]) => `<button type="button" class="club ${n === club ? 'on' : ''}" data-c="${esc(n)}">${crest(n, 'lg')}<span>${esc(n)}</span></button>`).join('')}</div>
@@ -970,13 +996,13 @@ function matchTab(){
     <div class="row2">
       <div class="panel mgr-mini"><div class="mgr-face">${M.i}</div><div style="min-width:0"><b>${esc(mgrName())} 감독</b><small>${M.n}</small><span class="mood">${MOOD_FACE[S.mood]}</span></div></div>
       <button class="fortune ${W.revealed ? 'open' : ''}" id="fortune" type="button" aria-label="오늘의 운세 카드"><div class="f-inner">
-        <div class="f-back">🔮<small>운세 카드 뒤집기</small></div>
-        <div class="f-front"><b>${F[2]} ${F[1]}</b><small>${F[3]}</small></div></div></button>
+        <div class="f-back">${ic('sparkles','big')}<small>운세 카드 뒤집기</small></div>
+        <div class="f-front"><b>${ic(['sun','clover','cloud','cloud-rain','skull'][W.fortune])} ${F[1]}</b><small>${F[3]}</small></div></div></button>
     </div>
     ${S.injury ? `<div class="injury">🤕 부상 중 (${S.injury}주 남음) · 출전할 수 없어요</div>` : ''}
-    <div class="note"><div class="note-head">📋 코치 리포트<span class="report-tag ${W.rumor ? 'rumor' : ''}">${W.rumor ? '🗣️ 확인되지 않은 소문' : '분석팀 보고'}</span></div><p>${esc(W.text)}</p><div class="hint">어떤 준비가 맞을지는 직접 판단하세요. 딱 맞으면 좋은 일이 생길지도…</div></div>
-    <div class="acts">${ACTS.map(([id,i,n], k) => `<button class="act t-${id}" type="button" data-a="${id}" style="animation-delay:${k*45}ms"><span class="i">${i}</span><span class="n">${n}</span><span class="d">${actDesc(id)}</span></button>`).join('')}</div>
-    <div class="toggle"><span>⏩ 빠른 중계 (페널티킥은 직접 차요)</span><label class="switch"><input type="checkbox" id="fast" ${S.fast ? 'checked' : ''} aria-label="빠른 중계"><span></span></label></div>
+    <div class="note"><div class="note-head">${ic('clipboard-list')} 코치 리포트<span class="report-tag ${W.rumor ? 'rumor' : ''}">${W.rumor ? '🗣️ 확인되지 않은 소문' : '분석팀 보고'}</span></div><p>${esc(W.text)}</p><div class="hint">어떤 준비가 맞을지는 직접 판단하세요. 딱 맞으면 좋은 일이 생길지도…</div></div>
+    <div class="acts">${ACTS.map(([id,i,n], k) => `<button class="act t-${id}" type="button" data-a="${id}" style="animation-delay:${k*45}ms"><span class="i">${ic({sho:'target',pas:'arrow-right-left',dri:'wind',def:'shield-half',phy:'dumbbell',rest:'bed',fan:'users',talk:'message-circle'}[id])}</span><span class="n">${n.replace(' 훈련','')}</span><span class="d">${actDesc(id)}</span></button>`).join('')}</div>
+    <div class="toggle"><span>${ic('fast-forward')} 빠른 중계 (페널티킥은 직접 차요)</span><label class="switch"><input type="checkbox" id="fast" ${S.fast ? 'checked' : ''} aria-label="빠른 중계"><span></span></label></div>
     <div class="strip">${[['출전',se.apps],['골',se.goals],['도움',se.assists],['평점',avg],['전적',`${se.W}-${se.D}-${se.L}`]].map(([k,v]) => `<div><b>${v}</b><span>${k}</span></div>`).join('')}</div>`;
 }
 function actDesc(id){
@@ -1001,12 +1027,12 @@ function playerTab(){
   const ovr = ovrOf(S.stats, S.pos), tier = tierOf(ovr);
   return `
     <div class="viewer tall" id="viewer"><div class="v-tag">${esc(S.name)} · ${S.pos} · OVR ${ovr}</div>
-      <div class="v-poses">${[['idle','🧍 기본'],['juggle','⚽ 리프팅'],['cele','🙌 세리머니']].map(([k, n]) => `<button type="button" class="opt ${k === 'idle' ? 'on' : ''}" data-pose="${k}">${n}</button>`).join('')}</div></div>
+      <div class="v-poses">${[['idle','기본'],['run','달리기'],['clap','박수'],['jump','점프']].map(([k, n]) => `<button type="button" class="opt ${k === 'idle' ? 'on' : ''}" data-pose="${k}">${n}</button>`).join('')}</div></div>
     <div class="small muted" style="text-align:center;margin-top:-6px">피지컬 ${S.stats.phy} · ${S.stats.phy >= 75 ? '탄탄한 근육질 체형' : S.stats.phy >= 55 ? '균형 잡힌 체형' : '호리호리한 체형'} · 드래그해서 돌려보기</div>
-    ${S.lookSet ? '' : '<button class="btn cyan block" id="firstLook" type="button">🧑 외모 설정하기 (무료 1회)</button>'}
+    ${S.lookSet ? '' : `<button class="btn cyan block" id="firstLook" type="button">${ic('user-round')} 외모 설정하기 (무료 1회)</button>`}
     <div class="pcard tier-${tier}">
       <div class="top"><div><div class="ovr">${ovr}</div><span class="pp">${S.pos}</span></div>${crest(S.club, 'lg')}</div>
-      <div class="avatar">${POS[S.pos].av}</div>
+      <div class="avatar">${ic(POS[S.pos].av)}</div>
       <div class="nm">${esc(S.name)}</div>
       <div class="st">${STAT_KEYS.map(k => `<span><small>${statName(k, S.pos)}</small>${S.stats[k]}</span>`).join('')}<span><small>인기</small>${S.pop}</span></div>
     </div>
@@ -1018,7 +1044,7 @@ function playerTab(){
       ${S.buff ? `<span class="chip ${S.buff > 0 ? 'up' : 'down'}">${S.buff > 0 ? '🔥 자신감' : '😰 부담감'} ${S.buff > 0 ? '+' : ''}${S.buff.toFixed(2)}</span>` : ''}
       ${S.traits.map(t => `<span class="trait" title="${esc(TRAITS[t].d)}">${TRAITS[t].i} ${esc(TRAITS[t].n)}</span>`).join('') || '<span class="small muted">상황에 맞는 훈련을 하면 낮은 확률로 특성을 얻어요.</span>'}
     </div>
-    <div class="label">🏆 트로피 캐비닛</div>
+    <div class="label">${ic('trophy')} 트로피 캐비닛</div>
     <div class="panel pad" style="display:flex;flex-wrap:wrap;gap:8px">${S.trophies.length ? S.trophies.map(t => `<span class="trophy">🏆 ${esc(t.comp)} <small>${t.year}</small></span>`).join('') : '<span class="small muted">컵 대회 결승에서 이기면 트로피가 쌓여요.</span>'}</div>
     <div class="label">커리어 기록 · 누적 수입 ${money(S.earn)}</div>
     <div class="panel tbl">${S.history.length ? historyTable() : '<p class="pad small muted" style="margin:0">첫 시즌을 마치면 기록이 쌓여요.</p>'}</div>`;
@@ -1046,7 +1072,7 @@ function clubTab(){
     <div class="panel pad stack">${[...new Set(S.schedule.filter(f => f.k !== 'L').map(f => f.comp))].map(c => { const st = S.out[c] ? '❌ 탈락' : (S.season.cups || []).includes(c) ? '🏆 우승' : '🔥 진행 중'; return `<div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(c)}</b><span>${st}</span></div>`; }).join('') || '<span class="small muted">출전하는 컵 대회가 없어요.</span>'}</div>`;
 }
 function newsTab(){
-  return `<div class="label">📰 PITCH SPORTS</div><ul class="news">${S.news.slice(0, 20).map((n, i) => `<li style="animation-delay:${Math.min(i, 10)*40}ms">${esc(n.h)}<small>${esc(n.t)}</small></li>`).join('')}</ul>`;
+  return `<div class="label">${ic('newspaper')} PITCH SPORTS</div><ul class="news">${S.news.slice(0, 20).map((n, i) => `<li style="animation-delay:${Math.min(i, 10)*40}ms">${esc(n.h)}<small>${esc(n.t)}</small></li>`).join('')}</ul>`;
 }
 function historyTable(){
   return `<table class="hist"><thead><tr><th>시즌</th><th>나이</th><th>구단</th><th>출전</th><th>골</th><th>도움</th><th>평점</th><th>연봉</th></tr></thead><tbody>
@@ -1346,7 +1372,7 @@ async function runMatch(){
       : `<div class="label">${r.role === 'injured' ? '부상 회복 중' : '출전하지 못했다'}</div><div style="font-size:48px">${r.role === 'injured' ? '🤕' : '🪑'}</div>`}
     <div class="chips">${chipsHtml(L.fx)}</div>
     ${r.iv ? '' : `<div class="noiv">${r.role === 'injured' ? '' : pick(['📵 오늘은 인터뷰 요청이 없었다.','🚌 기자들이 상대 팀 선수에게 몰려갔다.','🤫 조용히 버스에 올랐다.'])}</div>`}
-    <button class="btn block" id="toIv" type="button">${r.iv ? '🎤 기자회견장으로' : '다음 주로 ▶'}</button>
+    <button class="btn block" id="toIv" type="button">${r.iv ? `${ic('mic')} 기자회견장으로` : '다음 주로 ▶'}</button>
   </div>`;
   if (r.rating != null) countTo($('#rt'), r.rating, 1);
   if (r.res === 'W' && !fast) confetti([CLUB[S.club].c, '#ffffff']);
@@ -1669,7 +1695,7 @@ function renderNego(){
     <div class="label">🏁 ${S.year} 시즌 결산</div>
     <div class="strip">${[['출전',se.apps],['골',se.goals],['도움',se.assists],['평점', se.ratings.length ? n.avg.toFixed(1) : '-'],['전적',`${se.W}-${se.D}-${se.L}`]].map(([k,v]) => `<div><b>${v}</b><span>${k}</span></div>`).join('')}</div>
     ${awards.length ? `<div class="awards">${awards.map((a,i) => `<span class="award" style="animation-delay:${200 + i*90}ms">${a}</span>`).join('')}</div>` : ''}
-    <div class="label">💼 연봉 협상실 ${n.round > 1 ? '· 재협상' : ''}</div>
+    <div class="label">${ic('briefcase')} 연봉 협상실 ${n.round > 1 ? '· 재협상' : ''}</div>
     <div class="panel office">
       ${n.round === 1 ? `<div class="strip" style="grid-template-columns:1fr 1fr"><div><b>${money(S.salary)}</b><span>현재 연봉</span></div><div><b style="color:${n.offer > 0 ? 'var(--up)' : n.offer < 0 ? 'var(--down)' : 'inherit'}">${n.offer > 0 ? '+' : ''}${n.offer}%</b><span>구단 첫 제시</span></div></div>`
         : `<div class="strip" style="grid-template-columns:1fr 1fr"><div><b>${money(n.orig)}</b><span>시즌 전 연봉</span></div><div><b style="color:var(--gold)">${money(n.base)}</b><span>1차 확보 금액 (기준)</span></div></div>`}
@@ -2017,7 +2043,7 @@ function radar(){
 }
 function worldTab(){
   const cur = CLUB[S.club].lg;
-  return `<div class="label">🌍 세계 리그</div>` + ['K', ...EURO].map(l => {
+  return `<div class="label">${ic('globe')} 세계 리그</div>` + ['K', ...EURO].map(l => {
     const L = LEAGUES[l], cl = leagueClubs(l).sort((a, b) => CLUB[b].s - CLUB[a].s), avg = Math.round(cl.reduce((s, c) => s + CLUB[c].s, 0) / cl.length);
     const sc = S.scout[l] || 0;
     return `<div class="panel pad league ${l === cur ? 'mine' : ''}">
@@ -2059,36 +2085,36 @@ const LOOK = {
   skin:['#f6d7bd','#e9bf9a','#d6a27a','#b07a52','#8a5a3a','#5e3b26'],
   hair:{bald:'삭발', buzz:'버즈컷', short:'숏컷', twoblock:'투블럭', curly:'곱슬', long:'장발', mohawk:'모히칸', bun:'묶음 머리'},
   hairColor:['#1b1512','#4a2f1d','#8b5a2b','#d9b25b','#c9c9c9','#b3322a','#2f5fd0'],
-  eyes:{basic:'기본', sharp:'날카로운', big:'큰 눈', calm:'차분한'},
-  brow:{straight:'일자', arch:'아치', thick:'진한'},
+  eyes:{brown:'갈색', black:'검정', blue:'파랑', green:'초록', gray:'회색'},
+  eyeColor:{brown:'#4a2c18', black:'#120d0e', blue:'#2f6fd0', green:'#2f8a4f', gray:'#7a8494'},
   beard:{none:'없음', stubble:'수염 자국', goatee:'염소수염', full:'덥수룩', mustache:'콧수염'},
 };
-const DEFAULT_LOOK = {skin:1, hair:'short', hairColor:0, eyes:'basic', brow:'straight', beard:'none'};
+const DEFAULT_LOOK = {skin:1, hair:'short', hairColor:0, eyes:'brown', beard:'none'};
 function cleanLook(l){
   l = l && typeof l === 'object' ? l : {};
   return {skin:int(l.skin, 0, LOOK.skin.length - 1, 1), hair: LOOK.hair[l.hair] ? l.hair : 'short', hairColor:int(l.hairColor, 0, LOOK.hairColor.length - 1, 0),
-    eyes: LOOK.eyes[l.eyes] ? l.eyes : 'basic', brow: LOOK.brow[l.brow] ? l.brow : 'straight', beard: LOOK.beard[l.beard] ? l.beard : 'none'};
+    eyes: LOOK.eyes[l.eyes] ? l.eyes : 'brown', beard: LOOK.beard[l.beard] ? l.beard : 'none'};
 }
 const SHOP = [
-  {id:'band', slot:'head', i:'🎽', n:'헤어밴드', p:120, d:'머리카락을 잡아주는 클럽 컬러 밴드'},
-  {id:'beanie', slot:'head', i:'🧶', n:'니트 비니', p:180, d:'원정 버스 패션'},
-  {id:'glasses', slot:'face', i:'🕶️', n:'선글라스', p:220, d:'입국장 패션의 완성'},
-  {id:'chain', slot:'neck', i:'📿', n:'금목걸이', p:320, d:'세리머니 때 반짝이는 골드 체인'},
-  {id:'earring', slot:'ear', i:'💎', n:'다이아 귀걸이', p:260, d:'왼쪽 귀에 반짝'},
-  {id:'wrist', slot:'wrist', i:'🎗️', n:'손목 밴드', p:80, d:'클럽 컬러 손목 밴드'},
-  {id:'captain', slot:'arm', i:'©️', n:'주장 완장', p:500, d:'감독 신뢰 70 이상만 착용 가능', req: () => S.trust >= 70},
-  {id:'tattoo', slot:'sleeve', i:'🐉', n:'팔 타투', p:400, d:'오른팔 슬리브 타투'},
-  {id:'gloves', slot:'hands', i:'🧤', n:'방한 장갑', p:150, d:'겨울 경기 필수품'},
-  {id:'bootGold', slot:'boots', i:'🥇', n:'골드 축구화', p:600, d:'득점왕의 상징'},
-  {id:'bootPink', slot:'boots', i:'🩷', n:'핑크 축구화', p:200, d:'눈에 띄는 형광 핑크'},
-  {id:'bootBlack', slot:'boots', i:'🖤', n:'블랙아웃 축구화', p:150, d:'클래식한 올블랙'},
+  {id:'band', slot:'head', i:ic('sticker'), n:'헤어밴드', p:120, d:'머리카락을 잡아주는 클럽 컬러 밴드'},
+  {id:'beanie', slot:'head', i:ic('hard-hat'), n:'니트 비니', p:180, d:'원정 버스 패션'},
+  {id:'glasses', slot:'face', i:ic('glasses'), n:'선글라스', p:220, d:'입국장 패션의 완성'},
+  {id:'chain', slot:'neck', i:ic('link'), n:'금목걸이', p:320, d:'세리머니 때 반짝이는 골드 체인'},
+  {id:'earring', slot:'ear', i:ic('gem'), n:'다이아 귀걸이', p:260, d:'왼쪽 귀에 반짝'},
+  {id:'wrist', slot:'wrist', i:ic('watch'), n:'손목 밴드', p:80, d:'클럽 컬러 손목 밴드'},
+  {id:'captain', slot:'arm', i:ic('crown'), n:'주장 완장', p:500, d:'감독 신뢰 70 이상만 착용 가능', req: () => S.trust >= 70},
+  {id:'tattoo', slot:'sleeve', i:ic('pen-tool'), n:'팔 타투', p:400, d:'오른팔 슬리브 타투'},
+  {id:'gloves', slot:'hands', i:ic('hand'), n:'방한 장갑', p:150, d:'겨울 경기 필수품'},
+  {id:'bootGold', slot:'boots', i:ic('footprints'), n:'골드 축구화', p:600, d:'득점왕의 상징'},
+  {id:'bootPink', slot:'boots', i:ic('footprints'), n:'핑크 축구화', p:200, d:'눈에 띄는 형광 핑크'},
+  {id:'bootBlack', slot:'boots', i:ic('footprints'), n:'블랙아웃 축구화', p:150, d:'클래식한 올블랙'},
 ];
 const CONSUMABLES = [
-  {id:'drink', i:'🥤', n:'에너지 드링크', p:60, d:'컨디션 +30', use: () => applyFx({cond:30})},
-  {id:'mental', i:'🧘', n:'멘탈 코칭', p:120, d:'다음 경기 자신감 +0.2', use: () => applyFx({buff:.2})},
-  {id:'pr', i:'📣', n:'SNS 홍보 패키지', p:150, d:'인기도 +6', use: () => applyFx({pop:6})},
-  {id:'lesson', i:'🎓', n:'개인 레슨', p:250, d:'주 능력치 +1', use: () => applyFx({best:1})},
-  {id:'barber', i:'💈', n:'헤어숍 이용권', p:100, d:'헤어·머리색·수염 바꾸기', use: () => { setTimeout(() => openLookEditor('barber'), 50); return []; }},
+  {id:'drink', i:ic('cup-soda'), n:'에너지 드링크', p:60, d:'컨디션 +30', use: () => applyFx({cond:30})},
+  {id:'mental', i:ic('brain'), n:'멘탈 코칭', p:120, d:'다음 경기 자신감 +0.2', use: () => applyFx({buff:.2})},
+  {id:'pr', i:ic('megaphone'), n:'SNS 홍보 패키지', p:150, d:'인기도 +6', use: () => applyFx({pop:6})},
+  {id:'lesson', i:ic('graduation-cap'), n:'개인 레슨', p:250, d:'주 능력치 +1', use: () => applyFx({best:1})},
+  {id:'barber', i:ic('scissors'), n:'헤어숍 이용권', p:100, d:'헤어·머리색·수염 바꾸기', use: () => { setTimeout(() => openLookEditor('barber'), 50); return []; }},
 ];
 function gainXp(n){ if (!n) return null; S.xp = Math.max(0, (S.xp || 0) + Math.round(n)); return ['XP', n, `🔷 +${Math.round(n)} XP`]; }
 
@@ -2106,181 +2132,187 @@ function crestTex(T, club){
   img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(crestSVG(club)); return t;
 }
 const KIT_NUM = {FW:9, MF:8, DF:4, GK:1};
-// 피지컬이 높을수록 어깨·팔다리가 굵어지고, 포지션에 따라 키가 조금 다르다
-function buildPlayer(T, look, o){
-  const st = o.stats, club = o.club, eq = o.equip || {}, pos = o.pos || 'FW';
-  const bulk = clamp(.8 + (st.phy - 40) / 105, .8, 1.34), tall = pos === 'GK' ? 1.06 : pos === 'DF' ? 1.03 : 1;
-  const M = (c, r = .6, m = 0, extra = {}) => new T.MeshStandardMaterial({color:c, roughness:r, metalness:m, ...extra});
-  const skinHex = LOOK.skin[look.skin], skin = M(skinHex, .55), kit = CLUB[club].c, kitDark = hexLum(kit) > .6;
-  const jersey = M(kit, .72), shorts = M(kitDark ? '#1a1a22' : '#f2f2f2', .78), socks = M(kit, .8);
-  const boot = M(...({bootGold:['#ffc83d', .25, .9], bootPink:['#ff4fa3', .4, .1], bootBlack:['#111111', .35, .2]}[eq.boots] || ['#f5f5f5', .45, .1]));
-  const hairM = M(LOOK.hairColor[look.hairColor], .85), dark = M('#1a1416', .4), white = M('#ffffff', .3), gold = M('#ffc83d', .2, .95);
-  const hand = eq.hands === 'gloves' ? M('#1d2233', .7) : skin;
-  const root = new T.Group(), body = new T.Group(); root.add(body); root.scale.setScalar(tall);
-  const mesh = (geo, mat, x, y, z, parent) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m; };
-  const cap = (r, l) => new T.CapsuleGeometry(r, l, 6, 16);
-  const legs = [];
-  for (const s of [-1, 1]){
-    const hip = new T.Group(); hip.position.set(s * .1 * bulk, .96, 0); body.add(hip);
-    mesh(cap(.078 * bulk, .16), shorts, 0, -.09, 0, hip);
-    mesh(cap(.066 * bulk, .2), skin, 0, -.28, 0, hip);
-    const knee = new T.Group(); knee.position.set(0, -.44, 0); hip.add(knee);
-    mesh(cap(.056 * bulk, .3), socks, 0, -.2, 0, knee);
-    const b = mesh(new T.BoxGeometry(.1 * Math.min(bulk, 1.15), .075, .25), boot, 0, -.435, .045, knee);
-    mesh(new T.BoxGeometry(.102 * Math.min(bulk, 1.15), .012, .2), white, 0, -.47, .045, knee).visible = !eq.boots;
-    legs.push({hip, knee, b});
-  }
-  mesh(new T.CylinderGeometry(.19 * bulk, .2 * bulk, .2, 24), shorts, 0, .95, 0, body);
-  const torso = new T.Group(); torso.position.y = 1.02; body.add(torso);
-  const chest = mesh(new T.CylinderGeometry(.215 * bulk, .17 * bulk, .52, 28), jersey, 0, .26, 0, torso); chest.scale.z = .64;
-  const sh = mesh(new T.SphereGeometry(.215 * bulk, 28, 16), jersey, 0, .5, 0, torso); sh.scale.set(1, .42, .64);
-  mesh(new T.TorusGeometry(.06, .012, 8, 24), M(kitDark ? '#1a1a22' : '#ffffff', .6), 0, .6, 0, torso).rotation.x = Math.PI / 2;
-  mesh(new T.CylinderGeometry(.052 * (.88 + bulk * .14), .062 * (.88 + bulk * .14), .12, 18), skin, 0, .62, 0, torso);
-  const front = .21 * bulk * .64 + .004;
-  const crestP = mesh(new T.PlaneGeometry(.085, .085), new T.MeshStandardMaterial({map: crestTex(T, club), transparent:true, roughness:.6}), -.085 * bulk, .4, front - .012, torso);
-  crestP.castShadow = false;
-  const back = mesh(new T.PlaneGeometry(.3, .3), new T.MeshStandardMaterial({map: backTex(T, o.name || '', KIT_NUM[pos], kitDark ? '#15151f' : '#ffffff'), transparent:true, roughness:.7}), 0, .24, -front + .004, torso);
-  back.rotation.y = Math.PI; back.castShadow = false;
-  // 머리 · 얼굴
-  const head = new T.Group(); head.position.y = .79; torso.add(head);
-  mesh(new T.SphereGeometry(.12, 36, 28), skin, 0, 0, 0, head).scale.set(.94, 1.12, 1.02);
-  mesh(new T.SphereGeometry(.05, 20, 14), skin, 0, -.075, .045, head).scale.set(1.25, .8, 1);
-  const eyeS = {basic:[1, 1], sharp:[1.05, .55], big:[1.3, 1.25], calm:[1, .7]}[look.eyes];
-  for (const s of [-1, 1]){
-    const e = mesh(new T.SphereGeometry(.021, 16, 12), white, s * .042, .018, .098, head); e.scale.set(eyeS[0], eyeS[1], .6);
-    const pu = mesh(new T.SphereGeometry(.012, 12, 10), dark, s * .042, .018, .111, head); pu.scale.set(eyeS[0] * .9, Math.min(1, eyeS[1] * 1.1), .6);
-    const br = mesh(new T.BoxGeometry(.048, look.brow === 'thick' ? .016 : .009, .012), hairM, s * .042, .056, .108, head);
-    if (look.brow === 'arch') br.rotation.z = -s * .28; if (look.eyes === 'sharp') br.rotation.z = s * .18;
-    mesh(new T.SphereGeometry(.028, 14, 10), skin, s * .114, 0, 0, head).scale.set(.45, 1, .8);
-  }
-  mesh(new T.SphereGeometry(.017, 12, 10), skin, 0, -.012, .12, head).scale.set(.85, 1.15, 1);
-  mesh(new T.BoxGeometry(.042, .007, .01), M('#7a3b3b', .6), 0, -.058, .104, head);
-  addHair(T, head, look, hairM, eq, mesh);
-  addBeard(T, head, look, hairM, mesh);
-  // 팔
-  const arms = [];
-  for (const s of [-1, 1]){
-    const shJ = new T.Group(); shJ.position.set(s * .245 * bulk, .46, 0); shJ.rotation.z = s * .14; torso.add(shJ);
-    mesh(cap(.064 * bulk, .1), jersey, 0, -.06, 0, shJ);
-    const tat = eq.sleeve === 'tattoo' && s === 1 ? new T.MeshStandardMaterial({map: tattooTex(T, skinHex), roughness:.55}) : skin;
-    mesh(cap(.054 * bulk, .14), tat, 0, -.2, 0, shJ);
-    if (eq.arm === 'captain' && s === -1) mesh(new T.CylinderGeometry(.068 * bulk, .068 * bulk, .05, 20, 1, true), M('#ffd400', .5), 0, -.08, 0, shJ);
-    const el = new T.Group(); el.position.y = -.3; shJ.add(el);
-    mesh(cap(.046 * bulk, .19), tat, 0, -.13, 0, el);
-    if (eq.wrist === 'wrist') mesh(new T.CylinderGeometry(.052 * bulk, .052 * bulk, .05, 18), M(kit, .7), 0, -.23, 0, el);
-    mesh(new T.SphereGeometry(.047, 16, 12), hand, 0, -.29, 0, el).scale.set(.85, 1.15, .7);
-    arms.push({sh:shJ, el, s});
-  }
-  if (eq.neck === 'chain'){ const ch = mesh(new T.TorusGeometry(.085 * bulk, .007, 8, 40), gold, 0, .55, .03, torso); ch.rotation.x = Math.PI / 2 - .35; }
-  if (eq.ear === 'earring') mesh(new T.SphereGeometry(.011, 10, 8), M('#bfe9ff', .05, .9), -.118, -.035, 0, head);
-  if (eq.face === 'glasses'){
-    const gl = M('#11151f', .1, .7, {transparent:true, opacity:.92});
-    for (const s of [-1, 1]) mesh(new T.BoxGeometry(.05, .03, .008), gl, s * .043, .02, .124, head);
-    mesh(new T.BoxGeometry(.03, .006, .006), gold, 0, .026, .124, head);
-    for (const s of [-1, 1]) mesh(new T.BoxGeometry(.006, .006, .1), gl, s * .07, .024, .07, head);
-  }
-  if (eq.head === 'band') { const b = mesh(new T.TorusGeometry(.122, .013, 8, 40), M(kit, .7), 0, .055, 0, head); b.rotation.x = Math.PI / 2 - .2; b.scale.set(.96, 1.05, 1); }
-  return {root, body, torso, head, arms, legs};
+// 사람 모델: Quaternius "Man" (CC0). 유니폼·피부·머리색은 재질 색을 바꾸고,
+// 헤어 스타일·수염·악세사리·양말·엠블럼·등번호는 뼈대에 붙여 애니메이션을 따라가게 한다.
+let GLB_BUF = null;
+function glbBuffer(){
+  if (!GLB_BUF && window.PLAYER_GLB){ const bin = atob(window.PLAYER_GLB); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); GLB_BUF = u.buffer; }
+  return GLB_BUF;
 }
-function addHair(T, head, look, mat, eq, mesh){
-  const h = eq.head === 'beanie' ? 'beanie' : look.hair;
-  const capG = (r, th) => new T.SphereGeometry(r, 36, 18, 0, Math.PI * 2, 0, Math.PI * th);
-  const cap = (r, th, y = .0, tilt = -.22) => { const m = mesh(capG(r, th), mat, 0, y, -.005, head); m.scale.set(.95, 1.12, 1.03); m.rotation.x = tilt; return m; };
-  if (h === 'beanie'){
-    const b = mesh(capG(.134, .5), new T.MeshStandardMaterial({color:'#2b2f45', roughness:.95}), 0, .012, 0, head); b.scale.set(.95, 1.15, 1.03); b.rotation.x = -.12;
-    const rim = mesh(new T.TorusGeometry(.124, .02, 10, 40), new T.MeshStandardMaterial({color:'#3a4060', roughness:.95}), 0, .03, 0, head); rim.rotation.x = Math.PI / 2 - .12; rim.scale.set(.96, 1.05, 1);
-    mesh(new T.SphereGeometry(.03, 12, 10), new T.MeshStandardMaterial({color:'#ffc83d', roughness:.95}), 0, .175, -.01, head);
-    return;
-  }
-  if (h === 'bald') return;
-  if (h === 'buzz'){ cap(.123, .47, .0, -.25); return; }
-  if (h === 'mohawk'){ cap(.122, .42, 0, -.3).material = new T.MeshStandardMaterial({color: mat.color.clone().multiplyScalar(.6), roughness:.9}); for (let i = 0; i < 7; i++){ const z = .1 - i * .033; const y = Math.sqrt(Math.max(0, .02 - z * z)) * .9 + .1; mesh(new T.BoxGeometry(.028, .07, .03), mat, 0, y, z, head).rotation.x = -z * 3; } return; }
-  cap(.13, .52, .008);
-  if (h === 'short'){ const f = mesh(new T.BoxGeometry(.17, .035, .05), mat, 0, .085, .085, head); f.rotation.x = .5; }
-  if (h === 'twoblock'){ const f = mesh(new T.BoxGeometry(.19, .05, .07), mat, 0, .075, .09, head); f.rotation.x = .75; mesh(capG(.137, .3), mat, 0, .02, 0, head).scale.set(.97, 1.16, 1.05); }
-  if (h === 'curly'){ for (let i = 0; i < 34; i++){ const th = Math.random() * Math.PI * .45, ph = Math.random() * Math.PI * 2; mesh(new T.SphereGeometry(.03, 10, 8), mat, Math.cos(ph) * Math.sin(th) * .125, Math.cos(th) * .14 + .01, Math.sin(ph) * Math.sin(th) * .13 - .01, head); } }
-  if (h === 'long'){ mesh(new T.CylinderGeometry(.115, .1, .2, 24, 1, true, Math.PI * .1, Math.PI * .8), mat, 0, -.06, -.02, head).rotation.y = Math.PI; for (const s of [-1, 1]) mesh(new T.BoxGeometry(.03, .16, .07), mat, s * .112, -.04, .0, head); }
-  if (h === 'bun') mesh(new T.SphereGeometry(.048, 16, 12), mat, 0, .13, -.09, head);
-}
-function addBeard(T, head, look, mat, mesh){
-  const b = look.beard;
-  if (b === 'none') return;
-  if (b === 'stubble' || b === 'full'){
-    const m = b === 'full' ? mat : new T.MeshStandardMaterial({color:mat.color, roughness:.9, transparent:true, opacity:.38});
-    const g = mesh(new T.SphereGeometry(b === 'full' ? .127 : .122, 32, 16, Math.PI * .1, Math.PI * .8, Math.PI * .56, Math.PI * .3), m, 0, 0, 0, head); g.scale.set(.95, 1.12, 1.04);
-    if (b === 'full') mesh(new T.SphereGeometry(.045, 14, 10), mat, 0, -.11, .07, head).scale.set(1.2, 1, 1);
-  }
-  if (b === 'goatee') mesh(new T.BoxGeometry(.038, .05, .03), mat, 0, -.1, .1, head);
-  if (b === 'mustache' || b === 'goatee') mesh(new T.BoxGeometry(.06, .013, .016), mat, 0, -.042, .113, head);
-}
-function animatePose(P, pose, t, ball){
-  const br = Math.sin(t * 2.2) * .012;
-  P.torso.scale.set(1, 1 + br, 1); P.body.position.y = 0;
-  P.arms.forEach(a => { a.sh.rotation.x = 0; a.sh.rotation.z = a.s * .14; a.el.rotation.x = -.15; });
-  P.legs.forEach(l => { l.hip.rotation.x = 0; l.knee.rotation.x = 0; });
-  P.head.rotation.y = Math.sin(t * .7) * .12;
-  if (pose === 'idle'){ P.arms.forEach(a => { a.sh.rotation.x = Math.sin(t * 1.6 + a.s) * .06; }); ball.position.set(.32, .11, .32); ball.rotation.y = t * .3; }
-  if (pose === 'cele'){
-    const j = Math.abs(Math.sin(t * 3.2)); P.body.position.y = j * .14;
-    P.arms.forEach(a => { a.sh.rotation.z = a.s * (2.5 + Math.sin(t * 6) * .12); a.el.rotation.x = -.2; });
-    P.legs.forEach((l, i) => { l.knee.rotation.x = j * .5; l.hip.rotation.x = -j * .2; });
-    P.head.rotation.x = -.25; ball.position.set(.5, .11, .2);
-  } else P.head.rotation.x = 0;
-  if (pose === 'juggle'){
-    const k = Math.max(0, Math.sin(t * 4.2)); const L = P.legs[1];
-    L.hip.rotation.x = -k * .9; L.knee.rotation.x = k * .9;
-    P.arms.forEach(a => { a.sh.rotation.z = a.s * .5; });
-    ball.position.set(.1, .45 + Math.abs(Math.cos(t * 4.2 / 2)) * .55, .28); ball.rotation.x = t * 6;
-  }
+const POSES = {idle:'Man_Idle', run:'Man_Run', clap:'Man_Clapping', jump:'Man_Jump', walk:'Man_Walk'};
+function regionBoxes(model, names){
+  const T = THREE, out = {};
+  model.traverse(m => {
+    if (!m.isSkinnedMesh) return;
+    const pos = m.geometry.attributes.position, si = m.geometry.attributes.skinIndex, sw = m.geometry.attributes.skinWeight, bones = m.skeleton.bones, v = new T.Vector3();
+    for (let i = 0; i < pos.count; i++){
+      const ws = [sw.getX(i), sw.getY(i), sw.getZ(i), sw.getW(i)], is = [si.getX(i), si.getY(i), si.getZ(i), si.getW(i)];
+      let bi = 0, bw = -1; for (let k = 0; k < 4; k++) if (ws[k] > bw){ bw = ws[k]; bi = is[k]; }
+      const name = bones[bi] && bones[bi].name; if (!names.includes(name)) continue;
+      v.fromBufferAttribute(pos, i); m.boneTransform(i, v); v.applyMatrix4(m.matrixWorld);
+      (out[name] = out[name] || new T.Box3()).expandByPoint(v);
+    }
+  });
+  return out;
 }
 function mountViewer(el, opts = {}){
   disposeViewer();
   if (!el) return null;
-  if (!window.THREE){ el.innerHTML = '<div class="v-fallback">3D 엔진을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.</div>'; return null; }
   const T = window.THREE;
-  if (T.ColorManagement) T.ColorManagement.legacyMode = false; // 색상 hex를 sRGB로 해석해 바래 보이지 않게
-  let w = el.clientWidth || 320, h = el.clientHeight || 340;
-  let renderer;
+  if (!T || !T.GLTFLoader || !glbBuffer()){ el.innerHTML = '<div class="v-fallback">3D 엔진을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.</div>'; return null; }
+  if (T.ColorManagement) T.ColorManagement.legacyMode = false;
+  let w = el.clientWidth || 320, h = el.clientHeight || 340, renderer;
   try { renderer = new T.WebGLRenderer({antialias:true, alpha:true}); }
   catch { el.innerHTML = '<div class="v-fallback">이 기기에서는 3D를 표시할 수 없어요.</div>'; return null; }
   renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1)); renderer.setSize(w, h);
-  renderer.outputEncoding = T.sRGBEncoding; renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = .95;
+  renderer.outputEncoding = T.sRGBEncoding; renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 1;
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
   el.appendChild(renderer.domElement);
   const scene = new T.Scene();
-  const cam = new T.PerspectiveCamera(30, w / h, .1, 50); cam.position.set(0, 1.15, opts.close ? 3.6 : 5.3); cam.lookAt(0, opts.close ? 1.4 : .98, 0);
-  scene.add(new T.HemisphereLight(0xcfe0ff, 0x1a3020, .75));
-  const key = new T.DirectionalLight(0xffffff, 1.7); key.position.set(2.2, 4.2, 3); key.castShadow = true; key.shadow.mapSize.set(1024, 1024);
-  Object.assign(key.shadow.camera, {left:-1.5, right:1.5, top:2.5, bottom:-.5}); key.shadow.bias = -.0005; scene.add(key);
-  const rim = new T.DirectionalLight(0x7cc4ff, 1.3); rim.position.set(-3, 2.6, -3); scene.add(rim);
-  const warm = new T.PointLight(0xffc83d, .6, 8); warm.position.set(-2, 1.2, 2.5); scene.add(warm);
+  const cam = new T.PerspectiveCamera(28, w / h, .1, 50);
+  const close = !!opts.close;
+  cam.position.set(0, close ? 1.5 : 1.15, close ? 3.2 : 5.4); cam.lookAt(0, close ? 1.38 : .95, 0);
+  scene.add(new T.HemisphereLight(0xdde8ff, 0x22301f, .85));
+  const key = new T.DirectionalLight(0xfff4e6, 1.9); key.position.set(2.2, 4.2, 3.2); key.castShadow = true; key.shadow.mapSize.set(1024, 1024);
+  Object.assign(key.shadow.camera, {left:-1.5, right:1.5, top:2.5, bottom:-.5}); key.shadow.bias = -.0004; scene.add(key);
+  const rim = new T.DirectionalLight(0x7cc4ff, 1.4); rim.position.set(-3, 2.6, -3); scene.add(rim);
+  const warm = new T.PointLight(0xffc83d, .5, 8); warm.position.set(-2, 1.2, 2.5); scene.add(warm);
   const ground = new T.Mesh(new T.CircleGeometry(1.5, 48), new T.MeshStandardMaterial({map: grassTex(T), roughness:.95})); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
   const ring = new T.Mesh(new T.RingGeometry(1.5, 1.56, 64), new T.MeshBasicMaterial({color:0xffc83d})); ring.rotation.x = -Math.PI / 2; ring.position.y = .003; scene.add(ring);
-  const ball = new T.Mesh(new T.SphereGeometry(.11, 28, 18), new T.MeshStandardMaterial({map: ballTex(T), roughness:.45})); ball.castShadow = true; scene.add(ball);
-  const make = () => buildPlayer(T, opts.look || S.look, {stats: opts.stats || S.stats, club: opts.club || S.club, equip: opts.equip || S.equip, pos: opts.pos || S.pos, name: opts.name ?? S.name});
-  let P = make(); scene.add(P.root);
-  let rotY = -.35, vel = 0, drag = false, lastX = 0, idle = 0, pose = opts.pose || 'idle', alive = true, raf = 0;
+  const ball = new T.Mesh(new T.SphereGeometry(.11, 28, 18), new T.MeshStandardMaterial({map: ballTex(T), roughness:.45})); ball.castShadow = true; ball.position.set(.42, .11, .3); scene.add(ball);
+  const S0 = {alive:true, model:null, mixer:null, actions:{}, cur:null, attach:[], bones:{}, bulk:1, pose: opts.pose || 'idle', gen:0};
+  const disp = o => o.traverse(x => { if (x.geometry) x.geometry.dispose(); if (x.material) [].concat(x.material).forEach(m => { if (m.map) m.map.dispose(); m.dispose(); }); });
+  let rotY = -.35, vel = 0, drag = false, lastX = 0, idle = 0, raf = 0;
   const dom = renderer.domElement; dom.style.touchAction = 'pan-y'; dom.style.cursor = 'grab';
   dom.addEventListener('pointerdown', e => { drag = true; lastX = e.clientX; dom.setPointerCapture?.(e.pointerId); dom.style.cursor = 'grabbing'; });
   dom.addEventListener('pointermove', e => { if (!drag) return; const dx = e.clientX - lastX; lastX = e.clientX; rotY += dx * .012; vel = dx * .012; idle = 0; });
   const up = () => { drag = false; dom.style.cursor = 'grab'; };
   dom.addEventListener('pointerup', up); dom.addEventListener('pointercancel', up);
-  const t0 = performance.now();
-  const loop = now => {
-    if (!alive) return;
-    const t = (now - t0) / 1000;
-    if (!drag){ vel *= .92; rotY += vel; idle += 1 / 60; if (idle > 2.5 && !RM) rotY += .005; }
-    P.root.rotation.y = rotY; animatePose(P, RM ? 'idle' : pose, RM ? 0 : t, ball);
+
+  async function build(){
+    const gen = ++S0.gen;
+    const g = await new Promise(res => new T.GLTFLoader().parse(glbBuffer().slice(0), '', res, () => res(null)));
+    if (!S0.alive || gen !== S0.gen || !g) return;
+    if (S0.model){ scene.remove(S0.model); disp(S0.model); }
+    S0.attach.forEach(a => { scene.remove(a.g); disp(a.g); }); S0.attach = [];
+    const look = opts.look || S.look, st = opts.stats || S.stats, club = opts.club || S.club, eq = opts.equip || S.equip || {}, pos = opts.pos || S.pos, name = opts.name ?? S.name;
+    const model = g.scene, bones = {};
+    model.traverse(x => { if (x.isBone) bones[x.name] = x; if (x.isMesh){ x.castShadow = true; x.receiveShadow = true; x.frustumCulled = false; } });
+    model.updateMatrixWorld(true);
+    const hv = new T.Vector3(); bones.Head.getWorldPosition(hv);
+    const tall = pos === 'GK' ? 1.05 : pos === 'DF' ? 1.02 : 1;
+    model.scale.multiplyScalar(1.6 / hv.y * tall); model.updateMatrixWorld(true);
+    // 재질: 셔츠=유니폼, 바지=반바지, 피부, 머리, 눈
+    const kit = CLUB[club].c, kitDark = hexLum(kit) > .6, skinHex = LOOK.skin[look.skin], hairHex = LOOK.hairColor[look.hairColor];
+    const bootHex = {bootGold:'#ffc83d', bootPink:'#ff4fa3', bootBlack:'#111111'}[eq.boots] || '#f2f2f2';
+    model.traverse(x => { if (!x.isMesh) return; x.material = [].concat(x.material).map(m0 => {
+      const m = m0.clone(), n = m0.name;
+      if (n === 'Shirt') m.color.set(kit);
+      else if (n === 'Pants') m.color.set(kitDark ? '#1a1a22' : '#f4f4f4');
+      else if (n === 'Skin') m.color.set(skinHex);
+      else if (n === 'Hair') m.color.set(look.hair === 'bald' ? skinHex : look.hair === 'buzz' ? new T.Color(skinHex).lerp(new T.Color(hairHex), .6) : hairHex);
+      else if (n === 'Eyes') m.color.set(LOOK.eyeColor[look.eyes] || '#1b1512');
+      else if (n === 'Socks'){ m.color.set(bootHex); if (eq.boots === 'bootGold'){ m.metalness = .85; m.roughness = .25; } }
+      if (m.roughness !== undefined && n !== 'Socks') m.roughness = n === 'Skin' ? .55 : .75;
+      return m; }); if (x.material.length === 1) x.material = x.material[0]; });
+    // 기준 자세에서 부위별 상자 → 악세사리 기준점
+    const R = regionBoxes(model, ['Head','Torso','Abdomen','Neck','UpperArmL','LowerArmL','LowerArmR','PalmL','PalmR','LowerLegL','LowerLegR']);
+    const M = (c, r = .6, mt = 0, x = {}) => new T.MeshStandardMaterial({color:c, roughness:r, metalness:mt, ...x});
+    const att = (boneName, box, build) => {
+      const b = bones[boneName]; if (!b || !box) return;
+      const c = box.getCenter(new T.Vector3()), s = box.getSize(new T.Vector3());
+      const grp = new T.Group(); grp.matrixAutoUpdate = false;
+      build(grp, s);
+      grp.traverse(o => { if (o.isMesh){ o.castShadow = true; } });
+      const C = new T.Matrix4().copy(b.matrixWorld).invert().multiply(new T.Matrix4().makeTranslation(c.x, c.y, c.z));
+      scene.add(grp); S0.attach.push({g:grp, b, C});
+    };
+    const tubeAlong = (s, r, len, mat) => { // 상자의 가장 긴 축을 따라 원통
+      const m = new T.Mesh(new T.CylinderGeometry(r, r, len, 24, 1, true), mat);
+      if (s.x >= s.y && s.x >= s.z) m.rotation.z = Math.PI / 2; else if (s.z >= s.y) m.rotation.x = Math.PI / 2;
+      m.material.side = T.DoubleSide; return m;
+    };
+    const hair = M(hairHex, .85), gold = M('#ffc83d', .2, .95), dark = M('#11151f', .15, .6, {transparent:true, opacity:.92});
+    // 머리: 헤어 스타일 · 수염 · 머리 악세사리
+    att('Head', R.Head, (grp, s) => {
+      const W = s.x, H = s.y, D = s.z, top = H / 2;
+      const hs = eq.head === 'beanie' ? 'beanie' : look.hair;
+      if (hs === 'mohawk') for (let i = 0; i < 7; i++){ const z = D * (.32 - i * .1); const m = new T.Mesh(new T.BoxGeometry(W * .14, H * .22, D * .1), hair); m.position.set(0, top - H * .02 - Math.abs(z) * .25, z); grp.add(m); }
+      if (hs === 'bun'){ const m = new T.Mesh(new T.SphereGeometry(W * .2, 16, 12), hair); m.position.set(0, top - H * .02, -D * .38); grp.add(m); }
+      if (hs === 'curly') for (let i = 0; i < 30; i++){ const th = Math.random() * Math.PI * .42, ph = Math.random() * Math.PI * 2; const m = new T.Mesh(new T.SphereGeometry(W * .12, 10, 8), hair); m.position.set(Math.cos(ph) * Math.sin(th) * W * .5, H * .12 + Math.cos(th) * H * .36, Math.sin(ph) * Math.sin(th) * D * .5 - D * .04); grp.add(m); }
+      if (hs === 'long'){ const m = new T.Mesh(new T.BoxGeometry(W * .92, H * .55, D * .22), hair); m.position.set(0, -H * .08, -D * .44); grp.add(m); for (const sx of [-1, 1]){ const l = new T.Mesh(new T.BoxGeometry(W * .1, H * .45, D * .5), hair); l.position.set(sx * W * .47, -H * .02, -D * .12); grp.add(l); } }
+      if (hs === 'twoblock'){ const m = new T.Mesh(new T.BoxGeometry(W * .82, H * .1, D * .3), hair); m.position.set(0, top - H * .14, D * .34); m.rotation.x = .5; grp.add(m); }
+      if (hs === 'beanie'){
+        const b = new T.Mesh(new T.SphereGeometry(W * .56, 32, 16, 0, Math.PI * 2, 0, Math.PI * .5), M('#2b2f45', .95)); b.scale.set(1, H / W * .85, D / W * 1.02); b.position.y = H * .14; grp.add(b);
+        const rim = new T.Mesh(new T.TorusGeometry(W * .54, W * .07, 10, 40), M('#3a4060', .95)); rim.rotation.x = Math.PI / 2; rim.scale.set(1, D / W, 1); rim.position.y = H * .14; grp.add(rim);
+        const pom = new T.Mesh(new T.SphereGeometry(W * .13, 12, 10), M('#ffc83d', .95)); pom.position.y = top + H * .1; grp.add(pom);
+      }
+      if (eq.head === 'band'){ const b = new T.Mesh(new T.TorusGeometry(W * .54, W * .05, 8, 40), M(kit, .7)); b.rotation.x = Math.PI / 2; b.scale.set(1, D / W * 1.02, 1); b.position.y = H * .2; grp.add(b); }
+      const bd = look.beard;
+      if (bd === 'stubble' || bd === 'full'){
+        const m = new T.Mesh(new T.SphereGeometry(W * .52, 28, 14, Math.PI * .08, Math.PI * .84, Math.PI * .55, Math.PI * .32),
+          bd === 'full' ? hair : M(hairHex, .9, 0, {transparent:true, opacity:.42}));
+        m.scale.set(1.0, H / W * .9, D / W * 1.05); m.position.set(0, -H * .02, D * .02); grp.add(m);
+      }
+      if (bd === 'goatee'){ const m = new T.Mesh(new T.BoxGeometry(W * .2, H * .16, D * .16), hair); m.position.set(0, -H * .4, D * .38); grp.add(m); }
+      if (bd === 'mustache' || bd === 'goatee'){ const m = new T.Mesh(new T.BoxGeometry(W * .34, H * .045, D * .08), hair); m.position.set(0, -H * .2, D * .47); grp.add(m); }
+      if (eq.face === 'glasses'){ for (const sx of [-1, 1]){ const l = new T.Mesh(new T.BoxGeometry(W * .3, H * .12, D * .04), dark); l.position.set(sx * W * .2, H * .02, D * .52); grp.add(l); } const br = new T.Mesh(new T.BoxGeometry(W * .14, H * .025, D * .03), gold); br.position.set(0, H * .05, D * .53); grp.add(br); }
+      if (eq.ear === 'earring'){ const e = new T.Mesh(new T.SphereGeometry(W * .045, 10, 8), M('#bfe9ff', .05, .9)); e.position.set(-W * .5, -H * .12, -D * .02); grp.add(e); }
+    });
+    // 가슴 엠블럼 · 등 이름/번호
+    att('Torso', R.Torso, (grp, s) => {
+      const cp = new T.Mesh(new T.PlaneGeometry(.075, .075), new T.MeshStandardMaterial({map: crestTex(T, club), transparent:true, roughness:.6}));
+      cp.position.set(-s.x * .22, s.y * .2, s.z * .5 + .018); grp.add(cp);
+      const bp = new T.Mesh(new T.PlaneGeometry(.26, .26), new T.MeshStandardMaterial({map: backTex(T, name || '', KIT_NUM[pos], kitDark ? '#15151f' : '#ffffff'), transparent:true, roughness:.7}));
+      bp.position.set(0, -s.y * .05, -s.z * .5 - .035); bp.rotation.y = Math.PI; grp.add(bp);
+    });
+    if (eq.neck === 'chain') att('Neck', R.Neck, (grp, s) => { const c = new T.Mesh(new T.TorusGeometry(Math.max(s.x, s.z) * .62, .006, 8, 40), gold); c.rotation.x = Math.PI / 2 - .35; c.position.y = -s.y * .35; grp.add(c); });
+    if (eq.arm === 'captain') att('UpperArmL', R.UpperArmL, (grp, s) => { const sorted = [s.x, s.y, s.z].sort((a, b) => a - b); const t = tubeAlong(s, sorted[0] * .58, sorted[2] * .2, M('#ffd400', .5)); t.position.y = sorted[2] * .12; grp.add(t); });
+    if (eq.sleeve === 'tattoo') att('LowerArmR', R.LowerArmR, (grp, s) => { const sorted = [s.x, s.y, s.z].sort((a, b) => a - b); grp.add(tubeAlong(s, sorted[0] * .55, sorted[2] * .7, new T.MeshStandardMaterial({map: tattooTex(T, skinHex), roughness:.55}))); });
+    if (eq.wrist === 'wrist') for (const sd of ['L', 'R']) att('LowerArm' + sd, R['LowerArm' + sd], (grp, s) => { const sorted = [s.x, s.y, s.z].sort((a, b) => a - b); const t = tubeAlong(s, sorted[0] * .62, sorted[2] * .14, M(kit, .7)); const k = s.x >= s.y && s.x >= s.z ? 'x' : s.z >= s.y ? 'z' : 'y'; t.position[k] = (k === 'y' ? -1 : (sd === 'L' ? 1 : -1)) * sorted[2] * .38; grp.add(t); });
+    if (eq.hands === 'gloves') for (const sd of ['L', 'R']) att('Palm' + sd, R['Palm' + sd], (grp, s) => { const m = new T.Mesh(new T.SphereGeometry(.5, 16, 12), M('#1d2233', .7)); m.scale.set(s.x * 1.25, s.y * 1.25, s.z * 1.25); grp.add(m); });
+    // 축구 양말 (유니폼 색)
+    for (const sd of ['L', 'R']) att('LowerLeg' + sd, R['LowerLeg' + sd], (grp, s) => { const sorted = [s.x, s.y, s.z].sort((a, b) => a - b); const t = tubeAlong(s, sorted[0] * .5, sorted[2] * .5, M(kit, .85)); t.position.y = sorted[2] * .06; grp.add(t); });
+    // 체형: 피지컬
+    S0.bulk = clamp(.86 + (st.phy - 40) / 150, .86, 1.2);
+    S0.model = model; S0.bones = bones; scene.add(model);
+    S0.mixer = new T.AnimationMixer(model); S0.actions = {};
+    g.animations.forEach(a => { const k = Object.keys(POSES).find(p => a.name.endsWith(POSES[p])); if (k) S0.actions[k] = S0.mixer.clipAction(a); });
+    S0.cur = null; setPose(S0.pose, true);
+  }
+  function setPose(p, instant){
+    S0.pose = p; const a = S0.actions[p] || S0.actions.idle; if (!a || a === S0.cur) return;
+    a.reset().play(); if (S0.cur && !instant) S0.cur.crossFadeTo(a, .35, false); S0.cur = a;
+  }
+  const clock = new T.Clock();
+  const loop = () => {
+    if (!S0.alive) return;
+    const dt = Math.min(.05, clock.getDelta());
+    if (!drag){ vel *= .92; rotY += vel; idle += dt; if (idle > 2.5 && !RM) rotY += .005; }
+    if (S0.model){
+      S0.model.rotation.y = rotY;
+      if (S0.mixer) S0.mixer.update(RM ? 0 : dt);
+      const B = S0.bones, b = S0.bulk;
+      if (B.Torso) B.Torso.scale.set(b, 1, .5 + b * .5);
+      if (B.Neck) B.Neck.scale.set(1 / b, 1, 1 / (.5 + b * .5));
+      for (const sd of ['L', 'R']){
+
+        if (B['UpperLeg' + sd]) B['UpperLeg' + sd].scale.set(b * .95 + .05, 1, b * .95 + .05);
+      }
+      S0.model.updateMatrixWorld(true);
+      for (const a of S0.attach) a.g.matrix.multiplyMatrices(a.b.matrixWorld, a.C);
+      ball.position.set(.42, .11, .3);
+    }
     renderer.render(scene, cam); raf = requestAnimationFrame(loop);
   };
   raf = requestAnimationFrame(loop);
   const ro = new ResizeObserver(() => { const w2 = el.clientWidth, h2 = el.clientHeight; if (!w2 || !h2) return; renderer.setSize(w2, h2); cam.aspect = w2 / h2; cam.updateProjectionMatrix(); });
   ro.observe(el);
-  const disp = o => o.traverse(x => { if (x.geometry) x.geometry.dispose(); if (x.material) [].concat(x.material).forEach(m => { if (m.map) m.map.dispose(); m.dispose(); }); });
+  build();
   V = {
-    stop(){ alive = false; cancelAnimationFrame(raf); ro.disconnect(); disp(scene); renderer.dispose(); renderer.forceContextLoss(); dom.remove(); },
-    rebuild(o2){ Object.assign(opts, o2); scene.remove(P.root); disp(P.root); P = make(); scene.add(P.root); },
-    pose(p){ pose = p; },
+    stop(){ S0.alive = false; cancelAnimationFrame(raf); ro.disconnect(); disp(scene); S0.attach.forEach(a => disp(a.g)); renderer.dispose(); renderer.forceContextLoss(); dom.remove(); },
+    rebuild(o2){ Object.assign(opts, o2); build(); },
+    pose(p){ setPose(p); },
   };
   return V;
 }
@@ -2293,8 +2325,7 @@ function lookControls(look){
     <div class="lrow"><span class="label">피부</span><div class="sws">${sw('skin', LOOK.skin)}</div></div>
     <div class="lrow"><span class="label">헤어</span><div class="opts">${ch('hair', LOOK.hair)}</div></div>
     <div class="lrow"><span class="label">머리색</span><div class="sws">${sw('hairColor', LOOK.hairColor)}</div></div>
-    <div class="lrow"><span class="label">눈</span><div class="opts">${ch('eyes', LOOK.eyes)}</div></div>
-    <div class="lrow"><span class="label">눈썹</span><div class="opts">${ch('brow', LOOK.brow)}</div></div>
+    <div class="lrow"><span class="label">눈동자</span><div class="opts">${ch('eyes', LOOK.eyes)}</div></div>
     <div class="lrow"><span class="label">수염</span><div class="opts">${ch('beard', LOOK.beard)}</div></div>
   </div>`;
 }
@@ -2312,7 +2343,7 @@ function bindLook(host, look, onChange, only){
 async function openLookEditor(mode){
   const free = mode === 'first';
   const look = {...S.look};
-  const el = modal(`<div class="eyebrow">${free ? '🧑 외모 설정' : '💈 헤어숍'}</div><div class="viewer sm" id="lv"></div>${lookControls(look)}<button class="btn turf block" type="button" id="lok">저장하기</button>`);
+  const el = modal(`<div class="eyebrow">${free ? '외모 설정' : '헤어숍'}</div><div class="viewer sm" id="lv"></div>${lookControls(look)}<button class="btn turf block" type="button" id="lok">저장하기</button>`);
   el.querySelector('.modal-card').classList.add('wide');
   const v = mountViewer(el.querySelector('#lv'), {look, close:true});
   bindLook(el, look, l => v && v.rebuild({look:l}), free ? null : ['hair','hairColor','beard']);
@@ -2325,16 +2356,16 @@ function shopTab(){
   const owned = new Set(S.items);
   const card = it => {
     const has = owned.has(it.id), on = S.equip[it.slot] === it.id, locked = it.req && !it.req();
-    return `<div class="shop-item ${on ? 'on' : ''}"><div class="si-i">${it.i}</div><b>${esc(it.n)}</b><small>${esc(it.d)}</small>
+    return `<div class="shop-item ${on ? 'on' : ''}"><div class="si-i" style="${{bootGold:'color:#ffc83d',bootPink:'color:#ff6fb5',bootBlack:'color:#8a8fa8'}[it.id] || ''}">${it.i}</div><b>${esc(it.n)}</b><small>${esc(it.d)}</small>
       ${has ? `<button class="btn ${on ? 'dark' : 'cyan'} sm" type="button" data-eq="${it.id}" ${locked && !on ? 'disabled' : ''}>${on ? '벗기' : '착용'}</button>`
             : `<button class="btn sm" type="button" data-buy="${it.id}" ${S.xp < it.p ? 'disabled' : ''}>🔷 ${it.p}</button>`}</div>`;
   };
   return `
     <div class="viewer" id="viewer"></div>
-    <div class="xp-bank"><span>🔷 보유 경험치</span><b>${S.xp.toLocaleString()} XP</b><small>경기 출전·골·훈련·미니게임·우승으로 모여요. 연봉과는 별개예요.</small></div>
-    <div class="label">👕 악세사리 · 착용하면 3D 선수에 바로 보여요</div>
+    <div class="xp-bank"><span>${ic('gem')} 보유 경험치</span><b>${S.xp.toLocaleString()} XP</b><small>경기 출전·골·훈련·미니게임·우승으로 모여요. 연봉과는 별개예요.</small></div>
+    <div class="label">${ic('shirt')} 악세사리 · 착용하면 3D 선수에 바로 보여요</div>
     <div class="shop-grid">${SHOP.map(card).join('')}</div>
-    <div class="label">🧪 소모품</div>
+    <div class="label">${ic('package')} 소모품</div>
     <div class="shop-grid">${CONSUMABLES.map(c => `<div class="shop-item"><div class="si-i">${c.i}</div><b>${esc(c.n)}</b><small>${esc(c.d)}</small><button class="btn sm" type="button" data-use="${c.id}" ${S.xp < c.p ? 'disabled' : ''}>🔷 ${c.p}</button></div>`).join('')}</div>`;
 }
 function bindShop(){
@@ -2342,7 +2373,7 @@ function bindShop(){
   root.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => {
     const it = SHOP.find(x => x.id === b.dataset.buy); if (!it || S.xp < it.p) return;
     S.xp -= it.p; S.items.push(it.id); if (!(it.req && !it.req())) S.equip[it.slot] = it.id;
-    save(); SFX.coin(); toast(`${it.i} ${it.n} 구매!`); renderHub();
+    save(); SFX.coin(); toast(`${it.n} 구매! 3D 선수에 착용했어요`); renderHub();
   });
   root.querySelectorAll('[data-eq]').forEach(b => b.onclick = () => {
     const it = SHOP.find(x => x.id === b.dataset.eq); if (!it) return;
@@ -2352,7 +2383,7 @@ function bindShop(){
   root.querySelectorAll('[data-use]').forEach(b => b.onclick = () => {
     const c = CONSUMABLES.find(x => x.id === b.dataset.use); if (!c || S.xp < c.p) return;
     S.xp -= c.p; const fx = c.use(); save(); SFX.coin();
-    toast(`${c.i} ${c.n} 사용! ${fx.map(f => f[2] || `${f[0]} ${f[1] > 0 ? '+' : ''}${f[1]}`).join(' · ')}`);
+    toast(`${c.n} 사용! ${fx.map(f => f[2] || `${f[0]} ${f[1] > 0 ? '+' : ''}${f[1]}`).join(' · ')}`);
     if (c.id !== 'barber') renderHub();
   });
 }
