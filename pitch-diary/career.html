@@ -1070,6 +1070,48 @@ table.standings{min-width:0}
 .slot-empty{display:flex;align-items:center;justify-content:center;gap:8px;border-style:dashed}
 .slot-empty.primary{border-style:solid}
 .slot-left{font-family:var(--f-body);font-size:11px;color:var(--muted);margin-left:4px}
+
+/* ---------- 한계 도달 훈련 · 동료 · 애니메이션 ---------- */
+.act.capped{filter:grayscale(.85) brightness(.6);cursor:not-allowed}
+.act.capped .d{color:var(--gold) !important;font-weight:900}
+.shop-item.off{opacity:.55}
+.mate-face{flex:none;width:46px;height:46px;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 30%,rgba(255,255,255,.18),rgba(11,17,40,.8));border:2px solid var(--edge)}
+.mate.hi .mate-face{border-color:var(--turf)} .mate.lo .mate-face{border-color:var(--hot)}
+.mate-face svg{width:100%;height:100%;display:block;filter:none !important}
+.mate-face .eyes,.mate-face .head,.mate-face .whole{animation:none !important}
+.hang-b{align-self:flex-start;display:inline-flex;align-items:center;gap:5px;margin-top:2px;padding:5px 11px;border-radius:999px;border:1px solid rgba(255,107,129,.5);background:rgba(255,77,109,.12);color:#ffc2cd;font-size:12px;font-weight:900}
+.hang-b .ico{width:14px;height:14px}
+.hang-b:disabled{opacity:.45} .hang-b.done{opacity:1;border-color:var(--turf);background:rgba(34,197,94,.14);color:var(--up)}
+.hang-scene{position:relative;display:flex;justify-content:center;align-items:flex-end;gap:0;height:170px;margin:4px 0 6px}
+.hang-scene .cb{width:120px;height:160px} .hang-scene .cb svg{width:100%;height:100%}
+.hang-scene .cb.flip svg{transform:scaleX(-1)}
+.hearts{position:absolute;left:50%;bottom:70px;width:0;height:0}
+.hearts i{position:absolute;left:var(--x);bottom:0;color:#ff6b81;animation:heartUp 2.2s ease-out var(--d) infinite;opacity:0}
+.hearts i .ico{width:20px;height:20px;fill:#ff6b81}
+@keyframes heartUp{0%{transform:translateY(0) scale(.4);opacity:0}20%{opacity:1}100%{transform:translateY(-90px) scale(1.1);opacity:0}}
+.res-cb{position:relative;width:118px;height:150px;margin:-4px auto -6px}
+.res-cb svg{width:100%;height:100%}
+.res-cb .spark{position:absolute;width:10px;height:10px;border-radius:2px;background:var(--gold);animation:sparkle 1.4s ease-in-out infinite}
+.res-cb .spark.s1{left:4px;top:20px} .res-cb .spark.s2{right:6px;top:8px;animation-delay:.4s;background:var(--cyan)} .res-cb .spark.s3{right:16px;top:60px;animation-delay:.8s;background:#fff}
+@keyframes sparkle{0%,100%{transform:scale(0) rotate(0)}50%{transform:scale(1.2) rotate(45deg)}}
+.res-cb .sweat{position:absolute;right:30px;top:24px;width:9px;height:13px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:#7cc4ff;animation:sweat 1.6s ease-in infinite}
+@keyframes sweat{0%{transform:translateY(0);opacity:0}20%{opacity:1}100%{transform:translateY(22px);opacity:0}}
+.train-cut{position:fixed;inset:0;z-index:45;display:grid;place-items:center;background:rgba(3,6,16,.6);backdrop-filter:blur(3px);animation:fadeIn .2s both;padding:16px}
+.train-cut.out{animation:fadeOut .25s both}
+.tc-card{width:min(320px,100%);display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px;border-radius:22px;border:3px solid var(--cyan);background:linear-gradient(180deg,var(--panel-2),var(--panel));box-shadow:0 0 30px rgba(61,214,255,.3);animation:pop .35s cubic-bezier(.3,1.6,.6,1) both}
+.tc-card.hit{border-color:var(--gold);box-shadow:0 0 34px rgba(255,200,61,.4)}
+.tc-title{display:flex;align-items:center;gap:6px;font-family:var(--f-display);font-size:20px}
+.tc-title .ico{color:var(--gold);width:22px;height:22px}
+.tc-cb{position:relative;width:140px;height:175px} .tc-cb svg{width:100%;height:100%}
+.tc-cb .zz{position:absolute;right:10px;top:10px;font-family:var(--f-display);color:#9fd8ff;font-size:22px;animation:zz 1.6s ease-in-out infinite} .tc-cb .zz i{font-style:normal;font-size:.7em}
+@keyframes zz{50%{transform:translate(4px,-8px);opacity:.6}}
+.tc-cb .tc-ball{position:absolute;left:60%;bottom:12px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:inset -3px -3px 0 rgba(0,0,0,.2);animation:kick .9s ease-in infinite}
+@keyframes kick{0%{transform:translate(0,0)}60%{transform:translate(70px,-60px) scale(.6);opacity:1}61%,100%{opacity:0}}
+.tc-msgs{display:flex;flex-direction:column;align-items:center;gap:4px}
+.tc-msgs span{font-weight:900;font-size:15px;color:var(--up);animation:floatUp .5s ease both;text-align:center}
+@keyframes floatUp{from{opacity:0;transform:translateY(14px)}}
+.tc-card small{color:var(--muted);font-size:12px}
+@media (prefers-reduced-motion: reduce){ .hearts i,.res-cb .spark,.res-cb .sweat,.tc-cb .tc-ball,.tc-cb .zz{animation:none} }
 </style>
 </head>
 <body>
@@ -1189,6 +1231,8 @@ const POS = {
 const STAT_KEYS = ['sho','pas','dri','def','phy'];
 const statName = (k, pos) => ({sho:'슈팅',pas:'패스',dri:'드리블',def: pos === 'GK' ? '선방' : '수비',phy:'피지컬'})[k];
 const mainStat = () => STAT_KEYS.reduce((a, k) => (POS[S.pos].w[k] || 0) > (POS[S.pos].w[a] || 0) ? k : a, 'sho');
+// 아직 99 미만인 능력치 중 포지션에서 가장 중요한 것 (주 능력치가 한계면 다음 능력치로)
+const growStat = () => [...STAT_KEYS].sort((a, b) => (POS[S.pos].w[b] || 0) - (POS[S.pos].w[a] || 0)).find(k => S.stats[k] < 99) || null;
 const ACTS = [['sho','🎯','슈팅 훈련'],['pas','🔁','패스 훈련'],['dri','💨','드리블 훈련'],['def','🛡️','수비 훈련'],['phy','🏋️','피지컬 훈련'],['rest','🛌','휴식'],['fan','🤳','팬 미팅'],['talk','🗣️','감독 면담']];
 const ACT_IDS = ACTS.map(a => a[0]);
 const TRAITS = {
@@ -1547,7 +1591,7 @@ function load(slot = curSlot){
       event: EVENTS.some(e => e.id === w.event) ? w.event : null, eventRes: w.eventRes && typeof w.eventRes.text === 'string' ? {text:w.eventRes.text.slice(0, 200)} : null,
       mini: MINIS[w.mini] ? w.mini : null, miniDone:!!w.miniDone, mission: MISSION[w.mission] ? w.mission : null,
       mOpts: Array.isArray(w.mOpts) ? w.mOpts.filter(o => o && MISSION[o.k]).map(o => ({k:o.k, lucky:!!o.lucky})).slice(0, 3) : null,
-      mPick: w.mPick == null ? null : int(w.mPick, 0, 2, 1), wx:int(w.wx, 0, WEATHER.length - 1, 0), ref:int(w.ref, 0, REFS.length - 1, 1), psy: cleanPsy(w.psy), psyFx: cleanPsyFx(w.psyFx), lb: w.lb && STAT_KEYS.includes(w.lb.k) ? {k:w.lb.k, started:!!w.lb.started, res: ['ok','fail'].includes(w.lb.res) ? w.lb.res : null} : null, speech: typeof w.speech === 'string' ? w.speech.slice(0, 80) : ''} : null;
+      mPick: w.mPick == null ? null : int(w.mPick, 0, 2, 1), hang: MATES[w.hang] ? w.hang : null, wx:int(w.wx, 0, WEATHER.length - 1, 0), ref:int(w.ref, 0, REFS.length - 1, 1), psy: cleanPsy(w.psy), psyFx: cleanPsyFx(w.psyFx), lb: w.lb && STAT_KEYS.includes(w.lb.k) ? {k:w.lb.k, started:!!w.lb.started, res: ['ok','fail'].includes(w.lb.res) ? w.lb.res : null} : null, speech: typeof w.speech === 'string' ? w.speech.slice(0, 80) : ''} : null;
     r.prev = r.prev ? {rating:Number(r.prev.rating) || 0, goals:int(r.prev.goals, 0, 9, 0), mins:int(r.prev.mins, 0, 90, 0)} : null;
     r.pending = validPending(r.pending);
     if (r.phase === 'match' && !r.pending) r.phase = 'week';
@@ -1585,7 +1629,7 @@ function applyFx(e){
   }
   if (e.buff){ const b0 = S.buff; S.buff = r2(clamp(S.buff + e.buff, -1, 1)); const d = r2(S.buff - b0); if (d) out.push([d > 0 ? '자신감' : '부담감', d, d > 0 ? '🔥 다음 경기 자신감↑' : '😰 다음 경기 부담감↑']); }
   if (e.earn){ S.earn = Math.max(0, S.earn + e.earn); out.push(['수입', e.earn, `💰 ${e.earn > 0 ? '+' : '−'}${money(Math.abs(e.earn))}`]); }
-  if (e.best){ const k = mainStat(); const d = addStat(k, e.best); if (d) out.push([statName(k, S.pos), d, '']); }
+  if (e.best){ const k = growStat() || mainStat(); const d = addStat(k, e.best); if (d) out.push([statName(k, S.pos), d, '']); }
   return out;
 }
 const chipsHtml = arr => arr.map(([l, d, txt], i) => `<span class="chip ${d > 0 ? 'up' : 'down'}" style="animation-delay:${i*90}ms">${txt ? esc(txt) : `${esc(l)} ${d > 0 ? '+' : ''}${d}`}</span>`).join('');
@@ -1797,7 +1841,7 @@ function matchTab(){
     ${st('goal', '훈련 고르고 경기 시작', S.injury ? '부상 중이라 휴식을 추천해요 · 고르면 바로 경기가 진행돼요' : '코치 리포트를 보고 맞는 훈련을 고르면 보너스 · 누르면 바로 경기 시작')}
     ${S.injury ? `<div class="injury">🤕 부상 중 (${S.injury}주 남음) · 출전할 수 없어요</div>` : ''}
     <div class="coach-line">${ic('clipboard-list')}<span><em class="${W.rumor ? 'rumor' : ''}">${W.rumor ? '확인 안 된 소문' : '코치 리포트'}</em>${esc(W.text)}</span></div>
-    <div class="acts">${ACTS.map(([id,i,n], k) => `<button class="act t-${id}" type="button" data-a="${id}" style="animation-delay:${k*45}ms"><span class="i">${ic({sho:'target',pas:'arrow-right-left',dri:'wind',def:'shield-half',phy:'dumbbell',rest:'bed',fan:'users',talk:'message-circle'}[id])}</span><span class="n">${n.replace(' 훈련','')}</span><span class="d">${actDesc(id)}</span></button>`).join('')}</div>
+    <div class="acts">${ACTS.map(([id,i,n], k) => `<button class="act t-${id} ${STAT_KEYS.includes(id) && S.stats[id] >= 99 ? 'capped' : ''}" type="button" data-a="${id}" ${STAT_KEYS.includes(id) && S.stats[id] >= 99 ? 'disabled' : ''} style="animation-delay:${k*45}ms"><span class="i">${ic({sho:'target',pas:'arrow-right-left',dri:'wind',def:'shield-half',phy:'dumbbell',rest:'bed',fan:'users',talk:'message-circle'}[id])}</span><span class="n">${n.replace(' 훈련','')}</span><span class="d">${actDesc(id)}</span></button>`).join('')}</div>
     <div class="toggle"><span>${ic('fast-forward')} 빠른 중계 (페널티킥은 직접 차요)</span><label class="switch"><input type="checkbox" id="fast" ${S.fast ? 'checked' : ''} aria-label="빠른 중계"><span></span></label></div>`; })()}
     <div class="label">${ic('calendar-days')} 시즌 현황</div>
     <div class="panel track"><span class="lab">SEASON</span>${S.schedule.map((x, i) => { const r = S.season.results[i], skip = !r && i < S.round, out = x.k !== 'L' && S.out[x.comp] && !r; return `<span class="n ${x.k !== 'L' ? 'cupn' : ''} ${r ? 'r-' + r : ''} ${skip || out ? 'gone' : ''} ${i === S.round ? 'now' : ''}" title="${esc(fxLabel(x))}">${r ? {W:'승',D:'무',L:'패'}[r] : x.k === 'L' ? x.lr : x.k === 'X' ? '⭐' : '🏆'}</span>`; }).join('')}</div>
@@ -1806,7 +1850,7 @@ function matchTab(){
     ${vMini('toValue2')}`;
 }
 function actDesc(id){
-  if (STAT_KEYS.includes(id)) return `${statName(id, S.pos)} ${S.stats[id]}↑`;
+  if (STAT_KEYS.includes(id)) return S.stats[id] >= 99 ? '한계 도달' : `${statName(id, S.pos)} ${S.stats[id]}↑`;
   return {rest:'컨디션↑', fan:'인기도↑', talk:'신뢰 ±'}[id];
 }
 function bindMatchTab(){
@@ -1969,6 +2013,7 @@ async function showEvent(){
 function growth(age){ return age <= 21 ? 2.2 : age <= 24 ? 1.7 : age <= 28 ? 1.1 : age <= 31 ? .6 : .3; }
 async function doAction(id){
   if (S.phase !== 'week') return;
+  if (STAT_KEYS.includes(id) && S.stats[id] >= 99) return; // 한계 도달 능력치는 훈련 불가 (한계 돌파 시험으로만)
   if (S.week.event && !S.week.eventRes){ showEvent(); return; }
   if (ntPending() && !S.injury){ showNT(); return; }
   if (S.week.lb && !S.week.lb.started){ showLB(); return; }
@@ -2012,8 +2057,8 @@ async function doAction(id){
   if (S.week.mOpts && S.week.mPick == null){ S.week.mPick = 1; S.week.mission = S.week.mOpts[1].k; }
   S.pending = simulate(); S.phase = 'match'; save();
   if (hit) SFX.good();
-  toast(msgs.join(' · '));
-  if (special) await showSpecial(special); else await wait(800);
+  await trainCut(id, msgs, hit);
+  if (special) await showSpecial(special);
   playMatch();
 }
 function pickSpecial(id){
@@ -2249,6 +2294,7 @@ async function runMatch(){
   add(90, 'big', `📣 경기 종료 — ${r.res === 'W' ? '🎉 승리!' : r.res === 'D' ? '🤝 무승부' : '😢 패배'}`);
   const L = S.last, rc = r.rating == null ? '' : r.rating >= 7.5 ? 'background:linear-gradient(135deg,#4ade80,#0f7a35);color:#03200d' : r.rating < 5.5 ? 'background:linear-gradient(135deg,#ff6b81,#a8203b);color:#fff' : 'background:linear-gradient(135deg,#3dd6ff,#157a99);color:#04202b';
   $('#after').innerHTML = `<div class="panel res-card stack" style="align-items:center">
+    <div class="res-cb" data-cpose="${r.role === 'injured' ? 'idle' : r.res === 'W' ? (r.goals ? 'jump' : 'clap') : r.res === 'D' ? 'clap' : 'idle'}">${meSvg()}${r.res === 'W' && r.mins ? '<i class="spark s1"></i><i class="spark s2"></i><i class="spark s3"></i>' : r.res === 'L' ? '<i class="sweat"></i>' : ''}</div>
     ${r.rating != null ? `<div class="label">MY RATING</div><div class="rating" style="${rc}" id="rt">0.0</div>
       <div style="font-weight:900">${r.goals ? `⚽ ${r.goals}골 ` : ''}${r.assists ? `🅰️ ${r.assists}도움 ` : ''}${r.cs ? '🧤 클린시트 ' : ''}${!r.goals && !r.assists && !r.cs ? `${r.mins}분 출전` : ''}</div>`
       : `<div class="label">${r.role === 'injured' ? '부상 회복 중' : '출전하지 못했다'}</div><div style="font-size:48px">${r.role === 'injured' ? '🤕' : '🪑'}</div>`}
@@ -3015,7 +3061,7 @@ const CONSUMABLES = [
   {id:'drink', i:ic('cup-soda'), n:'에너지 드링크', p:300, d:'컨디션 +30', use: () => applyFx({cond:30})},
   {id:'mental', i:ic('brain'), n:'멘탈 코칭', p:450, d:'다음 경기 자신감 +0.2', use: () => applyFx({buff:.2})},
   {id:'pr', i:ic('megaphone'), n:'SNS 홍보 패키지', p:500, d:'인기도 +6', use: () => applyFx({pop:6})},
-  {id:'lesson', i:ic('graduation-cap'), n:'개인 레슨', p:1200, d:'주 능력치 +1', use: () => applyFx({best:1})},
+  {id:'lesson', i:ic('graduation-cap'), n:'개인 레슨', p:1200, d:'주 능력치 +1', use: () => applyFx({best:1}), dyn: () => { const k = growStat(); return k ? `${statName(k, S.pos)} +1${k !== mainStat() ? ` (${statName(mainStat(), S.pos)}은 한계 도달)` : ''}` : null; }},
   {id:'barber', i:ic('scissors'), n:'헤어숍 이용권', p:400, d:'헤어·머리색·수염 바꾸기', use: () => { setTimeout(() => openLookEditor('barber'), 50); return []; }},
 ];
 function gainXp(n){ if (!n) return null; S.xp = Math.max(0, (S.xp || 0) + Math.round(n)); return ['XP', n, `🔷 +${Math.round(n)} XP`]; }
@@ -3199,7 +3245,7 @@ function shopTab(){
     <div class="label">${ic('shirt')} 악세사리 · 착용하면 내 선수에 바로 보여요</div>
     <div class="shop-grid">${SHOP.map(card).join('')}</div>
     <div class="label">${ic('package')} 소모품</div>
-    <div class="shop-grid">${CONSUMABLES.map(c => `<div class="shop-item"><div class="si-i">${c.i}</div><b>${esc(c.n)}</b><small>${esc(c.d)}</small><button class="btn sm" type="button" data-use="${c.id}" ${S.xp < c.p ? 'disabled' : ''}>🔷 ${c.p}</button></div>`).join('')}</div>`;
+    <div class="shop-grid">${CONSUMABLES.map(c => { const dd = c.dyn ? c.dyn() : c.d, off = c.dyn && !dd; return `<div class="shop-item ${off ? 'off' : ''}"><div class="si-i">${c.i}</div><b>${esc(c.n)}</b><small>${esc(dd || '모든 능력치가 한계에 도달했어요')}</small><button class="btn sm" type="button" data-use="${c.id}" ${off ? 'disabled ' : ''}${S.xp < c.p ? 'disabled' : ''}>🔷 ${c.p}</button></div>`; }).join('')}</div>`;
 }
 function bindShop(){
   const sb = $('#shopBack'); if (sb) sb.onclick = () => { UI.tab = 'player'; renderHub(); };
@@ -3215,7 +3261,7 @@ function bindShop(){
     save(); SFX.good(); renderHub();
   });
   root.querySelectorAll('[data-use]').forEach(b => b.onclick = () => {
-    const c = CONSUMABLES.find(x => x.id === b.dataset.use); if (!c || S.xp < c.p) return;
+    const c = CONSUMABLES.find(x => x.id === b.dataset.use); if (!c || S.xp < c.p || (c.dyn && !c.dyn())) return;
     S.xp -= c.p; const fx = c.use(); save(); SFX.coin();
     toast(`${c.n} 사용! ${fx.map(f => f[2] || `${f[0]} ${f[1] > 0 ? '+' : ''}${f[1]}`).join(' · ')}`);
     if (c.id !== 'barber') renderHub();
@@ -4004,6 +4050,43 @@ function relFx(){
     rt: t('veteran') === 'hi' ? .1 : t('veteran') === 'lo' ? -.1 : 0, ast: t('star') === 'hi' ? 1.1 : t('star') === 'lo' ? .9 : 1};
 }
 function addRel(k, d){ if (!MATES[k]) return 0; S.rel = S.rel || {}; const b = rel(k); S.rel[k] = clamp(Math.round(b + d), 0, 100); return S.rel[k] - b; }
+// 동료와 시간 보내기: 매주 한 명. 상대마다 하는 일이 다르고, 경쟁자와 친해지면 다른 동료 하나가 살짝 서운해한다.
+const HANG = {
+  rival:{n:'1:1 슈팅 내기', t:['승부욕이 불타는 슈팅 내기! 끝나고 서로 웃었다.','내기에 지고 밥을 샀다. 그래도 사이는 좋아졌다.'], pose:'run'},
+  captain:{n:'저녁 같이 먹기', t:['주장이 팀 이야기를 털어놓았다. 믿음이 생겼다.','고깃집에서 진지한 대화를 나눴다.'], pose:'clap'},
+  veteran:{n:'노하우 배우기', t:['베테랑이 위치 선정 비법을 알려줬다.','훈련 뒤 남아서 1:1 과외를 받았다.'], pose:'idle'},
+  star:{n:'게임 한 판', t:['밤새 게임하며 웃었다. 패스가 잘 통할 것 같다.','팀 에이스와 듀오로 랭크를 올렸다.'], pose:'jump'},
+};
+const HAIRS = Object.keys(LOOK.hair);
+function mateLook(k){ const h = hashStr(MATES[k].nm() + k); return {skin: h % 6, hair: HAIRS[(h >>> 3) % HAIRS.length], hairColor: (h >>> 7) % 5, eyes: Object.keys(LOOK.eyes)[(h >>> 10) % 5], beard: k === 'veteran' ? ['stubble','full','goatee'][(h >>> 12) % 3] : 'none'}; }
+const mateSvg = (k, bare = true) => chibiSVG({look:mateLook(k), stats:{phy:55 + hashStr(k) % 30}, club:S.club, equip:{}, pos: k === 'star' ? 'FW' : 'MF', name:MATES[k].nm(), bare});
+const mateFace = k => mateSvg(k).replace('viewBox="0 0 200 262"', 'viewBox="42 14 116 116"');
+const meSvg = () => chibiSVG({look:S.look, stats:S.stats, club:S.club, equip:S.equip || {}, pos:S.pos, name:S.name, bare:true});
+async function hangOut(k){
+  if (!S.week || S.week.hang || !MATES[k] || document.querySelector('.modal')) return;
+  S.week.hang = k; const H = HANG[k];
+  const d = addRel(k, ri(6, 11)); const fx = [['관계', d, `${MATES[k].nm()} 관계 +${d}`], ...applyFx({cond:-3})];
+  if (k === 'rival'){ const o = pick(['captain','veteran','star']), d2 = addRel(o, -2); if (d2) fx.push(['관계', d2, `${MATES[o].nm()}이(가) 살짝 서운해함 ${d2}`]); }
+  const g = gainXp(12); if (g) fx.push(g);
+  save();
+  const el = modal(`<div class="eyebrow">${ic('heart')} 동료와 시간 보내기</div><h3>${esc(MATES[k].nm())} · ${H.n}</h3>
+    <div class="hang-scene"><div class="cb" data-cpose="${H.pose}">${meSvg()}</div><div class="hearts">${[0,1,2,3,4].map(i => `<i style="--d:${i * .35}s;--x:${-30 + i * 15}px">${ic('heart')}</i>`).join('')}</div><div class="cb flip" data-cpose="${H.pose === 'idle' ? 'clap' : H.pose}">${mateSvg(k)}</div></div>
+    <p>${esc(pick(H.t))}</p><div class="chips" style="margin-bottom:14px">${chipsHtml(fx)}</div><button class="btn block" type="button" id="hgok">좋았어!</button>`);
+  el.classList.add('hang-modal'); SFX.good();
+  el.querySelector('#hgok').onclick = async () => { await el.close(); renderHub(); };
+}
+// 훈련 컷신: 캐릭터가 훈련하는 짧은 장면 + 결과 숫자
+const TRAIN_POSE = {sho:'run', pas:'clap', dri:'run', def:'jump', phy:'jump', rest:'idle', fan:'clap', talk:'idle'};
+async function trainCut(id, msgs, hit){
+  const A = ACTS.find(a => a[0] === id), el = document.createElement('div');
+  el.className = 'train-cut';
+  el.innerHTML = `<div class="tc-card ${hit ? 'hit' : ''}"><div class="tc-title">${ic({sho:'target',pas:'arrow-right-left',dri:'wind',def:'shield-half',phy:'dumbbell',rest:'bed',fan:'users',talk:'message-circle'}[id])} ${A ? A[2] : ''}</div>
+    <div class="tc-cb ${id}" data-cpose="${TRAIN_POSE[id] || 'idle'}">${meSvg()}${id === 'rest' ? '<b class="zz">Z<i>z</i><i>z</i></b>' : ''}${id === 'sho' ? '<i class="tc-ball"></i>' : ''}</div>
+    <div class="tc-msgs">${msgs.map((m, i) => `<span style="animation-delay:${.35 + i * .25}s">${esc(m)}</span>`).join('')}</div><small>경기장으로 이동 중…</small></div>`;
+  document.body.appendChild(el);
+  await wait(RM ? 0 : 1900);
+  el.classList.add('out'); await wait(RM ? 0 : 250); el.remove();
+}
 const STAFF = [['AN','분석관','search'], ['PH','피지컬 코치','dumbbell'], ['DR','팀 닥터','stethoscope']];
 function staffLine(k){
   const W = S.week || {};
@@ -4036,15 +4119,18 @@ function benchTab(){
         <div class="f-front"><b>${ic(['sun','clover','cloud','cloud-rain','skull'][W.fortune])} ${F[1]}</b><small>${F[3]}</small></div></div></button>
     </section>
     <div class="label">${ic('users')} 동료 관계</div>
-    <p class="small muted" style="margin:-6px 0 0">심리전에서 이기면 관계가 좋아지고 지면 나빠져요. 70 이상이거나 25 이하면 경기에 영향을 줘요.</p>
+    <p class="small muted" style="margin:-6px 0 0">매주 한 명과 시간을 보낼 수 있어요 (컨디션 −3). 누구와 가까워질지 골라보세요 · 70 이상이면 경기에 보너스, 25 이하면 페널티 · 심리전 결과도 반영돼요.</p>
     <div class="mates">${Object.entries(MATES).map(([k, D]) => {
       if (k === 'captain' && cap) return `<div class="panel mate"><span class="mate-i">${ic('crown')}</span><div><b>주장은 나!</b><small>주장 완장을 차고 있어요</small></div></div>`;
       const v = rel(k), [tier, word] = relTier(v);
-      return `<div class="panel mate ${tier}"><span class="mate-i">${ic(D.i)}</span><div><b>${esc(D.nm())}<em>${D.role}</em></b>${bar(v, tier === 'hi' ? 'var(--turf)' : tier === 'lo' ? 'var(--hot)' : 'var(--gold)')}<small>${word} · ${v}${tier === 'hi' ? ` · ${D.hi}` : tier === 'lo' ? ` · ${D.lo}` : ''}</small></div></div>`;
+      const hg = S.week && S.week.hang;
+      return `<div class="panel mate ${tier}"><span class="mate-face">${mateFace(k)}</span><div><b>${esc(D.nm())}<em>${D.role}</em></b>${bar(v, tier === 'hi' ? 'var(--turf)' : tier === 'lo' ? 'var(--hot)' : 'var(--gold)')}<small>${word} · ${v}${tier === 'hi' ? ` · ${D.hi}` : tier === 'lo' ? ` · ${D.lo}` : ''}</small>
+        <button type="button" class="hang-b ${hg === k ? 'done' : ''}" data-hang="${k}" ${hg ? 'disabled' : ''}>${hg === k ? `${ic('check')} 이번 주 함께했어요` : `${ic('heart')} ${HANG[k].n}`}</button></div></div>`;
     }).join('')}</div>
     <div class="panel pad small muted" style="display:flex;align-items:center;gap:8px">${ic('brain')}<span>심리전 승리 ${S.rec.psyW || 0}회 · 감독·동료와의 기싸움은 몇 주에 한 번 찾아와요</span></div>`;
 }
 function bindBench(){
+  root.querySelectorAll('[data-hang]').forEach(b => b.onclick = () => hangOut(b.dataset.hang));
   const fb = $('#fortune');
   if (fb) fb.onclick = e => {
     if (S.week.revealed) return;
