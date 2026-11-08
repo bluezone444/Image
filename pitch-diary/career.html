@@ -586,7 +586,10 @@ table.standings tr.me em{color:var(--gold);font-weight:900}
 .tn-head small{display:block;color:var(--muted);font-size:12px}
 
 /* ---------- 줄바꿈: 한국어는 단어(띄어쓰기) 단위로 ---------- */
-body{word-break:keep-all;overflow-wrap:anywhere}
+body{word-break:keep-all;overflow-wrap:break-word}
+/* 단어는 절대 쪼개지 않는다: 영문 로고·숫자 묶음은 한 덩어리로 */
+.ts-title{flex-wrap:wrap;font-size:clamp(34px,10.5vw,58px)} .ts-title span{white-space:nowrap}
+.nw{white-space:nowrap}
 h1,h2,h3,h4,.disp,.btn,.label,.speech,.note p,.outcome,.paper h3,.modal-card p,.vs .side b,.mpick-h,.tag{text-wrap:balance}
 p,small,.talk .line,.fans li,.feed li,.dlg p,.news li,.twist,.memo{text-wrap:pretty}
 .btn{white-space:normal;line-height:1.25;text-align:center}
@@ -671,6 +674,143 @@ table.standings{min-width:0}
   .crest.xl{width:62px;height:62px;font-size:26px}
 }
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* ---------- 세계 탭: 몸값 랭킹 · 시상식 ---------- */
+.wseg{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:5px;border-radius:16px;background:rgba(11,17,40,.8);border:2px solid var(--edge)}
+.wseg button{display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 4px;border-radius:11px;border:0;background:transparent;color:var(--muted);font-family:var(--f-display);font-size:14px;min-width:0}
+.wseg button.on{background:linear-gradient(180deg,var(--gold),var(--gold-d));color:#231700}
+.wseg .ico{width:16px;height:16px;flex:none}
+.vcard{padding:16px;background:radial-gradient(120% 90% at 100% 0%,rgba(255,200,61,.22),transparent 60%),linear-gradient(180deg,var(--panel-2),var(--panel));border-color:var(--gold)}
+.vc-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.vc-top .label{display:inline-flex;align-items:center;gap:5px;color:var(--gold)}
+.vc-val{font-family:var(--f-display);font-size:clamp(34px,10vw,46px);line-height:1.1;margin:6px 0 10px;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.35)}
+.vc-val small{font-size:.45em;margin-left:4px;color:var(--muted)}
+.vc-ranks{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+.vc-ranks div{background:rgba(11,17,40,.6);border:1px solid var(--edge);border-radius:12px;padding:8px 4px;text-align:center;min-width:0}
+.vc-ranks b{display:block;font-family:var(--f-display);font-weight:400;font-size:clamp(14px,4.4vw,18px);color:var(--gold)}
+.vc-ranks small{font-size:10.5px;color:var(--muted)}
+.vcard p{margin:0}
+.vpos{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.vlist{padding:6px}
+.vrow{display:flex;align-items:center;gap:9px;padding:8px 6px;border-radius:12px;animation:slideIn .3s both}
+.vrow + .vrow{border-top:1px solid rgba(255,255,255,.05)}
+.vrow .vr{width:24px;flex:none;text-align:center;font-family:var(--f-display);font-size:15px;color:var(--muted)}
+.vrow.top1 .vr{color:var(--gold)} .vrow.top2 .vr{color:#d9dde8} .vrow.top3 .vr{color:#e3a36b}
+.vrow .crest{flex:none}
+.vn{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.vn b{font-size:14px} .vn em,.nom em{font-style:normal;font-size:11px;background:var(--gold);color:#231700;border-radius:6px;padding:0 5px;margin-left:2px}
+.vn small{font-size:11px;color:var(--muted)}
+.vv{flex:none;text-align:right;display:flex;flex-direction:column;align-items:flex-end;line-height:1.2}
+.vv b{font-family:var(--f-display);font-weight:400;font-size:15px;white-space:nowrap}
+.vv i{font-style:normal;font-size:10.5px;font-weight:900;color:var(--muted)} .vv i.up{color:var(--up)} .vv i.down{color:var(--down)}
+.vrow.me{background:rgba(255,200,61,.14);box-shadow:inset 0 0 0 2px rgba(255,200,61,.55)}
+.vgap{text-align:center;color:var(--dim);letter-spacing:.3em}
+.trophy.honor{background:linear-gradient(180deg,#2c1d4f,#160f2c);border-color:#b98bff;color:#e3d2ff}
+.trophy .ico{width:16px;height:16px}
+.aw-guide{padding:6px 14px;display:flex;flex-direction:column}
+.aw-guide > div{display:flex;gap:10px;align-items:center;padding:8px 0}
+.aw-guide > div + div{border-top:1px solid rgba(255,255,255,.06)}
+.aw-guide > div > div{min-width:0}
+.aw-guide b{font-family:var(--f-display);font-weight:400;font-size:15px;display:block}
+.aw-guide small{font-size:11.5px;color:var(--muted);line-height:1.35}
+.ag-i{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(255,200,61,.14);color:var(--gold)}
+.ag-i.puskas{background:rgba(61,214,255,.14);color:var(--cyan)} .ag-i.golden{background:rgba(255,255,255,.1);color:#fff} .ag-i.yashin{background:rgba(34,197,94,.15);color:var(--turf)}
+.ag-i.boot,.ag-i.best11,.ag-i.young{background:rgba(185,139,255,.15);color:#c9a8ff}
+.ah{display:flex;flex-direction:column;gap:6px}
+.ah-y{font-family:var(--f-display);color:var(--gold);font-size:16px}
+.ah-r{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ah-r > small{flex:none;color:var(--muted);font-size:12px}
+.ah-w{display:flex;align-items:center;gap:6px;min-width:0;justify-content:flex-end;text-align:right}
+.ah-w b{font-size:13px} .ah-w.me b{color:var(--gold)}
+.ah-w .crest{flex:none}
+.vmini{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;text-align:left;color:var(--ink);border-color:rgba(255,200,61,.5);cursor:pointer}
+.vmini > .ico{color:var(--gold);width:26px;height:26px;flex:none}
+.vmini > .ico:last-child{color:var(--muted);width:20px;height:20px}
+.vmini div{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.3}
+.vmini b{font-family:var(--f-display);font-weight:400;font-size:20px;color:var(--gold)}
+.vmini small{font-size:11.5px;color:var(--muted)}
+/* ---------- 시상식 ---------- */
+.aw-head{text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px}
+.aw-head .disp{font-size:clamp(26px,8vw,34px);display:flex;align-items:center;gap:8px;color:var(--gold);text-shadow:0 3px 0 rgba(0,0,0,.4)}
+.aw-head .disp .ico{width:30px;height:30px}
+.aw-dots{display:flex;gap:6px}
+.aw-dots i{width:22px;height:6px;border-radius:9px;background:var(--edge)}
+.aw-dots i.done{background:var(--gold-d)} .aw-dots i.now{background:var(--gold);box-shadow:0 0 10px var(--gold)}
+.aw-card{position:relative;overflow:hidden;padding:20px 14px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:stretch;border-color:var(--gold);animation:cardIn .5s both}
+.aw-card::before{content:"";position:absolute;inset:-40% -20% auto;height:70%;background:radial-gradient(closest-side,rgba(255,200,61,.28),transparent);pointer-events:none}
+.aw-card.k-puskas{border-color:var(--cyan)} .aw-card.k-puskas::before{background:radial-gradient(closest-side,rgba(61,214,255,.25),transparent)}
+.aw-card.k-league{border-color:#b98bff} .aw-card.k-league::before{background:radial-gradient(closest-side,rgba(185,139,255,.25),transparent)}
+.aw-ic{position:relative;margin:0 auto;width:74px;height:74px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#fff3b0,var(--gold) 45%,var(--gold-d));color:#3a2600;box-shadow:0 0 0 6px rgba(255,200,61,.18),0 10px 24px rgba(0,0,0,.4);animation:pulse 2s ease-in-out infinite}
+.aw-ic .ico{width:38px;height:38px}
+.k-puskas .aw-ic{background:radial-gradient(circle at 35% 30%,#d8f8ff,var(--cyan) 45%,var(--cyan-d));color:#04202b;box-shadow:0 0 0 6px rgba(61,214,255,.18),0 10px 24px rgba(0,0,0,.4)}
+.k-league .aw-ic{background:radial-gradient(circle at 35% 30%,#efe4ff,#b98bff 45%,#6a3fc0);color:#1c0a3a;box-shadow:0 0 0 6px rgba(185,139,255,.18),0 10px 24px rgba(0,0,0,.4)}
+.aw-card h2{margin:0;font-size:clamp(26px,8vw,32px);position:relative}
+.aw-card > small{position:relative}
+.aw-sub{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;font-family:var(--f-display);font-size:16px;margin-top:6px;color:#e3d2ff}
+.aw-sub .ico{width:18px;height:18px}
+.aw-sub small{width:100%;font-family:var(--f-body);font-size:11px;color:var(--muted)}
+.noms{display:flex;flex-direction:column;gap:7px;position:relative}
+.nom{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:14px;background:rgba(11,17,40,.7);border:2px solid var(--edge);text-align:left;animation:dealIn .45s both;transition:opacity .3s,transform .3s}
+.nom > .crest{flex:none}
+.nom .nm-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;line-height:1.25}
+.nom b{font-size:14px}
+.nom small{font-size:11px;color:var(--muted)}
+.nom.me{border-color:rgba(255,200,61,.6)}
+.nom.win{border-color:var(--gold);background:linear-gradient(90deg,rgba(255,200,61,.3),rgba(255,200,61,.06));transform:scale(1.02);box-shadow:0 0 22px rgba(255,200,61,.35)}
+.nom.lose{opacity:.5}
+.nom .crown{flex:none;color:var(--gold);animation:stamp .5s both} .nom .crown .ico{width:24px;height:24px}
+.nom .pct{flex:none;font-family:var(--f-display);font-size:15px;color:var(--cyan)}
+.vbar{display:block;height:6px;border-radius:9px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:3px}
+.vbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),#9ff0ff);border-radius:9px;animation:growX 1.2s cubic-bezier(.2,.8,.2,1) both;transform-origin:left}
+.aw-me{font-size:13px;font-weight:700;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.06);position:relative}
+.aw-me.ok{background:rgba(74,222,128,.16);color:var(--up);font-family:var(--f-display);font-weight:400;font-size:17px;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+.aw-me b{color:var(--gold)}
+#awfx{justify-content:center}
+/* ---------- 심리전 ---------- */
+.psy-vs{display:flex;align-items:center;justify-content:center;gap:10px;margin:10px 0 4px}
+.pv{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;flex:1;max-width:140px}
+.pv > .ico{width:46px;height:46px;border-radius:50%;background:rgba(61,214,255,.15);color:var(--cyan);padding:10px;box-sizing:border-box}
+.pv.them > .ico{background:rgba(255,77,109,.16);color:var(--hot)}
+.pv b{font-size:12.5px;line-height:1.2}
+.pv-x{color:var(--gold);animation:pulse 1.4s ease-in-out infinite;flex:none} .pv-x .ico{width:28px;height:28px}
+.psy-meter{display:flex;align-items:center;justify-content:center;gap:4px;margin:4px 0 10px;flex-wrap:wrap}
+.psy-meter i{display:block;flex:none;width:18px;height:8px;padding:0;margin:0;border:0;border-radius:5px;background:rgba(255,255,255,.1)}
+.psy-meter i.on{background:#fff;box-shadow:0 0 8px #fff}
+.psy-meter i.on.mpos{background:var(--cyan);box-shadow:0 0 10px var(--cyan)} .psy-meter i.on.mneg{background:var(--hot);box-shadow:0 0 10px var(--hot)}
+.psy-meter small{width:100%;font-size:11px;color:var(--muted)}
+.psy-round{font-family:var(--f-display);letter-spacing:.14em;color:var(--gold);font-size:13px}
+.psy-tell{display:flex;gap:8px;align-items:flex-start;text-align:left;margin:8px 0 4px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.06);border:1px dashed var(--edge);font-size:14px;line-height:1.45}
+.psy-tell > .ico{flex:none;color:var(--cyan);margin-top:2px}
+.psy-acc{font-size:11px;color:var(--muted);margin-bottom:10px}
+.psy-picks{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.psy-b{--pc:var(--hot);display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;border-radius:14px;border:2px solid color-mix(in srgb,var(--pc) 60%,transparent);background:color-mix(in srgb,var(--pc) 12%,rgba(11,17,40,.85));color:var(--ink);min-width:0;transition:transform .12s}
+.psy-b.k-calm{--pc:var(--cyan)} .psy-b.k-feint{--pc:var(--gold)}
+.psy-b:hover{transform:translateY(-2px)}
+.psy-b .ico{color:var(--pc);width:26px;height:26px}
+.psy-b b{font-family:var(--f-display);font-weight:400;font-size:15px}
+.psy-b small{font-size:10.5px;color:var(--muted);line-height:1.3}
+.psy-b em{font-style:normal;font-size:10px;font-weight:900;color:var(--pc)}
+.psy-b.picked{transform:scale(1.06);box-shadow:0 0 0 3px var(--pc)}
+.psy-rule{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:10px}
+.psy-rule .ico{width:13px;height:13px}
+.psy-reveal{padding:12px;border-radius:16px;background:rgba(255,255,255,.05);margin-bottom:12px;animation:pop .35s both}
+.psy-reveal.w{background:rgba(61,214,255,.14)} .psy-reveal.l{background:rgba(255,77,109,.14)}
+.pr-row{display:flex;align-items:center;justify-content:center;gap:12px}
+.pr-row span{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;flex:1}
+.pr-row span .ico{width:30px;height:30px}
+.pr-row small{font-size:11px;color:var(--muted)} .pr-row b{font-family:var(--f-display);font-weight:400;font-size:15px}
+.pr-row em{font-style:normal;font-family:var(--f-display);color:var(--gold)}
+.psy-reveal p{margin:8px 0 6px;font-size:13px}
+.pr-res{font-family:var(--f-display);font-size:22px}
+.psy-reveal.w .pr-res{color:var(--cyan)} .psy-reveal.l .pr-res{color:var(--hot)}
+.psy-res.good{color:var(--cyan)} .psy-res.bad{color:var(--hot)}
+.psy-hist{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:6px 0 10px}
+.psy-hist span{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:900;padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.07)}
+.psy-hist .ico{width:14px;height:14px}
+.psy-hist .w{color:var(--cyan)} .psy-hist .l{color:var(--hot)}
+.conds .psyc{border-color:rgba(61,214,255,.5)} .conds .psyc.down{border-color:rgba(255,77,109,.5)} .conds .psyc.down .ico{color:var(--hot)}
+.mis-res.wonder{background:rgba(61,214,255,.14);color:var(--cyan)}
+@media (max-width:360px){ .psy-picks{grid-template-columns:1fr} .psy-b{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:2px 8px} .psy-b small{width:100%} .wseg button{font-size:13px} }
 </style>
 </head>
 <body>
@@ -687,7 +827,7 @@ const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ROUNDS = 11, RETIRE_AGE = 36, MIN_SALARY = 2400;
 
 // 아이콘: Lucide (ISC License) — https://lucide.dev
-const ICONS = {"star": "<path d=\"M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z\" />", "handshake": "<path d=\"m11 17 2 2a1 1 0 1 0 3-3\" /> <path d=\"m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4\" /> <path d=\"m21 3 1 11h-2\" /> <path d=\"M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3\" /> <path d=\"M3 4h8\" />", "zap": "<path d=\"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z\" />", "gem": "<path d=\"M6 3h12l4 6-10 13L2 9Z\" /> <path d=\"M11 3 8 9l4 13 4-13-3-6\" /> <path d=\"M2 9h20\" />", "wallet": "<path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\" /> <path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\" />", "volume-2": "<path d=\"M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z\" /> <path d=\"M16 9a5 5 0 0 1 0 6\" /> <path d=\"M19.364 18.364a9 9 0 0 0 0-12.728\" />", "volume-x": "<path d=\"M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z\" /> <line x1=\"22\" x2=\"16\" y1=\"9\" y2=\"15\" /> <line x1=\"16\" x2=\"22\" y1=\"9\" y2=\"15\" />", "goal": "<path d=\"M12 13V2l8 4-8 4\" /> <path d=\"M20.561 10.222a9 9 0 1 1-12.55-5.29\" /> <path d=\"M8.002 9.997a5 5 0 1 0 8.9 2.02\" />", "user-round": "<circle cx=\"12\" cy=\"8\" r=\"5\" /> <path d=\"M20 21a8 8 0 0 0-16 0\" />", "shopping-bag": "<path d=\"M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z\" /> <path d=\"M3 6h18\" /> <path d=\"M16 10a4 4 0 0 1-8 0\" />", "shield": "<path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\" />", "globe": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20\" /> <path d=\"M2 12h20\" />", "newspaper": "<path d=\"M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2\" /> <path d=\"M18 14h-8\" /> <path d=\"M15 18h-5\" /> <path d=\"M10 6h8v4h-8V6Z\" />", "target": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <circle cx=\"12\" cy=\"12\" r=\"6\" /> <circle cx=\"12\" cy=\"12\" r=\"2\" />", "arrow-right-left": "<path d=\"m16 3 4 4-4 4\" /> <path d=\"M20 7H4\" /> <path d=\"m8 21-4-4 4-4\" /> <path d=\"M4 17h16\" />", "wind": "<path d=\"M12.8 19.6A2 2 0 1 0 14 16H2\" /> <path d=\"M17.5 8a2.5 2.5 0 1 1 2 4H2\" /> <path d=\"M9.8 4.4A2 2 0 1 1 11 8H2\" />", "shield-half": "<path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\" /> <path d=\"M12 22V2\" />", "dumbbell": "<path d=\"M14.4 14.4 9.6 9.6\" /> <path d=\"M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z\" /> <path d=\"m21.5 21.5-1.4-1.4\" /> <path d=\"M3.9 3.9 2.5 2.5\" /> <path d=\"M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z\" />", "bed": "<path d=\"M2 4v16\" /> <path d=\"M2 8h18a2 2 0 0 1 2 2v10\" /> <path d=\"M2 17h20\" /> <path d=\"M6 8v9\" />", "users": "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\" /> <circle cx=\"9\" cy=\"7\" r=\"4\" /> <path d=\"M22 21v-2a4 4 0 0 0-3-3.87\" /> <path d=\"M16 3.13a4 4 0 0 1 0 7.75\" />", "message-circle": "<path d=\"M7.9 20A9 9 0 1 0 4 16.1L2 22Z\" />", "flame": "<path d=\"M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z\" />", "heart-handshake": "<path d=\"M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z\" /> <path d=\"M12 5 9.04 7.96a2.17 2.17 0 0 0 0 3.08c.82.82 2.13.85 3 .07l2.07-1.9a2.82 2.82 0 0 1 3.79 0l2.96 2.66\" /> <path d=\"m18 15-2-2\" /> <path d=\"m15 18-2-2\" />", "brain": "<path d=\"M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z\" /> <path d=\"M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z\" /> <path d=\"M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4\" /> <path d=\"M17.599 6.5a3 3 0 0 0 .399-1.375\" /> <path d=\"M6.003 5.125A3 3 0 0 0 6.401 6.5\" /> <path d=\"M3.477 10.896a4 4 0 0 1 .585-.396\" /> <path d=\"M19.938 10.5a4 4 0 0 1 .585.396\" /> <path d=\"M6 18a4 4 0 0 1-1.967-.516\" /> <path d=\"M19.967 17.484A4 4 0 0 1 18 18\" />", "sparkles": "<path d=\"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z\" /> <path d=\"M20 3v4\" /> <path d=\"M22 5h-4\" /> <path d=\"M4 17v2\" /> <path d=\"M5 18H3\" />", "tornado": "<path d=\"M21 4H3\" /> <path d=\"M18 8H6\" /> <path d=\"M19 12H9\" /> <path d=\"M16 16h-6\" /> <path d=\"M11 20H9\" />", "sprout": "<path d=\"M7 20h10\" /> <path d=\"M10 20c5.5-2.5.8-6.4 3-10\" /> <path d=\"M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z\" /> <path d=\"M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z\" />", "sun": "<circle cx=\"12\" cy=\"12\" r=\"4\" /> <path d=\"M12 2v2\" /> <path d=\"M12 20v2\" /> <path d=\"m4.93 4.93 1.41 1.41\" /> <path d=\"m17.66 17.66 1.41 1.41\" /> <path d=\"M2 12h2\" /> <path d=\"M20 12h2\" /> <path d=\"m6.34 17.66-1.41 1.41\" /> <path d=\"m19.07 4.93-1.41 1.41\" />", "clover": "<path d=\"M16.17 7.83 2 22\" /> <path d=\"M4.02 12a2.827 2.827 0 1 1 3.81-4.17A2.827 2.827 0 1 1 12 4.02a2.827 2.827 0 1 1 4.17 3.81A2.827 2.827 0 1 1 19.98 12a2.827 2.827 0 1 1-3.81 4.17A2.827 2.827 0 1 1 12 19.98a2.827 2.827 0 1 1-4.17-3.81A1 1 0 1 1 4 12\" /> <path d=\"m7.83 7.83 8.34 8.34\" />", "cloud": "<path d=\"M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z\" />", "cloud-rain": "<path d=\"M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242\" /> <path d=\"M16 14v6\" /> <path d=\"M8 14v6\" /> <path d=\"M12 16v6\" />", "skull": "<path d=\"m12.5 17-.5-1-.5 1h1z\" /> <path d=\"M15 22a1 1 0 0 0 1-1v-1a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20v1a1 1 0 0 0 1 1z\" /> <circle cx=\"15\" cy=\"12\" r=\"1\" /> <circle cx=\"9\" cy=\"12\" r=\"1\" />", "fast-forward": "<polygon points=\"13 19 22 12 13 5 13 19\" /> <polygon points=\"2 19 11 12 2 5 2 19\" />", "trophy": "<path d=\"M6 9H4.5a2.5 2.5 0 0 1 0-5H6\" /> <path d=\"M18 9h1.5a2.5 2.5 0 0 0 0-5H18\" /> <path d=\"M4 22h16\" /> <path d=\"M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22\" /> <path d=\"M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22\" /> <path d=\"M18 2H6v7a6 6 0 0 0 12 0V2Z\" />", "calendar-days": "<path d=\"M8 2v4\" /> <path d=\"M16 2v4\" /> <rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" /> <path d=\"M3 10h18\" /> <path d=\"M8 14h.01\" /> <path d=\"M12 14h.01\" /> <path d=\"M16 14h.01\" /> <path d=\"M8 18h.01\" /> <path d=\"M12 18h.01\" /> <path d=\"M16 18h.01\" />", "clipboard-list": "<rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\" /> <path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\" /> <path d=\"M12 11h4\" /> <path d=\"M12 16h4\" /> <path d=\"M8 11h.01\" /> <path d=\"M8 16h.01\" />", "mic": "<path d=\"M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z\" /> <path d=\"M19 10v2a7 7 0 0 1-14 0v-2\" /> <line x1=\"12\" x2=\"12\" y1=\"19\" y2=\"22\" />", "briefcase": "<path d=\"M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16\" /> <rect width=\"20\" height=\"14\" x=\"2\" y=\"6\" rx=\"2\" />", "coins": "<circle cx=\"8\" cy=\"8\" r=\"6\" /> <path d=\"M18.09 10.37A6 6 0 1 1 10.34 18\" /> <path d=\"M7 6h1v4\" /> <path d=\"m16.71 13.88.7.71-2.82 2.82\" />", "gauge": "<path d=\"m12 14 4-4\" /> <path d=\"M3.34 19a10 10 0 1 1 17.32 0\" />", "heart": "<path d=\"M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z\" />", "shirt": "<path d=\"M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z\" />", "footprints": "<path d=\"M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z\" /> <path d=\"M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z\" /> <path d=\"M16 17h4\" /> <path d=\"M4 13h4\" />", "glasses": "<circle cx=\"6\" cy=\"15\" r=\"4\" /> <circle cx=\"18\" cy=\"15\" r=\"4\" /> <path d=\"M14 15a2 2 0 0 0-2-2 2 2 0 0 0-2 2\" /> <path d=\"M2.5 13 5 7c.7-1.3 1.4-2 3-2\" /> <path d=\"M21.5 13 19 7c-.7-1.3-1.5-2-3-2\" />", "crown": "<path d=\"M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z\" /> <path d=\"M5 21h14\" />", "watch": "<circle cx=\"12\" cy=\"12\" r=\"6\" /> <polyline points=\"12 10 12 12 13 13\" /> <path d=\"m16.13 7.66-.81-4.05a2 2 0 0 0-2-1.61h-2.68a2 2 0 0 0-2 1.61l-.78 4.05\" /> <path d=\"m7.88 16.36.8 4a2 2 0 0 0 2 1.61h2.72a2 2 0 0 0 2-1.61l.81-4.05\" />", "hand": "<path d=\"M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2\" /> <path d=\"M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2\" /> <path d=\"M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8\" /> <path d=\"M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15\" />", "sticker": "<path d=\"M15.5 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z\" /> <path d=\"M14 3v4a2 2 0 0 0 2 2h4\" /> <path d=\"M8 13h.01\" /> <path d=\"M16 13h.01\" /> <path d=\"M10 16s.8 1 2 1c1.3 0 2-1 2-1\" />", "scissors": "<circle cx=\"6\" cy=\"6\" r=\"3\" /> <path d=\"M8.12 8.12 12 12\" /> <path d=\"M20 4 8.12 15.88\" /> <circle cx=\"6\" cy=\"18\" r=\"3\" /> <path d=\"M14.8 14.8 20 20\" />", "cup-soda": "<path d=\"m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8\" /> <path d=\"M5 8h14\" /> <path d=\"M7 15a6.47 6.47 0 0 1 5 0 6.47 6.47 0 0 0 5 0\" /> <path d=\"m12 8 1-6h2\" />", "graduation-cap": "<path d=\"M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z\" /> <path d=\"M22 10v6\" /> <path d=\"M6 12.5V16a6 3 0 0 0 12 0v-3.5\" />", "megaphone": "<path d=\"m3 11 18-5v12L3 14v-3z\" /> <path d=\"M11.6 16.8a3 3 0 1 1-5.8-1.6\" />", "package": "<path d=\"M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z\" /> <path d=\"M12 22V12\" /> <path d=\"m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7\" /> <path d=\"m7.5 4.27 9 5.15\" />", "hard-hat": "<path d=\"M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5\" /> <path d=\"M14 6a6 6 0 0 1 6 6v3\" /> <path d=\"M4 15v-3a6 6 0 0 1 6-6\" /> <rect x=\"2\" y=\"15\" width=\"20\" height=\"4\" rx=\"1\" />", "link": "<path d=\"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71\" /> <path d=\"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71\" />", "pen-tool": "<path d=\"M15.707 21.293a1 1 0 0 1-1.414 0l-1.586-1.586a1 1 0 0 1 0-1.414l5.586-5.586a1 1 0 0 1 1.414 0l1.586 1.586a1 1 0 0 1 0 1.414z\" /> <path d=\"m18 13-1.375-6.874a1 1 0 0 0-.746-.776L3.235 2.028a1 1 0 0 0-1.207 1.207L5.35 15.879a1 1 0 0 0 .776.746L13 18\" /> <path d=\"m2.3 2.3 7.286 7.286\" /> <circle cx=\"11\" cy=\"11\" r=\"2\" />", "smile": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M8 14s1.5 2 4 2 4-2 4-2\" /> <line x1=\"9\" x2=\"9.01\" y1=\"9\" y2=\"9\" /> <line x1=\"15\" x2=\"15.01\" y1=\"9\" y2=\"9\" />", "award": "<path d=\"m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526\" /> <circle cx=\"12\" cy=\"8\" r=\"6\" />", "smartphone": "<rect width=\"14\" height=\"20\" x=\"5\" y=\"2\" rx=\"2\" ry=\"2\" /> <path d=\"M12 18h.01\" />", "video": "<path d=\"m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5\" /> <rect x=\"2\" y=\"6\" width=\"14\" height=\"12\" rx=\"2\" />", "alarm-clock": "<circle cx=\"12\" cy=\"13\" r=\"8\" /> <path d=\"M12 9v4l2 2\" /> <path d=\"M5 3 2 6\" /> <path d=\"m22 6-3-3\" /> <path d=\"M6.38 18.7 4 21\" /> <path d=\"M17.64 18.67 20 21\" />", "bike": "<circle cx=\"18.5\" cy=\"17.5\" r=\"3.5\" /> <circle cx=\"5.5\" cy=\"17.5\" r=\"3.5\" /> <circle cx=\"15\" cy=\"5\" r=\"1\" /> <path d=\"M12 17.5V14l-3-3 4-3 2 3h2\" />", "clock": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <polyline points=\"12 6 12 12 16 14\" />", "shield-alert": "<path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\" /> <path d=\"M12 8v4\" /> <path d=\"M12 16h.01\" />", "door-open": "<path d=\"M13 4h3a2 2 0 0 1 2 2v14\" /> <path d=\"M2 20h3\" /> <path d=\"M13 20h9\" /> <path d=\"M10 12v.01\" /> <path d=\"M13 4.562v16.157a1 1 0 0 1-1.242.97L5 20V5.562a2 2 0 0 1 1.515-1.94l4-1A2 2 0 0 1 13 4.561Z\" />", "dice-5": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" ry=\"2\" /> <path d=\"M16 8h.01\" /> <path d=\"M8 8h.01\" /> <path d=\"M8 16h.01\" /> <path d=\"M16 16h.01\" /> <path d=\"M12 12h.01\" />", "swords": "<polyline points=\"14.5 17.5 3 6 3 3 6 3 17.5 14.5\" /> <line x1=\"13\" x2=\"19\" y1=\"19\" y2=\"13\" /> <line x1=\"16\" x2=\"20\" y1=\"16\" y2=\"20\" /> <line x1=\"19\" x2=\"21\" y1=\"21\" y2=\"19\" /> <polyline points=\"14.5 6.5 18 3 21 3 21 6 17.5 9.5\" /> <line x1=\"5\" x2=\"9\" y1=\"14\" y2=\"18\" /> <line x1=\"7\" x2=\"4\" y1=\"17\" y2=\"20\" /> <line x1=\"3\" x2=\"5\" y1=\"19\" y2=\"21\" />", "pizza": "<path d=\"m12 14-1 1\" /> <path d=\"m13.75 18.25-1.25 1.42\" /> <path d=\"M17.775 5.654a15.68 15.68 0 0 0-12.121 12.12\" /> <path d=\"M18.8 9.3a1 1 0 0 0 2.1 7.7\" /> <path d=\"M21.964 20.732a1 1 0 0 1-1.232 1.232l-18-5a1 1 0 0 1-.695-1.232A19.68 19.68 0 0 1 15.732 2.037a1 1 0 0 1 1.232.695z\" />", "puzzle": "<path d=\"M15.39 4.39a1 1 0 0 0 1.68-.474 2.5 2.5 0 1 1 3.014 3.015 1 1 0 0 0-.474 1.68l1.683 1.682a2.414 2.414 0 0 1 0 3.414L19.61 15.39a1 1 0 0 1-1.68-.474 2.5 2.5 0 1 0-3.014 3.015 1 1 0 0 1 .474 1.68l-1.683 1.682a2.414 2.414 0 0 1-3.414 0L8.61 19.61a1 1 0 0 0-1.68.474 2.5 2.5 0 1 1-3.014-3.015 1 1 0 0 0 .474-1.68l-1.683-1.682a2.414 2.414 0 0 1 0-3.414L4.39 8.61a1 1 0 0 1 1.68.474 2.5 2.5 0 1 0 3.014-3.015 1 1 0 0 1-.474-1.68l1.683-1.682a2.414 2.414 0 0 1 3.414 0z\" />", "utensils": "<path d=\"M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2\" /> <path d=\"M7 2v20\" /> <path d=\"M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7\" />", "map-pin": "<path d=\"M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0\" /> <circle cx=\"12\" cy=\"10\" r=\"3\" />", "cat": "<path d=\"M12 5c.67 0 1.35.09 2 .26 1.78-2 5.03-2.84 6.42-2.26 1.4.58-.42 7-.42 7 .57 1.07 1 2.24 1 3.44C21 17.9 16.97 21 12 21s-9-3-9-7.56c0-1.25.5-2.4 1-3.44 0 0-1.89-6.42-.5-7 1.39-.58 4.72.23 6.5 2.23A9.04 9.04 0 0 1 12 5Z\" /> <path d=\"M8 14v.5\" /> <path d=\"M16 14v.5\" /> <path d=\"M11.25 16.25h1.5L12 17l-.75-.75Z\" />", "hand-heart": "<path d=\"M11 14h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 16\" /> <path d=\"m7 20 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9\" /> <path d=\"m2 15 6 6\" /> <path d=\"M19.5 8.5c.7-.7 1.5-1.6 1.5-2.7A2.73 2.73 0 0 0 16 4a2.78 2.78 0 0 0-5 1.8c0 1.2.8 2 1.5 2.8L16 12Z\" />", "ticket": "<path d=\"M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z\" /> <path d=\"M13 5v2\" /> <path d=\"M13 17v2\" /> <path d=\"M13 11v2\" />", "gavel": "<path d=\"m14.5 12.5-8 8a2.119 2.119 0 1 1-3-3l8-8\" /> <path d=\"m16 16 6-6\" /> <path d=\"m8 8 6-6\" /> <path d=\"m9 7 8 8\" /> <path d=\"m21 11-8-8\" />", "party-popper": "<path d=\"M5.8 11.3 2 22l10.7-3.79\" /> <path d=\"M4 3h.01\" /> <path d=\"M22 8h.01\" /> <path d=\"M15 2h.01\" /> <path d=\"M22 20h.01\" /> <path d=\"m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10\" /> <path d=\"m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11c-.11.7-.72 1.22-1.43 1.22H17\" /> <path d=\"m11 2 .33.82c.34.86-.2 1.82-1.11 1.98C9.52 4.9 9 5.52 9 6.23V7\" /> <path d=\"M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z\" />", "soup": "<path d=\"M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z\" /> <path d=\"M7 21h10\" /> <path d=\"M19.5 12 22 6\" /> <path d=\"M16.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.73 1.62\" /> <path d=\"M11.25 3c.27.1.8.53.74 1.36-.05.83-.93 1.2-.98 2.02-.06.78.33 1.24.72 1.62\" /> <path d=\"M6.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.74 1.62\" />", "book-open": "<path d=\"M12 7v14\" /> <path d=\"M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z\" />", "scale": "<path d=\"m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z\" /> <path d=\"m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z\" /> <path d=\"M7 21h10\" /> <path d=\"M12 3v18\" /> <path d=\"M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2\" />", "rocket": "<path d=\"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z\" /> <path d=\"m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z\" /> <path d=\"M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0\" /> <path d=\"M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5\" />", "baby": "<path d=\"M9 12h.01\" /> <path d=\"M15 12h.01\" /> <path d=\"M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5\" /> <path d=\"M19 6.3a9 9 0 0 1 1.8 3.9 2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5c-.8 0-1.5-.4-1.5-1\" />", "hotel": "<path d=\"M10 22v-6.57\" /> <path d=\"M12 11h.01\" /> <path d=\"M12 7h.01\" /> <path d=\"M14 15.43V22\" /> <path d=\"M15 16a5 5 0 0 0-6 0\" /> <path d=\"M16 11h.01\" /> <path d=\"M16 7h.01\" /> <path d=\"M8 11h.01\" /> <path d=\"M8 7h.01\" /> <rect x=\"4\" y=\"2\" width=\"16\" height=\"20\" rx=\"2\" />", "fish": "<path d=\"M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 2.54 7 6-.94 3.47-3.44 6-7 6s-7.56-2.53-8.5-6Z\" /> <path d=\"M18 12v.5\" /> <path d=\"M16 17.93a9.77 9.77 0 0 1 0-11.86\" /> <path d=\"M7 10.67C7 8 5.58 5.97 2.73 5.5c-1 1.5-1 5 .23 6.5-1.24 1.5-1.24 5-.23 6.5C5.58 18.03 7 16 7 13.33\" /> <path d=\"M10.46 7.26C10.2 5.88 9.17 4.24 8 3h5.8a2 2 0 0 1 1.98 1.67l.23 1.4\" /> <path d=\"m16.01 17.93-.23 1.4A2 2 0 0 1 13.8 21H9.5a5.96 5.96 0 0 0 1.49-3.98\" />", "camera": "<path d=\"M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z\" /> <circle cx=\"12\" cy=\"13\" r=\"3\" />", "leaf": "<path d=\"M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z\" /> <path d=\"M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12\" />", "tv": "<rect width=\"20\" height=\"15\" x=\"2\" y=\"7\" rx=\"2\" ry=\"2\" /> <polyline points=\"17 2 12 7 7 2\" />", "gamepad-2": "<line x1=\"6\" x2=\"10\" y1=\"11\" y2=\"11\" /> <line x1=\"8\" x2=\"8\" y1=\"9\" y2=\"13\" /> <line x1=\"15\" x2=\"15.01\" y1=\"12\" y2=\"12\" /> <line x1=\"18\" x2=\"18.01\" y1=\"10\" y2=\"10\" /> <path d=\"M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z\" />", "film": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" /> <path d=\"M7 3v18\" /> <path d=\"M3 7.5h4\" /> <path d=\"M3 12h18\" /> <path d=\"M3 16.5h4\" /> <path d=\"M17 3v18\" /> <path d=\"M17 7.5h4\" /> <path d=\"M17 16.5h4\" />", "user-plus": "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\" /> <circle cx=\"9\" cy=\"7\" r=\"4\" /> <line x1=\"19\" x2=\"19\" y1=\"8\" y2=\"14\" /> <line x1=\"22\" x2=\"16\" y1=\"11\" y2=\"11\" />", "coffee": "<path d=\"M10 2v2\" /> <path d=\"M14 2v2\" /> <path d=\"M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1\" /> <path d=\"M6 2v2\" />", "flag": "<path d=\"M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z\" /> <line x1=\"4\" x2=\"4\" y1=\"22\" y2=\"15\" />", "activity": "<path d=\"M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2\" />", "laptop": "<path d=\"M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16\" />", "music": "<path d=\"M9 18V5l12-2v13\" /> <circle cx=\"6\" cy=\"18\" r=\"3\" /> <circle cx=\"18\" cy=\"16\" r=\"3\" />", "bus": "<path d=\"M8 6v6\" /> <path d=\"M15 6v6\" /> <path d=\"M2 12h19.6\" /> <path d=\"M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3\" /> <circle cx=\"7\" cy=\"18\" r=\"2\" /> <path d=\"M9 18h5\" /> <circle cx=\"16\" cy=\"18\" r=\"2\" />", "lightbulb": "<path d=\"M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5\" /> <path d=\"M9 18h6\" /> <path d=\"M10 22h4\" />", "ghost": "<path d=\"M9 10h.01\" /> <path d=\"M15 10h.01\" /> <path d=\"M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z\" />", "thermometer": "<path d=\"M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z\" />", "gift": "<rect x=\"3\" y=\"8\" width=\"18\" height=\"4\" rx=\"1\" /> <path d=\"M12 8v13\" /> <path d=\"M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7\" /> <path d=\"M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5\" />", "droplets": "<path d=\"M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z\" /> <path d=\"M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97\" />", "dog": "<path d=\"M11.25 16.25h1.5L12 17z\" /> <path d=\"M16 14v.5\" /> <path d=\"M4.42 11.247A13.152 13.152 0 0 0 4 14.556C4 18.728 7.582 21 12 21s8-2.272 8-6.444a11.702 11.702 0 0 0-.493-3.309\" /> <path d=\"M8 14v.5\" /> <path d=\"M8.5 8.5c-.384 1.05-1.083 2.028-2.344 2.5-1.931.722-3.576-.297-3.656-1-.113-.994 1.177-6.53 4-7 1.923-.321 3.651.845 3.651 2.235A7.497 7.497 0 0 1 14 5.277c0-1.39 1.844-2.598 3.767-2.277 2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.855-1.45-2.239-2.5\" />", "mail": "<rect width=\"20\" height=\"16\" x=\"2\" y=\"4\" rx=\"2\" /> <path d=\"m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7\" />", "moon": "<path d=\"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z\" />", "snowflake": "<line x1=\"2\" x2=\"22\" y1=\"12\" y2=\"12\" /> <line x1=\"12\" x2=\"12\" y1=\"2\" y2=\"22\" /> <path d=\"m20 16-4-4 4-4\" /> <path d=\"m4 8 4 4-4 4\" /> <path d=\"m16 4-4 4-4-4\" /> <path d=\"m8 20 4-4 4 4\" />", "mountain": "<path d=\"m8 3 4 8 5-5 5 15H2L8 3z\" />", "stethoscope": "<path d=\"M11 2v2\" /> <path d=\"M5 2v2\" /> <path d=\"M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1\" /> <path d=\"M8 15a6 6 0 0 0 12 0v-3\" /> <circle cx=\"20\" cy=\"10\" r=\"2\" />", "mic-vocal": "<path d=\"m11 7.601-5.994 8.19a1 1 0 0 0 .1 1.298l.817.818a1 1 0 0 0 1.314.087L15.09 12\" /> <path d=\"M16.5 21.174C15.5 20.5 14.372 20 13 20c-2.058 0-3.928 2.356-6 2-2.072-.356-2.775-3.369-1.5-4.5\" /> <circle cx=\"16\" cy=\"7\" r=\"5\" />", "heart-pulse": "<path d=\"M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z\" /> <path d=\"M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27\" />", "music-2": "<circle cx=\"8\" cy=\"18\" r=\"4\" /> <path d=\"M12 18V2l7 4\" />", "school": "<path d=\"M14 22v-4a2 2 0 1 0-4 0v4\" /> <path d=\"m18 10 3.447 1.724a1 1 0 0 1 .553.894V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-7.382a1 1 0 0 1 .553-.894L6 10\" /> <path d=\"M18 5v17\" /> <path d=\"m4 6 7.106-3.553a2 2 0 0 1 1.788 0L20 6\" /> <path d=\"M6 5v17\" /> <circle cx=\"12\" cy=\"9\" r=\"2\" />", "map": "<path d=\"M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z\" /> <path d=\"M15 5.764v15\" /> <path d=\"M9 3.236v15\" />", "cake": "<path d=\"M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8\" /> <path d=\"M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1\" /> <path d=\"M2 21h20\" /> <path d=\"M7 8v3\" /> <path d=\"M12 8v3\" /> <path d=\"M17 8v3\" /> <path d=\"M7 4h.01\" /> <path d=\"M12 4h.01\" /> <path d=\"M17 4h.01\" />", "plane": "<path d=\"M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z\" />", "siren": "<path d=\"M7 18v-6a5 5 0 1 1 10 0v6\" /> <path d=\"M5 21a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2z\" /> <path d=\"M21 12h1\" /> <path d=\"M18.5 4.5 18 5\" /> <path d=\"M2 12h1\" /> <path d=\"M12 2v1\" /> <path d=\"m4.929 4.929.707.707\" /> <path d=\"M12 12v6\" />", "medal": "<path d=\"M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15\" /> <path d=\"M11 12 5.12 2.2\" /> <path d=\"m13 12 5.88-9.8\" /> <path d=\"M8 7h8\" /> <circle cx=\"12\" cy=\"17\" r=\"5\" /> <path d=\"M12 18v-2h-.5\" />", "file-text": "<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\" /> <path d=\"M14 2v4a2 2 0 0 0 2 2h4\" /> <path d=\"M10 9H8\" /> <path d=\"M16 13H8\" /> <path d=\"M16 17H8\" />", "bird": "<path d=\"M16 7h.01\" /> <path d=\"M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20\" /> <path d=\"m20 7 2 .5-2 .5\" /> <path d=\"M10 18v3\" /> <path d=\"M14 17.75V21\" /> <path d=\"M7 18a6 6 0 0 0 3.84-10.61\" />", "car": "<path d=\"M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2\" /> <circle cx=\"7\" cy=\"17\" r=\"2\" /> <path d=\"M9 17h6\" /> <circle cx=\"17\" cy=\"17\" r=\"2\" />", "wand-sparkles": "<path d=\"m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72\" /> <path d=\"m14 7 3 3\" /> <path d=\"M5 6v4\" /> <path d=\"M19 14v4\" /> <path d=\"M10 2v2\" /> <path d=\"M7 8H3\" /> <path d=\"M21 16h-4\" /> <path d=\"M11 3H9\" />", "house": "<path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\" /> <path d=\"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\" />", "phone": "<path d=\"M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z\" />", "badge-check": "<path d=\"M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z\" /> <path d=\"m9 12 2 2 4-4\" />"};
+const ICONS = {"star": "<path d=\"M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z\" />", "handshake": "<path d=\"m11 17 2 2a1 1 0 1 0 3-3\" /> <path d=\"m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4\" /> <path d=\"m21 3 1 11h-2\" /> <path d=\"M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3\" /> <path d=\"M3 4h8\" />", "zap": "<path d=\"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z\" />", "gem": "<path d=\"M6 3h12l4 6-10 13L2 9Z\" /> <path d=\"M11 3 8 9l4 13 4-13-3-6\" /> <path d=\"M2 9h20\" />", "wallet": "<path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\" /> <path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\" />", "volume-2": "<path d=\"M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z\" /> <path d=\"M16 9a5 5 0 0 1 0 6\" /> <path d=\"M19.364 18.364a9 9 0 0 0 0-12.728\" />", "volume-x": "<path d=\"M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z\" /> <line x1=\"22\" x2=\"16\" y1=\"9\" y2=\"15\" /> <line x1=\"16\" x2=\"22\" y1=\"9\" y2=\"15\" />", "goal": "<path d=\"M12 13V2l8 4-8 4\" /> <path d=\"M20.561 10.222a9 9 0 1 1-12.55-5.29\" /> <path d=\"M8.002 9.997a5 5 0 1 0 8.9 2.02\" />", "user-round": "<circle cx=\"12\" cy=\"8\" r=\"5\" /> <path d=\"M20 21a8 8 0 0 0-16 0\" />", "shopping-bag": "<path d=\"M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z\" /> <path d=\"M3 6h18\" /> <path d=\"M16 10a4 4 0 0 1-8 0\" />", "shield": "<path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\" />", "globe": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20\" /> <path d=\"M2 12h20\" />", "newspaper": "<path d=\"M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2\" /> <path d=\"M18 14h-8\" /> <path d=\"M15 18h-5\" /> <path d=\"M10 6h8v4h-8V6Z\" />", "target": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <circle cx=\"12\" cy=\"12\" r=\"6\" /> <circle cx=\"12\" cy=\"12\" r=\"2\" />", "arrow-right-left": "<path d=\"m16 3 4 4-4 4\" /> <path d=\"M20 7H4\" /> <path d=\"m8 21-4-4 4-4\" /> <path d=\"M4 17h16\" />", "wind": "<path d=\"M12.8 19.6A2 2 0 1 0 14 16H2\" /> <path d=\"M17.5 8a2.5 2.5 0 1 1 2 4H2\" /> <path d=\"M9.8 4.4A2 2 0 1 1 11 8H2\" />", "shield-half": "<path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\" /> <path d=\"M12 22V2\" />", "dumbbell": "<path d=\"M14.4 14.4 9.6 9.6\" /> <path d=\"M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z\" /> <path d=\"m21.5 21.5-1.4-1.4\" /> <path d=\"M3.9 3.9 2.5 2.5\" /> <path d=\"M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z\" />", "bed": "<path d=\"M2 4v16\" /> <path d=\"M2 8h18a2 2 0 0 1 2 2v10\" /> <path d=\"M2 17h20\" /> <path d=\"M6 8v9\" />", "users": "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\" /> <circle cx=\"9\" cy=\"7\" r=\"4\" /> <path d=\"M22 21v-2a4 4 0 0 0-3-3.87\" /> <path d=\"M16 3.13a4 4 0 0 1 0 7.75\" />", "message-circle": "<path d=\"M7.9 20A9 9 0 1 0 4 16.1L2 22Z\" />", "flame": "<path d=\"M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z\" />", "heart-handshake": "<path d=\"M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z\" /> <path d=\"M12 5 9.04 7.96a2.17 2.17 0 0 0 0 3.08c.82.82 2.13.85 3 .07l2.07-1.9a2.82 2.82 0 0 1 3.79 0l2.96 2.66\" /> <path d=\"m18 15-2-2\" /> <path d=\"m15 18-2-2\" />", "brain": "<path d=\"M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z\" /> <path d=\"M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z\" /> <path d=\"M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4\" /> <path d=\"M17.599 6.5a3 3 0 0 0 .399-1.375\" /> <path d=\"M6.003 5.125A3 3 0 0 0 6.401 6.5\" /> <path d=\"M3.477 10.896a4 4 0 0 1 .585-.396\" /> <path d=\"M19.938 10.5a4 4 0 0 1 .585.396\" /> <path d=\"M6 18a4 4 0 0 1-1.967-.516\" /> <path d=\"M19.967 17.484A4 4 0 0 1 18 18\" />", "sparkles": "<path d=\"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z\" /> <path d=\"M20 3v4\" /> <path d=\"M22 5h-4\" /> <path d=\"M4 17v2\" /> <path d=\"M5 18H3\" />", "tornado": "<path d=\"M21 4H3\" /> <path d=\"M18 8H6\" /> <path d=\"M19 12H9\" /> <path d=\"M16 16h-6\" /> <path d=\"M11 20H9\" />", "sprout": "<path d=\"M7 20h10\" /> <path d=\"M10 20c5.5-2.5.8-6.4 3-10\" /> <path d=\"M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z\" /> <path d=\"M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z\" />", "sun": "<circle cx=\"12\" cy=\"12\" r=\"4\" /> <path d=\"M12 2v2\" /> <path d=\"M12 20v2\" /> <path d=\"m4.93 4.93 1.41 1.41\" /> <path d=\"m17.66 17.66 1.41 1.41\" /> <path d=\"M2 12h2\" /> <path d=\"M20 12h2\" /> <path d=\"m6.34 17.66-1.41 1.41\" /> <path d=\"m19.07 4.93-1.41 1.41\" />", "clover": "<path d=\"M16.17 7.83 2 22\" /> <path d=\"M4.02 12a2.827 2.827 0 1 1 3.81-4.17A2.827 2.827 0 1 1 12 4.02a2.827 2.827 0 1 1 4.17 3.81A2.827 2.827 0 1 1 19.98 12a2.827 2.827 0 1 1-3.81 4.17A2.827 2.827 0 1 1 12 19.98a2.827 2.827 0 1 1-4.17-3.81A1 1 0 1 1 4 12\" /> <path d=\"m7.83 7.83 8.34 8.34\" />", "cloud": "<path d=\"M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z\" />", "cloud-rain": "<path d=\"M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242\" /> <path d=\"M16 14v6\" /> <path d=\"M8 14v6\" /> <path d=\"M12 16v6\" />", "skull": "<path d=\"m12.5 17-.5-1-.5 1h1z\" /> <path d=\"M15 22a1 1 0 0 0 1-1v-1a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20v1a1 1 0 0 0 1 1z\" /> <circle cx=\"15\" cy=\"12\" r=\"1\" /> <circle cx=\"9\" cy=\"12\" r=\"1\" />", "fast-forward": "<polygon points=\"13 19 22 12 13 5 13 19\" /> <polygon points=\"2 19 11 12 2 5 2 19\" />", "trophy": "<path d=\"M6 9H4.5a2.5 2.5 0 0 1 0-5H6\" /> <path d=\"M18 9h1.5a2.5 2.5 0 0 0 0-5H18\" /> <path d=\"M4 22h16\" /> <path d=\"M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22\" /> <path d=\"M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22\" /> <path d=\"M18 2H6v7a6 6 0 0 0 12 0V2Z\" />", "calendar-days": "<path d=\"M8 2v4\" /> <path d=\"M16 2v4\" /> <rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" /> <path d=\"M3 10h18\" /> <path d=\"M8 14h.01\" /> <path d=\"M12 14h.01\" /> <path d=\"M16 14h.01\" /> <path d=\"M8 18h.01\" /> <path d=\"M12 18h.01\" /> <path d=\"M16 18h.01\" />", "clipboard-list": "<rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\" /> <path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\" /> <path d=\"M12 11h4\" /> <path d=\"M12 16h4\" /> <path d=\"M8 11h.01\" /> <path d=\"M8 16h.01\" />", "mic": "<path d=\"M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z\" /> <path d=\"M19 10v2a7 7 0 0 1-14 0v-2\" /> <line x1=\"12\" x2=\"12\" y1=\"19\" y2=\"22\" />", "briefcase": "<path d=\"M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16\" /> <rect width=\"20\" height=\"14\" x=\"2\" y=\"6\" rx=\"2\" />", "coins": "<circle cx=\"8\" cy=\"8\" r=\"6\" /> <path d=\"M18.09 10.37A6 6 0 1 1 10.34 18\" /> <path d=\"M7 6h1v4\" /> <path d=\"m16.71 13.88.7.71-2.82 2.82\" />", "gauge": "<path d=\"m12 14 4-4\" /> <path d=\"M3.34 19a10 10 0 1 1 17.32 0\" />", "heart": "<path d=\"M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z\" />", "shirt": "<path d=\"M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z\" />", "footprints": "<path d=\"M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z\" /> <path d=\"M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z\" /> <path d=\"M16 17h4\" /> <path d=\"M4 13h4\" />", "glasses": "<circle cx=\"6\" cy=\"15\" r=\"4\" /> <circle cx=\"18\" cy=\"15\" r=\"4\" /> <path d=\"M14 15a2 2 0 0 0-2-2 2 2 0 0 0-2 2\" /> <path d=\"M2.5 13 5 7c.7-1.3 1.4-2 3-2\" /> <path d=\"M21.5 13 19 7c-.7-1.3-1.5-2-3-2\" />", "crown": "<path d=\"M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z\" /> <path d=\"M5 21h14\" />", "watch": "<circle cx=\"12\" cy=\"12\" r=\"6\" /> <polyline points=\"12 10 12 12 13 13\" /> <path d=\"m16.13 7.66-.81-4.05a2 2 0 0 0-2-1.61h-2.68a2 2 0 0 0-2 1.61l-.78 4.05\" /> <path d=\"m7.88 16.36.8 4a2 2 0 0 0 2 1.61h2.72a2 2 0 0 0 2-1.61l.81-4.05\" />", "hand": "<path d=\"M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2\" /> <path d=\"M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2\" /> <path d=\"M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8\" /> <path d=\"M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15\" />", "sticker": "<path d=\"M15.5 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z\" /> <path d=\"M14 3v4a2 2 0 0 0 2 2h4\" /> <path d=\"M8 13h.01\" /> <path d=\"M16 13h.01\" /> <path d=\"M10 16s.8 1 2 1c1.3 0 2-1 2-1\" />", "scissors": "<circle cx=\"6\" cy=\"6\" r=\"3\" /> <path d=\"M8.12 8.12 12 12\" /> <path d=\"M20 4 8.12 15.88\" /> <circle cx=\"6\" cy=\"18\" r=\"3\" /> <path d=\"M14.8 14.8 20 20\" />", "cup-soda": "<path d=\"m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8\" /> <path d=\"M5 8h14\" /> <path d=\"M7 15a6.47 6.47 0 0 1 5 0 6.47 6.47 0 0 0 5 0\" /> <path d=\"m12 8 1-6h2\" />", "graduation-cap": "<path d=\"M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z\" /> <path d=\"M22 10v6\" /> <path d=\"M6 12.5V16a6 3 0 0 0 12 0v-3.5\" />", "megaphone": "<path d=\"m3 11 18-5v12L3 14v-3z\" /> <path d=\"M11.6 16.8a3 3 0 1 1-5.8-1.6\" />", "package": "<path d=\"M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z\" /> <path d=\"M12 22V12\" /> <path d=\"m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7\" /> <path d=\"m7.5 4.27 9 5.15\" />", "hard-hat": "<path d=\"M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5\" /> <path d=\"M14 6a6 6 0 0 1 6 6v3\" /> <path d=\"M4 15v-3a6 6 0 0 1 6-6\" /> <rect x=\"2\" y=\"15\" width=\"20\" height=\"4\" rx=\"1\" />", "link": "<path d=\"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71\" /> <path d=\"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71\" />", "pen-tool": "<path d=\"M15.707 21.293a1 1 0 0 1-1.414 0l-1.586-1.586a1 1 0 0 1 0-1.414l5.586-5.586a1 1 0 0 1 1.414 0l1.586 1.586a1 1 0 0 1 0 1.414z\" /> <path d=\"m18 13-1.375-6.874a1 1 0 0 0-.746-.776L3.235 2.028a1 1 0 0 0-1.207 1.207L5.35 15.879a1 1 0 0 0 .776.746L13 18\" /> <path d=\"m2.3 2.3 7.286 7.286\" /> <circle cx=\"11\" cy=\"11\" r=\"2\" />", "smile": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M8 14s1.5 2 4 2 4-2 4-2\" /> <line x1=\"9\" x2=\"9.01\" y1=\"9\" y2=\"9\" /> <line x1=\"15\" x2=\"15.01\" y1=\"9\" y2=\"9\" />", "award": "<path d=\"m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526\" /> <circle cx=\"12\" cy=\"8\" r=\"6\" />", "smartphone": "<rect width=\"14\" height=\"20\" x=\"5\" y=\"2\" rx=\"2\" ry=\"2\" /> <path d=\"M12 18h.01\" />", "video": "<path d=\"m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5\" /> <rect x=\"2\" y=\"6\" width=\"14\" height=\"12\" rx=\"2\" />", "alarm-clock": "<circle cx=\"12\" cy=\"13\" r=\"8\" /> <path d=\"M12 9v4l2 2\" /> <path d=\"M5 3 2 6\" /> <path d=\"m22 6-3-3\" /> <path d=\"M6.38 18.7 4 21\" /> <path d=\"M17.64 18.67 20 21\" />", "bike": "<circle cx=\"18.5\" cy=\"17.5\" r=\"3.5\" /> <circle cx=\"5.5\" cy=\"17.5\" r=\"3.5\" /> <circle cx=\"15\" cy=\"5\" r=\"1\" /> <path d=\"M12 17.5V14l-3-3 4-3 2 3h2\" />", "clock": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <polyline points=\"12 6 12 12 16 14\" />", "shield-alert": "<path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\" /> <path d=\"M12 8v4\" /> <path d=\"M12 16h.01\" />", "door-open": "<path d=\"M13 4h3a2 2 0 0 1 2 2v14\" /> <path d=\"M2 20h3\" /> <path d=\"M13 20h9\" /> <path d=\"M10 12v.01\" /> <path d=\"M13 4.562v16.157a1 1 0 0 1-1.242.97L5 20V5.562a2 2 0 0 1 1.515-1.94l4-1A2 2 0 0 1 13 4.561Z\" />", "dice-5": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" ry=\"2\" /> <path d=\"M16 8h.01\" /> <path d=\"M8 8h.01\" /> <path d=\"M8 16h.01\" /> <path d=\"M16 16h.01\" /> <path d=\"M12 12h.01\" />", "swords": "<polyline points=\"14.5 17.5 3 6 3 3 6 3 17.5 14.5\" /> <line x1=\"13\" x2=\"19\" y1=\"19\" y2=\"13\" /> <line x1=\"16\" x2=\"20\" y1=\"16\" y2=\"20\" /> <line x1=\"19\" x2=\"21\" y1=\"21\" y2=\"19\" /> <polyline points=\"14.5 6.5 18 3 21 3 21 6 17.5 9.5\" /> <line x1=\"5\" x2=\"9\" y1=\"14\" y2=\"18\" /> <line x1=\"7\" x2=\"4\" y1=\"17\" y2=\"20\" /> <line x1=\"3\" x2=\"5\" y1=\"19\" y2=\"21\" />", "pizza": "<path d=\"m12 14-1 1\" /> <path d=\"m13.75 18.25-1.25 1.42\" /> <path d=\"M17.775 5.654a15.68 15.68 0 0 0-12.121 12.12\" /> <path d=\"M18.8 9.3a1 1 0 0 0 2.1 7.7\" /> <path d=\"M21.964 20.732a1 1 0 0 1-1.232 1.232l-18-5a1 1 0 0 1-.695-1.232A19.68 19.68 0 0 1 15.732 2.037a1 1 0 0 1 1.232.695z\" />", "puzzle": "<path d=\"M15.39 4.39a1 1 0 0 0 1.68-.474 2.5 2.5 0 1 1 3.014 3.015 1 1 0 0 0-.474 1.68l1.683 1.682a2.414 2.414 0 0 1 0 3.414L19.61 15.39a1 1 0 0 1-1.68-.474 2.5 2.5 0 1 0-3.014 3.015 1 1 0 0 1 .474 1.68l-1.683 1.682a2.414 2.414 0 0 1-3.414 0L8.61 19.61a1 1 0 0 0-1.68.474 2.5 2.5 0 1 1-3.014-3.015 1 1 0 0 0 .474-1.68l-1.683-1.682a2.414 2.414 0 0 1 0-3.414L4.39 8.61a1 1 0 0 1 1.68.474 2.5 2.5 0 1 0 3.014-3.015 1 1 0 0 1-.474-1.68l1.683-1.682a2.414 2.414 0 0 1 3.414 0z\" />", "utensils": "<path d=\"M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2\" /> <path d=\"M7 2v20\" /> <path d=\"M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7\" />", "map-pin": "<path d=\"M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0\" /> <circle cx=\"12\" cy=\"10\" r=\"3\" />", "cat": "<path d=\"M12 5c.67 0 1.35.09 2 .26 1.78-2 5.03-2.84 6.42-2.26 1.4.58-.42 7-.42 7 .57 1.07 1 2.24 1 3.44C21 17.9 16.97 21 12 21s-9-3-9-7.56c0-1.25.5-2.4 1-3.44 0 0-1.89-6.42-.5-7 1.39-.58 4.72.23 6.5 2.23A9.04 9.04 0 0 1 12 5Z\" /> <path d=\"M8 14v.5\" /> <path d=\"M16 14v.5\" /> <path d=\"M11.25 16.25h1.5L12 17l-.75-.75Z\" />", "hand-heart": "<path d=\"M11 14h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 16\" /> <path d=\"m7 20 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9\" /> <path d=\"m2 15 6 6\" /> <path d=\"M19.5 8.5c.7-.7 1.5-1.6 1.5-2.7A2.73 2.73 0 0 0 16 4a2.78 2.78 0 0 0-5 1.8c0 1.2.8 2 1.5 2.8L16 12Z\" />", "ticket": "<path d=\"M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z\" /> <path d=\"M13 5v2\" /> <path d=\"M13 17v2\" /> <path d=\"M13 11v2\" />", "gavel": "<path d=\"m14.5 12.5-8 8a2.119 2.119 0 1 1-3-3l8-8\" /> <path d=\"m16 16 6-6\" /> <path d=\"m8 8 6-6\" /> <path d=\"m9 7 8 8\" /> <path d=\"m21 11-8-8\" />", "party-popper": "<path d=\"M5.8 11.3 2 22l10.7-3.79\" /> <path d=\"M4 3h.01\" /> <path d=\"M22 8h.01\" /> <path d=\"M15 2h.01\" /> <path d=\"M22 20h.01\" /> <path d=\"m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10\" /> <path d=\"m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11c-.11.7-.72 1.22-1.43 1.22H17\" /> <path d=\"m11 2 .33.82c.34.86-.2 1.82-1.11 1.98C9.52 4.9 9 5.52 9 6.23V7\" /> <path d=\"M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z\" />", "soup": "<path d=\"M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z\" /> <path d=\"M7 21h10\" /> <path d=\"M19.5 12 22 6\" /> <path d=\"M16.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.73 1.62\" /> <path d=\"M11.25 3c.27.1.8.53.74 1.36-.05.83-.93 1.2-.98 2.02-.06.78.33 1.24.72 1.62\" /> <path d=\"M6.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.74 1.62\" />", "book-open": "<path d=\"M12 7v14\" /> <path d=\"M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z\" />", "scale": "<path d=\"m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z\" /> <path d=\"m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z\" /> <path d=\"M7 21h10\" /> <path d=\"M12 3v18\" /> <path d=\"M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2\" />", "rocket": "<path d=\"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z\" /> <path d=\"m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z\" /> <path d=\"M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0\" /> <path d=\"M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5\" />", "baby": "<path d=\"M9 12h.01\" /> <path d=\"M15 12h.01\" /> <path d=\"M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5\" /> <path d=\"M19 6.3a9 9 0 0 1 1.8 3.9 2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5c-.8 0-1.5-.4-1.5-1\" />", "hotel": "<path d=\"M10 22v-6.57\" /> <path d=\"M12 11h.01\" /> <path d=\"M12 7h.01\" /> <path d=\"M14 15.43V22\" /> <path d=\"M15 16a5 5 0 0 0-6 0\" /> <path d=\"M16 11h.01\" /> <path d=\"M16 7h.01\" /> <path d=\"M8 11h.01\" /> <path d=\"M8 7h.01\" /> <rect x=\"4\" y=\"2\" width=\"16\" height=\"20\" rx=\"2\" />", "fish": "<path d=\"M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 2.54 7 6-.94 3.47-3.44 6-7 6s-7.56-2.53-8.5-6Z\" /> <path d=\"M18 12v.5\" /> <path d=\"M16 17.93a9.77 9.77 0 0 1 0-11.86\" /> <path d=\"M7 10.67C7 8 5.58 5.97 2.73 5.5c-1 1.5-1 5 .23 6.5-1.24 1.5-1.24 5-.23 6.5C5.58 18.03 7 16 7 13.33\" /> <path d=\"M10.46 7.26C10.2 5.88 9.17 4.24 8 3h5.8a2 2 0 0 1 1.98 1.67l.23 1.4\" /> <path d=\"m16.01 17.93-.23 1.4A2 2 0 0 1 13.8 21H9.5a5.96 5.96 0 0 0 1.49-3.98\" />", "camera": "<path d=\"M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z\" /> <circle cx=\"12\" cy=\"13\" r=\"3\" />", "leaf": "<path d=\"M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z\" /> <path d=\"M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12\" />", "tv": "<rect width=\"20\" height=\"15\" x=\"2\" y=\"7\" rx=\"2\" ry=\"2\" /> <polyline points=\"17 2 12 7 7 2\" />", "gamepad-2": "<line x1=\"6\" x2=\"10\" y1=\"11\" y2=\"11\" /> <line x1=\"8\" x2=\"8\" y1=\"9\" y2=\"13\" /> <line x1=\"15\" x2=\"15.01\" y1=\"12\" y2=\"12\" /> <line x1=\"18\" x2=\"18.01\" y1=\"10\" y2=\"10\" /> <path d=\"M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z\" />", "film": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" /> <path d=\"M7 3v18\" /> <path d=\"M3 7.5h4\" /> <path d=\"M3 12h18\" /> <path d=\"M3 16.5h4\" /> <path d=\"M17 3v18\" /> <path d=\"M17 7.5h4\" /> <path d=\"M17 16.5h4\" />", "user-plus": "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\" /> <circle cx=\"9\" cy=\"7\" r=\"4\" /> <line x1=\"19\" x2=\"19\" y1=\"8\" y2=\"14\" /> <line x1=\"22\" x2=\"16\" y1=\"11\" y2=\"11\" />", "coffee": "<path d=\"M10 2v2\" /> <path d=\"M14 2v2\" /> <path d=\"M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1\" /> <path d=\"M6 2v2\" />", "flag": "<path d=\"M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z\" /> <line x1=\"4\" x2=\"4\" y1=\"22\" y2=\"15\" />", "activity": "<path d=\"M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2\" />", "laptop": "<path d=\"M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16\" />", "music": "<path d=\"M9 18V5l12-2v13\" /> <circle cx=\"6\" cy=\"18\" r=\"3\" /> <circle cx=\"18\" cy=\"16\" r=\"3\" />", "bus": "<path d=\"M8 6v6\" /> <path d=\"M15 6v6\" /> <path d=\"M2 12h19.6\" /> <path d=\"M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3\" /> <circle cx=\"7\" cy=\"18\" r=\"2\" /> <path d=\"M9 18h5\" /> <circle cx=\"16\" cy=\"18\" r=\"2\" />", "lightbulb": "<path d=\"M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5\" /> <path d=\"M9 18h6\" /> <path d=\"M10 22h4\" />", "ghost": "<path d=\"M9 10h.01\" /> <path d=\"M15 10h.01\" /> <path d=\"M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z\" />", "thermometer": "<path d=\"M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z\" />", "gift": "<rect x=\"3\" y=\"8\" width=\"18\" height=\"4\" rx=\"1\" /> <path d=\"M12 8v13\" /> <path d=\"M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7\" /> <path d=\"M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5\" />", "droplets": "<path d=\"M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z\" /> <path d=\"M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97\" />", "dog": "<path d=\"M11.25 16.25h1.5L12 17z\" /> <path d=\"M16 14v.5\" /> <path d=\"M4.42 11.247A13.152 13.152 0 0 0 4 14.556C4 18.728 7.582 21 12 21s8-2.272 8-6.444a11.702 11.702 0 0 0-.493-3.309\" /> <path d=\"M8 14v.5\" /> <path d=\"M8.5 8.5c-.384 1.05-1.083 2.028-2.344 2.5-1.931.722-3.576-.297-3.656-1-.113-.994 1.177-6.53 4-7 1.923-.321 3.651.845 3.651 2.235A7.497 7.497 0 0 1 14 5.277c0-1.39 1.844-2.598 3.767-2.277 2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.855-1.45-2.239-2.5\" />", "mail": "<rect width=\"20\" height=\"16\" x=\"2\" y=\"4\" rx=\"2\" /> <path d=\"m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7\" />", "moon": "<path d=\"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z\" />", "snowflake": "<line x1=\"2\" x2=\"22\" y1=\"12\" y2=\"12\" /> <line x1=\"12\" x2=\"12\" y1=\"2\" y2=\"22\" /> <path d=\"m20 16-4-4 4-4\" /> <path d=\"m4 8 4 4-4 4\" /> <path d=\"m16 4-4 4-4-4\" /> <path d=\"m8 20 4-4 4 4\" />", "mountain": "<path d=\"m8 3 4 8 5-5 5 15H2L8 3z\" />", "stethoscope": "<path d=\"M11 2v2\" /> <path d=\"M5 2v2\" /> <path d=\"M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1\" /> <path d=\"M8 15a6 6 0 0 0 12 0v-3\" /> <circle cx=\"20\" cy=\"10\" r=\"2\" />", "mic-vocal": "<path d=\"m11 7.601-5.994 8.19a1 1 0 0 0 .1 1.298l.817.818a1 1 0 0 0 1.314.087L15.09 12\" /> <path d=\"M16.5 21.174C15.5 20.5 14.372 20 13 20c-2.058 0-3.928 2.356-6 2-2.072-.356-2.775-3.369-1.5-4.5\" /> <circle cx=\"16\" cy=\"7\" r=\"5\" />", "heart-pulse": "<path d=\"M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z\" /> <path d=\"M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27\" />", "music-2": "<circle cx=\"8\" cy=\"18\" r=\"4\" /> <path d=\"M12 18V2l7 4\" />", "school": "<path d=\"M14 22v-4a2 2 0 1 0-4 0v4\" /> <path d=\"m18 10 3.447 1.724a1 1 0 0 1 .553.894V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-7.382a1 1 0 0 1 .553-.894L6 10\" /> <path d=\"M18 5v17\" /> <path d=\"m4 6 7.106-3.553a2 2 0 0 1 1.788 0L20 6\" /> <path d=\"M6 5v17\" /> <circle cx=\"12\" cy=\"9\" r=\"2\" />", "map": "<path d=\"M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z\" /> <path d=\"M15 5.764v15\" /> <path d=\"M9 3.236v15\" />", "cake": "<path d=\"M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8\" /> <path d=\"M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1\" /> <path d=\"M2 21h20\" /> <path d=\"M7 8v3\" /> <path d=\"M12 8v3\" /> <path d=\"M17 8v3\" /> <path d=\"M7 4h.01\" /> <path d=\"M12 4h.01\" /> <path d=\"M17 4h.01\" />", "plane": "<path d=\"M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z\" />", "siren": "<path d=\"M7 18v-6a5 5 0 1 1 10 0v6\" /> <path d=\"M5 21a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2z\" /> <path d=\"M21 12h1\" /> <path d=\"M18.5 4.5 18 5\" /> <path d=\"M2 12h1\" /> <path d=\"M12 2v1\" /> <path d=\"m4.929 4.929.707.707\" /> <path d=\"M12 12v6\" />", "medal": "<path d=\"M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15\" /> <path d=\"M11 12 5.12 2.2\" /> <path d=\"m13 12 5.88-9.8\" /> <path d=\"M8 7h8\" /> <circle cx=\"12\" cy=\"17\" r=\"5\" /> <path d=\"M12 18v-2h-.5\" />", "file-text": "<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\" /> <path d=\"M14 2v4a2 2 0 0 0 2 2h4\" /> <path d=\"M10 9H8\" /> <path d=\"M16 13H8\" /> <path d=\"M16 17H8\" />", "bird": "<path d=\"M16 7h.01\" /> <path d=\"M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20\" /> <path d=\"m20 7 2 .5-2 .5\" /> <path d=\"M10 18v3\" /> <path d=\"M14 17.75V21\" /> <path d=\"M7 18a6 6 0 0 0 3.84-10.61\" />", "car": "<path d=\"M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2\" /> <circle cx=\"7\" cy=\"17\" r=\"2\" /> <path d=\"M9 17h6\" /> <circle cx=\"17\" cy=\"17\" r=\"2\" />", "wand-sparkles": "<path d=\"m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72\" /> <path d=\"m14 7 3 3\" /> <path d=\"M5 6v4\" /> <path d=\"M19 14v4\" /> <path d=\"M10 2v2\" /> <path d=\"M7 8H3\" /> <path d=\"M21 16h-4\" /> <path d=\"M11 3H9\" />", "house": "<path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\" /> <path d=\"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\" />", "phone": "<path d=\"M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z\" />", "badge-check": "<path d=\"M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z\" /> <path d=\"m9 12 2 2 4-4\" />", "badge-dollar-sign": "<path d=\"M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z\" /><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8\" /><path d=\"M12 18V6\" />", "trending-up": "<polyline points=\"22 7 13.5 15.5 8.5 10.5 2 17\" /><polyline points=\"16 7 22 7 22 13\" />", "trending-down": "<polyline points=\"22 17 13.5 8.5 8.5 13.5 2 7\" /><polyline points=\"16 17 22 17 22 11\" />", "eye": "<path d=\"M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0\" /><circle cx=\"12\" cy=\"12\" r=\"3\" />", "drama": "<path d=\"M10 11h.01\" /><path d=\"M14 6h.01\" /><path d=\"M18 6h.01\" /><path d=\"M6.5 13.1h.01\" /><path d=\"M22 5c0 9-4 12-6 12s-6-3-6-12c0-2 2-3 6-3s6 1 6 3\" /><path d=\"M17.4 9.9c-.8.8-2 .8-2.8 0\" /><path d=\"M10.1 7.1C9 7.2 7.7 7.7 6 8.6c-3.5 2-4.7 3.9-3.7 5.6 4.5 7.8 9.5 8.4 11.2 7.4.9-.5 1.9-2.1 1.9-4.7\" /><path d=\"M9.1 16.5c.3-1.1 1.4-1.7 2.4-1.4\" />", "chevron-right": "<path d=\"m9 18 6-6-6-6\" />"};
 const ic = (n, cls = "") => `<svg class="ico ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ""}</svg>`;
 // ================= 데이터 =================
 // [구단, 전력, 색, 재정, 감독, 감독 성향, 홈구장]
@@ -1021,7 +1161,7 @@ function newCareer(name, pos, club, look){
   const st = {}; STAT_KEYS.forEach(k => st[k] = clamp(POS[pos].base[k] + ri(-3, 3), 1, 99));
   S = {v:2, name, pos, club, age:19, year:new Date().getFullYear() + 1, round:0, stats:st, pop:8, trust:45, cond:100, salary:3000, earn:500, injury:0, fast:false,
     schedule:makeSeason(club), out:{}, trophies:[], scout:{}, window:null, season:freshSeason(), history:[], news:[], phase:'week', last:null, interview:null, nego:null, pending:null,
-    best:{rating:0, salary:3000}, traits:[], buff:0, streak:{t:'', n:0}, media:0, toneHist:[], week:null, prev:null, rival:pick(RIVALS), mood:0, look: look || {...DEFAULT_LOOK}, lookSet:true, xp:50, items:[], equip:{}, ach:[], rec:{}, mgrs:{}};
+    best:{rating:0, salary:3000}, traits:[], buff:0, streak:{t:'', n:0}, media:0, toneHist:[], week:null, prev:null, rival:pick(RIVALS), mood:0, look: look || {...DEFAULT_LOOK}, lookSet:true, xp:50, items:[], equip:{}, ach:[], rec:{}, mgrs:{}, stars:genStars(), honors:[], awardHist:[], v0:0};
   S.season.obj = makeObjectives();
   addNews(`[오피셜] ${club}, 19세 유망주 ${name} 영입… 연봉 ${money(3000)} · 계약금 ${money(500)}`);
   addNews(`${CLUB[club].m} 감독 "${name}, 지켜보겠다"`);
@@ -1038,7 +1178,7 @@ function validPending(p){
   ['tg','og','from','mins','ovr'].forEach(k => p[k] = int(p[k], 0, 99, 0));
   p.big = typeof p.big === 'string' ? p.big.slice(0, 30) : '';
   p.wx = int(p.wx, 0, WEATHER.length - 1, 0); p.ref = int(p.ref, 0, REFS.length - 1, 1); p.drain = clamp(Number(p.drain) || 1, 1, 2);
-  p.noise = clamp(Number(p.noise) || 0, -1, 1); p.buff = clamp(Number(p.buff) || 0, -1, 1); p.home = !!p.home;
+  p.noise = clamp(Number(p.noise) || 0, -1, 1); p.psy = clamp(Number(p.psy) || 0, -.6, .6); p.wq = clamp(Number(p.wq ?? 1), 0, 1); p.wqv = clamp(Number(p.wqv) || 70, 0, 100); p.wd = int(p.wd, 0, WONDER.length - 1, 0); p.buff = clamp(Number(p.buff) || 0, -1, 1); p.home = !!p.home;
   p.fx = p.fx && ['L','C','X'].includes(p.fx.k) ? {k:p.fx.k, comp:String(p.fx.comp || '').slice(0, 30), stage:String(p.fx.stage || '').slice(0, 10)} : {k:'L', comp:'', stage:''};
   const arr = (a, f) => Array.isArray(a) && a.length === 12 ? a.map(f) : null;
   if (p.so){ const kd = arr(p.so.kd, x => int(x, 0, 2, 1)), or = arr(p.so.or, x => !!x), roll = arr(p.so.roll, x => clamp(Number(x) || 0, 0, 1)); p.so = kd && or && roll ? {kd, or, roll, tb:!!p.so.tb} : null; }
@@ -1073,7 +1213,7 @@ function load(){
     if (r.window && !r.window.offers.length) r.window = null;
     r.news = (Array.isArray(r.news) ? r.news : []).filter(n => n && typeof n.h === 'string').slice(0, 40).map(n => ({h:n.h.slice(0, 160), t:String(n.t || '').slice(0, 30)}));
     r.history = (Array.isArray(r.history) ? r.history : []).filter(h => h && CLUB[h.club]).map(h => ({year:int(h.year,2000,2100,2027), age:int(h.age,16,45,19), club:h.club, apps:int(h.apps,0,99), goals:int(h.goals,0,99), assists:int(h.assists,0,99), avg:String(h.avg).slice(0,5), salary:int(h.salary,0,2000000), change:int(h.change,-100,500)}));
-    if (!['week','match','interview','nego','retired','window','tnego'].includes(r.phase)) r.phase = 'week';
+    if (!['week','match','interview','nego','retired','window','tnego','awards'].includes(r.phase)) r.phase = 'week';
     const tn = r.tn;
     r.tn = tn && CLUB[tn.club] && ['nego','window'].includes(tn.back) ? {club:tn.club, back:tn.back, max:int(tn.max, MIN_SALARY, 2000000, MIN_SALARY), cur:int(tn.cur, MIN_SALARY, 2000000, MIN_SALARY), open:int(tn.open, MIN_SALARY, 2000000, MIN_SALARY),
       used:(Array.isArray(tn.used) ? tn.used : []).filter(k => TAPPEALS[k]).slice(0, 4), log:(Array.isArray(tn.log) ? tn.log : []).filter(l => l && typeof l.t === 'string').map(l => ({who: l.who === 'me' ? 'me' : 'dir', t: l.t.slice(0, 200)})).slice(0, 12),
@@ -1084,11 +1224,15 @@ function load(){
     r.season = Object.assign(freshSeason(), r.season || {});
     r.season.rank = r.season.rank ? int(r.season.rank, 1, 20, 1) : undefined;
     r.season.cups = (Array.isArray(r.season.cups) ? r.season.cups : []).filter(c => typeof c === 'string').map(c => c.slice(0, 30)).slice(0, 10);
+    { const sw = r.season.wonder; r.season.wonder = sw && typeof sw.d === 'string' ? {opp: CLUB[sw.opp] ? sw.opp : '', d: sw.d.slice(0, 40), q: int(sw.q, 0, 100, 70)} : undefined; }
+    r.stars = cleanStars(r.stars) || genStars(); r.v0 = int(r.v0, 0, 1e9, 0);
+    r.honors = (Array.isArray(r.honors) ? r.honors : []).filter(h => h && AWARDS[h.k]).map(h => ({y:int(h.y, 2000, 2100, 2027), k:h.k})).slice(0, 80);
+    r.awardHist = cleanHist(r.awardHist); r.awards = cleanAwards(r.awards);
     r.season.hot = int(r.season.hot, 0, 99, 0); r.season.winter = !!r.season.winter; r.season.agentCall = !!r.season.agentCall;
     r.season.obj = Array.isArray(r.season.obj) ? r.season.obj.filter(o => o && OBJ[o.k]).map(o => ({k:o.k, n: o.k === 'rating' ? clamp(Number(o.n) || 6.8, 5, 9) : int(o.n, 1, 99, 1)})).slice(0, 3) : null;
     r.season.objRes = Array.isArray(r.season.objRes) ? r.season.objRes.map(Boolean).slice(0, 3) : undefined;
     r.ach = Array.isArray(r.ach) ? [...new Set(r.ach.filter(a => ACH.some(x => x[0] === a)))] : [];
-    r.rec = Object.fromEntries(['hat','so','clutch','events','objAll','missions','hardMis'].map(k => [k, int(r.rec?.[k], 0, 99999, 0)]));
+    r.rec = Object.fromEntries(['hat','so','clutch','events','objAll','missions','hardMis','psyW','vbest'].map(k => [k, int(r.rec?.[k], 0, 99999, 0)]));
     r.mgrs = Object.fromEntries(Object.entries(r.mgrs && typeof r.mgrs === 'object' ? r.mgrs : {}).filter(([c, v]) => CLUB[c] && v && MGR[v.t] && typeof v.m === 'string').map(([c, v]) => [c, {m: v.m.slice(0, 16), t: v.t}]));
     r.season.ratings = (Array.isArray(r.season.ratings) ? r.season.ratings : []).map(Number).filter(Number.isFinite);
     ['apps','starts','goals','assists','cs','W','D','L'].forEach(k => r.season[k] = int(r.season[k], 0, 99, 0));
@@ -1105,11 +1249,11 @@ function load(){
       event: EVENTS.some(e => e.id === w.event) ? w.event : null, eventRes: w.eventRes && typeof w.eventRes.text === 'string' ? {text:w.eventRes.text.slice(0, 200)} : null,
       mini: MINIS[w.mini] ? w.mini : null, miniDone:!!w.miniDone, mission: MISSION[w.mission] ? w.mission : null,
       mOpts: Array.isArray(w.mOpts) ? w.mOpts.filter(o => o && MISSION[o.k]).map(o => ({k:o.k, lucky:!!o.lucky})).slice(0, 3) : null,
-      mPick: w.mPick == null ? null : int(w.mPick, 0, 2, 1), wx:int(w.wx, 0, WEATHER.length - 1, 0), ref:int(w.ref, 0, REFS.length - 1, 1), speech: typeof w.speech === 'string' ? w.speech.slice(0, 80) : ''} : null;
+      mPick: w.mPick == null ? null : int(w.mPick, 0, 2, 1), wx:int(w.wx, 0, WEATHER.length - 1, 0), ref:int(w.ref, 0, REFS.length - 1, 1), psy: cleanPsy(w.psy), psyFx: cleanPsyFx(w.psyFx), speech: typeof w.speech === 'string' ? w.speech.slice(0, 80) : ''} : null;
     r.prev = r.prev ? {rating:Number(r.prev.rating) || 0, goals:int(r.prev.goals, 0, 9, 0), mins:int(r.prev.mins, 0, 90, 0)} : null;
     r.pending = validPending(r.pending);
     if (r.phase === 'match' && !r.pending) r.phase = 'week';
-    if (r.last){ const L = r.last; ['tg','og','goals','assists'].forEach(k => L[k] = int(L[k], 0, 12, 0)); L.mins = int(L.mins, 0, 90, 0); L.rating = L.rating == null ? null : clamp(Number(L.rating) || 6, 3, 10); L.fx = cleanFx(L.fx); L.iv = L.iv !== false; L.mis = L.mis && MISSION[L.mis.k] ? {k:L.mis.k, ok: L.mis.ok == null ? null : !!L.mis.ok, lucky:!!L.mis.lucky} : null; L.big = typeof L.big === 'string' ? L.big.slice(0, 30) : ''; if (!CLUB[L.opp]) r.last = null; }
+    if (r.last){ const L = r.last; ['tg','og','goals','assists'].forEach(k => L[k] = int(L[k], 0, 12, 0)); L.mins = int(L.mins, 0, 90, 0); L.rating = L.rating == null ? null : clamp(Number(L.rating) || 6, 3, 10); L.fx = cleanFx(L.fx); L.iv = L.iv !== false; L.mis = L.mis && MISSION[L.mis.k] ? {k:L.mis.k, ok: L.mis.ok == null ? null : !!L.mis.ok, lucky:!!L.mis.lucky} : null; L.big = typeof L.big === 'string' ? L.big.slice(0, 30) : ''; L.wonder = typeof L.wonder === 'string' ? L.wonder.slice(0, 40) : ''; if (!CLUB[L.opp]) r.last = null; }
     if (r.phase === 'interview' && !r.last) r.phase = 'week';
     if (r.interview){
       const iv = r.interview.set;
@@ -1124,10 +1268,11 @@ function load(){
     if (r.nego){
       const n = r.nego; n.offer = int(n.offer, -40, 60, 0); n.round = int(n.round, 1, 2, 1); n.avg = Number(n.avg) || 0; n.score = Number(n.score) || 0;
       n.used = (Array.isArray(n.used) ? n.used : []).filter(k => APPEALS[k]); n.log = (Array.isArray(n.log) ? n.log : []).map(l => ({me:String(l.me), gm:String(l.gm)}));
-      n.opText = String(n.opText || ''); n.orig = int(n.orig, MIN_SALARY, 2000000, r.salary); n.base = int(n.base, MIN_SALARY, 2000000, n.orig);
+      n.opText = String(n.opText || ''); n.awBonus = int(n.awBonus, 0, 80, 0); n.orig = int(n.orig, MIN_SALARY, 2000000, r.salary); n.base = int(n.base, MIN_SALARY, 2000000, n.orig);
       if (n.result){ const x = n.result; x.ok = x.ok !== false; if (!APPEALS[x.k] || !['up','keep','down'].includes(x.kind)) n.result = null; else { x.pct = int(x.pct, -60, 200, 0); x.newSalary = int(x.newSalary, MIN_SALARY, 2000000, r.salary); x.trust = int(x.trust, -30, 30, 0); x.gm = String(x.gm); } }
       n.offers = Array.isArray(n.offers) ? n.offers.filter(o => o && CLUB[o.club] && o.club !== r.club).map(o => ({club:o.club, salary:int(o.salary, MIN_SALARY, 2000000, r.salary)})).slice(0, 2) : null;
     }
+    if (r.phase === 'awards' && (!r.awards || !r.nego)) r.phase = r.nego ? 'nego' : 'week';
     if (r.phase === 'tnego' && (!r.tn || (r.tn.back === 'nego' && !r.nego) || (r.tn.back === 'window' && !r.window))){ r.phase = r.tn && r.tn.back === 'nego' && r.nego ? 'nego' : 'week'; r.tn = null; }
     return r;
   } catch (e) { console.error('save load failed', e && e.message); return null; }
@@ -1153,7 +1298,7 @@ function go(){
   applyMgrs();
   save();
   if (!S) return renderTitle();
-  ({week:renderHub, match:playMatch, interview:renderInterview, nego:renderNego, retired:renderRetired, window:renderWindow, tnego:renderTN})[S.phase]();
+  ({week:renderHub, match:playMatch, interview:renderInterview, nego:renderNego, retired:renderRetired, window:renderWindow, tnego:renderTN, awards:renderAwards})[S.phase]();
 }
 function hud(){
   const ovr = ovrOf(S.stats, S.pos);
@@ -1200,7 +1345,7 @@ function renderTitle(){
       <p class="ts-sub">K리그에서 유럽 무대까지, 나만의 축구 인생</p>
       ${has ? `<button class="ts-cont" id="cont" type="button">
           <span class="ts-cont-crest">${crest(sv.club, 'lg')}</span>
-          <span class="ts-cont-main"><small>이어하기</small><b>${esc(sv.name)}</b><em>${lgName.f} ${esc(sv.club)} · ${sv.year} 시즌 · ${sv.age}세</em></span>
+          <span class="ts-cont-main"><small>이어하기</small><b>${esc(sv.name)}</b><em><span class="nw">${lgName.f} ${esc(sv.club)}</span> <span class="nw">· ${sv.year} 시즌</span> <span class="nw">· ${sv.age}세</span></em></span>
           <span class="ts-cont-ovr"><b>${ovr}</b><small>OVR</small></span>
           <span class="ts-cont-go">${ic('fast-forward')}</span>
         </button>` : ''}
@@ -1268,6 +1413,7 @@ function makeWeek(){
   const roll = Math.random(); // 한 주에 돌발 이벤트 또는 미니게임 중 최대 하나만
   const event = !S.injury && roll < .26 ? pick(EVENTS).id : null;
   const mini = !S.injury && !event && roll < .42 ? pick(Object.keys(MINIS)) : null;
+  const psy = !S.injury && !event && !mini && roll < .62 ? makePsy() : null; // 감독·동료와의 심리전
   const mOpts = S.injury ? null : makeMissions();
   const wx = WEATHER.indexOf(wpick(WEATHER)), ref = REFS.indexOf(wpick(REFS));
   let needs, text, rumor = false;
@@ -1289,7 +1435,7 @@ function makeWeek(){
   }
   S.buff = r2(clamp(S.buff + FORTUNES[fortune][4], -1, 1));
   if (mgr().volatile) S.mood = ri(-2, 2);
-  return {needs, text, rumor, fortune, revealed:false, event, eventRes:null, mini, miniDone:false, mOpts, mPick:null, mission:null, wx, ref};
+  return {needs, text, rumor, fortune, revealed:false, event, eventRes:null, mini, miniDone:false, mOpts, mPick:null, mission:null, wx, ref, psy, psyFx:null};
 }
 const SPEECH = {
   '-2':['요즘 다들 정신 못 차리지? 이번 주 지면 각오해.','훈련장에 웃음소리가 들리면 가만 안 둔다.'],
@@ -1307,12 +1453,14 @@ function renderHub(){
   if (S.week && S.week.mOpts && S.week.mPick != null && !S.week.mOpts[S.week.mPick]){ S.week.mPick = null; S.week.mission = null; }
   if (S.equip.arm === 'captain' && S.trust < 70){ delete S.equip.arm; save(); setTimeout(() => toast('감독 신뢰가 70 아래로 떨어져 주장 완장을 내려놓았다'), 300); }
   if (!S.week.speech){ S.week.speech = pick([...SPEECH[String(S.mood)], ...(S.mood >= 0 ? mgr().pos : mgr().neg).map(x => x.replace(/"/g, ''))]); save(); }
+  if (!S.v0){ S.v0 = myValue(); save(); }
+  if (UI.vToast){ const m = UI.vToast; UI.vToast = null; setTimeout(() => toast(m), 1200); }
   const t = UI.tab;
   if (t === 'player'){ frame(playerTab(), true); bindPlayer(); }
   else if (t === 'shop'){ frame(shopTab(), true); bindShop(); }
   else if (t === 'club') frame(clubTab(), true);
   else if (t === 'news') frame(newsTab(), true);
-  else if (t === 'world') frame(worldTab(), true);
+  else if (t === 'world'){ frame(worldTab(), true); bindWorld(); }
   else { frame(matchTab(), true); bindMatchTab(); }
 }
 function matchTab(){
@@ -1328,7 +1476,7 @@ function matchTab(){
         <div class="vs-mid">VS</div>
         <div class="side">${crest(opp, 'xl')}<b>${esc(opp)}</b><small>${CLUB[opp].lg !== CLUB[S.club].lg ? LEAGUES[CLUB[opp].lg].f + ' ' : ''}전력 ${CLUB[opp].s} · #${STYLE_NAME[CLUB[opp].sty]}</small></div>
       </div>
-      <div class="conds"><span>${ic(WX[1])} ${WX[2]}${WX[3] ? ` <em>${WX[3]}</em>` : ''}</span><span>${ic('scale')} ${RF[1]}${RF[2] ? ` <em>${RF[2]}</em>` : ''}</span></div>
+      <div class="conds"><span>${ic(WX[1])} ${WX[2]}${WX[3] ? ` <em>${WX[3]}</em>` : ''}</span><span>${ic('scale')} ${RF[1]}${RF[2] ? ` <em>${RF[2]}</em>` : ''}</span>${W.psyFx ? `<span class="psyc ${W.psyFx.rt < 0 ? 'down' : ''}">${ic('brain')} ${esc(W.psyFx.label)}</span>` : ''}</div>
       ${W.mOpts ? `<div class="mpick"><div class="mpick-h">${ic('target')} 감독 미션 · 하나 골라 도전 <small>${W.mPick == null ? '안 고르면 보통 미션으로 진행' : '경기 시작 전까지 바꿀 수 있어요'}</small></div>
         <div class="mopts">${W.mOpts.map((o, i) => { const M = MISSION[o.k], rw = missionReward(o.k, big, o.lucky), dd = DIFF[M.d]; return `<button type="button" class="mopt ${dd[1]} ${W.mPick === i ? 'on' : ''}" data-mi="${i}">
           <span class="md">${dd[0]}${o.lucky ? ` <i class="lucky">${ic('clover')}x2</i>` : ''}</span><b>${M.n}</b><small>경험치 +${rw.xp} · 신뢰 +${rw.trust}${rw.fail ? `<br>실패 시 신뢰 ${rw.fail}` : ''}</small></button>`; }).join('')}</div></div>` : ''}
@@ -1346,6 +1494,7 @@ function matchTab(){
     <div class="acts">${ACTS.map(([id,i,n], k) => `<button class="act t-${id}" type="button" data-a="${id}" style="animation-delay:${k*45}ms"><span class="i">${ic({sho:'target',pas:'arrow-right-left',dri:'wind',def:'shield-half',phy:'dumbbell',rest:'bed',fan:'users',talk:'message-circle'}[id])}</span><span class="n">${n.replace(' 훈련','')}</span><span class="d">${actDesc(id)}</span></button>`).join('')}</div>
     <div class="toggle"><span>${ic('fast-forward')} 빠른 중계 (페널티킥은 직접 차요)</span><label class="switch"><input type="checkbox" id="fast" ${S.fast ? 'checked' : ''} aria-label="빠른 중계"><span></span></label></div>
     ${objHtml()}
+    ${vMini('toValue2')}
     <div class="strip">${[['출전',se.apps],['골',se.goals],['도움',se.assists],['평점',avg],['전적',`${se.W}-${se.D}-${se.L}`]].map(([k,v]) => `<div><b>${v}</b><span>${k}</span></div>`).join('')}</div>`;
 }
 function actDesc(id){
@@ -1372,6 +1521,8 @@ function bindMatchTab(){
   if (UI.sacked){ const o = UI.sacked; UI.sacked = null; setTimeout(() => sackModal(o), delay); return; }
   if (S.week.event && !S.week.eventRes) setTimeout(showEvent, delay);
   else if (S.week.mini && !S.week.miniDone) setTimeout(showMini, delay);
+  else if (S.week.psy && !S.week.psy.done) setTimeout(showPsy, delay);
+  const tv = $('#toValue2'); if (tv) tv.onclick = goValue;
 }
 function playerTab(){
   const ovr = ovrOf(S.stats, S.pos), tier = tierOf(ovr);
@@ -1386,6 +1537,7 @@ function playerTab(){
       <div class="nm">${esc(S.name)}</div>
       <div class="st">${STAT_KEYS.map(k => `<span><small>${statName(k, S.pos)}</small>${S.stats[k]}</span>`).join('')}<span><small>인기</small>${S.pop}</span></div>
     </div>
+    ${vMini('toValue')}
     <div class="panel pad" style="display:flex;justify-content:center">${radar()}</div>
     <div class="panel pad statbars">${STAT_KEYS.map((k, i) => `<div class="sb"><span>${statName(k, S.pos)}</span><div class="t"><i style="width:${S.stats[k]}%;animation-delay:${i*80}ms"></i></div><b>${S.stats[k]}</b></div>`).join('')}</div>
     <div class="label">특성 · 상태</div>
@@ -1397,7 +1549,7 @@ function playerTab(){
     <div class="label">${ic('medal')} 업적 ${S.ach.length}/${ACH.length} · 달성하면 경험치 보상</div>
     <div class="ach-grid">${ACH.map(([id, icn, n, d, f, xp]) => `<div class="ach ${S.ach.includes(id) ? 'on' : ''}"><span class="ach-i">${ic(icn)}</span><b>${esc(n)}</b><small>${esc(d)}</small><em>+${xp} XP</em></div>`).join('')}</div>
     <div class="label">${ic('trophy')} 트로피 캐비닛</div>
-    <div class="panel pad" style="display:flex;flex-wrap:wrap;gap:8px">${S.trophies.length ? S.trophies.map(t => `<span class="trophy">🏆 ${esc(t.comp)} <small>${t.year}</small></span>`).join('') : '<span class="small muted">컵 대회 결승에서 이기면 트로피가 쌓여요.</span>'}</div>
+    <div class="panel pad" style="display:flex;flex-wrap:wrap;gap:8px">${S.trophies.length || (S.honors || []).length ? (S.honors || []).map(h => `<span class="trophy honor">${ic(AWARDS[h.k].i)} ${AWARDS[h.k].n} <small>${h.y}</small></span>`).join('') + S.trophies.map(t => `<span class="trophy">🏆 ${esc(t.comp)} <small>${t.year}</small></span>`).join('') : '<span class="small muted">컵 대회 결승에서 이기거나 시즌 시상식에서 상을 받으면 여기에 쌓여요.</span>'}</div>
     <div class="label">커리어 기록 · 보유 자금 ${money(S.earn)}</div>
     <div class="panel tbl">${S.history.length ? historyTable() : '<p class="pad small muted" style="margin:0">첫 시즌을 마치면 기록이 쌓여요.</p>'}</div>`;
 }
@@ -1405,6 +1557,7 @@ function bindPlayer(){
   const v = mountViewer($('#viewer'));
   root.querySelectorAll('[data-pose]').forEach(b => b.onclick = () => { if (v) v.pose(b.dataset.pose); root.querySelectorAll('[data-pose]').forEach(x => x.classList.toggle('on', x === b)); });
   const f = $('#firstLook'); if (f) f.onclick = () => openLookEditor('first');
+  const tv = $('#toValue'); if (tv) tv.onclick = goValue;
 }
 function clubTab(){
   const C = CLUB[S.club], M = mgr(), rk = myRank(), lp = S.schedule.filter(f => f.k === 'L').length, done = S.schedule.slice(0, S.round).filter(f => f.k === 'L').length;
@@ -1500,6 +1653,7 @@ async function doAction(id){
   if (S.phase !== 'week') return;
   if (S.week.event && !S.week.eventRes){ showEvent(); return; }
   if (S.week.mini && !S.week.miniDone){ showMini(); return; }
+  if (S.week.psy && !S.week.psy.done){ showPsy(); return; }
   root.querySelectorAll('.act').forEach(b => b.disabled = true);
   const hit = S.week.needs.includes(id), msgs = [];
   let special = null;
@@ -1567,6 +1721,7 @@ function startChance(ovr){
   if (t === 'showman') p += (S.pop - 30) / 200;
   if (S.perk && S.perk.club === S.club && S.perk.year === S.year) p += .15;
   if (M.youth) p += S.age <= 23 ? .12 : -.03;
+  if (S.week && S.week.psyFx) p += S.week.psyFx.start || 0;
   return clamp(p, .05, .97);
 }
 function simulate(){
@@ -1578,8 +1733,8 @@ function simulate(){
   const mins = role === 'start' ? 90 : role === 'sub' ? 90 - from : 0;
   const myImpact = mins ? (ovr - 62) * .25 * (mins / 90) * (S.cond / 100 + .3) : 0;
   const ts = CLUB[S.club].s + myImpact + (home ? 2 : -2), os = CLUB[opp].s;
-  const Wk = S.week || {}, WXe = WEATHER[Wk.wx ?? 0][4], RFe = REFS[Wk.ref ?? 1][3];
-  let lt = 1.35 * Math.pow(ts / os, 2.4) * (WXe.goal || 1) * (WXe.swing ? rand(1 - WXe.swing, 1 + WXe.swing) : 1);
+  const Wk = S.week || {}, WXe = WEATHER[Wk.wx ?? 0][4], RFe = REFS[Wk.ref ?? 1][3], PF = Wk.psyFx || {};
+  let lt = 1.35 * Math.pow(ts / os, 2.4) * (PF.team || 1) * (WXe.goal || 1) * (WXe.swing ? rand(1 - WXe.swing, 1 + WXe.swing) : 1);
   let lo = 1.35 * Math.pow(os / ts, 2.4) * (WXe.goal || 1) * (WXe.swing ? rand(1 - WXe.swing, 1 + WXe.swing) : 1);
   if (mins && (S.pos === 'GK' || S.pos === 'DF')) lo *= clamp(1 - (ovr - 55) / 160, .6, 1.1);
   if (mins && hasT('def')) lo *= .9;
@@ -1588,22 +1743,22 @@ function simulate(){
   for (let i = 0; i < tg; i++){
     const m = ri(1, 90), on = m >= from;
     let who = 'team', ast = false;
-    if (on && Math.random() < P.goalP * sk * (hasT('sho') ? 1.25 : 1)) who = 'me';
-    else if (on && Math.random() < P.astP * sk * (hasT('pas') ? 1.3 : 1)) ast = true;
+    if (on && Math.random() < P.goalP * sk * (hasT('sho') ? 1.25 : 1) * (PF.goal || 1)) who = 'me';
+    else if (on && Math.random() < P.astP * sk * (hasT('pas') ? 1.3 : 1) * (PF.ast || 1)) ast = true;
     ev.push({m, side:'us', who, ast});
   }
   for (let i = 0; i < og; i++) ev.push({m: ri(1, 90), side:'them'});
   if (role === 'sub') ev.push({m: from, side:'sub'});
   const onPitch = () => ri(Math.max(from, 5), 88);
-  if (mins && (S.pos === 'FW' || S.pos === 'MF') && Math.random() < .14 * (RFe.pk || 1)) ev.push({m: onPitch(), side:'pk', dir: wpick([[.4,0],[.2,1],[.4,2]])[1], roll: Math.random()});
+  if (mins && (S.pos === 'FW' || S.pos === 'MF') && Math.random() < .14 * (RFe.pk || 1) * (PF.pk || 1)) ev.push({m: onPitch(), side:'pk', dir: wpick([[.4,0],[.2,1],[.4,2]])[1], roll: Math.random()});
   if (mins && S.pos === 'GK' && Math.random() < .14 * (RFe.pk || 1)) ev.push({m: onPitch(), side:'opk', dir: wpick([[.42,0],[.16,1],[.42,2]])[1], roll: Math.random()});
   if (mins && S.pos !== 'GK' && Math.random() < .22) ev.push({m: onPitch(), side:'post'});
   if (mins && S.pos !== 'GK' && Math.random() < .32) ev.push({m: onPitch(), side:'chance', roll: Math.random()});
-  if (mins && Math.random() < .1 * (RFe.card || 1)) ev.push({m: onPitch(), side:'yellow'});
+  if (mins && Math.random() < .1 * (RFe.card || 1) * (PF.card || 1)) ev.push({m: onPitch(), side:'yellow'});
   if (Math.random() < .14) ev.push({m: ri(10, 88), side:'var'});
   if (Math.random() < .06) ev.push({m: ri(30, 85), side:'red'});
   ev.sort((a, b) => a.m - b.m);
-  return {opp, home, role, from, mins, tg, og, ev, noise: rand(-.7, .7), buff: S.buff, ovr, fx:{k:fxx.k, comp:fxx.comp || '', stage:fxx.stage || ''}, so: fxx.k !== 'L' ? genSo() : null, big: (bigMatch(fxx) || {}).label || '', wx: Wk.wx ?? 0, ref: Wk.ref ?? 1, drain: WXe.drain || 1};
+  return {opp, home, role, from, mins, tg, og, ev, noise: rand(-.7, .7), buff: S.buff, ovr, fx:{k:fxx.k, comp:fxx.comp || '', stage:fxx.stage || ''}, so: fxx.k !== 'L' ? genSo() : null, big: (bigMatch(fxx) || {}).label || '', wx: Wk.wx ?? 0, ref: Wk.ref ?? 1, drain: WXe.drain || 1, psy: PF.rt || 0, wq: Math.random(), wqv: rand(62, 99), wd: ri(0, WONDER.length - 1)};
 }
 function finalize(p){
   let tg = p.tg, og = p.og, goals = 0, assists = 0, bonus = 0, first = null, clutchOk = 0, yellow = false;
@@ -1625,12 +1780,12 @@ function finalize(p){
   const res = tg > og ? 'W' : tg < og ? 'L' : 'D';
   let rating = null;
   if (p.mins){
-    rating = 6.0 + (p.ovr - 62) * .035 + (S.cond - 70) * .01 + goals * .9 + assists * .55 + (res === 'W' ? .35 : res === 'L' ? -.35 : 0) + p.noise + p.buff + (hasT('dri') ? .2 : 0) + bonus;
+    rating = 6.0 + (p.ovr - 62) * .035 + (S.cond - 70) * .01 + goals * .9 + assists * .55 + (res === 'W' ? .35 : res === 'L' ? -.35 : 0) + p.noise + p.buff + (p.psy || 0) + (hasT('dri') ? .2 : 0) + bonus;
     if (S.pos === 'GK' || S.pos === 'DF') rating += og === 0 ? .7 : -og * .2;
     if (p.role === 'sub') rating = 6 + (rating - 6) * .7;
     rating = Math.round(clamp(rating, 3, 10) * 10) / 10;
   }
-  return {opp:p.opp, home:p.home, role:p.role, from:p.from, mins:p.mins, tg, og, goals, assists, res, rating, fx:p.fx, big:p.big || '', goalMins, yellow, clutchOk, comeback: first === 'them' && res === 'W', drain: p.drain || 1, cs: !!(p.mins && og === 0 && (S.pos === 'GK' || S.pos === 'DF'))};
+  return {opp:p.opp, home:p.home, role:p.role, from:p.from, mins:p.mins, tg, og, goals, assists, res, rating, fx:p.fx, big:p.big || '', goalMins, yellow, clutchOk, comeback: first === 'them' && res === 'W', drain: p.drain || 1, cs: !!(p.mins && og === 0 && (S.pos === 'GK' || S.pos === 'DF')), wq: p.wq ?? 1, wqv: p.wqv || 70, wd: p.wd || 0};
 }
 function applyMatch(r){
   const se = S.season; se[r.res]++; se.results[S.round] = r.res;
@@ -1647,6 +1802,8 @@ function applyMatch(r){
     if (r.goals >= 3) addNews(`🎩 ${S.name} 해트트릭! ${S.club}, ${r.opp}에 ${r.tg}-${r.og} 대승`);
     else if (r.goals === 2) addNews(`⚽⚽ ${S.name} 멀티골… ${S.club} ${r.tg}-${r.og} ${r.res === 'W' ? '승리' : r.res === 'D' ? '무승부' : '패배'}`);
     else if (r.rating >= 8.5) addNews(`⭐ 평점 ${r.rating}! ${S.name}, ${r.opp}전 최고의 선수`);
+    const wch = clamp(.06 + (S.stats.sho + S.stats.dri - 110) / 700, .04, .18) * Math.min(r.goals, 3); // 원더골 → 푸스카스상 후보
+    if (r.goals && r.wq < wch){ const w = {opp:r.opp, d:WONDER[r.wd] || WONDER[0], q:Math.round(r.wqv)}; if (!se.wonder || w.q >= se.wonder.q) se.wonder = w; r.wonder = w.d; fx.push(['원더골', 1, '🌟 원더골! 푸스카스상 후보']); addNews(`🌟 ${S.name}, ${r.opp}전 ${w.d}… "올해의 골 후보"`); }
   } else if (r.role === 'injured'){ S.injury = Math.max(0, S.injury - 1); fx.push(...applyFx({cond: 15})); }
   else fx.push(...applyFx({cond: 8, pop: -1}));
   S.streak = S.streak.t === r.res ? {t:r.res, n:S.streak.n + 1} : {t:r.res, n:1};
@@ -1759,6 +1916,7 @@ async function runMatch(){
       <div style="font-weight:900">${r.goals ? `⚽ ${r.goals}골 ` : ''}${r.assists ? `🅰️ ${r.assists}도움 ` : ''}${r.cs ? '🧤 클린시트 ' : ''}${!r.goals && !r.assists && !r.cs ? `${r.mins}분 출전` : ''}</div>`
       : `<div class="label">${r.role === 'injured' ? '부상 회복 중' : '출전하지 못했다'}</div><div style="font-size:48px">${r.role === 'injured' ? '🤕' : '🪑'}</div>`}
     ${L.mis ? `<div class="mis-res ${L.mis.ok ? 'ok' : L.mis.ok === false ? 'no' : ''}">${ic('target')} <span>${DIFF[MISSION[L.mis.k].d][0]} 미션${L.mis.lucky ? ' (럭키 x2)' : ''} · ${MISSION[L.mis.k].n}</span> <b>${L.mis.ok ? '성공!' : L.mis.ok === false ? '실패' : '출전 못 해 무효'}</b></div>` : ''}
+    ${L.wonder ? `<div class="mis-res wonder">${ic('sparkles')} <span>원더골 · ${esc(L.wonder)}</span> <b>푸스카스상 후보!</b></div>` : ''}
     <div class="chips">${chipsHtml(L.fx)}</div>
     ${r.iv ? '' : `<div class="noiv">${r.role === 'injured' ? '' : pick(['📵 오늘은 인터뷰 요청이 없었다.','🚌 기자들이 상대 팀 선수에게 몰려갔다.','🤫 조용히 버스에 올랐다.'])}</div>`}
     <button class="btn block" id="toIv" type="button">${r.iv ? `${ic('mic')} 기자회견장으로` : '다음 주로 ▶'}</button>
@@ -1998,9 +2156,9 @@ function nextRound(){
   const done = S.schedule[S.round];
   S.earn += Math.round(S.salary / Math.max(ROUNDS, S.schedule.length)); // 연봉은 매주 나눠 지급
   S.round++; S.last = null; S.interview = null; S.week = null;
-  skipOut(); worldNews();
+  skipOut(); worldNews(); starsWeek();
   UI.tab = 'match';
-  if (S.round >= S.schedule.length){ startNego(); return go(); }
+  if (S.round >= S.schedule.length){ startNego(); makeAwards(); S.phase = 'awards'; return go(); }
   const sacked = sackCheck(done); if (sacked) UI.sacked = sacked;
   if (done && done.k === 'L' && done.lr === 6 && !S.season.winter){
     S.season.winter = true;
@@ -2090,12 +2248,14 @@ function renderNego(){
   if (se.goals >= 10) awards.push('⚽ 두 자릿수 골'); if (se.assists >= 7) awards.push('🅰️ 도움 머신');
   if (n.avg >= 7.5 && se.apps >= 6) awards.push('⭐ 시즌 MVP 후보'); if (se.cs >= 4) awards.push('🧤 철벽');
   if (se.apps === se.results.filter(Boolean).length) awards.push('🔋 전 경기 출전');
+  (S.honors || []).filter(h => h.y === S.year).forEach(h => awards.unshift(`🏅 ${AWARDS[h.k].n}`));
   (se.cups || []).forEach(c => awards.unshift(`🏆 ${c} 우승`)); if (se.rank) awards.unshift(`📊 리그 ${se.rank}위`); if (se.objRes && se.objRes.length) awards.unshift(`🎯 시즌 목표 ${se.objRes.filter(Boolean).length}/${se.objRes.length} 달성`); if (S.pop >= 75) awards.push('🌟 팬 투표 1위');
   const oddsTag = p => p >= .65 ? '<span class="odds hi">성공 가능성 높음</span>' : p >= .4 ? '<span class="odds mid">성공 가능성 보통</span>' : '<span class="odds lo">성공 가능성 낮음</span>';
   frame(`
     <div class="label">🏁 ${S.year} 시즌 결산</div>
     <div class="strip">${[['출전',se.apps],['골',se.goals],['도움',se.assists],['평점', se.ratings.length ? n.avg.toFixed(1) : '-'],['전적',`${se.W}-${se.D}-${se.L}`]].map(([k,v]) => `<div><b>${v}</b><span>${k}</span></div>`).join('')}</div>
     ${awards.length ? `<div class="awards">${awards.map((a,i) => `<span class="award" style="animation-delay:${200 + i*90}ms">${esc(a)}</span>`).join('')}</div>` : ''}
+    ${n.awBonus ? `<div class="mis-res ok">${ic('award')} <span>시상식 수상 프리미엄 · 구단 제안 +${n.awBonus}%p</span></div>` : ''}
     <div class="label">${ic('briefcase')} 연봉 협상실 ${n.round > 1 ? '· 재협상' : ''}</div>
     <div class="panel office">
       ${n.round === 1 ? `<div class="strip" style="grid-template-columns:1fr 1fr"><div><b>${money(S.salary)}</b><span>현재 연봉</span></div><div><b style="color:${n.offer > 0 ? 'var(--up)' : n.offer < 0 ? 'var(--down)' : 'inherit'}">${n.offer > 0 ? '+' : ''}${n.offer}%</b><span>구단 첫 제시</span></div></div>`
@@ -2172,12 +2332,14 @@ function signContract(salary, pct, newClub){
   } else addNews(`[오피셜] ${S.name}, ${money(salary)}에 재계약 (${pct >= 3 ? `${pct}% 인상` : pct <= -3 ? `${Math.abs(pct)}% 삭감` : '동결'})${ad ? ` · 광고 수입 ${money(ad)}` : ''}`);
   S.salary = salary; S.best.salary = Math.max(S.best.salary, S.salary); gainXp(60);
   S.age++; S.year++;
+  starsSeason();
   const msgs = [];
   if (S.age <= 23){ const k = pick(STAT_KEYS.filter(k => POS[S.pos].w[k] > .1)); const g = ri(1, 3); S.stats[k] = clamp(S.stats[k] + g, 1, 99); msgs.push(`${statName(k, S.pos)} +${g} 자연 성장`); }
   if (S.age >= 30){ STAT_KEYS.forEach(k => { S.stats[k] = clamp(S.stats[k] - ri(0, Math.max(1, S.age - 29)), 1, 99); }); msgs.push('노쇠화로 능력치 하락'); }
   S.pop = Math.round(S.pop * .9); S.trust = Math.round(50 + (S.trust - 50) * .6); S.cond = 100; S.injury = 0;
   S.season = freshSeason(); S.round = 0; S.schedule = makeSeason(S.club); S.table = null; S.season.obj = makeObjectives(); S.out = {}; S.nego = null; S.week = null; S.buff = 0;
   Object.keys(S.scout).forEach(l => S.scout[l] = Math.max(0, S.scout[l] - 1));
+  S.v0 = myValue();
   if (S.age >= RETIRE_AGE){ S.phase = 'retired'; addNews(`${S.name}, ${S.age}세로 현역 은퇴 선언`); }
   else { S.phase = 'week'; UI.splash = true; toast(`${S.year} 시즌 개막! ${msgs.join(' · ')}`); }
   SFX.whistle(); UI.tab = 'match'; go();
@@ -2194,6 +2356,7 @@ function renderRetired(){
     </div>
     <div class="strip" style="grid-template-columns:repeat(4,1fr)">${[['출전',tot.apps],['골',tot.goals],['도움',tot.assists],['최고 평점',S.best.rating || '-']].map(([k,v]) => `<div><b>${v}</b><span>${k}</span></div>`).join('')}</div>
     <div class="panel pad small" style="text-align:center">최고 연봉 ${money(S.best.salary)} · 보유 자금 ${money(S.earn)}</div>
+    ${(S.honors || []).length ? `<div class="panel pad" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center">${S.honors.map(h => `<span class="trophy honor">${ic(AWARDS[h.k].i)} ${AWARDS[h.k].n} <small>${h.y}</small></span>`).join('')}</div>` : ''}
     <div class="panel tbl">${historyTable()}</div>
     <button class="btn block" id="again" type="button">새 커리어 시작</button>`, false);
   confetti(['#ffc83d','#fff','#3dd6ff']);
@@ -2449,18 +2612,6 @@ function radar(){
     <polygon class="radar-fill" points="${poly(i => S.stats[STAT_KEYS[i]] / 100)}" fill="rgba(255,200,61,.35)" stroke="var(--gold)" stroke-width="2.5"/>
     ${STAT_KEYS.map((k, i) => { const [x, y] = pt(i, 1.2); return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" fill="var(--ink)" font-size="12" font-weight="700">${statName(k, S.pos)} <tspan fill="var(--gold)">${S.stats[k]}</tspan></text>`; }).join('')}
   </svg>`;
-}
-function worldTab(){
-  const cur = CLUB[S.club].lg;
-  return `<div class="label">${ic('globe')} 세계 리그</div>` + ALL_LG.map(l => {
-    const L = LEAGUES[l], cl = leagueClubs(l).sort((a, b) => CLUB[b].s - CLUB[a].s), avg = Math.round(cl.reduce((s, c) => s + CLUB[c].s, 0) / cl.length);
-    const sc = S.scout[l] || 0;
-    return `<div class="panel pad league ${l === cur ? 'mine' : ''}">
-      <div class="lg-head"><span class="lg-flag">${L.f}</span><div style="min-width:0"><b>${L.n}</b><small>평균 전력 ${avg} · 연봉 수준 ×${L.pay} · 🏆 ${esc(L.cup)}</small></div>${l === cur ? '<span class="tag gold">소속</span>' : ''}</div>
-      <div class="lg-clubs">${cl.slice(0, 4).map(c => `<span>${crest(c)}<em>${esc(c)}</em><b>${CLUB[c].s}</b></span>`).join('')}</div>
-      ${l !== cur ? `<div class="small muted">🔭 스카우트 관심 ${sc ? '🟡'.repeat(Math.min(sc, 5)) : '아직 없음'}</div>` : ''}
-    </div>`;
-  }).join('');
 }
 
 // ================= 엠블럼 · 외모 · 3D 선수 · 상점 =================
@@ -2952,6 +3103,504 @@ function tnSign(){
 }
 
 // ---------- 업적 · 시즌 목표 · 감독 교체 · 결정적 순간 ----------
+// ================= 세계 스타 · 몸값 랭킹 =================
+// 랭킹에 나오는 선수는 모두 가상 인물이다(국적별 흔한 이름을 무작위로 조합).
+// [가중치, 국기, 이름, 성, 순서(fl: 이름 성, lf: 성 이름, kr: 성이름)]
+const NATIONS = [
+  [10,'🇧🇷',['루카스','가브리에우','마테우스','하파엘','이고르','펠리피','브루누','에두아르두','다비','조엘송'],['소자','산투스','올리베이라','페헤이라','알메이다','코스타','히베이루','카르발류','멘지스','바헤투'],'fl'],
+  [8,'🇫🇷',['테오','위고','뤼카','마티스','아드리앵','바스티앵','요안','노아'],['르루아','모로','프티','가르니에','르페브르','루셀','페랭','부셰'],'fl'],
+  [8,'🏴󠁧󠁢󠁥󠁮󠁧󠁿',['잭','올리버','조지','찰리','메이슨','루이스','에단','앨피'],['베넷','클라크','휴스','파커','쿠퍼','모리스','와드','풀러'],'fl'],
+  [8,'🇪🇸',['파블로','알바로','이케르','세르히오','마르크','아드리안','하비','우나이'],['가르시아','마르티네스','로드리게스','고메스','루이스','모레노','나바로','카노'],'fl'],
+  [6,'🇦🇷',['마티아스','니콜라스','산티아고','파쿤도','토마스','이그나시오','가스톤','에세키엘'],['곤살레스','페레스','소사','메디나','아란다','비알바','몰리나','레데스마'],'fl'],
+  [6,'🇩🇪',['요나스','레온','핀','니코','막시밀리안','파울','엘리아스','얀'],['베커','슐츠','호프만','리히터','클라인','볼프','노이만','브란트'],'fl'],
+  [5,'🇮🇹',['로렌초','마테오','레오나르도','리카르도','토마소','다비데','페데리코','니콜로'],['루소','에스포지토','비앙키','로마노','콜롬보','갈리','콘티','마리노'],'fl'],
+  [5,'🇵🇹',['주앙','디오구','누누','곤살루','티아구','비토르'],['페레이라','마르팅스','로페스','소아르스','피게이라','핀투'],'fl'],
+  [4,'🇳🇱',['다안','셈','루크','밀란','티스','야스퍼'],['얀선','바커','피서르','스미트','메이르','보스'],'fl'],
+  [3,'🇳🇴',['마그누스','에밀','시베르트','올레','토르'],['한센','요한센','올센','라르센','베르그'],'fl'],
+  [4,'🇳🇬',['치디','에메카','오비','사무엘','빅터','투니'],['오카포','아데바요','은와추쿠','에제','오녜카','오비에'],'fl'],
+  [3,'🇸🇳',['이스마일라','셰이크','파페','마마두','이드리사'],['디알로','은디아예','시세','디우프','팔'],'fl'],
+  [3,'🇲🇦',['유세프','아민','이스마엘','아나스','오사마'],['엘 아미리','벤사이드','지아니','타하리','엘 하다드'],'fl'],
+  [3,'🇭🇷',['이반','마리오','안테','도미니크','요시프'],['바비치','마르코비치','유리치','노바크','부코비치'],'fl'],
+  [3,'🇺🇾',['페데리코','로드리고','마티아스','니콜라스'],['로드리게스','페르난데스','실베이라','카브레라'],'fl'],
+  [3,'🇧🇪',['아르튀르','막심','로망','시몽'],['페테르스','얀선스','마에스','클라에스'],'fl'],
+  [3,'🇯🇵',['하루토','소타','렌','유토','다이키','가이토'],['다나카','스즈키','사토','이노우에','마쓰모토','하야시'],'lf'],
+  [2,'🇰🇷',['준호','민성','태윤','지환','현우','도훈','재원','승민'],['김','이','박','정','조','윤','장','한'],'kr'],
+];
+const LG_NAT = {EPL:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', LIGA:'🇪🇸', SA:'🇮🇹', BUN:'🇩🇪', B2:'🇩🇪', J1:'🇯🇵', AFC:'🇧🇷', K:'🇰🇷'};
+const fmtName = (N, f, l) => N[4] === 'kr' ? l + f : N[4] === 'lf' ? `${l} ${f}` : `${f} ${l}`;
+function starName(used, nat){
+  for (let t = 0; t < 60; t++){
+    const N = nat ? NATIONS.find(x => x[1] === nat) : wpick(NATIONS), n = fmtName(N, pick(N[2]), pick(N[3]));
+    if (!used.has(n) && n !== (S && S.name) && !RIVALS.includes(n)){ used.add(n); return [n, N[1]]; }
+  }
+  const n = `${pick(NATIONS[0][2])} ${used.size}`; used.add(n); return [n, NATIONS[0][1]];
+}
+function hashStr(s){ let h = 7; for (const ch of String(s)) h = (h * 31 + ch.codePointAt(0)) >>> 0; return h; }
+function nameFrom(nat, h){ const N = NATIONS.find(x => x[1] === nat) || NATIONS[0]; return fmtName(N, N[2][h % N[2].length], N[3][(h >>> 7) % N[3].length]); }
+// 소속 팀 동료 이름(구단마다 고정)
+function mateName(role){ const h = hashStr(S.club + role); let n = nameFrom(LG_NAT[CLUB[S.club].lg] || '🇰🇷', h); if (n === S.rival || n === S.name) n = nameFrom(LG_NAT[CLUB[S.club].lg] || '🇰🇷', h + 13); return n; }
+
+const VPOS = {FW:1.1, MF:1, DF:.8, GK:.55}, LG_V = {K:.45, J1:.55, B2:.6, AFC:.5, EPL:1.15, LIGA:1, SA:.92, BUN:.95};
+const POSN = {FW:'공격수', MF:'미드필더', DF:'수비수', GK:'골키퍼'};
+const ageV = a => a <= 21 ? 1.45 : a <= 24 ? 1.25 : a <= 27 ? 1.05 : a <= 29 ? .85 : a <= 31 ? .6 : a <= 33 ? .4 : .25;
+// 몸값(만원): 능력치 6 차이마다 약 2.7배, 나이·포지션·리그·인기·폼 반영
+function valueOf(o, age, pos, lg, pop, fm){ return Math.max(100, Math.round(70000 * Math.exp((o - 60) / 6) * ageV(age) * VPOS[pos] * (LG_V[lg] || .5) * (.8 + pop / 250) * fm / 100 / 100) * 100); }
+function vfmt(m){ m = Math.round(m); if (m >= 10000){ const e = m / 10000; return e >= 100 ? `${Math.round(e)}억` : `${e.toFixed(1).replace(/\.0$/, '')}억`; } return `${m.toLocaleString()}만`; }
+const STAR_TOP = {FW:91, MF:91, DF:89, GK:89};
+function starClub(o, age){
+  const pool = Object.keys(CLUB).filter(c => EURO.includes(CLUB[c].lg) || (CLUB[c].lg === 'AFC' && age >= 29));
+  return wpick(pool.map(c => [Math.max(.05, 5 - Math.abs(CLUB[c].s - o)) * (CLUB[c].lg === 'AFC' ? .6 : 1), c]))[1];
+}
+function newStar(p, o, age, used){
+  const [n, f] = starName(used);
+  return {n, f, p, a:age, o, c:starClub(o, age), pop: clamp(Math.round((o - 75) * 3.5 + 40 + ri(-10, 10)), 25, 99), fm: ri(88, 112), v:0, v0:0};
+}
+const starV = x => valueOf(x.o, x.a, x.p, CLUB[x.c].lg, x.pop, x.fm);
+function genStars(){
+  const used = new Set(), out = [];
+  for (const p of ['FW','MF','DF','GK']) for (let i = 0; i < 25; i++){
+    const age = wpick([[14,0],[40,1],[32,2],[14,3]])[1];
+    const a = [ri(18, 21), ri(22, 26), ri(27, 30), ri(31, 34)][age];
+    out.push(newStar(p, Math.round(STAR_TOP[p] - i * .45 + rand(-1.5, 1.5) - (a <= 21 ? ri(3, 7) : 0)), a, used));
+  }
+  out.forEach(x => { x.v = starV(x); x.v0 = x.v; });
+  return out;
+}
+function cleanStars(a){
+  if (!Array.isArray(a) || a.length < 40 || a.length > 140) return null;
+  const out = a.filter(x => x && typeof x.n === 'string' && POS[x.p] && CLUB[x.c]).map(x => ({n:x.n.slice(0, 20), f:String(x.f || '🌍').slice(0, 16), p:x.p, a:int(x.a, 16, 45, 25), o:int(x.o, 40, 99, 80), c:x.c, pop:int(x.pop, 0, 99, 50), fm:int(x.fm, 75, 135, 100), v:0, v0:int(x.v0, 0, 1e9, 0)}));
+  if (out.length < 40) return null;
+  out.forEach(x => { x.v = starV(x); if (!x.v0) x.v0 = x.v; });
+  return out;
+}
+function myForm(){ const r = S.season.ratings; if (r.length < 3) return 100; return clamp(Math.round(100 + (r.reduce((s, v) => s + v, 0) / r.length - 6.8) * 30), 75, 135); }
+const AW_V = {ballon:.3, golden:.15, yashin:.15, puskas:.08, boot:.1, best11:.05, young:.06};
+const honorBoost = () => 1 + (S.honors || []).filter(h => h.y >= S.year - 1).reduce((s, h) => s + (AW_V[h.k] || 0), 0);
+const myValue = () => Math.round(valueOf(ovrOf(S.stats, S.pos), S.age, S.pos, CLUB[S.club].lg, S.pop, myForm()) * honorBoost() / 100) * 100;
+function valueRank(pos){
+  const list = S.stars.filter(x => !pos || x.p === pos).map(x => ({...x}));
+  if (!pos || pos === S.pos) list.push({me:true, n:S.name, f:'🇰🇷', p:S.pos, a:S.age, o:ovrOf(S.stats, S.pos), c:S.club, v:myValue(), v0:S.v0 || 0});
+  return list.sort((a, b) => b.v - a.v);
+}
+const myVRank = pos => valueRank(pos).findIndex(x => x.me) + 1;
+function starsWeek(){
+  let best = null;
+  for (const x of S.stars){
+    const old = x.v;
+    x.fm = clamp(Math.round(x.fm * rand(.965, 1.045) + (100 - x.fm) * .06), 75, 135); x.v = starV(x);
+    const d = old ? x.v / old - 1 : 0;
+    if (!best || Math.abs(d) > Math.abs(best[1])) best = [x, d];
+  }
+  if (best && Math.abs(best[1]) > .04 && Math.random() < .3) addNews(`${best[1] > 0 ? '📈' : '📉'} [몸값] ${best[0].f} ${best[0].n}(${best[0].c}) ${best[1] > 0 ? '급등' : '급락'} → ${vfmt(best[0].v)}원`);
+  const r = myVRank(''), n = S.stars.length, prev = S.rec.vbest || 999;
+  if (r <= n && r < prev){
+    S.rec.vbest = r;
+    const ms = [1, 10, 50, 100].find(m => r <= m && prev > m);
+    if (ms){ addNews(`💰 ${S.name}, 세계 몸값 랭킹 ${ms === 1 ? '1위 등극!' : `TOP ${ms} 진입`} (${vfmt(myValue())}원)`); UI.vToast = `💰 세계 몸값 ${ms === 1 ? '1위 등극!' : `TOP ${ms} 진입!`}`; }
+  }
+}
+function starsSeason(){
+  const used = new Set(S.stars.map(x => x.n)), msgs = [];
+  S.stars = S.stars.map(x => {
+    x.a++;
+    x.o = clamp(x.o + (x.a <= 23 ? ri(0, 3) : x.a <= 28 ? ri(-1, 2) : x.a <= 31 ? -ri(0, 2) : -ri(1, 3)), 60, 95);
+    if (x.a >= 36 || (x.a >= 33 && Math.random() < .35) || x.o < STAR_TOP[x.p] - 15){
+      const y = newStar(x.p, Math.round(STAR_TOP[x.p] - rand(9, 14)), ri(18, 20), used);
+      msgs.push(x.a >= 33 ? `👋 ${x.f} ${x.n}(${x.a}세), 현역 은퇴 선언` : `🌟 ${y.f} ${y.n}(${y.a}세·${y.c}), 세계가 주목하는 신성 등장`);
+      return y;
+    }
+    if (Math.random() < .12){ const c = starClub(x.o, x.a); if (c !== x.c){ msgs.push(`✈️ [이적] ${x.f} ${x.n}, ${x.c} → ${c}`); x.c = c; } }
+    x.fm = ri(90, 110); return x;
+  });
+  S.stars.forEach(x => { x.v = starV(x); x.v0 = x.v; });
+  shuffle(msgs).slice(0, 3).forEach(addNews);
+}
+
+function vRankText(){
+  const all = valueRank(''), ar = all.findIndex(x => x.me) + 1, aN = all.length - 1, pr = myVRank(S.pos), pN = S.stars.filter(x => x.p === S.pos).length;
+  return `세계 ${ar <= aN ? ar + '위' : `TOP ${aN} 밖`} · ${POSN[S.pos]} ${pr <= pN ? pr + '위' : `TOP ${pN} 밖`}`;
+}
+const vMini = id => `<button type="button" class="panel vmini" id="${id}">${ic('badge-dollar-sign')}<div><small>내 몸값 (추정)</small><b>${vfmt(myValue())}원</b><small>${segs(vRankText() + ' · 랭킹 보기')}</small></div>${ic('chevron-right')}</button>`;
+const goValue = () => { UI.tab = 'world'; UI.wsub = 'value'; renderHub(); };
+// ---------- 세계 탭: 몸값 랭킹 · 시상식 · 리그 ----------
+// ' · '로 나뉜 정보는 항목 단위로 묶어서 줄바꿈 (구분점이 줄 맨 앞에 혼자 떨어지지 않게)
+const segs = t => String(t).split(' · ').filter(Boolean).map((p, i) => `<span class="nw">${i ? '· ' : ''}${esc(p)}</span>`).join(' ');
+function trendHtml(x){ const d = x.v0 ? Math.round((x.v / x.v0 - 1) * 100) : 0; return d ? `<i class="${d > 0 ? 'up' : 'down'}">${d > 0 ? '▲' : '▼'}${Math.abs(d)}%</i>` : '<i>━</i>'; }
+function valueBoard(){
+  const pos = UI.vpos || '', list = valueRank(pos), all = valueRank(''), mv = myValue();
+  const aN = all.length - 1, pN = S.stars.filter(x => x.p === S.pos).length, ar = all.findIndex(x => x.me) + 1, pr = myVRank(S.pos);
+  const inAll = ar <= aN, d0 = S.v0 ? Math.round((mv / S.v0 - 1) * 100) : 0;
+  const others = all.filter(x => !x.me), gap = inAll ? (ar > 1 ? all[ar - 2].v - mv : 0) : others[aN - 1].v - mv;
+  const show = UI.vmore ? 25 : 10, meI = list.findIndex(x => x.me), N = list.length - (meI >= 0 ? 1 : 0);
+  const row = (x, i) => `<div class="vrow ${x.me ? 'me' : ''} ${i < 3 ? 'top' + (i + 1) : ''}" style="animation-delay:${Math.min(i, 12) * 30}ms"><span class="vr">${x.me && i >= N ? '—' : i + 1}</span>${crest(x.c)}<div class="vn"><b>${x.f} ${esc(x.n)}${x.me ? ' <em>나</em>' : ''}</b><small>${segs(`${POSN[x.p]} · ${x.a}세 · OVR ${x.o} · ${x.c}`)}</small></div><div class="vv"><b>${vfmt(x.v)}</b>${trendHtml(x)}</div></div>`;
+  return `<section class="panel vcard">
+      <div class="vc-top"><span class="label">${ic('badge-dollar-sign')} 내 몸값 (추정)</span><span class="tag ${d0 >= 0 ? 'gold' : ''}">시즌 시작 대비 ${d0 > 0 ? '+' : ''}${d0}%</span></div>
+      <div class="vc-val">${vfmt(mv)}<small>원</small></div>
+      <div class="vc-ranks"><div><b>${inAll ? ar + '위' : '랭킹 밖'}</b><small>세계 TOP ${aN}</small></div><div><b>${pr <= pN ? pr + '위' : '랭킹 밖'}</b><small>${POSN[S.pos]} TOP ${pN}</small></div><div><b>${ar === 1 ? '세계 1위!' : '+' + vfmt(Math.max(100, gap))}</b><small>${inAll ? (ar === 1 ? '최고 몸값' : '한 계단 위까지') : `TOP ${aN} 진입까지`}</small></div></div>
+      <p class="small muted">능력치 · 나이 · 리그 수준 · 인기 · 이번 시즌 평점 · 수상 경력으로 매겨져요. 유럽 빅리그로 가면 크게 뛰어요.</p>
+    </section>
+    <div class="vpos">${[['','전체'],['FW','공격수'],['MF','미드필더'],['DF','수비수'],['GK','골키퍼']].map(([k, n]) => `<button type="button" class="opt ${pos === k ? 'on' : ''}" data-vp="${k}">${n}</button>`).join('')}</div>
+    <div class="panel vlist">${list.slice(0, show).map(row).join('')}${meI >= show ? `<div class="vgap">⋯</div>${row(list[meI], meI)}` : ''}</div>
+    <button class="btn dark block sm" type="button" id="vmore">${UI.vmore ? '접기' : `TOP 25 전체 보기`}</button>
+    <p class="small muted" style="text-align:center;margin:0">랭킹의 선수들은 모두 가상 인물이에요. 몸값은 매주 폼에 따라 출렁여요.</p>`;
+}
+function awardsBoard(){
+  const my = S.honors || [], H = S.awardHist || [];
+  const cell = w => w ? `<span class="ah-w ${w.me ? 'me' : ''}">${w.c && CLUB[w.c] ? crest(w.c) : ''}<b>${esc(w.f || '')} ${esc(w.n)}</b></span>` : '<span class="muted">-</span>';
+  return `<div class="label">${ic('award')} 내 수상 경력</div>
+    <div class="panel pad" style="display:flex;flex-wrap:wrap;gap:8px">${my.length ? my.map(h => `<span class="trophy honor">${ic(AWARDS[h.k].i)} ${AWARDS[h.k].n} <small>${h.y}</small></span>`).join('') : '<span class="small muted">아직 수상 경력이 없어요. 시즌이 끝나면 시상식이 열려요.</span>'}</div>
+    <div class="label">${ic('crown')} 시상식 안내</div>
+    <div class="panel aw-guide">${['ballon','golden','yashin','puskas','boot','best11','young'].map(k => `<div><span class="ag-i ${k}">${ic(AWARDS[k].i)}</span><div><b>${AWARDS[k].n}</b><small>${AWARDS[k].h}</small></div></div>`).join('')}</div>
+    <div class="label">${ic('trophy')} 역대 수상자</div>
+    ${H.length ? H.map(h => `<div class="panel pad ah"><div class="ah-y">${h.y}</div>${[['ballon','발롱도르'],['golden','골든보이'],['yashin','야신상'],['puskas','푸스카스상']].map(([k, n]) => `<div class="ah-r"><small>${n}</small>${cell(h.w[k])}</div>`).join('')}</div>`).join('') : '<div class="panel pad small muted">첫 시즌이 끝나면 기록이 쌓여요.</div>'}`;
+}
+function leaguesBoard(){
+  const cur = CLUB[S.club].lg;
+  return ALL_LG.map(l => {
+    const L = LEAGUES[l], cl = leagueClubs(l).sort((a, b) => CLUB[b].s - CLUB[a].s), avg = Math.round(cl.reduce((s, c) => s + CLUB[c].s, 0) / cl.length);
+    const sc = S.scout[l] || 0;
+    return `<div class="panel pad league ${l === cur ? 'mine' : ''}">
+      <div class="lg-head"><span class="lg-flag">${L.f}</span><div style="min-width:0"><b>${L.n}</b><small>평균 전력 ${avg} · 연봉 수준 ×${L.pay} · 🏆 ${esc(L.cup)}</small></div>${l === cur ? '<span class="tag gold">소속</span>' : ''}</div>
+      <div class="lg-clubs">${cl.slice(0, 4).map(c => `<span>${crest(c)}<em>${esc(c)}</em><b>${CLUB[c].s}</b></span>`).join('')}</div>
+      ${l !== cur ? `<div class="small muted">🔭 스카우트 관심 ${sc ? '🟡'.repeat(Math.min(sc, 5)) : '아직 없음'}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+function worldTab(){
+  const sub = UI.wsub || 'value';
+  return `<div class="wseg">${[['value','badge-dollar-sign','몸값 랭킹'],['awards','award','시상식'],['leagues','globe','세계 리그']].map(([k, i, n]) => `<button type="button" class="${sub === k ? 'on' : ''}" data-ws="${k}">${ic(i)}<span>${n}</span></button>`).join('')}</div>`
+    + (sub === 'awards' ? awardsBoard() : sub === 'leagues' ? leaguesBoard() : valueBoard());
+}
+function bindWorld(){
+  root.querySelectorAll('[data-ws]').forEach(b => b.onclick = () => { UI.wsub = b.dataset.ws; renderHub(); });
+  root.querySelectorAll('[data-vp]').forEach(b => b.onclick = () => { UI.vpos = b.dataset.vp; renderHub(); });
+  const m = $('#vmore'); if (m) m.onclick = () => { UI.vmore = !UI.vmore; renderHub(); };
+}
+
+// ================= 시즌 시상식 =================
+const AWARDS = {
+  ballon:{n:'발롱도르', i:'crown', d:'올해 세계 최고의 선수', h:'세계 최고의 선수 · 평점, 공격포인트, 우승, 리그 수준으로 결정'},
+  golden:{n:'골든보이', i:'star', d:'21세 이하 세계 최고의 유망주', h:'21세 이하만 후보 · 어릴 때만 노릴 수 있어요'},
+  yashin:{n:'야신상', i:'hand', d:'올해 세계 최고의 골키퍼', h:'골키퍼 전용 · 평점과 클린시트가 핵심'},
+  puskas:{n:'푸스카스상', i:'sparkles', d:'올해의 골 · 팬 투표', h:'경기에서 원더골을 넣으면 후보 · 인기가 높을수록 표가 몰려요'},
+  boot:{n:'리그 득점왕', i:'goal', d:'리그 최다 득점', h:'소속 리그 최다 골'},
+  best11:{n:'리그 베스트 11', i:'users', d:'포지션 최고 평점', h:'4경기 이상 출전 · 같은 포지션 최고 평점'},
+  young:{n:'영플레이어상', i:'sprout', d:'23세 이하 리그 최고 신예', h:'23세 이하 · 평점, 공격포인트, 출전 수'},
+};
+const AW_RW = {ballon:{pop:15, trust:10, xp:600, offer:12}, golden:{pop:8, trust:5, xp:250, offer:6}, yashin:{pop:8, trust:6, xp:300, offer:7}, puskas:{pop:10, xp:200, offer:3},
+  boot:{pop:6, trust:4, xp:150, offer:5}, best11:{pop:4, trust:3, xp:100, offer:3}, young:{pop:5, trust:3, xp:120, offer:3}, podium:{pop:6, xp:200, offer:4}, nom:{pop:3, xp:60, offer:0}};
+const WONDER = ['35m 중거리 감아차기','하프라인 장거리 슛','바이시클 킥','무회전 프리킥','수비 다섯 명을 제친 단독 돌파','논스톱 발리','라보나 킥','골키퍼 키를 넘긴 칩슛','뒤꿈치로 돌려놓은 힐킥','40m 대포알 슛','가슴 트래핑 후 오버헤드킥','70m 단독 질주 마무리'];
+const AW_LGB = {EPL:1, LIGA:1, SA:.95, BUN:.95, B2:.7, J1:.65, K:.6, AFC:.55};
+function starSeasonStats(x){
+  const q = (x.o - 80) / 10;
+  return {rt: r2(clamp(6.7 + q * .55 + rand(-.3, .35), 6, 8.6)), apps: ri(10, 15),
+    g: x.p === 'FW' ? Math.max(0, Math.round((5 + q * 4) * rand(.55, 1.35))) : x.p === 'MF' ? Math.max(0, Math.round((2 + q * 1.5) * rand(.3, 1.5))) : x.p === 'DF' ? ri(0, 2) : 0,
+    as: x.p === 'FW' ? Math.max(0, Math.round((2 + q * 1.5) * rand(.3, 1.4))) : x.p === 'MF' ? Math.max(0, Math.round((3.5 + q * 2.5) * rand(.45, 1.4))) : x.p === 'DF' ? ri(0, 3) : 0,
+    cs: x.p === 'GK' || x.p === 'DF' ? Math.max(0, Math.round((3 + q * 2.5) * rand(.6, 1.3))) : 0,
+    tr: Math.random() < clamp((CLUB[x.c].s - 80) / 18, .03, .6) ? (Math.random() < .3 ? 2 : 1) : 0, lgB: AW_LGB[CLUB[x.c].lg] || .6};
+}
+function mySeasonStats(){ const se = S.season, r = se.ratings; return {rt: r.length ? r2(r.reduce((a, b) => a + b, 0) / r.length) : 0, apps: se.apps, g: se.goals, as: se.assists, cs: se.cs, tr: (se.cups || []).length, lgB: AW_LGB[CLUB[S.club].lg] || .6}; }
+function awScore(st, o, pop, p){
+  if (!st.apps) return -99;
+  const pw = {FW:1, MF:1.25, DF:1.7, GK:1.8}[p];
+  return ((st.rt - 6.2) * 20 * Math.min(1, st.apps / 8) + (st.g * 2.2 + st.as * 1.5) * pw + st.cs * (p === 'GK' || p === 'DF' ? 1.6 : 0) + st.tr * 8 + (o - 70) * .8 + pop * .1) * st.lgB;
+}
+const statLine = st => [`평점 ${st.rt.toFixed(1)}`, st.g ? `${st.g}골` : '', st.as ? `${st.as}도움` : '', st.cs ? `클린시트 ${st.cs}` : '', st.tr ? `🏆${st.tr}` : ''].filter(Boolean).join(' · ');
+// 후보 [{n,f,c,s,me}] 중 상위 3명(+내가 3위 밖이면 순위만)을 섞어 보여준다
+function finalists(cands){
+  cands.sort((a, b) => b.sc - a.sc);
+  const top = cands.slice(0, 3), myR = cands.findIndex(x => x.me) + 1;
+  const nom = shuffle(top).map(x => ({n:x.n, f:x.f, c:x.c, s:x.s, me:!!x.me}));
+  return {nom, win: nom.findIndex(x => x.n === top[0].n && x.me === !!top[0].me), myR: myR || null, of: cands.length};
+}
+function makeAwards(){
+  const Y = S.year, me = mySeasonStats(), ovr = ovrOf(S.stats, S.pos), meC = {n:S.name, f:'🇰🇷', c:S.club, me:true, s:statLine(me)};
+  const ss = S.stars.map(x => ({x, st: starSeasonStats(x)}));
+  const cand = filter => ss.filter(({x}) => filter(x)).map(({x, st}) => ({n:x.n, f:x.f, c:x.c, s:statLine(st), sc: awScore(st, x.o, x.pop, x.p) + rand(0, 6)}));
+  const list = [];
+  // 리그 시상 (득점왕 · 베스트 11 · 영플레이어)
+  const lg = CLUB[S.club].lg, lgClubs = leagueClubs(lg).filter(c => c !== S.club), used = new Set([S.name]);
+  const lgP = () => { const [n] = starName(used, LG_NAT[lg]); return {n, f:LG_NAT[lg], c:pick(lgClubs)}; };
+  const rows = [];
+  if (S.pos !== 'GK'){
+    const top = ri(7, 11), c = [{...lgP(), g: top}, {...lgP(), g: Math.max(1, top - ri(1, 3))}, {...lgP(), g: Math.max(1, top - ri(2, 4))}, {...meC, g: me.g + .5}];
+    c.sort((a, b) => b.g - a.g);
+    const myR = c.findIndex(x => x.me) + 1, show = c.slice(0, 3);
+    rows.push({k:'boot', nom: show.map(x => ({n:x.n, f:x.f, c:x.c, s:`${Math.floor(x.g)}골`, me:!!x.me})), win:0, myR: myR <= 3 && me.g ? myR : null, of:c.length});
+  }
+  if (me.apps >= 4){
+    const c = [{...lgP(), r: r2(rand(6.85, 7.45))}, {...lgP(), r: r2(rand(6.8, 7.3))}, {...meC, r: me.rt + .001}];
+    c.sort((a, b) => b.r - a.r);
+    const myR = c.findIndex(x => x.me) + 1, sh = shuffle(c);
+    rows.push({k:'best11', nom: sh.map(x => ({n:x.n, f:x.f, c:x.c, s:`평점 ${x.r.toFixed(2)}`, me:!!x.me})), win: sh.indexOf(c[0]), myR, of:3});
+  }
+  if (S.age <= 23 && me.apps >= 4){
+    const ys = (me.rt - 6.4) * 12 + me.g * 1.2 + me.as * .8 + me.apps * .25;
+    const c = [{...lgP(), y: rand(7, 16), s:'평점 ' + rand(6.9, 7.4).toFixed(1)}, {...lgP(), y: rand(5, 13), s:'평점 ' + rand(6.8, 7.2).toFixed(1)}, {...meC, y: ys}];
+    c.sort((a, b) => b.y - a.y);
+    const myR = c.findIndex(x => x.me) + 1, sh = shuffle(c);
+    rows.push({k:'young', nom: sh.map(x => ({n:x.n, f:x.f, c:x.c, s:x.s, me:!!x.me})), win: sh.indexOf(c[0]), myR, of:3});
+  }
+  if (rows.length) list.push({k:'league', lg, rows});
+  // 푸스카스상: 원더골 후보 + 팬 투표
+  const pk = shuffle(S.stars.filter(x => x.p !== 'GK')).slice(0, 3).map(x => ({n:x.n, f:x.f, c:x.c, s:pick(WONDER), q: rand(72, 98), pop:x.pop}));
+  const w = S.season.wonder; if (w) pk.push({n:S.name, f:'🇰🇷', c:S.club, s:w.d + (w.opp ? ` (vs ${w.opp})` : ''), q:w.q, pop:S.pop, me:true});
+  const wts = pk.map(x => x.q * x.q / 100 * (.5 + x.pop / 100) * rand(.75, 1.25)), tot = wts.reduce((a, b) => a + b, 0);
+  let votes = wts.map(v => Math.round(v / tot * 100)); votes[votes.indexOf(Math.max(...votes))] += 100 - votes.reduce((a, b) => a + b, 0);
+  const pOrd = shuffle(pk.map((x, i) => i));
+  const pN = pOrd.map(i => ({n:pk[i].n, f:pk[i].f, c:pk[i].c, s:pk[i].s, me:!!pk[i].me})), pV = pOrd.map(i => votes[i]);
+  const pW = pV.indexOf(Math.max(...pV));
+  list.push({k:'puskas', nom:pN, vote:pV, win:pW, myR: w ? [...pV].sort((a, b) => b - a).indexOf(pV[pN.findIndex(x => x.me)]) + 1 : null, of:pN.length});
+  // 야신상 · 골든보이 · 발롱도르
+  const mine = ok => ok ? [{...meC, sc: awScore(me, ovr, S.pop, S.pos) + rand(0, 6)}] : [];
+  const yas = finalists([...cand(x => x.p === 'GK'), ...mine(S.pos === 'GK')]);
+  // 골든보이는 리그 수준보다 나이 대비 활약을 더 본다
+  const goldSc = (st, o, pop, p) => awScore({...st, lgB: Math.sqrt(st.lgB)}, o, pop, p) + (o - 70) * .5 + rand(0, 6);
+  const gb = ss.filter(({x}) => x.a <= 21).map(({x, st}) => ({n:x.n, f:x.f, c:x.c, s:statLine(st), sc: goldSc(st, x.o, x.pop, x.p)}));
+  const gUsed = new Set(S.stars.map(x => x.n));
+  while (gb.length < 3){ const [n, f] = starName(gUsed); gb.push({n, f, c:starClub(80, 20), s:'평점 7.0', sc: rand(20, 40)}); }
+  const gold = finalists([...gb, ...(S.age <= 21 ? [{...meC, sc: goldSc(me, ovr, S.pop, S.pos)}] : [])]);
+  const bal = finalists([...cand(() => true), ...mine(true)]);
+  if (S.pos === 'GK') list.push({k:'yashin', ...yas});
+  if (S.age <= 21) list.push({k:'golden', ...gold});
+  list.push({k:'ballon', ...bal, top30: !!(bal.myR && bal.myR <= 30)});
+  const winOf = a => a.nom[a.win];
+  S.awardHist = [{y:Y, w:{ballon:winOf(bal), golden:winOf(gold), yashin:winOf(yas), puskas:pN[pW]}}, ...(S.awardHist || [])].slice(0, 10);
+  if (bal.myR && bal.myR <= 30) addNews(`📜 [발롱도르] 최종 후보 30인 발표… ${S.name} 이름 올렸다`);
+  S.awards = {y:Y, list, step:0, rev:false};
+}
+function cleanNom(a){ return (Array.isArray(a) ? a : []).filter(x => x && typeof x.n === 'string').slice(0, 6).map(x => ({n:x.n.slice(0, 20), f:String(x.f || '').slice(0, 16), c: CLUB[x.c] ? x.c : '', s:String(x.s || '').slice(0, 60), me:!!x.me})); }
+function cleanAwards(A){
+  if (!A || !Array.isArray(A.list) || !A.list.length) return null;
+  const one = a => { const nom = cleanNom(a.nom); return nom.length ? {k:a.k, nom, win:int(a.win, 0, nom.length - 1, 0), myR: a.myR == null ? null : int(a.myR, 1, 200, 1), of:int(a.of, 1, 200, 3), vote: Array.isArray(a.vote) ? a.vote.slice(0, 6).map(v => int(v, 0, 100, 0)) : undefined, top30:!!a.top30} : null; };
+  const list = A.list.map(a => a && a.k === 'league' ? {k:'league', lg: LEAGUES[a.lg] ? a.lg : 'K', rows:(Array.isArray(a.rows) ? a.rows : []).filter(r => r && AWARDS[r.k]).map(one).filter(Boolean)} : a && AWARDS[a.k] ? one(a) : null).filter(x => x && (x.k !== 'league' || x.rows.length));
+  return list.length ? {y:int(A.y, 2000, 2100, 2027), list, step:int(A.step, 0, list.length - 1, 0), rev:!!A.rev, paid: Array.isArray(A.paid) ? A.paid.slice(0, 10).map(Boolean) : []} : null;
+}
+function cleanHist(H){ return (Array.isArray(H) ? H : []).filter(h => h && h.w).slice(0, 10).map(h => ({y:int(h.y, 2000, 2100, 2027), w:Object.fromEntries(['ballon','golden','yashin','puskas'].map(k => [k, cleanNom([h.w[k]])[0] || null]))})); }
+// 공개 순간 보상 지급 (새로고침해도 한 번만)
+function payAward(i){
+  const A = S.awards, a = A.list[i]; A.paid = A.paid || [];
+  if (A.paid[i]) return [];
+  A.paid[i] = true;
+  const won = [], fx = [];
+  const rowsOf = a.k === 'league' ? a.rows : [a];
+  for (const r of rowsOf){
+    const w = r.nom[r.win];
+    if (w && w.me) won.push(r.k);
+    else if (r.k === 'ballon' && r.myR && r.myR <= 3) won.push('podium');
+    else if (r.k === 'ballon' && r.top30) won.push('nom');
+    if (r.k === 'ballon' && w) addNews(`🏆 [발롱도르] ${A.y} 수상자는 ${w.f} ${w.n}(${w.c})${w.me ? '! 한국 축구의 새 역사' : ''}`);
+    if (r.k === 'puskas' && w) addNews(`✨ [푸스카스상] ${w.n} — ${w.s}`);
+  }
+  for (const k of won){
+    const R = AW_RW[k];
+    fx.push(...applyFx({pop:R.pop, trust:R.trust || 0}));
+    const g = gainXp(R.xp); if (g) fx.push(g);
+    if (R.offer && S.nego){ S.nego.offer = clamp(S.nego.offer + R.offer, -40, Math.max(S.nego.offer, 50)); S.nego.awBonus = (S.nego.awBonus || 0) + R.offer; }
+    if (AWARDS[k]){ S.honors = [...(S.honors || []), {y:A.y, k}]; addNews(`🏅 ${S.name}, ${A.y} ${AWARDS[k].n} 수상!`); }
+  }
+  return fx;
+}
+function renderAwards(){
+  const A = S.awards; if (!A){ S.phase = 'nego'; return go(); }
+  const a = A.list[A.step], last = A.step === A.list.length - 1;
+  const D = a.k === 'league' ? {n:`${LEAGUES[a.lg].n} 어워즈`, i:'medal', d:'리그 득점왕 · 베스트 11 · 영플레이어상'} : AWARDS[a.k];
+  const nomRow = (r, x, i) => { const win = A.rev && i === r.win; return `<div class="nom ${x.me ? 'me' : ''} ${win ? 'win' : ''} ${A.rev && !win ? 'lose' : ''}" style="animation-delay:${i * 120}ms">${x.c ? crest(x.c) : `<span class="crest">${ic('user-round')}</span>`}<div class="nm-t"><b>${esc(x.f)} ${esc(x.n)}${x.me ? ' <em>나</em>' : ''}</b><small>${segs(x.s + (x.c ? ' · ' + x.c : ''))}</small>${r.vote ? `<span class="vbar"><i style="width:${A.rev ? r.vote[i] : 0}%"></i></span>` : ''}</div>${win ? `<span class="crown">${ic('crown')}</span>` : r.vote && A.rev ? `<span class="pct">${r.vote[i]}%</span>` : ''}</div>`; };
+  const myLine = r => {
+    const w = r.nom[r.win]; if (!A.rev) return '';
+    if (w && w.me) return `<div class="aw-me ok">${ic('party-popper')} 수상! ${r.k === 'boot' && r.nom[1] && r.nom[1].s === w.s ? '(공동 1위 · 득점왕 차지)' : ''}</div>`;
+    if (r.k === 'ballon') return `<div class="aw-me">${r.myR && r.myR <= 30 ? `투표 결과 <b>${r.myR}위</b> ${r.myR <= 3 ? '· 시상대에 올랐다!' : '· 후보 30인에 들었다'}` : '후보 30인에 들지 못했다 · 더 큰 무대에서 증명하자'}</div>`;
+    if (r.myR) return `<div class="aw-me">${r.vote ? `팬 투표 ${r.myR}위` : `${r.myR}위`} · 아쉽게 놓쳤다</div>`;
+    return '';
+  };
+  const block = r => `${a.k === 'league' ? `<div class="aw-sub">${ic(AWARDS[r.k].i)} ${AWARDS[r.k].n}<small>${AWARDS[r.k].d}</small></div>` : ''}<div class="noms">${r.nom.map((x, i) => nomRow(r, x, i)).join('')}</div>${myLine(r)}`;
+  frame(`<div class="aw-head"><span class="label">${A.y} 시즌 · 시상식</span><div class="disp">${ic('award')} PITCH AWARDS</div><div class="aw-dots">${A.list.map((x, i) => `<i class="${i < A.step ? 'done' : i === A.step ? 'now' : ''}"></i>`).join('')}</div></div>
+    <section class="panel aw-card k-${a.k} ${A.rev ? 'rev' : ''}">
+      <div class="aw-ic">${ic(D.i)}</div><h2 class="disp">${D.n}</h2><small class="muted">${D.d}${a.k === 'ballon' ? ' · 최종 후보 3인' : a.k === 'puskas' ? ' · 팬 투표로 결정' : ''}</small>
+      ${a.k === 'puskas' && !a.nom.some(x => x.me) && !A.rev ? '<div class="small muted">이번 시즌엔 내 원더골이 없었다. 경기 중 멋진 골을 넣으면 후보에 올라요.</div>' : ''}
+      ${a.k === 'league' ? a.rows.map(block).join('') : block(a)}
+      <div class="chips" id="awfx"></div>
+      ${A.rev ? `<button class="btn block ${last ? 'turf' : ''}" type="button" id="awNext">${last ? `${ic('briefcase')} 연봉 협상실로` : '다음 시상 ▶'}</button>` : `<button class="btn block" type="button" id="awOpen">${ic('mail')} 봉투 열기</button>`}
+    </section>
+    ${A.step === 0 && !A.rev ? '<p class="small muted" style="text-align:center">시즌 기록과 세계 스타들의 활약으로 수상자가 정해졌어요.</p>' : ''}`, false);
+  const op = $('#awOpen');
+  if (op) op.onclick = async () => {
+    op.disabled = true; op.innerHTML = '두구두구두구…';
+    if (!RM) for (let i = 0; i < 6; i++){ tone(140 + i * 18, .08, 'square', .05, i * .12); }
+    await wait(1100);
+    A.rev = true; const fx = payAward(A.step); save();
+    renderAwards();
+    const won = (a.k === 'league' ? a.rows : [a]).some(r => r.nom[r.win] && r.nom[r.win].me);
+    if (won){ SFX.goal(); confetti(['#ffc83d','#ffffff', CLUB[S.club].c]); } else SFX.good();
+    const box = $('#awfx'); if (box && fx.length) box.innerHTML = chipsHtml(fx);
+  };
+  const nx = $('#awNext');
+  if (nx) nx.onclick = () => {
+    if (last){ S.awards = null; S.phase = 'nego'; save(); return go(); }
+    A.step++; A.rev = false; save(); renderAwards();
+  };
+}
+
+// ================= 심리전 =================
+const PSY_ST = {
+  atk:{n:'정면 돌파', i:'flame', d:'강하게 맞선다'},
+  calm:{n:'침착 대응', i:'snowflake', d:'흔들리지 않는다'},
+  feint:{n:'떠보기', i:'drama', d:'속내를 숨기고 역으로 떠본다'},
+};
+const PSY_KEYS = ['atk','calm','feint'];
+const PSY_BEATS = {atk:'calm', calm:'feint', feint:'atk'}; // 정면 돌파 > 침착 > 떠보기 > 정면 돌파
+const PSY_TELL = {
+  atk:['목소리 톤이 한 단계 올라갔다','팔짱을 끼고 한 발 다가온다','눈을 한 번도 피하지 않는다','턱에 힘이 잔뜩 들어가 있다','손가락으로 테이블을 탁탁 두드린다'],
+  calm:['표정 변화가 전혀 없다','천천히 물을 한 모금 마신다','의자에 깊숙이 기대 앉는다','말 사이에 긴 침묵을 둔다','숨소리가 고르고 차분하다'],
+  feint:['입꼬리가 살짝 올라가 있다','갑자기 엉뚱한 이야기를 꺼낸다','웃으며 어깨를 툭 친다','주변 눈치를 슬쩍 살핀다','말끝을 흐리며 반응을 본다'],
+};
+const PSY_SAY = {
+  atk:['"여기서 밀리면 끝이야."','"내 말에 토 달지 마."','"자신 없으면 빠져."','"똑바로 들어."'],
+  calm:['"…그래서?"','"감정은 빼고 이야기하자."','"난 급할 거 없어."','"생각할 시간은 충분해."'],
+  feint:['"농담이야. 근데 진짜일 수도?"','"다른 애들은 벌써 알던데?"','"뭐, 네가 그렇게 생각한다면야."','"난 아무 말도 안 했어."'],
+};
+// 상대별 수 선택 성향 [정면 돌파, 침착, 떠보기]
+const PSY_BIAS = {charisma:[5,3,2], warm:[2,5,3], tactician:[2,6,2], showman:[3,2,5], maverick:[4,2,4], mentor:[2,5,3], rival:[5,2,3], captain:[3,5,2], veteran:[2,3,5], star:[4,3,3]};
+const PSY_SC = [
+  {who:'mgr', t:'선발 명단의 행방', d:'{M} 감독이 "이번 주는 좀 쉬어도 된다"며 떠본다. 진심일까, 시험일까?'},
+  {who:'mgr', t:'실수 영상 리플레이', d:'전술 미팅에서 {M} 감독이 내 실수 장면만 반복 재생한다. 모두의 시선이 쏠린다.'},
+  {who:'mgr', t:'이적설 떠보기', d:'{M} 감독이 "다른 팀에서 널 원한다더라"며 반응을 살핀다.'},
+  {who:'mgr', t:'포지션 변경 제안', d:'{M} 감독이 훈련 중 넌지시 포지션 변경 이야기를 꺼낸다.'},
+  {who:'mgr', t:'공개 경고', d:'{M} 감독이 "요즘 훈련 태도가 마음에 안 든다"며 모두 앞에서 이름을 불렀다.'},
+  {who:'mgr', t:'출전 시간 협상', d:'면담 자리에서 {M} 감독이 "네가 원하는 게 정확히 뭐냐"고 묻는다.'},
+  {who:'rival', t:'주전 경쟁', d:'주전 경쟁자 {R}가 "네 자리, 곧 내 거야"라며 도발한다.'},
+  {who:'rival', t:'라커룸 신경전', d:'{R}가 들으라는 듯 큰 소리로 내 지난 경기 평점을 읽는다.'},
+  {who:'rival', t:'PK 키커 눈치싸움', d:'{R}가 "다음 PK는 내가 찬다"며 코치진에게 먼저 말을 꺼냈다.'},
+  {who:'veteran', t:'프리킥 키커 자리', d:'베테랑 {V}가 "프리킥은 원래 내 담당"이라며 공을 먼저 집어 든다.'},
+  {who:'veteran', t:'단톡방 저격', d:'{V}가 단체 대화방에 나를 겨냥한 듯한 글을 올렸다.'},
+  {who:'captain', t:'주장의 기강 잡기', d:'주장 {C}가 "요즘 너무 들떠 있다"며 공개적으로 쓴소리를 한다.', cap:true},
+  {who:'captain', t:'회식 자리의 진심', d:'회식 자리에서 주장 {C}가 "너, 우리 팀에 오래 있을 거지?"라며 속을 떠본다.', cap:true},
+  {who:'star', t:'에이스의 패스 거부', d:'팀 에이스 {A}가 훈련 게임에서 계속 나에게 패스를 안 준다.'},
+  {who:'star', t:'등번호 신경전', d:'팀 에이스 {A}가 "그 번호, 너한테 좀 무겁지 않아?"라며 웃는다.'},
+];
+const PSY_TIER = {
+  big:{n:'완벽한 기선 제압', i:'flame', rt:.4, goal:1.15, start:.1, card:.85},
+  win:{n:'심리전 우세', i:'trending-up', rt:.2, goal:1.07, start:.05, card:.95},
+  draw:{n:'팽팽한 신경전', i:'scale', rt:0, goal:1, start:0, card:1},
+  lose:{n:'멘탈 흔들림', i:'trending-down', rt:-.2, goal:.93, start:-.05, card:1.3},
+  crush:{n:'완전히 말렸다', i:'skull', rt:-.4, goal:.85, start:-.1, card:1.6},
+};
+const PSY_WHO = {
+  mgr:{wt:'{M} 감독이 "배짱 있군"이라며 고개를 끄덕였다.', lt:'{M} 감독이 "아직 멀었다"며 등을 돌렸다.'},
+  rival:{start:.06, wt:'{R}가 시선을 피했다. 주전 경쟁에서 한발 앞섰다.', lt:'{R}가 씩 웃었다. 주전 자리가 흔들린다.'},
+  veteran:{pk:1.5, wt:'{V}가 공을 내려놓았다. 이번 주 세트피스·PK 키커는 나다.', lt:'{V}에게 키커 자리를 뺏겼다.'},
+  captain:{team:1.05, wt:'{C}가 "인정한다"며 손을 내밀었다. 라커룸이 하나로 뭉친다.', lt:'라커룸 분위기가 싸늘해졌다. 팀이 삐걱댄다.'},
+  star:{ast:1.25, wt:'{A}가 다시 나에게 패스를 주기 시작했다.', lt:'{A}의 패스가 계속 나를 외면한다.'},
+};
+// 받침에 맞춰 조사 고르기 (가/이, 는/은, 를/을, 와/과)
+const JOSA = {가:['가','이'], 이:['가','이'], 는:['는','은'], 은:['는','은'], 를:['를','을'], 을:['를','을'], 와:['와','과'], 과:['와','과']};
+const josa = (w, p) => { const c = String(w).charCodeAt(String(w).length - 1), bat = c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 > 0; return JOSA[p] ? JOSA[p][bat ? 1 : 0] : p; };
+const psyName = who => who === 'mgr' ? `${mgrName()} 감독` : who === 'rival' ? S.rival : who === 'veteran' ? mateName('V') : who === 'captain' ? mateName('C') : mateName('A');
+const fillPsy = s => s.replace(/\{([MRVCA])\}(가|이|는|은|를|을|와|과)?/g, (m, k, p) => { const n = {M:mgrName(), R:S.rival, V:mateName('V'), C:mateName('C'), A:mateName('A')}[k]; return n + (p ? josa(n, p) : ''); });
+function makePsy(){
+  const cands = PSY_SC.map((x, i) => i).filter(i => !(PSY_SC[i].cap && S.equip && S.equip.arm === 'captain'));
+  const sc = pick(cands), P = PSY_SC[sc], t = CLUB[S.club].t;
+  const bias = PSY_BIAS[P.who === 'mgr' ? t : P.who] || [1,1,1];
+  // 경험이 쌓일수록 상대의 속내가 잘 읽힌다. 독불장군형 감독과 능구렁이 베테랑은 읽기 어렵다.
+  const rel = clamp(.6 + Math.max(0, S.age - 19) * .015 - (P.who === 'mgr' && t === 'maverick' ? .15 : 0) - (P.who === 'veteran' ? .07 : 0), .4, .85);
+  const rounds = [0, 1, 2].map(() => {
+    const st = wpick(PSY_KEYS.map((k, i) => [bias[i], k]))[1];
+    const tk = Math.random() < rel ? st : pick(PSY_KEYS.filter(k => k !== st));
+    return {st, tell: pick(PSY_TELL[tk]), say: pick(PSY_SAY[st])};
+  });
+  return {sc, who:P.who, rounds, picks:[], done:false, rel: Math.round(rel * 100)};
+}
+function cleanPsy(q){
+  if (!q || !PSY_SC[q.sc] || !Array.isArray(q.rounds) || q.rounds.length !== 3 || !q.rounds.every(x => x && PSY_ST[x.st] && typeof x.tell === 'string' && typeof x.say === 'string')) return null;
+  return {sc:q.sc, who:PSY_SC[q.sc].who, rounds:q.rounds.map(x => ({st:x.st, tell:x.tell.slice(0, 60), say:x.say.slice(0, 60)})), picks:(Array.isArray(q.picks) ? q.picks : []).filter(k => PSY_ST[k]).slice(0, 3), done:!!q.done, rel:int(q.rel, 30, 95, 60)};
+}
+function cleanPsyFx(f){
+  if (!f || typeof f !== 'object' || !PSY_TIER[f.tier]) return null;
+  const n = (v, lo, hi, d) => clamp(Number.isFinite(Number(v)) ? Number(v) : d, lo, hi);
+  return {tier:f.tier, rt:n(f.rt, -.6, .6, 0), goal:n(f.goal, .7, 1.3, 1), start:n(f.start, -.25, .25, 0), card:n(f.card, .5, 2, 1), ast:n(f.ast, .6, 1.4, 1), team:n(f.team, .9, 1.1, 1), pk:n(f.pk, .5, 1.6, 1), label:String(f.label || '').slice(0, 60)};
+}
+const psyOut = (m, st) => m === st ? 0 : PSY_BEATS[m] === st ? 1 : -1;
+function psyResolve(){
+  const Q = S.week.psy, t = CLUB[S.club].t, W = PSY_WHO[Q.who];
+  const sum = Q.picks.reduce((s, m, i) => s + psyOut(m, Q.rounds[i].st), 0);
+  const tier = sum >= 2 ? 'big' : sum === 1 ? 'win' : sum === 0 ? 'draw' : sum === -1 ? 'lose' : 'crush';
+  const T = PSY_TIER[tier], good = sum > 0, bad = sum < 0;
+  const f = {tier, rt:T.rt, goal:T.goal, start:T.start, card:T.card, ast:1, team:1, pk:1};
+  const eff = {}; let text = good ? fillPsy(W.wt) : bad ? fillPsy(W.lt) : '서로 한 치도 물러서지 않았다. 묘한 긴장감만 남았다.';
+  if (good){ f.start += W.start || 0; f.pk *= W.pk || 1; f.team *= W.team || 1; f.ast *= W.ast || 1; }
+  if (bad){ f.start -= W.start || 0; f.pk /= W.pk || 1; f.team /= W.team || 1; f.ast /= W.ast || 1; }
+  if (Q.who === 'mgr'){
+    eff.trust = good ? (sum >= 2 ? 6 : 4) : bad ? (sum <= -2 ? -5 : -3) : 0;
+    const atk = Q.picks.filter(k => k === 'atk').length, fe = Q.picks.filter(k => k === 'feint').length;
+    if (good && t === 'charisma' && atk >= 2){ eff.trust = -2; text = `결과는 내 판정승. 하지만 ${mgrName()} 감독은 "버릇없다"며 못마땅해한다.`; }
+    if (good && t === 'showman' && fe >= 1){ eff.pop = 3; text += ' 감독이 기자들 앞에서 내 배짱을 자랑했다.'; }
+    if (bad && t === 'warm'){ eff.trust = Math.ceil(eff.trust / 2); text += ` "괜찮다, 그럴 수 있지." ${mgrName()} 감독이 어깨를 두드렸다.`; }
+    if (t === 'tactician' && Q.picks.filter(k => k === 'calm').length >= 2 && !bad){ eff.trust = (eff.trust || 0) + 2; text += ' 감정을 섞지 않는 태도에 전술가 감독이 흡족해한다.'; }
+  } else if (good) eff.pop = sum >= 2 ? 2 : 1;
+  const tags = []; // 화살표(↑↓)가 단어에서 떨어져 줄바꿈되지 않도록 단어 결합 문자로 붙인다
+  if (f.rt) tags.push(`평점 ${f.rt > 0 ? '+' : ''}${f.rt.toFixed(1)}`);
+  if (f.goal !== 1) tags.push(f.goal > 1 ? '골 확률↑' : '골 확률↓');
+  if (Math.abs(f.start) > .001) tags.push(f.start > 0 ? '선발↑' : '선발↓');
+  if (f.pk !== 1) tags.push(f.pk > 1 ? 'PK 키커' : 'PK 기회↓');
+  if (f.team !== 1) tags.push(f.team > 1 ? '팀 결속↑' : '팀 결속↓');
+  if (f.ast !== 1) tags.push(f.ast > 1 ? '도움↑' : '도움↓');
+  if (f.card > 1.05) tags.push('경고↑');
+  tags.forEach((t, i) => tags[i] = t.replace(/([↑↓])/g, '\u2060$1'));
+  f.label = `${T.n}${tags.length ? ' · ' + tags.slice(0, 3).join(' ') : ''}`;
+  S.week.psyFx = f; Q.done = true;
+  if (good) S.rec.psyW = (S.rec.psyW || 0) + 1;
+  const fx = applyFx(eff); const g = gainXp(good ? 20 : 8); if (g) fx.push(g);
+  fx.unshift([T.n, sum, `${good ? '🧠' : bad ? '😵' : '😐'} ${tags.length ? '다음 경기 ' + tags.join(' · ') : '경기력 영향 없음'}`]);
+  if (sum >= 2) { const o = psyName(Q.who); addNews(`🧠 ${S.name}, ${o}${josa(o, '과')}의 기싸움서 완승… "멘탈이 남다르다"`); }
+  else if (sum <= -2) { const o = psyName(Q.who); addNews(`😵 ${S.name}, ${o}${josa(o, '과')}의 신경전서 완패… 흔들리는 모습`); }
+  save();
+  return {tier, sum, text, fx};
+}
+async function showPsy(){
+  const W = S.week; if (!W || !W.psy || W.psy.done || document.querySelector('.modal')) return;
+  const Q = W.psy, P = PSY_SC[Q.sc], nm = psyName(Q.who);
+  const el = modal(`<div class="eyebrow">${ic('brain')} 심리전</div>
+    <div class="psy-vs"><span class="pv me">${ic('user-round')}<b>${esc(S.name)}</b></span><span class="pv-x">${ic('swords')}</span><span class="pv them">${Q.who === 'mgr' ? mgr().i : ic(Q.who === 'captain' ? 'shield' : Q.who === 'star' ? 'star' : Q.who === 'veteran' ? 'award' : 'flame')}<b>${esc(nm)}</b></span></div>
+    <h3>${esc(P.t)}</h3><p id="psyd"></p><div id="psyb"></div>`);
+  el.classList.add('psy-modal');
+  SFX.good();
+  await typeIn(el.querySelector('#psyd'), fillPsy(P.d));
+  const box = el.querySelector('#psyb');
+  const meter = () => { const s = Q.picks.reduce((a, m, i) => a + psyOut(m, Q.rounds[i].st), 0); return `<div class="psy-meter" aria-label="기세">${[-3,-2,-1,0,1,2,3].map(v => `<i class="${v === s ? 'on' : ''} ${v < 0 ? 'mneg' : v > 0 ? 'mpos' : ''}"></i>`).join('')}<small>${s > 0 ? '내가 우세' : s < 0 ? '상대가 우세' : '팽팽'}</small></div>`; };
+  const finish = async () => {
+    const R = psyResolve(), T = PSY_TIER[R.tier];
+    if (R.sum > 0){ SFX.goal(); confetti(['#3dd6ff','#ffffff','#ffc83d']); } else if (R.sum < 0){ SFX.bad(); shake(); } else SFX.good();
+    el.querySelector('.modal-card').innerHTML = `<div class="eyebrow">${ic('brain')} 심리전 결과</div><div class="big psy-res ${R.sum > 0 ? 'good' : R.sum < 0 ? 'bad' : ''}">${ic(T.i, 'evi')}</div><h3>${T.n}</h3>
+      <div class="psy-hist">${Q.picks.map((m, i) => { const o = psyOut(m, Q.rounds[i].st); return `<span class="${o > 0 ? 'w' : o < 0 ? 'l' : 'd'}">R${i + 1} ${ic(PSY_ST[m].i)} vs ${ic(PSY_ST[Q.rounds[i].st].i)} ${o > 0 ? '승' : o < 0 ? '패' : '무'}</span>`; }).join('')}</div>
+      <div class="outcome">${esc(R.text)}</div><div class="chips" style="margin-bottom:14px">${chipsHtml(R.fx)}</div><button class="btn block" type="button" id="psyok">확인</button>`;
+    el.querySelector('#psyok').onclick = async () => { await el.close(); renderHub(); };
+  };
+  const round = () => {
+    const i = Q.picks.length; if (i >= 3) return finish();
+    const r = Q.rounds[i];
+    box.innerHTML = `${meter()}<div class="psy-round">ROUND ${i + 1} / 3</div>
+      <div class="psy-tell">${ic('eye')}<span><b>${esc(nm)}</b> ${esc(r.tell)}</span></div>
+      <div class="psy-acc">속내 읽기 정확도 ${Q.rel}% · 경험이 쌓일수록 올라요</div>
+      <div class="psy-picks">${PSY_KEYS.map(k => `<button type="button" class="psy-b k-${k}" data-k="${k}">${ic(PSY_ST[k].i)}<b>${PSY_ST[k].n}</b><small>${PSY_ST[k].d}</small><em>${PSY_ST[PSY_BEATS[k]].n}에 강함</em></button>`).join('')}</div>
+      <div class="psy-rule">${ic('flame')} 정면 돌파 ▶ ${ic('snowflake')} 침착 ▶ ${ic('drama')} 떠보기 ▶ ${ic('flame')}</div>`;
+    box.querySelectorAll('.psy-b').forEach(b => b.onclick = async () => {
+      if (Q.picks.length !== i) return;
+      box.querySelectorAll('.psy-b').forEach(x => x.disabled = true);
+      Q.picks.push(b.dataset.k); save(); // 고른 즉시 저장 (새로고침으로 무를 수 없음)
+      const o = psyOut(b.dataset.k, r.st);
+      b.classList.add('picked');
+      await wait(350);
+      if (o > 0) SFX.good(); else if (o < 0) SFX.bad(); else SFX.click();
+      box.innerHTML = `${meter()}<div class="psy-reveal ${o > 0 ? 'w' : o < 0 ? 'l' : 'd'}">
+        <div class="pr-row"><span>${ic(PSY_ST[b.dataset.k].i)}<small>나</small><b>${PSY_ST[b.dataset.k].n}</b></span><em>VS</em><span>${ic(PSY_ST[r.st].i)}<small>${esc(nm)}</small><b>${PSY_ST[r.st].n}</b></span></div>
+        <p>${esc(nm)}: ${esc(r.say)}</p><div class="pr-res">${o > 0 ? '기선 제압!' : o < 0 ? '말렸다…' : '팽팽!'}</div></div>
+        <button class="btn block ${i === 2 ? 'cyan' : 'dark'}" type="button" id="psyn">${i === 2 ? '결과 보기' : '다음 라운드 ▶'}</button>`;
+      box.querySelector('#psyn').onclick = round;
+    });
+  };
+  round();
+}
+
 const careerSum = k => S.history.reduce((a, h) => a + (h[k] || 0), 0) + (S.season[k] || 0);
 const ACH = [
   ['debut','user-round','프로 데뷔','첫 공식 경기 출전', s => careerSum('apps') >= 1, 30],
@@ -2980,6 +3629,12 @@ const ACH = [
   ['mission10','target','미션 클리어','감독 미션 10회 성공', s => s.rec.missions >= 10, 150],
   ['hardMis5','flame','도전자','어려움 이상 미션 5회 성공', s => s.rec.hardMis >= 5, 250],
   ['veteran','medal','베테랑','5시즌 완주', s => s.history.length >= 5, 200],
+  ['psy5','brain','멘탈 갑','심리전 5회 승리', s => s.rec.psyW >= 5, 150],
+  ['vtop100','badge-dollar-sign','몸값 TOP 100','세계 몸값 랭킹 TOP 100 진입', s => s.rec.vbest > 0 && s.rec.vbest <= 100, 200],
+  ['vtop10','trending-up','몸값 TOP 10','세계 몸값 랭킹 TOP 10 진입', s => s.rec.vbest > 0 && s.rec.vbest <= 10, 500],
+  ['puskas','sparkles','올해의 골','푸스카스상 수상', s => (s.honors || []).some(h => h.k === 'puskas'), 300],
+  ['golden','star','골든보이','골든보이 수상', s => (s.honors || []).some(h => h.k === 'golden'), 300],
+  ['ballon','crown','발롱도르','발롱도르 수상', s => (s.honors || []).some(h => h.k === 'ballon'), 1000],
 ];
 function checkAch(){
   if (!S || !Array.isArray(S.ach) || !S.rec) return;
