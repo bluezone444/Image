@@ -1190,6 +1190,7 @@ const SLOTS = 3, SLOT_KEY = 'pitch-career.slot', SFX_KEY = 'pitch-career.sfx';
 const slotKey = i => i === 0 ? 'pitch-career.v1' : `pitch-career.s${i}`;
 let curSlot = Math.min(SLOTS - 1, Math.max(0, parseInt(lsGet(SLOT_KEY), 10) || 0));
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SAL_MAX = 1e8; // 연봉 상한 1조원 (만원 단위) · 예전 상한 200억은 빅클럽 연봉을 잘라먹었다
 const ROUNDS = 11, RETIRE_AGE = 36, MAX_SEASONS = 10, MIN_SALARY = 2400, HOF_KEY = 'pitch-career.hof', HOF_NEED = 140;
 
 // 아이콘: Lucide (ISC License) — https://lucide.dev
@@ -1598,7 +1599,10 @@ function load(slot = curSlot){
     r.stats = r.stats || {}; STAT_KEYS.forEach(k => r.stats[k] = int(r.stats[k], 1, 120, 50)); r.lbCd = int(r.lbCd, 0, 10, 0);
     ['pop','trust','cond'].forEach(k => r[k] = int(r[k], 0, 100, 50));
     r.age = int(r.age, 16, 45, 19); r.year = int(r.year, 2000, 2100, 2027); r.round = int(r.round, 0, 40, 0);
-    r.salary = int(r.salary, MIN_SALARY, 2000000, 3000); r.earn = int(r.earn, 0, 1e9, 0); r.injury = int(r.injury, 0, 10, 0);
+    r.salary = int(r.salary, MIN_SALARY, SAL_MAX, 3000);
+    if (r.salary === 2000000 && Array.isArray(r.news)){
+      for (const n of r.news){ const m = typeof n?.h === 'string' && n.h.includes('[오피셜]') && n.h.match(/(\d+)억(?: ([\d,]+)만)?원/); if (m){ const v = Number(m[1]) * 10000 + (m[2] ? Number(m[2].replace(/,/g, '')) : 0); if (v > 2000000){ r.salary = Math.min(SAL_MAX, v); r.best = {...(r.best || {}), salary: Math.max(Number(r.best?.salary) || 0, r.salary)}; } break; } }
+    } r.earn = int(r.earn, 0, 1e9, 0); r.injury = int(r.injury, 0, 10, 0);
     r.newsN = int(r.newsN, 0, 1e9, 0); r.newsSeen = int(r.newsSeen, 0, r.newsN, r.newsN);
     r.rel = Object.fromEntries(Object.keys(MATES).map(k => [k, int(r.rel && r.rel[k], 0, 100, REL_DEF[k])]));
     r.sp = r.sp == null ? 1 + 3 * (Array.isArray(r.history) ? r.history.length : 0) : int(r.sp, 0, 999, 0); { const raw = r.skills && typeof r.skills === 'object' ? r.skills : {}; r.cls = SK_CLS[r.cls] ? r.cls : null; let back = 0; for (const [k, v] of Object.entries(raw)) if (!SKILLS[k] || SKILLS[k].cls !== r.cls) back += int(v, 0, 9, 0); r.skills = Object.fromEntries(Object.entries(cleanSkills(raw)).filter(([k]) => SKILLS[k].cls === r.cls)); r.sp += back; }
@@ -1615,13 +1619,13 @@ function load(slot = curSlot){
       const t = {}; for (const [c, v] of Object.entries(r.table.t)) if (CLUB[c] && CLUB[c].lg === r.table.lg && v) t[c] = Object.fromEntries(['p','w','d','l','gf','ga'].map(k => [k, int(v[k], 0, 999, 0)]));
       r.table = {lg: r.table.lg, t};
     } else r.table = null;
-    r.window = r.window && Array.isArray(r.window.offers) ? {kind: r.window.kind === 'agent' ? 'agent' : 'winter', offers: r.window.offers.filter(o => o && CLUB[o.club] && o.club !== r.club).map(o => ({club:o.club, salary:int(o.salary, MIN_SALARY, 2000000, r.salary)})).slice(0, 2)} : null;
+    r.window = r.window && Array.isArray(r.window.offers) ? {kind: r.window.kind === 'agent' ? 'agent' : 'winter', offers: r.window.offers.filter(o => o && CLUB[o.club] && o.club !== r.club).map(o => ({club:o.club, salary:int(o.salary, MIN_SALARY, SAL_MAX, r.salary)})).slice(0, 2)} : null;
     if (r.window && !r.window.offers.length) r.window = null;
     r.news = (Array.isArray(r.news) ? r.news : []).filter(n => n && typeof n.h === 'string').slice(0, 40).map(n => ({h:n.h.slice(0, 160), t:String(n.t || '').slice(0, 30)}));
-    r.history = (Array.isArray(r.history) ? r.history : []).filter(h => h && CLUB[h.club]).map(h => ({year:int(h.year,2000,2100,2027), age:int(h.age,16,45,19), club:h.club, apps:int(h.apps,0,99), goals:int(h.goals,0,99), assists:int(h.assists,0,99), avg:String(h.avg).slice(0,5), salary:int(h.salary,0,2000000), change:int(h.change,-100,500)}));
+    r.history = (Array.isArray(r.history) ? r.history : []).filter(h => h && CLUB[h.club]).map(h => ({year:int(h.year,2000,2100,2027), age:int(h.age,16,45,19), club:h.club, apps:int(h.apps,0,99), goals:int(h.goals,0,99), assists:int(h.assists,0,99), cs:int(h.cs,0,99,0), avg:String(h.avg).slice(0,5), salary:int(h.salary,0,SAL_MAX), change:int(h.change,-100,500)}));
     if (!['week','match','interview','nego','retired','window','tnego','awards'].includes(r.phase)) r.phase = 'week';
     const tn = r.tn;
-    r.tn = tn && CLUB[tn.club] && ['nego','window'].includes(tn.back) ? {club:tn.club, back:tn.back, max:int(tn.max, MIN_SALARY, 2000000, MIN_SALARY), cur:int(tn.cur, MIN_SALARY, 2000000, MIN_SALARY), open:int(tn.open, MIN_SALARY, 2000000, MIN_SALARY),
+    r.tn = tn && CLUB[tn.club] && ['nego','window'].includes(tn.back) ? {club:tn.club, back:tn.back, max:int(tn.max, MIN_SALARY, SAL_MAX, MIN_SALARY), cur:int(tn.cur, MIN_SALARY, SAL_MAX, MIN_SALARY), open:int(tn.open, MIN_SALARY, SAL_MAX, MIN_SALARY),
       used:(Array.isArray(tn.used) ? tn.used : []).filter(k => TAPPEALS[k]).slice(0, 4), log:(Array.isArray(tn.log) ? tn.log : []).filter(l => l && typeof l.t === 'string').map(l => ({who: l.who === 'me' ? 'me' : 'dir', t: l.t.slice(0, 200)})).slice(0, 12),
       status: tn.status === 'walked' ? 'walked' : 'open', mood:int(tn.mood, -5, 5, 0), perk:!!tn.perk} : null;
     if (r.tn) r.tn.cur = Math.min(r.tn.cur, r.tn.max);
@@ -1644,7 +1648,7 @@ function load(slot = curSlot){
     r.season.ratings = (Array.isArray(r.season.ratings) ? r.season.ratings : []).map(Number).filter(Number.isFinite);
     ['apps','starts','goals','assists','cs','W','D','L'].forEach(k => r.season[k] = int(r.season[k], 0, 99, 0));
     r.season.results = (Array.isArray(r.season.results) ? r.season.results : []).slice(0, 40).map(x => ['W','D','L'].includes(x) ? x : null);
-    r.best = {rating: clamp(Number(r.best?.rating) || 0, 0, 10), salary: int(r.best?.salary, 0, 2000000, r.salary)};
+    r.best = {rating: clamp(Number(r.best?.rating) || 0, 0, 10), salary: int(r.best?.salary, 0, SAL_MAX, r.salary)};
     r.traits = Array.isArray(r.traits) ? [...new Set(r.traits.filter(t => TRAITS[t]))] : [];
     r.buff = clamp(Number(r.buff) || 0, -1, 1);
     r.toneHist = Array.isArray(r.toneHist) ? r.toneHist.filter(t => TONES[t]).slice(-3) : [];
@@ -1675,9 +1679,9 @@ function load(slot = curSlot){
     if (r.nego){
       const n = r.nego; n.offer = int(n.offer, -40, 60, 0); n.round = int(n.round, 1, 2, 1); n.avg = Number(n.avg) || 0; n.score = Number(n.score) || 0;
       n.used = (Array.isArray(n.used) ? n.used : []).filter(k => APPEALS[k]); n.log = (Array.isArray(n.log) ? n.log : []).map(l => ({me:String(l.me), gm:String(l.gm)}));
-      n.opText = String(n.opText || ''); n.awBonus = int(n.awBonus, 0, 80, 0); n.orig = int(n.orig, MIN_SALARY, 2000000, r.salary); n.base = int(n.base, MIN_SALARY, 2000000, n.orig);
-      if (n.result){ const x = n.result; x.ok = x.ok !== false; if (!APPEALS[x.k] || !['up','keep','down'].includes(x.kind)) n.result = null; else { x.pct = int(x.pct, -60, 200, 0); x.newSalary = int(x.newSalary, MIN_SALARY, 2000000, r.salary); x.trust = int(x.trust, -30, 30, 0); x.gm = String(x.gm); } }
-      n.offers = Array.isArray(n.offers) ? n.offers.filter(o => o && CLUB[o.club] && o.club !== r.club).map(o => ({club:o.club, salary:int(o.salary, MIN_SALARY, 2000000, r.salary)})).slice(0, 2) : null;
+      n.opText = String(n.opText || ''); n.awBonus = int(n.awBonus, 0, 80, 0); n.orig = int(n.orig, MIN_SALARY, SAL_MAX, r.salary); n.base = int(n.base, MIN_SALARY, SAL_MAX, n.orig);
+      if (n.result){ const x = n.result; x.ok = x.ok !== false; if (!APPEALS[x.k] || !['up','keep','down'].includes(x.kind)) n.result = null; else { x.pct = int(x.pct, -60, 200, 0); x.newSalary = int(x.newSalary, MIN_SALARY, SAL_MAX, r.salary); x.trust = int(x.trust, -30, 30, 0); x.gm = String(x.gm); } }
+      n.offers = Array.isArray(n.offers) ? n.offers.filter(o => o && CLUB[o.club] && o.club !== r.club).map(o => ({club:o.club, salary:int(o.salary, MIN_SALARY, SAL_MAX, r.salary)})).slice(0, 2) : null;
     }
     if (r.phase === 'awards' && (!r.awards || !r.nego)) r.phase = r.nego ? 'nego' : 'week';
     if (r.phase === 'tnego' && (!r.tn || (r.tn.back === 'nego' && !r.nego) || (r.tn.back === 'window' && !r.window))){ r.phase = r.tn && r.tn.back === 'nego' && r.nego ? 'nego' : 'week'; r.tn = null; }
