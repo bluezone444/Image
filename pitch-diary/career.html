@@ -2715,25 +2715,25 @@ function cleanLook(l){
     eyes: LOOK.eyes[l.eyes] ? l.eyes : 'brown', beard: LOOK.beard[l.beard] ? l.beard : 'none'};
 }
 const SHOP = [
-  {id:'band', slot:'head', i:ic('sticker'), n:'헤어밴드', p:120, d:'머리카락을 잡아주는 클럽 컬러 밴드'},
-  {id:'beanie', slot:'head', i:ic('hard-hat'), n:'니트 비니', p:180, d:'원정 버스 패션'},
-  {id:'glasses', slot:'face', i:ic('glasses'), n:'선글라스', p:220, d:'입국장 패션의 완성'},
-  {id:'chain', slot:'neck', i:ic('link'), n:'금목걸이', p:320, d:'세리머니 때 반짝이는 골드 체인'},
-  {id:'earring', slot:'ear', i:ic('gem'), n:'다이아 귀걸이', p:260, d:'왼쪽 귀에 반짝'},
-  {id:'wrist', slot:'wrist', i:ic('watch'), n:'손목 밴드', p:80, d:'클럽 컬러 손목 밴드'},
-  {id:'captain', slot:'arm', i:ic('crown'), n:'주장 완장', p:500, d:'감독 신뢰 70 이상만 착용 가능', req: () => S.trust >= 70},
-  {id:'tattoo', slot:'sleeve', i:ic('pen-tool'), n:'팔 타투', p:400, d:'오른팔 슬리브 타투'},
-  {id:'gloves', slot:'hands', i:ic('hand'), n:'방한 장갑', p:150, d:'겨울 경기 필수품'},
-  {id:'bootGold', slot:'boots', i:ic('footprints'), n:'골드 축구화', p:600, d:'득점왕의 상징'},
-  {id:'bootPink', slot:'boots', i:ic('footprints'), n:'핑크 축구화', p:200, d:'눈에 띄는 형광 핑크'},
-  {id:'bootBlack', slot:'boots', i:ic('footprints'), n:'블랙아웃 축구화', p:150, d:'클래식한 올블랙'},
+  {id:'band', slot:'head', i:ic('sticker'), n:'헤어밴드', p:900, d:'머리카락을 잡아주는 클럽 컬러 밴드'},
+  {id:'beanie', slot:'head', i:ic('hard-hat'), n:'니트 비니', p:1300, d:'원정 버스 패션'},
+  {id:'glasses', slot:'face', i:ic('glasses'), n:'선글라스', p:1800, d:'입국장 패션의 완성'},
+  {id:'chain', slot:'neck', i:ic('link'), n:'금목걸이', p:3200, d:'세리머니 때 반짝이는 골드 체인'},
+  {id:'earring', slot:'ear', i:ic('gem'), n:'다이아 귀걸이', p:2400, d:'왼쪽 귀에 반짝'},
+  {id:'wrist', slot:'wrist', i:ic('watch'), n:'손목 밴드', p:600, d:'클럽 컬러 손목 밴드'},
+  {id:'captain', slot:'arm', i:ic('crown'), n:'주장 완장', p:5000, d:'감독 신뢰 70 이상만 착용 가능', req: () => S.trust >= 70},
+  {id:'tattoo', slot:'sleeve', i:ic('pen-tool'), n:'팔 타투', p:3800, d:'오른팔 슬리브 타투'},
+  {id:'gloves', slot:'hands', i:ic('hand'), n:'방한 장갑', p:1000, d:'겨울 경기 필수품'},
+  {id:'bootGold', slot:'boots', i:ic('footprints'), n:'골드 축구화', p:7000, d:'득점왕의 상징'},
+  {id:'bootPink', slot:'boots', i:ic('footprints'), n:'핑크 축구화', p:1500, d:'눈에 띄는 형광 핑크'},
+  {id:'bootBlack', slot:'boots', i:ic('footprints'), n:'블랙아웃 축구화', p:1100, d:'클래식한 올블랙'},
 ];
 const CONSUMABLES = [
-  {id:'drink', i:ic('cup-soda'), n:'에너지 드링크', p:60, d:'컨디션 +30', use: () => applyFx({cond:30})},
-  {id:'mental', i:ic('brain'), n:'멘탈 코칭', p:120, d:'다음 경기 자신감 +0.2', use: () => applyFx({buff:.2})},
-  {id:'pr', i:ic('megaphone'), n:'SNS 홍보 패키지', p:150, d:'인기도 +6', use: () => applyFx({pop:6})},
-  {id:'lesson', i:ic('graduation-cap'), n:'개인 레슨', p:250, d:'주 능력치 +1', use: () => applyFx({best:1})},
-  {id:'barber', i:ic('scissors'), n:'헤어숍 이용권', p:100, d:'헤어·머리색·수염 바꾸기', use: () => { setTimeout(() => openLookEditor('barber'), 50); return []; }},
+  {id:'drink', i:ic('cup-soda'), n:'에너지 드링크', p:300, d:'컨디션 +30', use: () => applyFx({cond:30})},
+  {id:'mental', i:ic('brain'), n:'멘탈 코칭', p:450, d:'다음 경기 자신감 +0.2', use: () => applyFx({buff:.2})},
+  {id:'pr', i:ic('megaphone'), n:'SNS 홍보 패키지', p:500, d:'인기도 +6', use: () => applyFx({pop:6})},
+  {id:'lesson', i:ic('graduation-cap'), n:'개인 레슨', p:1200, d:'주 능력치 +1', use: () => applyFx({best:1})},
+  {id:'barber', i:ic('scissors'), n:'헤어숍 이용권', p:400, d:'헤어·머리색·수염 바꾸기', use: () => { setTimeout(() => openLookEditor('barber'), 50); return []; }},
 ];
 function gainXp(n){ if (!n) return null; S.xp = Math.max(0, (S.xp || 0) + Math.round(n)); return ['XP', n, `🔷 +${Math.round(n)} XP`]; }
 
