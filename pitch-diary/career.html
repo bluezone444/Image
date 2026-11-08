@@ -964,6 +964,37 @@ table.standings{min-width:0}
 .vf-seg button{border:0;background:transparent;color:var(--muted);font-family:var(--f-display);font-size:14px;padding:8px 0;border-radius:10px}
 .vf-seg button.on{background:linear-gradient(180deg,var(--gold),var(--gold-d));color:#231700}
 .vf-lg{margin-top:6px}
+
+/* ---------- 심리전 v2 ---------- */
+.psy-b.k-bold{--pc:var(--hot)} .psy-b.k-wit{--pc:var(--gold)} .psy-b.k-calm{--pc:var(--cyan)}
+.psy-rule{gap:4px 10px !important}
+.psy-rule span{display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+.psy-picks{grid-template-columns:1fr !important}
+.psy-b{flex-direction:column !important;align-items:stretch !important;text-align:left;gap:4px !important;padding:11px 13px !important}
+.psy-b em{display:inline-flex;align-items:center;gap:4px;font-size:11.5px !important}
+.psy-b em .ico{width:15px !important;height:15px !important}
+.psy-b span{font-size:14.5px;line-height:1.4;color:var(--ink);font-weight:700}
+.pr-mood{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;font-size:14px}
+.pr-mood .ico{width:20px;height:20px;color:var(--gold)} .pr-mood b{color:var(--gold)}
+.psy-reveal .pr-me{color:var(--cyan);font-weight:700}
+.pr-res{font-size:18px !important;margin-top:4px}
+/* ---------- 국가대표 ---------- */
+.nt-modal .modal-card{border-color:#c8102e;box-shadow:0 0 0 3px rgba(0,52,120,.6),0 0 40px rgba(200,16,46,.35)}
+.nt-vs{display:flex;align-items:center;justify-content:center;gap:14px;margin:8px 0 2px}
+.nt-vs span{display:flex;flex-direction:column;align-items:center;gap:2px;font-weight:900;font-size:13px;min-width:0}
+.nt-flag{font-size:40px;line-height:1.1}
+.nt-vs em{font-style:normal;font-family:var(--f-display);color:var(--gold);font-size:22px}
+.nt-steps{display:flex;gap:6px;justify-content:center;margin:2px 0 6px}
+.nt-steps i{width:26px;height:7px;border-radius:5px;background:rgba(255,255,255,.12)} .nt-steps i.ok{background:var(--turf)} .nt-steps i.now{background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.nt-b{justify-content:flex-start !important;gap:8px !important;font-size:16px !important;flex-wrap:wrap}
+.nt-b .odds{margin-left:auto}
+.nt-b.picked{border-color:var(--gold) !important}
+.nt-card{display:flex;flex-direction:column;gap:8px}
+.nt-stat{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.nt-stat div{text-align:center;background:rgba(11,17,40,.6);border:1px solid var(--edge);border-radius:12px;padding:8px 4px}
+.nt-stat b{display:block;font-family:var(--f-display);font-weight:400;font-size:20px;color:var(--gold)} .nt-stat small{font-size:11px;color:var(--muted)}
+.nt-cur{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.nt-strip{display:flex;align-items:center;gap:8px;width:100%;padding:10px 12px;border-radius:14px;border:2px solid rgba(200,16,46,.6);background:linear-gradient(90deg,rgba(200,16,46,.22),rgba(0,52,120,.22));color:var(--ink);font-size:13px;font-weight:700;text-align:left}
 </style>
 </head>
 <body>
@@ -1415,11 +1446,12 @@ function load(){
     r.stars = cleanStars(r.stars) || genStars(); r.v0 = int(r.v0, 0, 1e9, 0);
     r.honors = (Array.isArray(r.honors) ? r.honors : []).filter(h => h && AWARDS[h.k]).map(h => ({y:int(h.y, 2000, 2100, 2027), k:h.k})).slice(0, 80);
     r.awardHist = cleanHist(r.awardHist); r.awards = cleanAwards(r.awards);
+    r.season.nt = cleanNtSeason(r.season.nt); r.season.ntChk = !!r.season.ntChk; r.nt = {caps:int(r.nt && r.nt.caps, 0, 999, 0), goals:int(r.nt && r.nt.goals, 0, 999, 0)};
     r.season.hot = int(r.season.hot, 0, 99, 0); r.season.lgTop = !!r.season.lgTop; r.season.winter = !!r.season.winter; r.season.agentCall = !!r.season.agentCall;
     r.season.obj = Array.isArray(r.season.obj) ? r.season.obj.filter(o => o && OBJ[o.k]).map(o => ({k:o.k, n: o.k === 'rating' ? clamp(Number(o.n) || 6.8, 5, 9) : int(o.n, 1, 99, 1)})).slice(0, 3) : null;
     r.season.objRes = Array.isArray(r.season.objRes) ? r.season.objRes.map(Boolean).slice(0, 3) : undefined;
     r.ach = Array.isArray(r.ach) ? [...new Set(r.ach.filter(a => ACH.some(x => x[0] === a)))] : [];
-    r.rec = Object.fromEntries(['hat','so','clutch','events','objAll','missions','hardMis','psyW','vbest','lb'].map(k => [k, int(r.rec?.[k], 0, 99999, 0)]));
+    r.rec = Object.fromEntries(['hat','so','clutch','events','objAll','missions','hardMis','psyW','vbest','lb','wcWin','asianWin'].map(k => [k, int(r.rec?.[k], 0, 99999, 0)]));
     r.mgrs = Object.fromEntries(Object.entries(r.mgrs && typeof r.mgrs === 'object' ? r.mgrs : {}).filter(([c, v]) => CLUB[c] && v && MGR[v.t] && typeof v.m === 'string').map(([c, v]) => [c, {m: v.m.slice(0, 16), t: v.t}]));
     r.season.ratings = (Array.isArray(r.season.ratings) ? r.season.ratings : []).map(Number).filter(Number.isFinite);
     ['apps','starts','goals','assists','cs','W','D','L'].forEach(k => r.season[k] = int(r.season[k], 0, 99, 0));
@@ -1599,10 +1631,11 @@ function renderCreate(){
 function makeWeek(){
   const fortune = FORTUNES.indexOf(wpick(FORTUNES));
   const roll = Math.random(); // 한 주에 돌발 이벤트 또는 미니게임 중 최대 하나만
-  const lb = S.injury ? null : makeLB(); // 한계 돌파 시험(능력치 99 이상일 때만)
-  const event = !S.injury && !lb && roll < .26 ? pick(EVENTS).id : null;
-  const mini = !S.injury && !lb && !event && roll < .42 ? pick(Object.keys(MINIS)) : null;
-  const psy = !S.injury && !lb && !event && !mini && roll < .62 ? makePsy() : null; // 감독·동료와의 심리전
+  const ntw = !S.injury && ntPending(); // 국가대표 경기가 있는 주
+  const lb = S.injury || ntw ? null : makeLB(); // 한계 돌파 시험(능력치 99 이상일 때만)
+  const event = !S.injury && !ntw && !lb && roll < .26 ? pick(EVENTS).id : null;
+  const mini = !S.injury && !ntw && !lb && !event && roll < .42 ? pick(Object.keys(MINIS)) : null;
+  const psy = !S.injury && !ntw && !lb && !event && !mini && roll < .55 ? makePsy() : null; // 감독·동료와의 심리전
   const mOpts = S.injury ? null : makeMissions();
   const wx = WEATHER.indexOf(wpick(WEATHER)), ref = REFS.indexOf(wpick(REFS));
   let needs, text, rumor = false;
@@ -1643,6 +1676,7 @@ function renderHub(){
   if (S.equip.arm === 'captain' && S.trust < 70){ delete S.equip.arm; save(); setTimeout(() => toast('감독 신뢰가 70 아래로 떨어져 주장 완장을 내려놓았다'), 300); }
   if (!S.week.speech){ S.week.speech = pick([...SPEECH[String(S.mood)], ...(S.mood >= 0 ? mgr().pos : mgr().neg).map(x => x.replace(/"/g, ''))]); save(); }
   if (!S.v0){ S.v0 = myValue(); save(); }
+  if (S.injury && ntPending()){ S.season.nt.alive = false; addNews(`🇰🇷 ${S.name}, 부상으로 대표팀 하차`); save(); setTimeout(() => toast('부상으로 국가대표에서 하차했어요'), 700); }
   if (S.week && S.week.lb && S.week.lb.started && !S.week.lb.res){ S.week.lb.res = 'fail'; S.lbCd = 3; save(); setTimeout(() => toast('한계 돌파 시험을 중간에 포기했다… 몇 주 뒤 다시 기회가 와요'), 600); }
   if (UI.vToast){ const m = UI.vToast; UI.vToast = null; setTimeout(() => toast(m), 1200); }
   const t = UI.tab;
@@ -1670,7 +1704,7 @@ function matchTab(){
       <div class="conds"><span>${ic(WX[1])} ${WX[2]}${WX[3] ? ` <em>${WX[3]}</em>` : ''}</span><span>${ic('scale')} ${RF[1]}${RF[2] ? ` <em>${RF[2]}</em>` : ''}</span>${W.psyFx ? `<span class="psyc ${W.psyFx.rt < 0 ? 'down' : ''}">${ic('brain')} ${esc(W.psyFx.label)}</span>` : ''}</div>
     </section>
     ${(() => { let n = 0; const st = (icon, t, sub, done, id) => `<div class="step ${done ? 'done' : ''}"><span class="step-n">${(++n, done ? ic('check') : n)}</span><div><b>${ic(icon)} ${t}</b><small${id ? ` id="${id}"` : ''}>${sub}</small></div></div>`;
-      return `<button type="button" class="mgr-strip" id="toBench">${M.i}<span><b>${esc(mgrName())} 감독</b> · ${MOOD_FACE[S.mood]} · 신뢰 ${S.trust}</span><small>벤치</small>${ic('chevron-right')}</button>
+      return `${ntPending() ? `<button type="button" class="nt-strip" id="toNT">🇰🇷 국가대표 ${NT_KIND[S.season.nt.kind].n} · ${S.season.nt.stages[S.season.nt.idx].nm} 경기가 기다려요 ${ic('chevron-right')}</button>` : ''}<button type="button" class="mgr-strip" id="toBench">${M.i}<span><b>${esc(mgrName())} 감독</b> · ${MOOD_FACE[S.mood]} · 신뢰 ${S.trust}</span><small>벤치</small>${ic('chevron-right')}</button>
     ${W.mOpts ? `${st('target', '감독 미션 고르기', W.mPick == null ? '하나 골라 도전 · 안 고르면 보통 미션으로 진행돼요' : '경기 시작 전까지 바꿀 수 있어요', W.mPick != null, 'mpSub')}
     <div class="panel pad mpick solo"><div class="mopts">${W.mOpts.map((o, i) => { const M = MISSION[o.k], rw = missionReward(o.k, big, o.lucky), dd = DIFF[M.d]; return `<button type="button" class="mopt ${dd[1]} ${W.mPick === i ? 'on' : ''}" data-mi="${i}">
           <span class="md">${dd[0]}${o.lucky ? ` <i class="lucky">${ic('clover')}x2</i>` : ''}</span><b>${M.n}</b><small>경험치 +${rw.xp} · 신뢰 +${rw.trust}${rw.fail ? `<br>실패 시 신뢰 ${rw.fail}` : ''}</small></button>`; }).join('')}</div></div>` : ''}
@@ -1692,6 +1726,7 @@ function actDesc(id){
 function bindMatchTab(){
   $('#fast').onchange = e => { S.fast = e.target.checked; save(); };
   const tb = $('#toBench'); if (tb) tb.onclick = () => { UI.tab = 'bench'; renderHub(); };
+  const tn = $('#toNT'); if (tn) tn.onclick = () => showNT();
   root.querySelectorAll('.act').forEach(b => b.onclick = () => doAction(b.dataset.a));
   root.querySelectorAll('.mopt').forEach(b => b.onclick = () => {
     if (S.phase !== 'week' || !S.week.mOpts) return;
@@ -1702,7 +1737,8 @@ function bindMatchTab(){
   if (UI.splash){ UI.splash = false; roundSplash(); }
   const delay = RM ? 0 : (document.querySelector('.splash') ? 1400 : 450);
   if (UI.sacked){ const o = UI.sacked; UI.sacked = null; setTimeout(() => sackModal(o), delay); return; }
-  if (S.week.lb && !S.week.lb.started) setTimeout(showLB, delay);
+  if (ntPending() && !S.injury) setTimeout(showNT, delay);
+  else if (S.week.lb && !S.week.lb.started) setTimeout(showLB, delay);
   else if (S.week.event && !S.week.eventRes) setTimeout(showEvent, delay);
   else if (S.week.mini && !S.week.miniDone) setTimeout(showMini, delay);
   else if (S.week.psy && !S.week.psy.done) setTimeout(showPsy, delay);
@@ -1734,6 +1770,7 @@ function playerTab(){
       ${S.buff ? `<span class="chip ${S.buff > 0 ? 'up' : 'down'}">${S.buff > 0 ? '🔥 자신감' : '😰 부담감'} ${S.buff > 0 ? '+' : ''}${S.buff.toFixed(2)}</span>` : ''}
       ${S.traits.map(t => `<span class="trait" title="${esc(TRAITS[t].d)}">${TRAITS[t].i} ${esc(TRAITS[t].n)}</span>`).join('') || '<span class="small muted">상황에 맞는 훈련을 하면 낮은 확률로 특성을 얻어요.</span>'}
     </div>
+    ${ntHtml()}
     <div class="label">${ic('trophy')} 트로피 · 수상</div>
     <div class="panel pad" style="display:flex;flex-wrap:wrap;gap:8px">${S.trophies.length || (S.honors || []).length ? (S.honors || []).map(h => `<span class="trophy honor">${ic(AWARDS[h.k].i)} ${AWARDS[h.k].n} <small>${h.y}</small></span>`).join('') + S.trophies.map(t => `<span class="trophy">🏆 ${esc(t.comp)} <small>${t.year}</small></span>`).join('') : '<span class="small muted">컵 대회 결승에서 이기거나 시즌 시상식에서 상을 받으면 여기에 쌓여요.</span>'}</div>
     <div class="label">${ic('medal')} 업적 ${S.ach.length}/${ACH.length} · 달성하면 경험치 보상</div>
@@ -1842,6 +1879,7 @@ function growth(age){ return age <= 21 ? 2.2 : age <= 24 ? 1.7 : age <= 28 ? 1.1
 async function doAction(id){
   if (S.phase !== 'week') return;
   if (S.week.event && !S.week.eventRes){ showEvent(); return; }
+  if (ntPending() && !S.injury){ showNT(); return; }
   if (S.week.lb && !S.week.lb.started){ showLB(); return; }
   if (S.week.mini && !S.week.miniDone){ showMini(); return; }
   if (S.week.psy && !S.week.psy.done){ showPsy(); return; }
@@ -2352,6 +2390,7 @@ function nextRound(){
   UI.tab = 'match';
   if (S.round >= S.schedule.length){ startNego(); makeAwards(); S.phase = 'awards'; return go(); }
   const sacked = sackCheck(done); if (sacked) UI.sacked = sacked;
+  if (done && done.k === 'L' && done.lr === 3) ntCallUp();
   if (done && done.k === 'L' && done.lr === 6 && !S.season.winter){
     S.season.winter = true;
     const offers = makeOffers(S.salary, true);
@@ -3612,41 +3651,46 @@ function renderAwards(){
 }
 
 // ================= 심리전 =================
+// 내 대답 방식 3가지. 상대의 '기분'에 맞추면 통하고, 어긋나면 역효과.
 const PSY_ST = {
-  atk:{n:'정면 돌파', i:'flame', d:'강하게 맞선다'},
-  calm:{n:'침착 대응', i:'snowflake', d:'흔들리지 않는다'},
-  feint:{n:'떠보기', i:'drama', d:'속내를 숨기고 역으로 떠본다'},
+  calm:{n:'차분하게', i:'snowflake'},
+  bold:{n:'자신 있게', i:'flame'},
+  wit:{n:'재치 있게', i:'laugh'},
 };
-const PSY_KEYS = ['atk','calm','feint'];
-const PSY_BEATS = {atk:'calm', calm:'feint', feint:'atk'}; // 정면 돌파 > 침착 > 떠보기 > 정면 돌파
-const PSY_TELL = {
-  atk:['목소리 톤이 한 단계 올라갔다','팔짱을 끼고 한 발 다가온다','눈을 한 번도 피하지 않는다','턱에 힘이 잔뜩 들어가 있다','손가락으로 테이블을 탁탁 두드린다'],
-  calm:['표정 변화가 전혀 없다','천천히 물을 한 모금 마신다','의자에 깊숙이 기대 앉는다','말 사이에 긴 침묵을 둔다','숨소리가 고르고 차분하다'],
-  feint:['입꼬리가 살짝 올라가 있다','갑자기 엉뚱한 이야기를 꺼낸다','웃으며 어깨를 툭 친다','주변 눈치를 슬쩍 살핀다','말끝을 흐리며 반응을 본다'],
+const PSY_KEYS = ['calm','bold','wit'];
+// 상대 기분: 흥분하면 차분하게, 시험하면 자신 있게, 장난치면 재치 있게. 차분함은 안전하지만 대박은 상대가 흥분했을 때뿐.
+const PSY_MOOD = {
+  heated:{n:'흥분', i:'angry', best:'calm', worst:'bold', tells:['얼굴이 붉어졌다','목소리가 점점 커진다','테이블을 쾅 내리쳤다','숨이 거칠어졌다','손가락으로 나를 가리킨다'],
+    say:['"이게 프로의 자세야?!"','"내 말 똑바로 들어!"','"한 번만 더 그러면 끝이야!"'], hit:'흥분이 가라앉았다', miss:'불에 기름을 부었다'},
+  testing:{n:'시험', i:'eye', best:'bold', worst:'wit', tells:['팔짱을 끼고 나를 빤히 본다','표정 없이 대답을 기다린다','"그래서?"라는 눈빛이다','차갑게 침묵한다','수첩에 뭔가를 적는다'],
+    say:['"…말만으로는 모르지."','"네가 어디까지 하나 보자."','"흠, 그게 진심이야?"'], hit:'눈빛이 달라졌다. 인정받았다', miss:'"장난하는 거야?" 실망한 눈치다'},
+  teasing:{n:'장난', i:'laugh', best:'wit', worst:'bold', tells:['입꼬리가 씰룩거린다','웃음을 꾹 참고 있다','어깨를 툭 치며 웃는다','옆 사람에게 윙크한다','장난스럽게 눈썹을 올린다'],
+    say:['"농담이야, 농담~"','"에이, 왜 이렇게 진지해?"','"하하, 표정 봐라."'], hit:'빵 터졌다. 분위기를 가져왔다', miss:'괜히 정색해서 분위기가 싸해졌다'},
 };
-const PSY_SAY = {
-  atk:['"여기서 밀리면 끝이야."','"내 말에 토 달지 마."','"자신 없으면 빠져."','"똑바로 들어."'],
-  calm:['"…그래서?"','"감정은 빼고 이야기하자."','"난 급할 거 없어."','"생각할 시간은 충분해."'],
-  feint:['"농담이야. 근데 진짜일 수도?"','"다른 애들은 벌써 알던데?"','"뭐, 네가 그렇게 생각한다면야."','"난 아무 말도 안 했어."'],
+const PSY_MOODS = Object.keys(PSY_MOOD);
+const PSY_GEN = {
+  calm:['"알겠습니다. 차분히 얘기해요."','"감정은 빼고 생각해볼게요."','"부족했던 건 인정합니다."','"서로 원하는 건 같잖아요."'],
+  bold:['"제 생각은 확고합니다."','"말보다 경기로 증명할게요."','"물러설 생각 없습니다."','"저 믿어보세요. 후회 안 하실 겁니다."'],
+  wit:['"하하, 그럼 내기하실래요?"','"오늘따라 멋있으시네요?"','"그 말 SNS에 올려도 돼요?"','"다음 회식은 제가 쏠게요. 됐죠?"'],
 };
-// 상대별 수 선택 성향 [정면 돌파, 침착, 떠보기]
-const PSY_BIAS = {charisma:[5,3,2], warm:[2,5,3], tactician:[2,6,2], showman:[3,2,5], maverick:[4,2,4], mentor:[2,5,3], rival:[5,2,3], captain:[3,5,2], veteran:[2,3,5], star:[4,3,3]};
+// 상대별 기분 성향 [흥분, 시험, 장난]
+const PSY_BIAS = {charisma:[5,3,2], warm:[1,5,4], tactician:[1,7,2], showman:[2,3,5], maverick:[4,2,4], mentor:[2,6,2], rival:[4,2,4], captain:[3,5,2], veteran:[2,3,5], star:[3,3,4]};
 const PSY_SC = [
-  {who:'mgr', t:'선발 명단의 행방', d:'{M} 감독이 "이번 주는 좀 쉬어도 된다"며 떠본다. 진심일까, 시험일까?'},
-  {who:'mgr', t:'실수 영상 리플레이', d:'전술 미팅에서 {M} 감독이 내 실수 장면만 반복 재생한다. 모두의 시선이 쏠린다.'},
-  {who:'mgr', t:'이적설 떠보기', d:'{M} 감독이 "다른 팀에서 널 원한다더라"며 반응을 살핀다.'},
-  {who:'mgr', t:'포지션 변경 제안', d:'{M} 감독이 훈련 중 넌지시 포지션 변경 이야기를 꺼낸다.'},
-  {who:'mgr', t:'공개 경고', d:'{M} 감독이 "요즘 훈련 태도가 마음에 안 든다"며 모두 앞에서 이름을 불렀다.'},
-  {who:'mgr', t:'출전 시간 협상', d:'면담 자리에서 {M} 감독이 "네가 원하는 게 정확히 뭐냐"고 묻는다.'},
-  {who:'rival', t:'주전 경쟁', d:'주전 경쟁자 {R}가 "네 자리, 곧 내 거야"라며 도발한다.'},
-  {who:'rival', t:'라커룸 신경전', d:'{R}가 들으라는 듯 큰 소리로 내 지난 경기 평점을 읽는다.'},
-  {who:'rival', t:'PK 키커 눈치싸움', d:'{R}가 "다음 PK는 내가 찬다"며 코치진에게 먼저 말을 꺼냈다.'},
-  {who:'veteran', t:'프리킥 키커 자리', d:'베테랑 {V}가 "프리킥은 원래 내 담당"이라며 공을 먼저 집어 든다.'},
-  {who:'veteran', t:'단톡방 저격', d:'{V}가 단체 대화방에 나를 겨냥한 듯한 글을 올렸다.'},
-  {who:'captain', t:'주장의 기강 잡기', d:'주장 {C}가 "요즘 너무 들떠 있다"며 공개적으로 쓴소리를 한다.', cap:true},
-  {who:'captain', t:'회식 자리의 진심', d:'회식 자리에서 주장 {C}가 "너, 우리 팀에 오래 있을 거지?"라며 속을 떠본다.', cap:true},
-  {who:'star', t:'에이스의 패스 거부', d:'팀 에이스 {A}가 훈련 게임에서 계속 나에게 패스를 안 준다.'},
-  {who:'star', t:'등번호 신경전', d:'팀 에이스 {A}가 "그 번호, 너한테 좀 무겁지 않아?"라며 웃는다.'},
+  {who:'mgr', t:'선발 명단의 행방', d:'{M} 감독이 "이번 주는 좀 쉬어도 된다"며 떠본다. 진심일까, 시험일까?', r:['감독님 판단 따르겠습니다. 준비는 돼 있어요.','쉬는 건 사양할게요. 뛰게 해주세요.','쉬라시면 벤치에서 제일 크게 응원할게요.']},
+  {who:'mgr', t:'실수 영상 리플레이', d:'전술 미팅에서 {M} 감독이 내 실수 장면만 반복 재생한다. 모두의 시선이 쏠린다.', r:['제 실수 맞습니다. 다음엔 안 나옵니다.','그 장면, 다음 경기에서 골로 갚겠습니다.','편집 실력 대단하세요. 제 하이라이트도 부탁드려요.']},
+  {who:'mgr', t:'이적설 떠보기', d:'{M} 감독이 "다른 팀에서 널 원한다더라"며 반응을 살핀다.', r:['저는 지금 이 팀에만 집중하고 있어요.','어디든 상관없어요. 여기서 먼저 증명할게요.','저 보내시면 감독님이 제일 아쉬우실걸요?']},
+  {who:'mgr', t:'포지션 변경 제안', d:'{M} 감독이 훈련 중 넌지시 포지션 변경 이야기를 꺼낸다.', r:['팀에 필요하다면 연습해보겠습니다.','제 자리에서 더 잘할 자신 있습니다.','골키퍼만 아니면 어디든요!']},
+  {who:'mgr', t:'공개 경고', d:'{M} 감독이 "요즘 훈련 태도가 마음에 안 든다"며 모두 앞에서 이름을 불렀다.', r:['지적 감사합니다. 태도부터 바꾸겠습니다.','훈련장에서 바로 보여드리겠습니다.','내일부터 1등 출근입니다. 알람 세 개 맞췄어요.']},
+  {who:'mgr', t:'출전 시간 협상', d:'면담 자리에서 {M} 감독이 "네가 원하는 게 정확히 뭐냐"고 묻는다.', r:['팀 사정 이해합니다. 기회만 주세요.','매주 선발로 뛰고 싶습니다.','90분 주시면 90점짜리 경기 보여드릴게요.']},
+  {who:'rival', t:'주전 경쟁', d:'주전 경쟁자 {R}가 "네 자리, 곧 내 거야"라며 도발한다.', r:['경쟁은 경기장에서 하자.','꿈 깨. 이 자리 안 내줘.','탐나면 내 등번호도 빌려줄까?']},
+  {who:'rival', t:'라커룸 신경전', d:'{R}가 들으라는 듯 큰 소리로 내 지난 경기 평점을 읽는다.', r:['맞아, 그 경기는 내가 못 했어.','다음 평점 보고도 그 말 하나 보자.','목소리 좋다? 장내 아나운서 해도 되겠어.']},
+  {who:'rival', t:'PK 키커 눈치싸움', d:'{R}가 "다음 PK는 내가 찬다"며 코치진에게 먼저 말을 꺼냈다.', r:['코치님이 정하시는 대로 하자.','PK는 내가 찬다. 넣을 자신 있어.','가위바위보로 정할까? 나 무패야.']},
+  {who:'veteran', t:'프리킥 키커 자리', d:'베테랑 {V}가 "프리킥은 원래 내 담당"이라며 공을 먼저 집어 든다.', r:['선배님 먼저 차세요. 저도 연습할게요.','오늘은 제가 차보겠습니다.','선배님 차시면 리바운드는 제가 넣을게요.']},
+  {who:'veteran', t:'단톡방 저격', d:'{V}가 단체 대화방에 나를 겨냥한 듯한 글을 올렸다.', r:['선배님, 하실 말씀 있으면 직접 해주세요.','저격은 그만하시죠. 실력으로 말할게요.','공지로 올리셔야죠. 읽음 표시 다 사라졌어요.']},
+  {who:'captain', t:'주장의 기강 잡기', d:'주장 {C}가 "요즘 너무 들떠 있다"며 공개적으로 쓴소리를 한다.', cap:true, r:['들떠 있던 거 맞아요. 조심할게요.','결과로 보여주고 있잖아요.','주장님 잔소리 들으니 집에 온 것 같네요.']},
+  {who:'captain', t:'회식 자리의 진심', d:'회식 자리에서 주장 {C}가 "너, 우리 팀에 오래 있을 거지?"라며 속을 떠본다.', cap:true, r:['당연하죠. 이 팀에서 오래 뛰고 싶어요.','더 큰 무대도 꿈꾸지만 지금은 여기서 최고가 될게요.','주장님 은퇴하실 때까진 있을게요.']},
+  {who:'star', t:'에이스의 패스 거부', d:'팀 에이스 {A}가 훈련 게임에서 계속 나에게 패스를 안 준다.', r:['패스 하나만 주면 확실히 마무리할게.','나한테 주면 도움 하나 느는 거야. 손해 아니잖아.','안 주면 네 몫까지 내가 다 뛴다?']},
+  {who:'star', t:'등번호 신경전', d:'팀 에이스 {A}가 "그 번호, 너한테 좀 무겁지 않아?"라며 웃는다.', r:['번호보다 경기력으로 보여줄게.','무거우면 더 열심히 뛰면 되지.','번호가 무거워서 하체가 튼튼해졌어.']},
 ];
 const PSY_TIER = {
   big:{n:'완벽한 기선 제압', i:'flame', rt:.4, goal:1.15, start:.1, card:.85},
@@ -3673,26 +3717,27 @@ function makePsy(){
   const bias = PSY_BIAS[P.who === 'mgr' ? t : P.who] || [1,1,1];
   // 경험이 쌓일수록 상대의 속내가 잘 읽힌다. 독불장군형 감독과 능구렁이 베테랑은 읽기 어렵다.
   const rel = clamp(.6 + Math.max(0, S.age - 19) * .015 - (P.who === 'mgr' && t === 'maverick' ? .15 : 0) - (P.who === 'veteran' ? .07 : 0), .4, .85);
-  const rounds = [0, 1, 2].map(() => {
-    const st = wpick(PSY_KEYS.map((k, i) => [bias[i], k]))[1];
-    const tk = Math.random() < rel ? st : pick(PSY_KEYS.filter(k => k !== st));
-    return {st, tell: pick(PSY_TELL[tk]), say: pick(PSY_SAY[st])};
+  const gen = {calm:shuffle(PSY_GEN.calm), bold:shuffle(PSY_GEN.bold), wit:shuffle(PSY_GEN.wit)};
+  const rounds = [0, 1, 2].map(i => {
+    const md = wpick(PSY_MOODS.map((k, j) => [bias[j], k]))[1];
+    const tk = Math.random() < rel ? md : pick(PSY_MOODS.filter(k => k !== md)); // 가끔은 표정이 속마음과 다르다
+    return {md, tell: pick(PSY_MOOD[tk].tells), say: pick(PSY_MOOD[md].say), opts: PSY_KEYS.map((k, j) => i === 0 && P.r ? `"${P.r[j]}"` : gen[k][i])};
   });
   return {sc, who:P.who, rounds, picks:[], done:false, rel: Math.round(rel * 100)};
 }
 function cleanPsy(q){
-  if (!q || !PSY_SC[q.sc] || !Array.isArray(q.rounds) || q.rounds.length !== 3 || !q.rounds.every(x => x && PSY_ST[x.st] && typeof x.tell === 'string' && typeof x.say === 'string')) return null;
-  return {sc:q.sc, who:PSY_SC[q.sc].who, rounds:q.rounds.map(x => ({st:x.st, tell:x.tell.slice(0, 60), say:x.say.slice(0, 60)})), picks:(Array.isArray(q.picks) ? q.picks : []).filter(k => PSY_ST[k]).slice(0, 3), done:!!q.done, rel:int(q.rel, 30, 95, 60)};
+  if (!q || !PSY_SC[q.sc] || !Array.isArray(q.rounds) || q.rounds.length !== 3 || !q.rounds.every(x => x && PSY_MOOD[x.md] && typeof x.tell === 'string' && typeof x.say === 'string' && Array.isArray(x.opts) && x.opts.length === 3)) return null;
+  return {sc:q.sc, who:PSY_SC[q.sc].who, rounds:q.rounds.map(x => ({md:x.md, tell:x.tell.slice(0, 60), say:x.say.slice(0, 60), opts:x.opts.map(o => String(o).slice(0, 60))})), picks:(Array.isArray(q.picks) ? q.picks : []).filter(k => PSY_ST[k]).slice(0, 3), done:!!q.done, rel:int(q.rel, 30, 95, 60)};
 }
 function cleanPsyFx(f){
   if (!f || typeof f !== 'object' || !PSY_TIER[f.tier]) return null;
   const n = (v, lo, hi, d) => clamp(Number.isFinite(Number(v)) ? Number(v) : d, lo, hi);
   return {tier:f.tier, rt:n(f.rt, -.6, .6, 0), goal:n(f.goal, .7, 1.3, 1), start:n(f.start, -.25, .25, 0), card:n(f.card, .5, 2, 1), ast:n(f.ast, .6, 1.4, 1), team:n(f.team, .9, 1.1, 1), pk:n(f.pk, .5, 1.6, 1), label:String(f.label || '').slice(0, 60)};
 }
-const psyOut = (m, st) => m === st ? 0 : PSY_BEATS[m] === st ? 1 : -1;
+const psyOut = (m, md) => m === PSY_MOOD[md].best ? 1 : m === PSY_MOOD[md].worst ? -1 : 0;
 function psyResolve(){
   const Q = S.week.psy, t = CLUB[S.club].t, W = PSY_WHO[Q.who];
-  const sum = Q.picks.reduce((s, m, i) => s + psyOut(m, Q.rounds[i].st), 0);
+  const sum = Q.picks.reduce((s, m, i) => s + psyOut(m, Q.rounds[i].md), 0);
   const tier = sum >= 2 ? 'big' : sum === 1 ? 'win' : sum === 0 ? 'draw' : sum === -1 ? 'lose' : 'crush';
   const T = PSY_TIER[tier], good = sum > 0, bad = sum < 0;
   const f = {tier, rt:T.rt, goal:T.goal, start:T.start, card:T.card, ast:1, team:1, pk:1};
@@ -3701,7 +3746,7 @@ function psyResolve(){
   if (bad){ f.start -= W.start || 0; f.pk /= W.pk || 1; f.team /= W.team || 1; f.ast /= W.ast || 1; }
   if (Q.who === 'mgr'){
     eff.trust = good ? (sum >= 2 ? 6 : 4) : bad ? (sum <= -2 ? -5 : -3) : 0;
-    const atk = Q.picks.filter(k => k === 'atk').length, fe = Q.picks.filter(k => k === 'feint').length;
+    const atk = Q.picks.filter(k => k === 'bold').length, fe = Q.picks.filter(k => k === 'wit').length;
     if (good && t === 'charisma' && atk >= 2){ eff.trust = -2; text = `결과는 내 판정승. 하지만 ${mgrName()} 감독은 "버릇없다"며 못마땅해한다.`; }
     if (good && t === 'showman' && fe >= 1){ eff.pop = 3; text += ' 감독이 기자들 앞에서 내 배짱을 자랑했다.'; }
     if (bad && t === 'warm'){ eff.trust = Math.ceil(eff.trust / 2); text += ` "괜찮다, 그럴 수 있지." ${mgrName()} 감독이 어깨를 두드렸다.`; }
@@ -3737,12 +3782,12 @@ async function showPsy(){
   SFX.good();
   await typeIn(el.querySelector('#psyd'), fillPsy(P.d));
   const box = el.querySelector('#psyb');
-  const meter = () => { const s = Q.picks.reduce((a, m, i) => a + psyOut(m, Q.rounds[i].st), 0); return `<div class="psy-meter" aria-label="기세">${[-3,-2,-1,0,1,2,3].map(v => `<i class="${v === s ? 'on' : ''} ${v < 0 ? 'mneg' : v > 0 ? 'mpos' : ''}"></i>`).join('')}<small>${s > 0 ? '내가 우세' : s < 0 ? '상대가 우세' : '팽팽'}</small></div>`; };
+  const meter = () => { const s = Q.picks.reduce((a, m, i) => a + psyOut(m, Q.rounds[i].md), 0); return `<div class="psy-meter" aria-label="기세">${[-3,-2,-1,0,1,2,3].map(v => `<i class="${v === s ? 'on' : ''} ${v < 0 ? 'mneg' : v > 0 ? 'mpos' : ''}"></i>`).join('')}<small>${s > 0 ? '내가 우세' : s < 0 ? '상대가 우세' : '팽팽'}</small></div>`; };
   const finish = async () => {
     const R = psyResolve(), T = PSY_TIER[R.tier];
     if (R.sum > 0){ SFX.goal(); confetti(['#3dd6ff','#ffffff','#ffc83d']); } else if (R.sum < 0){ SFX.bad(); shake(); } else SFX.good();
     el.querySelector('.modal-card').innerHTML = `<div class="eyebrow">${ic('brain')} 심리전 결과</div><div class="big psy-res ${R.sum > 0 ? 'good' : R.sum < 0 ? 'bad' : ''}">${ic(T.i, 'evi')}</div><h3>${T.n}</h3>
-      <div class="psy-hist">${Q.picks.map((m, i) => { const o = psyOut(m, Q.rounds[i].st); return `<span class="${o > 0 ? 'w' : o < 0 ? 'l' : 'd'}">R${i + 1} ${ic(PSY_ST[m].i)} vs ${ic(PSY_ST[Q.rounds[i].st].i)} ${o > 0 ? '승' : o < 0 ? '패' : '무'}</span>`; }).join('')}</div>
+      <div class="psy-hist">${Q.picks.map((m, i) => { const o = psyOut(m, Q.rounds[i].md); return `<span class="${o > 0 ? 'w' : o < 0 ? 'l' : 'd'}">R${i + 1} ${PSY_MOOD[Q.rounds[i].md].n} → ${PSY_ST[m].n} ${o > 0 ? '통함' : o < 0 ? '역효과' : '무난'}</span>`; }).join('')}</div>
       <div class="outcome">${esc(R.text)}</div><div class="chips" style="margin-bottom:14px">${chipsHtml(R.fx)}</div><button class="btn block" type="button" id="psyok">확인</button>`;
     el.querySelector('#psyok').onclick = async () => { await el.close(); renderHub(); };
   };
@@ -3750,21 +3795,22 @@ async function showPsy(){
     const i = Q.picks.length; if (i >= 3) return finish();
     const r = Q.rounds[i];
     box.innerHTML = `${meter()}<div class="psy-round">ROUND ${i + 1} / 3</div>
-      <div class="psy-tell">${ic('eye')}<span><b>${esc(nm)}</b> ${esc(r.tell)}</span></div>
-      <div class="psy-acc">속내 읽기 정확도 ${Q.rel}% · 경험이 쌓일수록 올라요</div>
-      <div class="psy-picks">${PSY_KEYS.map(k => `<button type="button" class="psy-b k-${k}" data-k="${k}">${ic(PSY_ST[k].i)}<b>${PSY_ST[k].n}</b><small>${PSY_ST[k].d}</small><em>${PSY_ST[PSY_BEATS[k]].n}에 강함</em></button>`).join('')}</div>
-      <div class="psy-rule">${ic('flame')} 정면 돌파 ▶ ${ic('snowflake')} 침착 ▶ ${ic('drama')} 떠보기 ▶ ${ic('flame')}</div>`;
+      <div class="psy-tell">${ic('eye')}<span><b>${esc(nm)}</b>${josa(nm, '은')} ${esc(r.tell)}</span></div>
+      <div class="psy-rule"><span>${ic('angry')} 흥분 → 차분하게</span><span>${ic('eye')} 시험 → 자신 있게</span><span>${ic('laugh')} 장난 → 재치 있게</span></div>
+      <div class="psy-acc">표정이 속마음과 다를 때도 있어요 · 읽기 정확도 ${Q.rel}%</div>
+      <div class="psy-picks">${PSY_KEYS.map((k, j) => `<button type="button" class="psy-b k-${k}" data-k="${k}"><em>${ic(PSY_ST[k].i)} ${PSY_ST[k].n}</em><span>${esc(r.opts[j])}</span></button>`).join('')}</div>`;
     box.querySelectorAll('.psy-b').forEach(b => b.onclick = async () => {
       if (Q.picks.length !== i) return;
       box.querySelectorAll('.psy-b').forEach(x => x.disabled = true);
       Q.picks.push(b.dataset.k); save(); // 고른 즉시 저장 (새로고침으로 무를 수 없음)
-      const o = psyOut(b.dataset.k, r.st);
+      const o = psyOut(b.dataset.k, r.md), MD = PSY_MOOD[r.md];
       b.classList.add('picked');
       await wait(350);
       if (o > 0) SFX.good(); else if (o < 0) SFX.bad(); else SFX.click();
       box.innerHTML = `${meter()}<div class="psy-reveal ${o > 0 ? 'w' : o < 0 ? 'l' : 'd'}">
-        <div class="pr-row"><span>${ic(PSY_ST[b.dataset.k].i)}<small>나</small><b>${PSY_ST[b.dataset.k].n}</b></span><em>VS</em><span>${ic(PSY_ST[r.st].i)}<small>${esc(nm)}</small><b>${PSY_ST[r.st].n}</b></span></div>
-        <p>${esc(nm)}: ${esc(r.say)}</p><div class="pr-res">${o > 0 ? '기선 제압!' : o < 0 ? '말렸다…' : '팽팽!'}</div></div>
+        <div class="pr-mood">${ic(MD.i)} ${esc(nm)}${josa(nm, '은')} <b>${MD.n}</b> 중이었다</div>
+        <p class="pr-me">나: ${esc(r.opts[PSY_KEYS.indexOf(b.dataset.k)])}</p>
+        <p>${esc(nm)}: ${esc(r.say)}</p><div class="pr-res">${o > 0 ? `통했다! ${MD.hit}` : o < 0 ? `역효과… ${MD.miss}` : '무난했다 · 큰 변화 없음'}</div></div>
         <button class="btn block ${i === 2 ? 'cyan' : 'dark'}" type="button" id="psyn">${i === 2 ? '결과 보기' : '다음 라운드 ▶'}</button>`;
       box.querySelector('#psyn').onclick = round;
     });
@@ -3897,6 +3943,107 @@ function bindBench(){
   };
 }
 
+// ================= 국가대표 =================
+// 시즌 3라운드가 끝나면 대표팀 명단 발표. 해마다 친선전 → (짝수 해) 월드컵 / (홀수 해) 아시안컵이 번갈아 열린다.
+const NT_ASIA = [['일본','🇯🇵',78],['이란','🇮🇷',76],['호주','🇦🇺',75],['사우디아라비아','🇸🇦',72],['카타르','🇶🇦',71],['우즈베키스탄','🇺🇿',70],['이라크','🇮🇶',69],['요르단','🇯🇴',68]];
+const NT_WORLD = [['아르헨티나','🇦🇷',91],['브라질','🇧🇷',90],['프랑스','🇫🇷',90],['스페인','🇪🇸',89],['잉글랜드','🏴󠁧󠁢󠁥󠁮󠁧󠁿',88],['독일','🇩🇪',87],['포르투갈','🇵🇹',87],['네덜란드','🇳🇱',86],['벨기에','🇧🇪',84],['크로아티아','🇭🇷',84],['우루과이','🇺🇾',84],['모로코','🇲🇦',83],['덴마크','🇩🇰',82],['스위스','🇨🇭',82],['미국','🇺🇸',80],['세네갈','🇸🇳',80],['멕시코','🇲🇽',79],['일본','🇯🇵',79]];
+const KOR_S = 77;
+const NT_KIND = {
+  friendly:{n:'A매치 친선전', st:['친선 경기'], pool:() => [...NT_ASIA, ...NT_WORLD], tgt:[80]},
+  asian:{n:'아시안컵', st:['조별리그','8강','4강','결승'], pool:() => NT_ASIA, tgt:[70,73,75,77]},
+  wc:{n:'월드컵', st:['조별리그','16강','8강','4강','결승'], pool:() => NT_WORLD, tgt:[80,83,86,88,90]},
+};
+const ntKind = y => y % 4 === 2 ? 'wc' : y % 4 === 3 ? 'asian' : 'friendly';
+function ntCallUp(){
+  if (S.season.ntChk) return; S.season.ntChk = true;
+  const r = S.season.ratings, avg = r.length ? r.reduce((a, b) => a + b, 0) / r.length : 6.4, ovr = ovrOf(S.stats, S.pos);
+  const p = clamp((ovr - 62) / 14 + (S.pop - 30) / 200 + (avg - 6.6) * .25, 0, .92);
+  if (Math.random() >= p){ if (p > .15) addNews(`🇰🇷 국가대표 명단 발표… ${S.name}, 아쉽게 탈락`); return; }
+  const kind = ntKind(S.year), K = NT_KIND[kind], used = new Set();
+  const stages = K.st.map((nm, i) => {
+    const pool = K.pool().filter(t => !used.has(t[0])), near = pool.filter(t => Math.abs(t[2] - K.tgt[i]) <= 3);
+    const opp = pick(near.length ? near : pool); used.add(opp[0]);
+    return {nm, opp, m: ri(52, 88), rm: Math.random(), rr: Math.random()};
+  });
+  S.season.nt = {kind, stages, idx:0, alive:true, wk:-1, pick:null, res:[]};
+  addNews(`🇰🇷 [대표팀] ${S.name}, ${S.year} ${K.n} 국가대표 발탁!`);
+  UI.vToast = `🇰🇷 국가대표 발탁! ${K.n}에 나서요`;
+}
+const ntPending = () => { const N = S.season && S.season.nt; return !!(N && N.alive && N.idx < N.stages.length && N.wk !== S.round); };
+function ntMoves(){
+  if (S.pos === 'FW' || S.pos === 'MF') return [['sho','target','강하게 때린다', chanceP('sho')], ['pas','arrow-right-left','동료에게 내준다', chanceP('pas')], ['dri','wind','한 명 더 제친다', chanceP('dri')]];
+  const p = k => clamp(.3 + (S.stats[k] - 50) / 100 * .8, .1, .88);
+  return S.pos === 'GK' ? [['def','hand','몸을 날린다', p('def')], ['phy','dumbbell','각을 좁히고 버틴다', p('phy')], ['pas','arrow-right-left','미리 나와서 끊는다', p('pas')]]
+    : [['def','shield-half','태클로 끊는다', p('def')], ['phy','dumbbell','몸으로 막아선다', p('phy')], ['pas','arrow-right-left','걷어내고 역습 연결', p('pas')]];
+}
+const pctTag = p => `<span class="odds ${p >= .6 ? 'hi' : p >= .4 ? 'mid' : 'lo'}">성공률 ${Math.round(p * 100)}%</span>`;
+async function showNT(){
+  const N = S.season.nt; if (!ntPending() || document.querySelector('.modal')) return;
+  const K = NT_KIND[N.kind], st = N.stages[N.idx], [on, of, os] = st.opp, atk = S.pos === 'FW' || S.pos === 'MF', moves = ntMoves();
+  const el = modal(`<div class="eyebrow">🇰🇷 국가대표 · ${K.n}</div>
+    <div class="nt-vs"><span><b class="nt-flag">🇰🇷</b>대한민국</span><em>VS</em><span><b class="nt-flag">${of}</b>${esc(on)}</span></div>
+    <h3>${st.nm}${N.kind !== 'friendly' ? ` <small class="muted">${N.idx + 1}/${N.stages.length}</small>` : ''}</h3>
+    <div class="nt-steps">${N.stages.map((x, i) => `<i class="${i < N.idx ? 'ok' : i === N.idx ? 'now' : ''}" title="${x.nm}"></i>`).join('')}</div>
+    <p id="ntd">${st.m}분, ${atk ? '페널티박스 앞에서 공을 잡았다! 결정적 기회다.' : '상대의 날카로운 역습! 마지막 수비는 나다.'}</p>
+    <div class="choice-list" id="ntc">${moves.map(([k, i, n, p]) => `<button class="btn dark block nt-b" type="button" data-k="${k}">${ic(i)} <span>${n}</span>${pctTag(p)}</button>`).join('')}</div>`);
+  el.classList.add('nt-modal'); SFX.whistle();
+  el.querySelectorAll('.nt-b').forEach(b => b.onclick = async () => {
+    if (N.pick) return; N.pick = b.dataset.k; save(); // 고른 즉시 저장
+    el.querySelectorAll('.nt-b').forEach(x => x.disabled = true); b.classList.add('picked');
+    const mv = moves.find(m => m[0] === N.pick), ok = st.rm < mv[3];
+    const base = 1 / (1 + Math.exp(-(KOR_S + (ovrOf(S.stats, S.pos) - 70) * .25 - os) / 5)), group = st.nm === '조별리그';
+    const p = clamp(base + (ok ? .2 : -.08) + (group ? .18 : 0), .05, .95), win = st.rr < p, last = N.idx === N.stages.length - 1;
+    const scored = ok && atk && N.pick !== 'pas', assist = ok && atk && N.pick === 'pas';
+    let kor = (scored || assist ? 1 : 0) + (st.rr < p * .5 ? 1 : 0) + (win ? 1 : 0), opp = win ? Math.max(0, kor - 1 - (st.rr < p * .3 ? 1 : 0)) : kor + 1;
+    const pso = !group && win && st.rr > p - .1 && N.kind !== 'friendly';
+    if (pso) opp = kor;
+    await wait(500);
+    const card = el.querySelector('.modal-card');
+    card.innerHTML = `<div class="eyebrow">🇰🇷 ${K.n} · ${st.nm}</div><div class="suspense">${ok ? (atk ? (scored ? '골!!!' : '어시스트!') : '막아냈다!') : (atk ? '아깝다…' : '뚫렸다…')}</div>`;
+    if (ok) SFX.goal(); else SFX.bad();
+    await wait(1100);
+    // 결과·보상
+    S.nt = S.nt || {caps:0, goals:0};
+    S.nt.caps += group ? 3 : 1; if (scored) S.nt.goals++;
+    const fx = [];
+    const stagePop = [3, 4, 6, 8, 10][Math.min(4, N.idx)];
+    fx.push(...applyFx({pop: win ? stagePop + (ok ? 2 : 0) : 1}));
+    const gx = gainXp((win ? 60 + N.idx * 40 : 30) + (ok ? 30 : 0)); if (gx) fx.push(gx);
+    let head;
+    if (group) head = win ? `조별리그 ${pick(['2승 1무','2승 1패','3전 전승','1승 2무'])} · 다음 라운드 진출!` : `조별리그 ${pick(['1무 2패','1승 2패','2무 1패'])} · 탈락…`;
+    else head = `대한민국 ${kor} : ${opp} ${on}${pso ? ' (승부차기 승)' : ''} · ${win ? (last ? '우승!!' : `${N.stages[N.idx + 1] ? N.stages[N.idx + 1].nm + ' 진출!' : '승리!'}`) : (N.kind === 'friendly' ? '패배' : '탈락…')}`;
+    if (N.kind === 'friendly') head = `대한민국 ${kor} : ${opp} ${on} · ${win ? '승리!' : kor === opp ? '무승부' : '패배'}`;
+    N.res.push({nm:st.nm, win, kor, opp, ok}); N.pick = null; N.wk = S.round; N.idx++;
+    if (!win || last) N.alive = false;
+    const champ = win && last && N.kind !== 'friendly';
+    if (champ){
+      S.trophies.push({year:S.year, comp:K.n}); S.season.cups = [...(S.season.cups || []), K.n];
+      fx.push(...applyFx({pop:15})); const g2 = gainXp(N.kind === 'wc' ? 800 : 400); if (g2) fx.push(g2);
+      S.rec[N.kind === 'wc' ? 'wcWin' : 'asianWin'] = (S.rec[N.kind === 'wc' ? 'wcWin' : 'asianWin'] || 0) + 1;
+      addNews(`🏆 대한민국, ${S.year} ${K.n} 우승!! ${S.name} ${scored ? '결승골' : '맹활약'}`);
+    } else if (N.kind !== 'friendly') addNews(win ? `🇰🇷 [${K.n}] 대한민국 ${st.nm} 통과${scored ? ` · ${S.name} 득점` : ''}` : `🇰🇷 [${K.n}] 대한민국 ${st.nm} 탈락… ${S.name} "다음엔 꼭"`);
+    else addNews(`🇰🇷 [A매치] 대한민국 ${kor}-${opp} ${on}${scored ? ` · ${S.name} 득점` : ''}`);
+    save();
+    if (champ) confetti(['#ffc83d', '#c8102e', '#003478', '#ffffff']); else if (win) confetti(['#c8102e', '#003478', '#ffffff']);
+    card.innerHTML = `<div class="eyebrow">🇰🇷 ${K.n} · ${st.nm}</div><div class="big">${champ ? '🏆' : win ? '🇰🇷' : '😢'}</div><h3>${esc(head)}</h3>
+      <p>${ok ? (atk ? (scored ? `${st.m}분 ${S.name}의 골이 터졌다!` : `${S.name}의 패스가 골로 이어졌다!`) : `${S.name}의 결정적 수비가 팀을 구했다!`) : `${st.m}분의 기회는 아쉽게 무산됐다.`}${N.alive ? ` 다음 주 ${N.stages[N.idx].nm}이 이어져요.` : ''}</p>
+      <div class="small muted" style="margin-bottom:8px">A매치 통산 ${S.nt.caps}경기 ${S.nt.goals}골</div>
+      <div class="chips" style="margin-bottom:14px">${chipsHtml(fx)}</div><button class="btn block" type="button" id="ntok">소속팀으로 복귀</button>`;
+    card.querySelector('#ntok').onclick = async () => { await el.close(); renderHub(); };
+  });
+}
+function cleanNtSeason(N){
+  if (!N || !NT_KIND[N.kind] || !Array.isArray(N.stages) || !N.stages.length) return undefined;
+  const stages = N.stages.slice(0, 5).filter(x => x && Array.isArray(x.opp) && typeof x.opp[0] === 'string').map(x => ({nm:String(x.nm).slice(0, 10), opp:[String(x.opp[0]).slice(0, 12), String(x.opp[1] || '').slice(0, 16), int(x.opp[2], 50, 99, 80)], m:int(x.m, 1, 90, 70), rm:clamp(Number(x.rm) || 0, 0, 1), rr:clamp(Number(x.rr) || 0, 0, 1)}));
+  if (!stages.length) return undefined;
+  return {kind:N.kind, stages, idx:int(N.idx, 0, stages.length, 0), alive:!!N.alive, wk:int(N.wk, -1, 40, -1), pick: ['sho','pas','dri','def','phy'].includes(N.pick) ? N.pick : null, res:(Array.isArray(N.res) ? N.res : []).slice(0, 5).map(r => ({nm:String(r.nm).slice(0, 10), win:!!r.win, kor:int(r.kor, 0, 9, 0), opp:int(r.opp, 0, 9, 0), ok:!!r.ok}))};
+}
+function ntHtml(){
+  const T = S.nt || {caps:0, goals:0}, N = S.season.nt;
+  const cur = N ? `<div class="nt-cur">${N.alive ? `${ic('flag')} ${NT_KIND[N.kind].n} 진행 중 · 다음: ${N.stages[N.idx].nm} vs ${N.stages[N.idx].opp[1]} ${esc(N.stages[N.idx].opp[0])}` : `${ic('flag')} ${NT_KIND[N.kind].n} · ${N.res.map(r => `${r.nm} ${r.win ? '승' : '패'}`).join(' → ')}`}</div>` : `<div class="small muted">${S.season.ntChk ? '이번 시즌엔 대표팀에 뽑히지 못했어요.' : '시즌 3라운드가 끝나면 대표팀 명단이 발표돼요.'} 다음 대회: ${NT_KIND[ntKind(S.year)].n}</div>`;
+  return `<div class="label">🇰🇷 국가대표</div><div class="panel pad nt-card"><div class="nt-stat"><div><b>${T.caps}</b><small>A매치</small></div><div><b>${T.goals}</b><small>A매치 골</small></div><div><b>${S.trophies.filter(t => t.comp === '월드컵' || t.comp === '아시안컵').length}</b><small>대표팀 우승</small></div></div>${cur}<p class="small muted" style="margin:6px 0 0">실력·인기·이번 시즌 평점이 높을수록 뽑히기 쉬워요. 짝수 해엔 월드컵, 홀수 해엔 아시안컵이 열려요.</p></div>`;
+}
+
 const careerSum = k => S.history.reduce((a, h) => a + (h[k] || 0), 0) + (S.season[k] || 0);
 const ACH = [
   ['debut','user-round','프로 데뷔','첫 공식 경기 출전', s => careerSum('apps') >= 1, 30],
@@ -3926,6 +4073,10 @@ const ACH = [
   ['hardMis5','flame','도전자','어려움 이상 미션 5회 성공', s => s.rec.hardMis >= 5, 250],
   ['veteran','medal','베테랑','5시즌 완주', s => s.history.length >= 5, 200],
   ['psy5','brain','멘탈 갑','심리전 5회 승리', s => s.rec.psyW >= 5, 150],
+  ['nt1','flag','태극마크','국가대표 데뷔', s => s.nt && s.nt.caps >= 1, 150],
+  ['ntgoal','goal','A매치 골','국가대표 경기에서 득점', s => s.nt && s.nt.goals >= 1, 150],
+  ['asian','trophy','아시아 정상','아시안컵 우승', s => s.rec.asianWin >= 1, 500],
+  ['wc','crown','월드 챔피언','월드컵 우승', s => s.rec.wcWin >= 1, 1500],
   ['limit1','flame','한계 돌파','능력치 100 돌파', s => s.rec.lb >= 1, 300],
   ['limit5','zap','초월자','한계 돌파 5회 성공', s => s.rec.lb >= 5, 600],
   ['vtop100','badge-dollar-sign','몸값 TOP 100','세계 몸값 랭킹 TOP 100 진입', s => s.rec.vbest > 0 && s.rec.vbest <= 100, 200],
