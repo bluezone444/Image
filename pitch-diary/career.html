@@ -1176,6 +1176,9 @@ table.standings{min-width:0}
 .hof-row em{flex:none;font-style:normal;font-family:var(--f-display);color:var(--gold);font-size:15px}
 .bk-btn{font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px}
 .bk-load{cursor:pointer}
+.sal-in{display:flex;align-items:center;gap:8px;margin:6px 0 14px}
+.sal-in input{flex:1;min-width:0;padding:12px 14px;border-radius:12px;border:2px solid var(--edge);background:#0b1128;color:var(--ink);font-family:var(--f-display);font-size:22px;text-align:right}
+.sal-in span{font-weight:900}
 </style>
 </head>
 <body>
@@ -1607,7 +1610,7 @@ function load(slot = curSlot){
       for (const n of r.news){ const m = typeof n?.h === 'string' && n.h.includes('[오피셜]') && /재계약|이적/.test(n.h) && n.h.match(/(\d+)억(?: ([\d,]+)만)?원/); if (m) best = Math.max(best, Number(m[1]) * 10000 + (m[2] ? Number(m[2].replace(/,/g, '')) : 0)); }
       if (best > r.salary * 1.2){ r.salary = Math.min(SAL_MAX, best); r.best = {...(r.best || {}), salary: Math.max(Number(r.best?.salary) || 0, r.salary)}; }
     }
-    r.salFix = true;
+    r.salFix = true; r.salAsk = !!r.salAsk;
     r.earn = int(r.earn, 0, 1e9, 0); r.injury = int(r.injury, 0, 10, 0);
     r.newsN = int(r.newsN, 0, 1e9, 0); r.newsSeen = int(r.newsSeen, 0, r.newsN, r.newsN);
     r.rel = Object.fromEntries(Object.keys(MATES).map(k => [k, int(r.rel && r.rel[k], 0, 100, REL_DEF[k])]));
@@ -1881,6 +1884,22 @@ const SPEECH = {
 };
 
 // ---------- 허브 ----------
+// 예전 상한(200억)에 연봉이 묶인 저장: 기록이 남지 않은 경우 실제 계약 연봉을 한 번만 입력받아 바로잡는다
+function salaryFixModal(){
+  if (S.salAsk || S.salary < 1995000 || S.salary > 2005000 || document.querySelector('.modal')) return;
+  const el = modal(`<div class="eyebrow">${ic('wallet')} 연봉 오류 바로잡기</div><h3>연봉이 200억에 묶여 있어요</h3>
+    <p class="small muted">예전 버전의 버그로 200억이 넘는 연봉이 200억으로 잘려 저장됐을 수 있어요. 마지막으로 계약한 연봉을 알고 있다면 입력해 주세요. 한 번만 물어봐요.</p>
+    <div class="sal-in"><input id="salV" type="number" inputmode="numeric" min="200" max="5000" step="1" placeholder="예) 800"><span>억 원</span></div>
+    <div class="sk-btns"><button class="btn dark" type="button" id="salKeep">200억이 맞아요</button><button class="btn" type="button" id="salOk">이 금액으로 고치기</button></div>`);
+  const done = async () => { S.salAsk = true; save(); await el.close(); renderHub(); };
+  el.querySelector('#salKeep').onclick = done;
+  el.querySelector('#salOk').onclick = () => {
+    const v = Math.round(Number(el.querySelector('#salV').value));
+    if (!(v >= 200 && v <= 5000)){ toast('200 ~ 5000억 사이로 입력해 주세요'); return; }
+    S.salary = v * 10000; S.best.salary = Math.max(S.best.salary, S.salary);
+    addNews(`[정정] ${S.name}의 연봉은 ${money(S.salary)}입니다`); toast(`연봉을 ${money(S.salary)}으로 바로잡았어요`); done();
+  };
+}
 function renderHub(){
   if (!S.week){ S.week = makeWeek(); save(); }
   if (!S.season.obj) S.season.obj = makeObjectives();
@@ -1891,6 +1910,7 @@ function renderHub(){
   if (!S.v0){ S.v0 = myValue(); save(); }
   if (S.injury && ntPending()){ S.season.nt.alive = false; addNews(`${natF()} ${S.name}, 부상으로 대표팀 하차`); save(); setTimeout(() => toast('부상으로 국가대표에서 하차했어요'), 700); }
   if (S.week && S.week.lb && S.week.lb.started && !S.week.lb.res){ S.week.lb.res = 'fail'; S.lbCd = 3; save(); setTimeout(() => toast('한계 돌파 시험을 중간에 포기했다… 몇 주 뒤 다시 기회가 와요'), 600); }
+  if (!S.salAsk && S.salary >= 1995000 && S.salary <= 2005000) setTimeout(salaryFixModal, 900);
   if (UI.vToast){ const m = UI.vToast; UI.vToast = null; setTimeout(() => toast(m), 1200); }
   const t = UI.tab;
   if (t === 'player'){ frame(playerTab(), true); bindPlayer(); }
