@@ -811,6 +811,12 @@ table.standings{min-width:0}
 .conds .psyc{border-color:rgba(61,214,255,.5)} .conds .psyc.down{border-color:rgba(255,77,109,.5)} .conds .psyc.down .ico{color:var(--hot)}
 .mis-res.wonder{background:rgba(61,214,255,.14);color:var(--cyan)}
 @media (max-width:360px){ .psy-picks{grid-template-columns:1fr} .psy-b{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:2px 8px} .psy-b small{width:100%} .wseg button{font-size:13px} }
+.vlg{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.vlg .opt.mine:not(.on){border-color:rgba(255,200,61,.5)}
+.vlg-sum{text-align:center;font-size:12px;color:var(--muted)}
+.vc-gap{margin:0 0 6px !important} .vc-gap b{color:var(--gold)}
+.lg-top{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink);padding:6px 10px;border-radius:10px;background:rgba(255,200,61,.08)}
+.lg-top .ico{color:var(--gold);width:15px;height:15px;flex:none}
 </style>
 </head>
 <body>
@@ -1228,7 +1234,7 @@ function load(){
     r.stars = cleanStars(r.stars) || genStars(); r.v0 = int(r.v0, 0, 1e9, 0);
     r.honors = (Array.isArray(r.honors) ? r.honors : []).filter(h => h && AWARDS[h.k]).map(h => ({y:int(h.y, 2000, 2100, 2027), k:h.k})).slice(0, 80);
     r.awardHist = cleanHist(r.awardHist); r.awards = cleanAwards(r.awards);
-    r.season.hot = int(r.season.hot, 0, 99, 0); r.season.winter = !!r.season.winter; r.season.agentCall = !!r.season.agentCall;
+    r.season.hot = int(r.season.hot, 0, 99, 0); r.season.lgTop = !!r.season.lgTop; r.season.winter = !!r.season.winter; r.season.agentCall = !!r.season.agentCall;
     r.season.obj = Array.isArray(r.season.obj) ? r.season.obj.filter(o => o && OBJ[o.k]).map(o => ({k:o.k, n: o.k === 'rating' ? clamp(Number(o.n) || 6.8, 5, 9) : int(o.n, 1, 99, 1)})).slice(0, 3) : null;
     r.season.objRes = Array.isArray(r.season.objRes) ? r.season.objRes.map(Boolean).slice(0, 3) : undefined;
     r.ach = Array.isArray(r.ach) ? [...new Set(r.ach.filter(a => ACH.some(x => x[0] === a)))] : [];
@@ -3156,33 +3162,54 @@ function newStar(p, o, age, used){
   return {n, f, p, a:age, o, c:starClub(o, age), pop: clamp(Math.round((o - 75) * 3.5 + 40 + ri(-10, 10)), 25, 99), fm: ri(88, 112), v:0, v0:0};
 }
 const starV = x => valueOf(x.o, x.a, x.p, CLUB[x.c].lg, x.pop, x.fm);
+// ---------- 리그별 선수 풀: 리그마다 포지션별로 최소 인원을 채운다 ----------
+const LG_WANT = {FW:6, MF:6, DF:5, GK:3};
+const LG_SHORT = {K:'K리그1', J1:'J1리그', B2:'2.분데스', EPL:'EPL', LIGA:'라리가', SA:'세리에 A', BUN:'분데스리가'};
+const LG_LOCAL = {K:.8, J1:.8, B2:.65};
+const randAge = () => [ri(18, 21), ri(22, 26), ri(27, 30), ri(31, 34)][wpick([[14,0],[40,1],[32,2],[14,3]])[1]];
+function newLocal(lg, p, used, young){
+  const c = pick(leagueClubs(lg)), [n, f] = starName(used, Math.random() < (LG_LOCAL[lg] || .45) ? LG_NAT[lg] : null);
+  const a = young ? ri(18, 20) : randAge();
+  const o = clamp(CLUB[c].s + ri(-3, 6) - (a <= 21 ? ri(2, 5) : 0), 55, 90);
+  return {n, f, p, a, o, c, home:lg, pop: clamp(Math.round((o - 62) * 2.5 + 20 + ri(-8, 8)), 5, 90), fm: ri(88, 112), v:0, v0:0};
+}
+function fillLeagues(list){
+  const used = new Set(list.map(x => x.n));
+  for (const lg of ALL_LG) for (const p of Object.keys(LG_WANT)){
+    let have = list.filter(x => x.p === p && CLUB[x.c].lg === lg).length;
+    while (have++ < LG_WANT[p]){ const y = newLocal(lg, p, used); y.v = starV(y); y.v0 = y.v; list.push(y); }
+  }
+  return list;
+}
 function genStars(){
   const used = new Set(), out = [];
   for (const p of ['FW','MF','DF','GK']) for (let i = 0; i < 25; i++){
-    const age = wpick([[14,0],[40,1],[32,2],[14,3]])[1];
-    const a = [ri(18, 21), ri(22, 26), ri(27, 30), ri(31, 34)][age];
+    const a = randAge();
     out.push(newStar(p, Math.round(STAR_TOP[p] - i * .45 + rand(-1.5, 1.5) - (a <= 21 ? ri(3, 7) : 0)), a, used));
   }
   out.forEach(x => { x.v = starV(x); x.v0 = x.v; });
-  return out;
+  return fillLeagues(out);
 }
 function cleanStars(a){
-  if (!Array.isArray(a) || a.length < 40 || a.length > 140) return null;
-  const out = a.filter(x => x && typeof x.n === 'string' && POS[x.p] && CLUB[x.c]).map(x => ({n:x.n.slice(0, 20), f:String(x.f || '🌍').slice(0, 16), p:x.p, a:int(x.a, 16, 45, 25), o:int(x.o, 40, 99, 80), c:x.c, pop:int(x.pop, 0, 99, 50), fm:int(x.fm, 75, 135, 100), v:0, v0:int(x.v0, 0, 1e9, 0)}));
+  if (!Array.isArray(a) || a.length < 40 || a.length > 400) return null;
+  const out = a.filter(x => x && typeof x.n === 'string' && POS[x.p] && CLUB[x.c]).map(x => ({n:x.n.slice(0, 20), f:String(x.f || '🌍').slice(0, 16), p:x.p, a:int(x.a, 16, 45, 25), o:int(x.o, 40, 99, 80), c:x.c, home: ALL_LG.includes(x.home) ? x.home : undefined, pop:int(x.pop, 0, 99, 50), fm:int(x.fm, 75, 135, 100), v:0, v0:int(x.v0, 0, 1e9, 0)}));
   if (out.length < 40) return null;
   out.forEach(x => { x.v = starV(x); if (!x.v0) x.v0 = x.v; });
-  return out;
+  return fillLeagues(out);
 }
 function myForm(){ const r = S.season.ratings; if (r.length < 3) return 100; return clamp(Math.round(100 + (r.reduce((s, v) => s + v, 0) / r.length - 6.8) * 30), 75, 135); }
 const AW_V = {ballon:.3, golden:.15, yashin:.15, puskas:.08, boot:.1, best11:.05, young:.06};
 const honorBoost = () => 1 + (S.honors || []).filter(h => h.y >= S.year - 1).reduce((s, h) => s + (AW_V[h.k] || 0), 0);
 const myValue = () => Math.round(valueOf(ovrOf(S.stats, S.pos), S.age, S.pos, CLUB[S.club].lg, S.pop, myForm()) * honorBoost() / 100) * 100;
-function valueRank(pos){
-  const list = S.stars.filter(x => !pos || x.p === pos).map(x => ({...x}));
-  if (!pos || pos === S.pos) list.push({me:true, n:S.name, f:'🇰🇷', p:S.pos, a:S.age, o:ovrOf(S.stats, S.pos), c:S.club, v:myValue(), v0:S.v0 || 0});
+const myLg = () => CLUB[S.club].lg;
+// 랭킹: pos(포지션) · lg(리그) 필터. 세계는 TOP 100, 포지션은 TOP 25, 리그는 리그 선수 전원
+function valueRank(pos, lg){
+  const list = S.stars.filter(x => (!pos || x.p === pos) && (!lg || CLUB[x.c].lg === lg)).map(x => ({...x}));
+  if ((!pos || pos === S.pos) && (!lg || lg === myLg())) list.push({me:true, n:S.name, f:'🇰🇷', p:S.pos, a:S.age, o:ovrOf(S.stats, S.pos), c:S.club, v:myValue(), v0:S.v0 || 0});
   return list.sort((a, b) => b.v - a.v);
 }
-const myVRank = pos => valueRank(pos).findIndex(x => x.me) + 1;
+const rankCap = (pos, lg, list) => lg ? list.length : pos ? 25 : 100;
+const myVRank = (pos, lg) => valueRank(pos, lg).findIndex(x => x.me) + 1;
 function starsWeek(){
   let best = null;
   for (const x of S.stars){
@@ -3192,33 +3219,42 @@ function starsWeek(){
     if (!best || Math.abs(d) > Math.abs(best[1])) best = [x, d];
   }
   if (best && Math.abs(best[1]) > .04 && Math.random() < .3) addNews(`${best[1] > 0 ? '📈' : '📉'} [몸값] ${best[0].f} ${best[0].n}(${best[0].c}) ${best[1] > 0 ? '급등' : '급락'} → ${vfmt(best[0].v)}원`);
-  const r = myVRank(''), n = S.stars.length, prev = S.rec.vbest || 999;
-  if (r <= n && r < prev){
+  const r = myVRank(''), prev = S.rec.vbest || 999;
+  if (r <= 100 && r < prev){
     S.rec.vbest = r;
     const ms = [1, 10, 50, 100].find(m => r <= m && prev > m);
     if (ms){ addNews(`💰 ${S.name}, 세계 몸값 랭킹 ${ms === 1 ? '1위 등극!' : `TOP ${ms} 진입`} (${vfmt(myValue())}원)`); UI.vToast = `💰 세계 몸값 ${ms === 1 ? '1위 등극!' : `TOP ${ms} 진입!`}`; }
   }
+  if (!S.season.lgTop && myVRank('', myLg()) === 1){ S.season.lgTop = true; addNews(`💎 ${S.name}, ${LEAGUES[myLg()].n} 몸값 1위 등극 (${vfmt(myValue())}원)`); UI.vToast = UI.vToast || `💎 ${LG_SHORT[myLg()]} 몸값 1위!`; }
 }
 function starsSeason(){
   const used = new Set(S.stars.map(x => x.n)), msgs = [];
   S.stars = S.stars.map(x => {
     x.a++;
-    x.o = clamp(x.o + (x.a <= 23 ? ri(0, 3) : x.a <= 28 ? ri(-1, 2) : x.a <= 31 ? -ri(0, 2) : -ri(1, 3)), 60, 95);
-    if (x.a >= 36 || (x.a >= 33 && Math.random() < .35) || x.o < STAR_TOP[x.p] - 15){
-      const y = newStar(x.p, Math.round(STAR_TOP[x.p] - rand(9, 14)), ri(18, 20), used);
-      msgs.push(x.a >= 33 ? `👋 ${x.f} ${x.n}(${x.a}세), 현역 은퇴 선언` : `🌟 ${y.f} ${y.n}(${y.a}세·${y.c}), 세계가 주목하는 신성 등장`);
-      return y;
+    x.o = clamp(x.o + (x.a <= 23 ? ri(0, 3) : x.a <= 28 ? ri(-1, 2) : x.a <= 31 ? -ri(0, 2) : -ri(1, 3)), 50, 95);
+    const lg = CLUB[x.c].lg;
+    if (x.home){
+      if (x.a >= 35 || (x.a >= 33 && Math.random() < .35)){ const y = newLocal(x.home, x.p, used, true); if (Math.random() < .3) msgs.push(`👋 ${x.f} ${x.n}(${x.c}), ${x.a}세로 은퇴`); return y; }
+      if (x.o >= 80 && x.a <= 27 && Math.random() < .25){ const c = starClub(x.o, x.a); msgs.push(`✈️ [유럽 진출] ${x.f} ${x.n}, ${x.c} → ${c}`); x.c = c; x.home = undefined; }
+      else if (Math.random() < .1){ const c = pick(leagueClubs(lg).filter(c => c !== x.c)); if (c){ if (Math.random() < .4) msgs.push(`🔁 [${LG_SHORT[lg]}] ${x.n}, ${x.c} → ${c}`); x.c = c; } }
+    } else {
+      if (x.a >= 36 || (x.a >= 33 && Math.random() < .35) || x.o < STAR_TOP[x.p] - 15){
+        const y = newStar(x.p, Math.round(STAR_TOP[x.p] - rand(9, 14)), ri(18, 20), used);
+        msgs.push(x.a >= 33 ? `👋 ${x.f} ${x.n}(${x.a}세), 현역 은퇴 선언` : `🌟 ${y.f} ${y.n}(${y.a}세·${y.c}), 세계가 주목하는 신성 등장`);
+        return y;
+      }
+      if (Math.random() < .12){ const c = starClub(x.o, x.a); if (c !== x.c){ msgs.push(`✈️ [이적] ${x.f} ${x.n}, ${x.c} → ${c}`); x.c = c; } }
     }
-    if (Math.random() < .12){ const c = starClub(x.o, x.a); if (c !== x.c){ msgs.push(`✈️ [이적] ${x.f} ${x.n}, ${x.c} → ${c}`); x.c = c; } }
     x.fm = ri(90, 110); return x;
   });
   S.stars.forEach(x => { x.v = starV(x); x.v0 = x.v; });
-  shuffle(msgs).slice(0, 3).forEach(addNews);
+  fillLeagues(S.stars);
+  shuffle(msgs).slice(0, 4).forEach(addNews);
 }
 
 function vRankText(){
-  const all = valueRank(''), ar = all.findIndex(x => x.me) + 1, aN = all.length - 1, pr = myVRank(S.pos), pN = S.stars.filter(x => x.p === S.pos).length;
-  return `세계 ${ar <= aN ? ar + '위' : `TOP ${aN} 밖`} · ${POSN[S.pos]} ${pr <= pN ? pr + '위' : `TOP ${pN} 밖`}`;
+  const ar = myVRank(''), lr = myVRank('', myLg());
+  return `세계 ${ar <= 100 ? ar + '위' : 'TOP 100 밖'} · ${LG_SHORT[myLg()]} ${lr}위`;
 }
 const vMini = id => `<button type="button" class="panel vmini" id="${id}">${ic('badge-dollar-sign')}<div><small>내 몸값 (추정)</small><b>${vfmt(myValue())}원</b><small>${segs(vRankText() + ' · 랭킹 보기')}</small></div>${ic('chevron-right')}</button>`;
 const goValue = () => { UI.tab = 'world'; UI.wsub = 'value'; renderHub(); };
@@ -3227,22 +3263,28 @@ const goValue = () => { UI.tab = 'world'; UI.wsub = 'value'; renderHub(); };
 const segs = t => String(t).split(' · ').filter(Boolean).map((p, i) => `<span class="nw">${i ? '· ' : ''}${esc(p)}</span>`).join(' ');
 function trendHtml(x){ const d = x.v0 ? Math.round((x.v / x.v0 - 1) * 100) : 0; return d ? `<i class="${d > 0 ? 'up' : 'down'}">${d > 0 ? '▲' : '▼'}${Math.abs(d)}%</i>` : '<i>━</i>'; }
 function valueBoard(){
-  const pos = UI.vpos || '', list = valueRank(pos), all = valueRank(''), mv = myValue();
-  const aN = all.length - 1, pN = S.stars.filter(x => x.p === S.pos).length, ar = all.findIndex(x => x.me) + 1, pr = myVRank(S.pos);
-  const inAll = ar <= aN, d0 = S.v0 ? Math.round((mv / S.v0 - 1) * 100) : 0;
-  const others = all.filter(x => !x.me), gap = inAll ? (ar > 1 ? all[ar - 2].v - mv : 0) : others[aN - 1].v - mv;
-  const show = UI.vmore ? 25 : 10, meI = list.findIndex(x => x.me), N = list.length - (meI >= 0 ? 1 : 0);
-  const row = (x, i) => `<div class="vrow ${x.me ? 'me' : ''} ${i < 3 ? 'top' + (i + 1) : ''}" style="animation-delay:${Math.min(i, 12) * 30}ms"><span class="vr">${x.me && i >= N ? '—' : i + 1}</span>${crest(x.c)}<div class="vn"><b>${x.f} ${esc(x.n)}${x.me ? ' <em>나</em>' : ''}</b><small>${segs(`${POSN[x.p]} · ${x.a}세 · OVR ${x.o} · ${x.c}`)}</small></div><div class="vv"><b>${vfmt(x.v)}</b>${trendHtml(x)}</div></div>`;
+  const pos = UI.vpos || '', lg = ALL_LG.includes(UI.vlg) ? UI.vlg : '', list = valueRank(pos, lg), cap = rankCap(pos, lg, list), mv = myValue();
+  const all = valueRank(''), ar = all.findIndex(x => x.me) + 1, lr = myVRank('', myLg()), lN = valueRank('', myLg()).length, pr = myVRank(S.pos), d0 = S.v0 ? Math.round((mv / S.v0 - 1) * 100) : 0;
+  const gap = ar === 1 ? 0 : ar <= 100 ? all[ar - 2].v - mv : all.filter(x => !x.me)[99].v - mv;
+  const show = UI.vmore ? Math.min(cap, 30) : 10, meI = list.findIndex(x => x.me);
+  const scope = lg ? `${LEAGUES[lg].f} ${LEAGUES[lg].n}` : '🌍 세계';
+  const row = (x, i) => `<div class="vrow ${x.me ? 'me' : ''} ${i < 3 ? 'top' + (i + 1) : ''}" style="animation-delay:${Math.min(i, 12) * 30}ms"><span class="vr">${i + 1 > cap ? '—' : i + 1}</span>${crest(x.c)}<div class="vn"><b>${x.f} ${esc(x.n)}${x.me ? ' <em>나</em>' : ''}</b><small>${segs(`${POSN[x.p]} · ${x.a}세 · OVR ${x.o} · ${x.c}`)}</small></div><div class="vv"><b>${vfmt(x.v)}</b>${trendHtml(x)}</div></div>`;
+  const lsum = lg ? (() => { const L = list.filter(x => !x.me), avg = L.reduce((s, x) => s + x.v, 0) / Math.max(1, L.length); return `<div class="vlg-sum"><span>${segs(`선수 ${list.length}명 · 평균 몸값 ${vfmt(avg)} · 1위 ${list[0] ? vfmt(list[0].v) : '-'}`)}</span></div>`; })() : '';
   return `<section class="panel vcard">
       <div class="vc-top"><span class="label">${ic('badge-dollar-sign')} 내 몸값 (추정)</span><span class="tag ${d0 >= 0 ? 'gold' : ''}">시즌 시작 대비 ${d0 > 0 ? '+' : ''}${d0}%</span></div>
       <div class="vc-val">${vfmt(mv)}<small>원</small></div>
-      <div class="vc-ranks"><div><b>${inAll ? ar + '위' : '랭킹 밖'}</b><small>세계 TOP ${aN}</small></div><div><b>${pr <= pN ? pr + '위' : '랭킹 밖'}</b><small>${POSN[S.pos]} TOP ${pN}</small></div><div><b>${ar === 1 ? '세계 1위!' : '+' + vfmt(Math.max(100, gap))}</b><small>${inAll ? (ar === 1 ? '최고 몸값' : '한 계단 위까지') : `TOP ${aN} 진입까지`}</small></div></div>
+      <div class="vc-ranks"><div><b>${ar <= 100 ? ar + '위' : '랭킹 밖'}</b><small>세계 TOP 100</small></div><div><b>${lr}위</b><small>${LG_SHORT[myLg()]} ${lN}명 중</small></div><div><b>${pr <= 25 ? pr + '위' : '랭킹 밖'}</b><small>${POSN[S.pos]} TOP 25</small></div></div>
+      <p class="small muted vc-gap">${ar === 1 ? '세계 최고 몸값 선수예요!' : `${ar <= 100 ? '세계 랭킹 한 계단 위까지' : '세계 TOP 100 진입까지'} <b>+${vfmt(Math.max(100, gap))}</b>`}</p>
       <p class="small muted">능력치 · 나이 · 리그 수준 · 인기 · 이번 시즌 평점 · 수상 경력으로 매겨져요. 유럽 빅리그로 가면 크게 뛰어요.</p>
     </section>
+    <div class="label">${ic('globe')} 리그 선택</div>
+    <div class="vlg">${['', ...ALL_LG].map(k => `<button type="button" class="opt ${lg === k ? 'on' : ''} ${k && k === myLg() ? 'mine' : ''}" data-vl="${k}">${k ? `${LEAGUES[k].f} ${LG_SHORT[k]}` : '🌍 세계'}</button>`).join('')}</div>
     <div class="vpos">${[['','전체'],['FW','공격수'],['MF','미드필더'],['DF','수비수'],['GK','골키퍼']].map(([k, n]) => `<button type="button" class="opt ${pos === k ? 'on' : ''}" data-vp="${k}">${n}</button>`).join('')}</div>
-    <div class="panel vlist">${list.slice(0, show).map(row).join('')}${meI >= show ? `<div class="vgap">⋯</div>${row(list[meI], meI)}` : ''}</div>
-    <button class="btn dark block sm" type="button" id="vmore">${UI.vmore ? '접기' : `TOP 25 전체 보기`}</button>
-    <p class="small muted" style="text-align:center;margin:0">랭킹의 선수들은 모두 가상 인물이에요. 몸값은 매주 폼에 따라 출렁여요.</p>`;
+    <div class="label">${scope} 몸값 ${lg ? '랭킹' : `TOP ${cap}`}${pos ? ' · ' + POSN[pos] : ''}</div>
+    ${lsum}
+    <div class="panel vlist">${list.length ? list.slice(0, show).map(row).join('') + (meI >= show ? `<div class="vgap">⋯</div>${row(list[meI], meI)}` : '') : '<p class="small muted pad" style="margin:0">선수가 없어요.</p>'}</div>
+    ${Math.min(cap, list.length) > 10 ? `<button class="btn dark block sm" type="button" id="vmore">${UI.vmore ? '접기' : `TOP ${Math.min(cap, list.length, 30)} 전체 보기`}</button>` : ''}
+    <p class="small muted" style="text-align:center;margin:0">랭킹의 선수들은 모두 가상 인물이에요. 몸값은 매주 폼에 따라 출렁이고, 시즌마다 이적·은퇴·신인 등장으로 바뀌어요.</p>`;
 }
 function awardsBoard(){
   const my = S.honors || [], H = S.awardHist || [];
@@ -3262,7 +3304,9 @@ function leaguesBoard(){
     return `<div class="panel pad league ${l === cur ? 'mine' : ''}">
       <div class="lg-head"><span class="lg-flag">${L.f}</span><div style="min-width:0"><b>${L.n}</b><small>평균 전력 ${avg} · 연봉 수준 ×${L.pay} · 🏆 ${esc(L.cup)}</small></div>${l === cur ? '<span class="tag gold">소속</span>' : ''}</div>
       <div class="lg-clubs">${cl.slice(0, 4).map(c => `<span>${crest(c)}<em>${esc(c)}</em><b>${CLUB[c].s}</b></span>`).join('')}</div>
+      ${(() => { const t = valueRank('', l).filter(x => !x.me)[0]; return t ? `<div class="lg-top">${ic('gem')}<span>${segs(`몸값 1위 ${t.f} ${t.n} · ${t.c} · ${vfmt(t.v)}`)}</span></div>` : ''; })()}
       ${l !== cur ? `<div class="small muted">🔭 스카우트 관심 ${sc ? '🟡'.repeat(Math.min(sc, 5)) : '아직 없음'}</div>` : ''}
+      <button type="button" class="btn dark sm block" data-golg="${l}">${ic('badge-dollar-sign')} ${LG_SHORT[l]} 몸값 랭킹 보기</button>
     </div>`;
   }).join('');
 }
@@ -3274,6 +3318,8 @@ function worldTab(){
 function bindWorld(){
   root.querySelectorAll('[data-ws]').forEach(b => b.onclick = () => { UI.wsub = b.dataset.ws; renderHub(); });
   root.querySelectorAll('[data-vp]').forEach(b => b.onclick = () => { UI.vpos = b.dataset.vp; renderHub(); });
+  root.querySelectorAll('[data-vl]').forEach(b => b.onclick = () => { UI.vlg = b.dataset.vl; UI.vmore = false; renderHub(); });
+  root.querySelectorAll('[data-golg]').forEach(b => b.onclick = () => { UI.wsub = 'value'; UI.vlg = b.dataset.golg; UI.vpos = ''; UI.vmore = false; renderHub(); });
   const m = $('#vmore'); if (m) m.onclick = () => { UI.vmore = !UI.vmore; renderHub(); };
 }
 
@@ -3320,30 +3366,32 @@ function makeAwards(){
   const list = [];
   // 리그 시상 (득점왕 · 베스트 11 · 영플레이어)
   const lg = CLUB[S.club].lg, lgClubs = leagueClubs(lg).filter(c => c !== S.club), used = new Set([S.name]);
-  const lgP = () => { const [n] = starName(used, LG_NAT[lg]); return {n, f:LG_NAT[lg], c:pick(lgClubs)}; };
+  const lgPool = S.stars.filter(x => CLUB[x.c].lg === lg && x.c !== S.club);
+  const lgP = (f = () => true) => { const c = shuffle(lgPool.filter(x => f(x) && !used.has(x.n)).sort((a, b) => b.o - a.o).slice(0, 5))[0]; if (c){ used.add(c.n); return {n:c.n, f:c.f, c:c.c}; } const [n] = starName(used, LG_NAT[lg]); return {n, f:LG_NAT[lg], c:pick(lgClubs)}; };
+  const atk = x => x.p === 'FW' || x.p === 'MF';
   const rows = [];
   if (S.pos !== 'GK'){
-    const top = ri(7, 11), c = [{...lgP(), g: top}, {...lgP(), g: Math.max(1, top - ri(1, 3))}, {...lgP(), g: Math.max(1, top - ri(2, 4))}, {...meC, g: me.g + .5}];
+    const top = ri(7, 11), c = [{...lgP(atk), g: top}, {...lgP(atk), g: Math.max(1, top - ri(1, 3))}, {...lgP(atk), g: Math.max(1, top - ri(2, 4))}, {...meC, g: me.g + .5}];
     c.sort((a, b) => b.g - a.g);
     const myR = c.findIndex(x => x.me) + 1, show = c.slice(0, 3);
     rows.push({k:'boot', nom: show.map(x => ({n:x.n, f:x.f, c:x.c, s:`${Math.floor(x.g)}골`, me:!!x.me})), win:0, myR: myR <= 3 && me.g ? myR : null, of:c.length});
   }
   if (me.apps >= 4){
-    const c = [{...lgP(), r: r2(rand(6.85, 7.45))}, {...lgP(), r: r2(rand(6.8, 7.3))}, {...meC, r: me.rt + .001}];
+    const c = [{...lgP(x => x.p === S.pos), r: r2(rand(6.85, 7.45))}, {...lgP(x => x.p === S.pos), r: r2(rand(6.8, 7.3))}, {...meC, r: me.rt + .001}];
     c.sort((a, b) => b.r - a.r);
     const myR = c.findIndex(x => x.me) + 1, sh = shuffle(c);
     rows.push({k:'best11', nom: sh.map(x => ({n:x.n, f:x.f, c:x.c, s:`평점 ${x.r.toFixed(2)}`, me:!!x.me})), win: sh.indexOf(c[0]), myR, of:3});
   }
   if (S.age <= 23 && me.apps >= 4){
     const ys = (me.rt - 6.4) * 12 + me.g * 1.2 + me.as * .8 + me.apps * .25;
-    const c = [{...lgP(), y: rand(7, 16), s:'평점 ' + rand(6.9, 7.4).toFixed(1)}, {...lgP(), y: rand(5, 13), s:'평점 ' + rand(6.8, 7.2).toFixed(1)}, {...meC, y: ys}];
+    const c = [{...lgP(x => x.a <= 23), y: rand(7, 16), s:'평점 ' + rand(6.9, 7.4).toFixed(1)}, {...lgP(x => x.a <= 23), y: rand(5, 13), s:'평점 ' + rand(6.8, 7.2).toFixed(1)}, {...meC, y: ys}];
     c.sort((a, b) => b.y - a.y);
     const myR = c.findIndex(x => x.me) + 1, sh = shuffle(c);
     rows.push({k:'young', nom: sh.map(x => ({n:x.n, f:x.f, c:x.c, s:x.s, me:!!x.me})), win: sh.indexOf(c[0]), myR, of:3});
   }
   if (rows.length) list.push({k:'league', lg, rows});
   // 푸스카스상: 원더골 후보 + 팬 투표
-  const pk = shuffle(S.stars.filter(x => x.p !== 'GK')).slice(0, 3).map(x => ({n:x.n, f:x.f, c:x.c, s:pick(WONDER), q: rand(72, 98), pop:x.pop}));
+  const pk = shuffle(S.stars.filter(x => x.p !== 'GK' && !x.home)).slice(0, 3).map(x => ({n:x.n, f:x.f, c:x.c, s:pick(WONDER), q: rand(72, 98), pop:x.pop}));
   const w = S.season.wonder; if (w) pk.push({n:S.name, f:'🇰🇷', c:S.club, s:w.d + (w.opp ? ` (vs ${w.opp})` : ''), q:w.q, pop:S.pop, me:true});
   const wts = pk.map(x => x.q * x.q / 100 * (.5 + x.pop / 100) * rand(.75, 1.25)), tot = wts.reduce((a, b) => a + b, 0);
   let votes = wts.map(v => Math.round(v / tot * 100)); votes[votes.indexOf(Math.max(...votes))] += 100 - votes.reduce((a, b) => a + b, 0);
