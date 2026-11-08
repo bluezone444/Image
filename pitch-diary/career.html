@@ -322,7 +322,7 @@ table.hist th{color:var(--muted);font-weight:700;font-size:12px}
 .odds{display:inline-block;margin-top:6px;font-size:11px;font-weight:900;padding:2px 8px;border-radius:999px}
 .odds.hi{background:rgba(74,222,128,.15);color:var(--up)}.odds.mid{background:rgba(255,200,61,.15);color:var(--gold)}.odds.lo{background:rgba(255,107,129,.15);color:var(--down)}
 .verdict{text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
-.stampv{display:inline-block;font-family:var(--f-display);font-size:34px;padding:6px 20px;border:5px solid currentColor;border-radius:12px;transform:rotate(-7deg);animation:stamp .55s cubic-bezier(.3,1.6,.6,1) both}
+.stampv{display:inline-block;font-family:var(--f-display);font-size:clamp(22px,7vw,34px);max-width:100%;text-align:center;padding:6px 18px;border:5px solid currentColor;border-radius:12px;transform:rotate(-7deg);animation:stamp .55s cubic-bezier(.3,1.6,.6,1) both}
 .stampv.up{color:var(--up)}.stampv.keep{color:var(--muted)}.stampv.down{color:var(--down)}
 .moneyv{font-family:var(--f-display);font-size:32px;font-variant-numeric:tabular-nums}
 .offer{display:flex;align-items:center;gap:10px;padding:12px;border:2px solid var(--cyan);border-radius:16px;background:rgba(61,214,255,.08);animation:dealIn .45s ease both;text-align:left;width:100%}
@@ -467,6 +467,28 @@ table.hist th{color:var(--muted);font-weight:700;font-size:12px}
 .speech .ico,.memo .ico,.twist .ico,.offer .ico{color:var(--gold)}
 .note-head .ico{color:#6b5a32}
 .f-front b .ico{color:var(--gold)}
+
+/* ---------- 순위표 ---------- */
+.rank-hero{display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px;border-radius:18px;border:2px solid var(--gold);background:linear-gradient(180deg,#3a2f0c,#1a1406);box-shadow:0 6px 0 rgba(0,0,0,.35);text-align:center}
+.rank-hero b{display:block;font-family:var(--f-display);font-weight:400;font-size:44px;line-height:1;color:var(--gold);text-shadow:0 4px 0 #6b3f00}
+.rank-hero small{color:var(--muted)}
+table.standings{width:100%;border-collapse:collapse;font-size:13px;min-width:360px}
+table.standings th,table.standings td{padding:7px 4px;text-align:center;border-bottom:1px solid var(--edge);font-variant-numeric:tabular-nums}
+table.standings th{color:var(--muted);font-size:11px;font-weight:700}
+table.standings .l{text-align:left}
+table.standings .tc{display:flex;align-items:center;gap:6px;min-width:0}
+table.standings .tc .crest{width:22px;height:22px}
+table.standings .tc em{font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+table.standings b{font-family:var(--f-display);font-weight:400;font-size:15px}
+table.standings .rk{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;font-family:var(--f-display);font-size:12px}
+table.standings tr.z-champ .rk{background:var(--gold);color:#231700}
+table.standings tr.z-cont .rk{background:var(--cyan);color:#04202b}
+table.standings tr.z-down .rk{background:var(--hot);color:#fff}
+table.standings tr.me td{background:rgba(255,200,61,.14)}
+table.standings tr.me em{color:var(--gold);font-weight:900}
+.legend-z{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted);margin-top:-6px}
+.legend-z i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.legend-z i.z-champ{background:var(--gold)} .legend-z i.z-cont{background:var(--cyan)} .legend-z i.z-down{background:var(--hot)}
 
 @keyframes enter{from{opacity:0;transform:translateY(14px) scale(.98)}}
 @keyframes dealIn{from{opacity:0;transform:translateY(18px) rotate(-2deg) scale(.92)}}
@@ -889,6 +911,10 @@ function load(){
     r.out = r.out && typeof r.out === 'object' ? Object.fromEntries(Object.entries(r.out).filter(([k, v]) => typeof k === 'string' && v === true).slice(0, 10)) : {};
     r.trophies = (Array.isArray(r.trophies) ? r.trophies : []).filter(t => t && typeof t.comp === 'string').map(t => ({year:int(t.year, 2000, 2100, 2027), comp:t.comp.slice(0, 30)})).slice(0, 60);
     r.scout = Object.fromEntries(ALL_LG.map(l => [l, int(r.scout?.[l], 0, 9, 0)]));
+    if (r.table && typeof r.table === 'object' && LEAGUES[r.table.lg] && r.table.t && typeof r.table.t === 'object'){
+      const t = {}; for (const [c, v] of Object.entries(r.table.t)) if (CLUB[c] && CLUB[c].lg === r.table.lg && v) t[c] = Object.fromEntries(['p','w','d','l','gf','ga'].map(k => [k, int(v[k], 0, 999, 0)]));
+      r.table = {lg: r.table.lg, t};
+    } else r.table = null;
     r.window = r.window && Array.isArray(r.window.offers) ? {kind: r.window.kind === 'agent' ? 'agent' : 'winter', offers: r.window.offers.filter(o => o && CLUB[o.club] && o.club !== r.club).map(o => ({club:o.club, salary:int(o.salary, MIN_SALARY, 2000000, r.salary)})).slice(0, 2)} : null;
     if (r.window && !r.window.offers.length) r.window = null;
     r.news = (Array.isArray(r.news) ? r.news : []).filter(n => n && typeof n.h === 'string').slice(0, 40).map(n => ({h:n.h.slice(0, 160), t:String(n.t || '').slice(0, 30)}));
@@ -896,6 +922,7 @@ function load(){
     if (!['week','match','interview','nego','retired','window'].includes(r.phase)) r.phase = 'week';
     if (r.phase === 'window' && !r.window) r.phase = 'week';
     r.season = Object.assign(freshSeason(), r.season || {});
+    r.season.rank = r.season.rank ? int(r.season.rank, 1, 20, 1) : undefined;
     r.season.ratings = (Array.isArray(r.season.ratings) ? r.season.ratings : []).map(Number).filter(Number.isFinite);
     ['apps','starts','goals','assists','cs','W','D','L'].forEach(k => r.season[k] = int(r.season[k], 0, 99, 0));
     r.season.results = (Array.isArray(r.season.results) ? r.season.results : []).slice(0, 40).map(x => ['W','D','L'].includes(x) ? x : null);
@@ -929,11 +956,11 @@ function load(){
       const n = r.nego; n.offer = int(n.offer, -40, 60, 0); n.round = int(n.round, 1, 2, 1); n.avg = Number(n.avg) || 0; n.score = Number(n.score) || 0;
       n.used = (Array.isArray(n.used) ? n.used : []).filter(k => APPEALS[k]); n.log = (Array.isArray(n.log) ? n.log : []).map(l => ({me:String(l.me), gm:String(l.gm)}));
       n.opText = String(n.opText || ''); n.orig = int(n.orig, MIN_SALARY, 2000000, r.salary); n.base = int(n.base, MIN_SALARY, 2000000, n.orig);
-      if (n.result){ const x = n.result; if (!APPEALS[x.k] || !['up','keep','down'].includes(x.kind)) n.result = null; else { x.pct = int(x.pct, -60, 200, 0); x.newSalary = int(x.newSalary, MIN_SALARY, 2000000, r.salary); x.trust = int(x.trust, -30, 30, 0); x.gm = String(x.gm); } }
+      if (n.result){ const x = n.result; x.ok = x.ok !== false; if (!APPEALS[x.k] || !['up','keep','down'].includes(x.kind)) n.result = null; else { x.pct = int(x.pct, -60, 200, 0); x.newSalary = int(x.newSalary, MIN_SALARY, 2000000, r.salary); x.trust = int(x.trust, -30, 30, 0); x.gm = String(x.gm); } }
       n.offers = Array.isArray(n.offers) ? n.offers.filter(o => o && CLUB[o.club] && o.club !== r.club).map(o => ({club:o.club, salary:int(o.salary, MIN_SALARY, 2000000, r.salary)})).slice(0, 2) : null;
     }
     return r;
-  } catch { return null; }
+  } catch (e) { console.error('save load failed', e && e.message); return null; }
 }
 // 효과 적용 → 표시용 칩 [라벨, 변화량, 대체 텍스트]
 function applyFx(e){
@@ -1093,7 +1120,7 @@ function matchTab(){
   const se = S.season, avg = se.ratings.length ? (se.ratings.reduce((a,b) => a+b, 0) / se.ratings.length).toFixed(1) : '-';
   return `
     <section class="panel next ${f.k !== 'L' ? 'cup' : ''}">
-      <div class="next-top"><span class="tag gold">${S.year} · ${esc(fxLabel(f))}</span><span class="tag">${home ? '🏠 HOME' : '🚌 AWAY'}</span></div>
+      <div class="next-top"><span class="tag gold">${S.year} · ${esc(fxLabel(f))}</span><span class="tag">${f.k === 'L' ? `현재 ${myRank()}위 · ` : ''}${home ? 'HOME' : 'AWAY'}</span></div>
       ${f.k !== 'L' ? `<div class="cup-banner">${f.k === 'X' ? '⭐' : '🏆'} 토너먼트 · 지면 탈락 · 비기면 승부차기</div>` : ''}
       <div class="vs">
         <div class="side">${crest(S.club, 'xl')}<b>${esc(S.club)}</b><small>전력 ${CLUB[S.club].s}</small></div>
@@ -1165,8 +1192,11 @@ function bindPlayer(){
   const f = $('#firstLook'); if (f) f.onclick = () => openLookEditor('first');
 }
 function clubTab(){
-  const C = CLUB[S.club], M = mgr();
+  const C = CLUB[S.club], M = mgr(), rk = myRank(), lp = S.schedule.filter(f => f.k === 'L').length, done = S.schedule.slice(0, S.round).filter(f => f.k === 'L').length;
   return `
+    <div class="rank-hero"><div><span class="label">${LEAGUES[C.lg].f} ${esc(LEAGUES[C.lg].n)} · ${done}/${lp} 라운드</span><b>${rk}위</b></div><small>${esc(S.club)} · 승점 ${standings()[rk - 1].pts}</small></div>
+    <div class="label">${ic('trophy')} 리그 순위</div>
+    ${tableHtml()}
     <div class="panel pad stack" style="text-align:center;align-items:center">
       ${crest(S.club, 'xl')}<div><div class="disp" style="font-size:26px">${esc(S.club)}</div><div class="small muted">${LEAGUES[C.lg].f} ${esc(LEAGUES[C.lg].n)}${C.st ? ' · 🏟️ ' + esc(C.st) : ''} · 전력 ${C.s}</div></div>
       <span class="wealth">${WEALTH[C.w]}</span>
@@ -1393,6 +1423,7 @@ function applyMatch(r){
   S.prev = {rating:r.rating || 0, goals:r.goals, mins:r.mins};
   S.media = clamp(S.media + ri(-1, 1), -2, 2);
   if (!mgr().volatile){ const dm = r.res === 'W' ? (Math.random() < .5 ? 1 : 0) : r.res === 'L' ? (Math.random() < .6 ? -1 : 0) : 0; S.mood = clamp(S.mood + dm + (Math.random() < .15 ? ri(-1, 1) : 0), -2, 2); }
+  if (r.fx && r.fx.k === 'L'){ ensureTable(); simRound({opp:r.opp, tg:r.tg, og:r.og}); }
   if (r.fx && r.fx.k !== 'L'){
     if (!r.adv){ S.out[r.fx.comp] = true; addNews(`${r.fx.comp} ${r.fx.stage} 탈락… ${S.club}, ${r.opp}에 무릎`); }
     else if (r.fx.stage === '결승'){ S.trophies.push({year:S.year, comp:r.fx.comp}); S.season.cups = [...(S.season.cups || []), r.fx.comp]; fx.push(...applyFx({pop:12, trust:5})); addNews(`🏆 ${S.club}, ${r.fx.comp} 우승! ${S.name} 첫 트로피의 감격`.replace(' 첫', S.trophies.length > 1 ? '' : ' 첫')); r.trophy = r.fx.comp; }
@@ -1746,6 +1777,11 @@ function startNego(){
   const {avg, score} = seasonPerf(), W = CLUB[S.club].w;
   let offer = clamp(score * .5, -20, 30);
   if (offer > 0) offer *= W === 'rich' ? 1.3 : W === 'poor' ? .7 : 1; else offer *= W === 'poor' ? 1.25 : 1;
+  const rk = myRank(), lgN = LEAGUES[CLUB[S.club].lg].n;
+  S.season.rank = rk;
+  if (rk === 1){ S.trophies.push({year:S.year, comp:lgN}); S.season.cups = [...(S.season.cups || []), lgN]; S.pop = clamp(S.pop + 10, 0, 100); addNews(`🏆 ${S.club}, ${lgN} 우승! ${S.name}도 정상에`); }
+  else addNews(`${S.club}, ${lgN} 최종 ${rk}위로 시즌 마감`);
+  offer += rk === 1 ? 4 : rk <= 3 ? 3 : rk >= standings().length - 1 ? -5 : 0;
   const cups = S.season.cups || [];
   offer += cups.length * 7;
   let op = 0, opText;
@@ -1779,10 +1815,10 @@ function rollAppeal(k){
   let pct = n.round === 1 ? n.offer : 0, trust = 0, gm;
   const up = a => pct += a * (W === 'rich' ? 1.25 : W === 'poor' ? .75 : 1);
   if (k === 'accept'){ trust = 5; gm = '좋습니다. 내년에도 잘 부탁해요.'; }
-  else if (k === 'record'){ if (ok){ up(ri(12, 28)); gm = '숫자는 거짓말을 안 하죠. 인정합니다.'; } else { pct -= ri(4, 9); trust = -3; gm = '그 정도 기록으로는 어렵습니다.'; } }
-  else if (k === 'pop'){ if (ok){ up(Math.round(S.pop / 4) + ri(0, 6)); gm = '마케팅팀도 같은 의견이더군요. 반영하겠습니다.'; } else { pct -= ri(4, 9); trust = -3; gm = '인기는 성적으로 만드는 겁니다.'; } }
-  else if (k === 'loyal'){ if (ok){ up(ri(6, 12)); trust = 8; gm = '그 마음, 구단도 잊지 않겠습니다.'; } else { trust = 3; gm = '마음은 고맙지만 규정상 어렵네요.'; } }
-  else if (k === 'transfer'){ if (ok){ up(ri(30, 60)); trust = -6; gm = '…알겠습니다. 놓칠 순 없죠. 맞춰드리죠.'; } else { pct -= ri(12, 20); trust = -15; gm = '그럼 그 팀으로 가시든가요. 우리 제시액은 낮추겠습니다.'; } }
+  else if (k === 'record'){ if (ok){ up(ri(12, 28)); gm = '숫자는 거짓말을 안 하죠. 인정합니다.'; } else { pct = Math.min(pct, 0) - ri(3, 8); trust = -3; gm = '그 정도 기록으로는 어렵습니다.'; } }
+  else if (k === 'pop'){ if (ok){ up(Math.round(S.pop / 4) + ri(0, 6)); gm = '마케팅팀도 같은 의견이더군요. 반영하겠습니다.'; } else { pct = Math.min(pct, 0) - ri(3, 8); trust = -3; gm = '인기는 성적으로 만드는 겁니다.'; } }
+  else if (k === 'loyal'){ if (ok){ up(ri(6, 12)); trust = 8; gm = '그 마음, 구단도 잊지 않겠습니다.'; } else { pct = Math.min(pct, 0); trust = 3; gm = '마음은 고맙지만 규정상 어렵네요.'; } }
+  else if (k === 'transfer'){ if (ok){ up(ri(30, 60)); trust = -6; gm = '…알겠습니다. 놓칠 순 없죠. 맞춰드리죠.'; } else { pct = Math.min(pct, 0) - ri(12, 20); trust = -15; gm = '그럼 그 팀으로 가시든가요.'; } }
   if (!ok && k !== 'accept'){
     const xp = M.failPct[k] || 0, xt = M.failTrust[k] || 0;
     if (xp || xt){ pct += xp; trust += xt; gm += ` …그리고 ${mgrName()} 감독님이 이 얘길 듣고 꽤 불쾌해하셨습니다.`; }
@@ -1791,14 +1827,9 @@ function rollAppeal(k){
   pct = clamp(Math.round(pct), -45, 150);
   if (pct > -3 && pct < 3) pct = 0;
   const kind = pct >= 3 ? 'up' : pct <= -3 ? 'down' : 'keep';
+  if (!ok && k !== 'accept') gm += kind === 'down' ? ` 처음 제안은 없던 일로 하고, ${Math.abs(pct)}% 삭감하겠습니다.` : (n.round === 1 && n.offer > 0 ? ' 처음 제안한 인상안은 철회하고, 동결로 가겠습니다.' : ' 연봉은 동결입니다.');
   const newSalary = Math.max(MIN_SALARY, Math.round(n.base * (1 + pct / 100) / 100) * 100);
   return {k, ok, pct, kind, trust, gm, newSalary};
-}
-function makeOffers(base){
-  const ovr = ovrOf(S.stats, S.pos), p = clamp(.12 + (ovr - 58) / 60 + S.pop / 250, .05, .6);
-  if (Math.random() >= p) return [];
-  const clubs = shuffle(CLUBS.map(c => c[0]).filter(c => c !== S.club)).slice(0, Math.random() < .3 ? 2 : 1);
-  return clubs.map(c => ({club:c, salary: Math.max(MIN_SALARY, Math.round(base * rand(1.05, 1.55) * (CLUB[c].w === 'rich' ? 1.15 : CLUB[c].w === 'poor' ? .9 : 1) / 100) * 100)}));
 }
 function renderNego(){
   const n = S.nego, se = S.season, M = mgr();
@@ -1806,7 +1837,7 @@ function renderNego(){
   if (se.goals >= 10) awards.push('⚽ 두 자릿수 골'); if (se.assists >= 7) awards.push('🅰️ 도움 머신');
   if (n.avg >= 7.5 && se.apps >= 6) awards.push('⭐ 시즌 MVP 후보'); if (se.cs >= 4) awards.push('🧤 철벽');
   if (se.apps === se.results.filter(Boolean).length) awards.push('🔋 전 경기 출전');
-  (se.cups || []).forEach(c => awards.unshift(`🏆 ${c} 우승`)); if (S.pop >= 75) awards.push('🌟 팬 투표 1위');
+  (se.cups || []).forEach(c => awards.unshift(`🏆 ${c} 우승`)); if (se.rank) awards.unshift(`📊 리그 ${se.rank}위`); if (S.pop >= 75) awards.push('🌟 팬 투표 1위');
   const oddsTag = p => p >= .65 ? '<span class="odds hi">성공 가능성 높음</span>' : p >= .4 ? '<span class="odds mid">성공 가능성 보통</span>' : '<span class="odds lo">성공 가능성 낮음</span>';
   frame(`
     <div class="label">🏁 ${S.year} 시즌 결산</div>
@@ -1849,7 +1880,7 @@ async function negotiate(k){
 }
 function showVerdict(anim){
   const n = S.nego, r = n.result;
-  const label = {up:`상승 ▲ ${r.pct}%`, keep:'유지 ━', down:`삭감 ▼ ${Math.abs(r.pct)}%`}[r.kind];
+  const label = (r.ok || r.k === 'accept' ? '' : '협상 실패 · ') + {up:`상승 ▲ ${r.pct}%`, keep:'동결 ━', down:`삭감 ▼ ${Math.abs(r.pct)}%`}[r.kind];
   const total = Math.round((r.newSalary / n.orig - 1) * 100);
   const canRetry = n.round === 1 && r.k !== 'accept';
   $('#negoBody').innerHTML = `<div class="verdict">
@@ -1892,7 +1923,7 @@ function signContract(salary, pct, newClub){
   if (S.age <= 23){ const k = pick(STAT_KEYS.filter(k => POS[S.pos].w[k] > .1)); const g = ri(1, 3); S.stats[k] = clamp(S.stats[k] + g, 1, 99); msgs.push(`${statName(k, S.pos)} +${g} 자연 성장`); }
   if (S.age >= 30){ STAT_KEYS.forEach(k => { S.stats[k] = clamp(S.stats[k] - ri(0, Math.max(1, S.age - 29)), 1, 99); }); msgs.push('노쇠화로 능력치 하락'); }
   S.pop = Math.round(S.pop * .9); S.trust = Math.round(50 + (S.trust - 50) * .6); S.cond = 100; S.injury = 0;
-  S.season = freshSeason(); S.round = 0; S.schedule = makeSeason(S.club); S.out = {}; S.nego = null; S.week = null; S.buff = 0;
+  S.season = freshSeason(); S.round = 0; S.schedule = makeSeason(S.club); S.table = null; S.out = {}; S.nego = null; S.week = null; S.buff = 0;
   Object.keys(S.scout).forEach(l => S.scout[l] = Math.max(0, S.scout[l] - 1));
   if (S.age >= RETIRE_AGE){ S.phase = 'retired'; addNews(`${S.name}, ${S.age}세로 현역 은퇴 선언`); }
   else { S.phase = 'week'; UI.splash = true; toast(`${S.year} 시즌 개막! ${msgs.join(' · ')}`); }
@@ -2140,7 +2171,7 @@ function transferMid(o){
   S.club = o.club; S.salary = o.salary; S.best.salary = Math.max(S.best.salary, o.salary); S.trust = 45; S.mood = 0; S.scout[CLUB[o.club].lg] = 0;
   const played = S.schedule.slice(0, S.round).filter(f => f.k === 'L').length;
   S.schedule = S.schedule.slice(0, S.round).concat(makeSeason(o.club).filter(f => f.k === 'L' && f.lr > played));
-  S.window = null; S.week = null; S.phase = 'week'; UI.splash = true; UI.tab = 'match';
+  S.table = null; S.window = null; S.week = null; S.phase = 'week'; UI.splash = true; UI.tab = 'match';
   SFX.coin(); toast(`${LEAGUES[CLUB[o.club].lg].f} ${o.club} 입단!`); go();
 }
 function worldNews(){
@@ -2505,6 +2536,46 @@ function bindShop(){
     toast(`${c.n} 사용! ${fx.map(f => f[2] || `${f[0]} ${f[1] > 0 ? '+' : ''}${f[1]}`).join(' · ')}`);
     if (c.id !== 'barber') renderHub();
   });
+}
+
+// ---------- 리그 순위표 ----------
+// 내 팀 경기는 실제 결과로, 나머지 팀 경기는 매 라운드 전력 기반으로 시뮬레이션한다.
+function blankRow(){ return {p:0, w:0, d:0, l:0, gf:0, ga:0}; }
+function addGame(t, a, b, x, y){
+  if (!t[a] || !t[b]) return;
+  const A = t[a], B = t[b]; A.p++; B.p++; A.gf += x; A.ga += y; B.gf += y; B.ga += x;
+  if (x > y){ A.w++; B.l++; } else if (x < y){ A.l++; B.w++; } else { A.d++; B.d++; }
+}
+function simScore(a, b){ const sa = CLUB[a].s + 2, sb = CLUB[b].s; return [Math.min(7, poisson(1.35 * Math.pow(sa / sb, 2.4))), Math.min(7, poisson(1.35 * Math.pow(sb / sa, 2.4)))]; }
+function simRound(our){
+  const t = S.table.t;
+  let pool = shuffle(Object.keys(t));
+  if (our){ addGame(t, S.club, our.opp, our.tg, our.og); pool = pool.filter(c => c !== S.club && c !== our.opp); }
+  for (let i = 0; i + 1 < pool.length; i += 2){ const [x, y] = simScore(pool[i], pool[i + 1]); addGame(t, pool[i], pool[i + 1], x, y); }
+}
+function ensureTable(){
+  const lg = CLUB[S.club].lg;
+  if (S.table && S.table.lg === lg && S.table.t[S.club]) return S.table;
+  S.table = {lg, t: Object.fromEntries(leagueClubs(lg).map(c => [c, blankRow()]))};
+  const played = S.schedule.slice(0, S.round).filter(f => f.k === 'L').length;
+  for (let i = 0; i < played; i++) simRound(null);
+  return S.table;
+}
+const pts = r => r.w * 3 + r.d;
+function standings(){
+  const t = ensureTable().t;
+  return Object.keys(t).map(c => ({c, ...t[c], pts: pts(t[c]), gd: t[c].gf - t[c].ga}))
+    .sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || CLUB[b.c].s - CLUB[a.c].s);
+}
+const myRank = () => standings().findIndex(r => r.c === S.club) + 1;
+function tableHtml(){
+  const rows = standings(), n = rows.length, lg = CLUB[S.club].lg;
+  const zone = i => i === 0 ? 'z-champ' : (LEAGUES[lg].cont && i < 3) ? 'z-cont' : i >= n - 2 ? 'z-down' : '';
+  return `<div class="panel tbl"><table class="standings">
+    <thead><tr><th>#</th><th class="l">구단</th><th>경기</th><th>승</th><th>무</th><th>패</th><th>득실</th><th>승점</th></tr></thead>
+    <tbody>${rows.map((r, i) => `<tr class="${r.c === S.club ? 'me' : ''} ${zone(i)}"><td><span class="rk">${i + 1}</span></td><td class="l"><span class="tc">${crest(r.c)}<em>${esc(r.c)}</em></span></td><td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${r.gd > 0 ? '+' : ''}${r.gd}</td><td><b>${r.pts}</b></td></tr>`).join('')}</tbody>
+  </table></div>
+  <div class="legend-z"><span><i class="z-champ"></i>우승</span>${LEAGUES[lg].cont ? `<span><i class="z-cont"></i>${esc(LEAGUES[lg].cont)} 진출권</span>` : ''}<span><i class="z-down"></i>하위권</span></div>`;
 }
 
 // ---------- 연출 ----------
