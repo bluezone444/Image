@@ -1047,6 +1047,14 @@ table.standings{min-width:0}
 .press .table span{position:relative;z-index:3}
 .iv-call{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;padding:9px 12px;border-radius:12px;background:linear-gradient(90deg,rgba(255,77,109,.22),rgba(255,200,61,.18));border:1px solid rgba(255,200,61,.5);font-size:14px}
 .iv-call .ico{color:var(--gold)} .iv-call span{font-size:12px;font-weight:900;color:#231700;background:var(--gold);border-radius:999px;padding:1px 8px}
+
+/* ---------- 경기 영향 표시 ---------- */
+.conds .warn{border-color:rgba(255,77,109,.55)} .conds .warn .ico{color:var(--hot)} .conds .warn em{color:var(--hot)}
+.impact{padding:8px 14px;display:flex;flex-direction:column}
+.impact > div{display:grid;grid-template-columns:78px 1fr;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.impact > div:last-child{border-bottom:0}
+.impact span{display:inline-flex;align-items:center;gap:5px;font-weight:900;font-size:13px} .impact span .ico{width:16px;height:16px;color:var(--gold)}
+.impact small{font-size:12px;color:var(--muted);line-height:1.4}
 </style>
 </head>
 <body>
@@ -1155,9 +1163,9 @@ const MGR_IC = {charisma:'flame', warm:'heart-handshake', tactician:'brain', sho
 const MOOD_FACE = {'-2':'😡 폭발 직전','-1':'😒 언짢음','0':'😐 평온','1':'🙂 기분 좋음','2':'😆 싱글벙글'};
 Object.entries(MGR_IC).forEach(([k, n]) => MGR[k].i = ic(n));
 const POS = {
-  FW:{name:'공격수', base:{sho:58,pas:48,dri:55,def:30,phy:52}, w:{sho:.4,dri:.25,pas:.15,phy:.15,def:.05}, goalP:.34, astP:.2, av:'target'},
-  MF:{name:'미드필더', base:{sho:48,pas:58,dri:53,def:45,phy:50}, w:{pas:.35,dri:.2,sho:.15,def:.15,phy:.15}, goalP:.16, astP:.32, av:'brain'},
-  DF:{name:'수비수', base:{sho:30,pas:47,dri:40,def:58,phy:57}, w:{def:.45,phy:.25,pas:.15,sho:.1,dri:.05}, goalP:.06, astP:.08, av:'shield-half'},
+  FW:{name:'공격수', base:{sho:58,pas:48,dri:55,def:30,phy:52}, w:{sho:.4,dri:.25,pas:.15,phy:.15,def:.05}, goalP:.27, astP:.2, av:'target'},
+  MF:{name:'미드필더', base:{sho:48,pas:58,dri:53,def:45,phy:50}, w:{pas:.35,dri:.2,sho:.15,def:.15,phy:.15}, goalP:.13, astP:.3, av:'brain'},
+  DF:{name:'수비수', base:{sho:30,pas:47,dri:40,def:58,phy:57}, w:{def:.45,phy:.25,pas:.15,sho:.1,dri:.05}, goalP:.07, astP:.08, av:'shield-half'},
   GK:{name:'골키퍼', base:{sho:15,pas:42,dri:25,def:60,phy:55}, w:{def:.6,phy:.25,pas:.15,sho:0,dri:0}, goalP:0, astP:.02, av:'hand'},
 };
 const STAT_KEYS = ['sho','pas','dri','def','phy'];
@@ -1446,7 +1454,7 @@ function validPending(p){
   ['tg','og','from','mins'].forEach(k => p[k] = int(p[k], 0, 99, 0)); p.ovr = int(p.ovr, 0, 130, 60);
   p.big = typeof p.big === 'string' ? p.big.slice(0, 30) : '';
   p.wx = int(p.wx, 0, WEATHER.length - 1, 0); p.ref = int(p.ref, 0, REFS.length - 1, 1); p.drain = clamp(Number(p.drain) || 1, 1, 2);
-  p.noise = clamp(Number(p.noise) || 0, -1, 1); p.psy = clamp(Number(p.psy) || 0, -.6, .6); p.wq = clamp(Number(p.wq ?? 1), 0, 1); p.wqv = clamp(Number(p.wqv) || 70, 0, 100); p.wd = int(p.wd, 0, WONDER.length - 1, 0); p.buff = clamp(Number(p.buff) || 0, -1, 1); p.home = !!p.home;
+  p.noise = clamp(Number(p.noise) || 0, -1, 1); p.psy = clamp(Number(p.psy) || 0, -.6, .6); p.wq = clamp(Number(p.wq ?? 1), 0, 1); p.wqv = clamp(Number(p.wqv) || 70, 0, 100); p.wd = int(p.wd, 0, WONDER.length - 1, 0); p.injR = clamp(Number(p.injR ?? 1), 0, 1); p.buff = clamp(Number(p.buff) || 0, -1, 1); p.home = !!p.home;
   p.fx = p.fx && ['L','C','X'].includes(p.fx.k) ? {k:p.fx.k, comp:String(p.fx.comp || '').slice(0, 30), stage:String(p.fx.stage || '').slice(0, 10)} : {k:'L', comp:'', stage:''};
   const arr = (a, f) => Array.isArray(a) && a.length === 12 ? a.map(f) : null;
   if (p.so){ const kd = arr(p.so.kd, x => int(x, 0, 2, 1)), or = arr(p.so.or, x => !!x), roll = arr(p.so.roll, x => clamp(Number(x) || 0, 0, 1)); p.so = kd && or && roll ? {kd, or, roll, tb:!!p.so.tb} : null; }
@@ -1755,7 +1763,7 @@ function matchTab(){
         <div class="vs-mid">VS</div>
         <div class="side">${crest(opp, 'xl')}<b>${esc(opp)}</b><small>${CLUB[opp].lg !== CLUB[S.club].lg ? LEAGUES[CLUB[opp].lg].f + ' ' : ''}전력 ${CLUB[opp].s} · #${STYLE_NAME[CLUB[opp].sty]}</small></div>
       </div>
-      <div class="conds"><span>${ic(WX[1])} ${WX[2]}${WX[3] ? ` <em>${WX[3]}</em>` : ''}</span><span>${ic('scale')} ${RF[1]}${RF[2] ? ` <em>${RF[2]}</em>` : ''}</span>${W.psyFx ? `<span class="psyc ${W.psyFx.rt < 0 ? 'down' : ''}">${ic('brain')} ${esc(W.psyFx.label)}</span>` : ''}</div>
+      <div class="conds"><span>${ic(WX[1])} ${WX[2]}${WX[3] ? ` <em>${WX[3]}</em>` : ''}</span><span>${ic('scale')} ${RF[1]}${RF[2] ? ` <em>${RF[2]}</em>` : ''}</span>${W.psyFx ? `<span class="psyc ${W.psyFx.rt < 0 ? 'down' : ''}">${ic('brain')} ${esc(W.psyFx.label)}</span>` : ''}${S.injury ? '' : (() => { const sc = Math.round(clamp(startChance(ovrOf(S.stats, S.pos)) + (f.k === 'C' && f.stage !== '결승' ? .1 : 0), 0, 1) * 100); return `<span class="${sc < 50 ? 'warn' : ''}">${ic('user-round')} 선발 확률 <em>${S.cond < 15 ? '0' : sc}%</em></span>`; })()}${S.cond < 45 ? `<span class="warn">${ic('heart-pulse')} 컨디션 ${S.cond} <em>평점·골↓ 부상 위험↑</em></span>` : ''}</div>
     </section>
     ${(() => { let n = 0; const st = (icon, t, sub, done, id) => `<div class="step ${done ? 'done' : ''}"><span class="step-n">${(++n, done ? ic('check') : n)}</span><div><b>${ic(icon)} ${t}</b><small${id ? ` id="${id}"` : ''}>${sub}</small></div></div>`;
       return `${ntPending() ? `<button type="button" class="nt-strip" id="toNT">🇰🇷 국가대표 ${NT_KIND[S.season.nt.kind].n} · ${S.season.nt.stages[S.season.nt.idx].nm} 경기가 기다려요 ${ic('chevron-right')}</button>` : ''}<button type="button" class="mgr-strip" id="toBench">${M.i}<span><b>${esc(mgrName())} 감독</b> · ${MOOD_FACE[S.mood]} · 신뢰 ${S.trust}</span><small>벤치</small>${ic('chevron-right')}</button>
@@ -1817,6 +1825,7 @@ function playerTab(){
     <div class="label">${ic('activity')} 능력치</div>
     <div class="panel pad" style="display:flex;justify-content:center">${radar()}</div>
     <div class="panel pad statbars">${STAT_KEYS.map((k, i) => `<div class="sb"><span>${statName(k, S.pos)}${S.stats[k] >= 99 ? `<small class="lim">${S.stats[k] >= STAT_MAX ? '최대치' : S.stats[k] >= 100 ? '한계 돌파' : '한계 도달'}</small>` : ''}</span><div class="t"><i class="${S.stats[k] >= 99 ? 'over' : ''}" style="width:${Math.min(100, S.stats[k] / STAT_MAX * 100)}%;animation-delay:${i*80}ms"></i></div><b>${S.stats[k]}</b></div>`).join('')}</div>
+    <div class="panel impact">${[['sho','target','골 확률 · 결정적 슈팅 · PK'],['pas','arrow-right-left','도움 확률 · 킬패스'],['dri','wind','골·도움 보조 · 돌파 성공률'],['def', 'shield-half', S.pos === 'GK' || S.pos === 'DF' ? '팀 실점 감소 · 수비 평점 · 경고 줄이기' : '경고 줄이기 · 팀 수비 소폭'],['phy','dumbbell','체력 소모↓ · 회복↑ · 부상 위험↓' + (S.pos === 'DF' ? ' · 헤딩골' : '')],['cond','heart-pulse','선발 · 평점 · 골/도움 · 부상 위험 (매주 피지컬만큼 자연 회복)']].map(([k, i, t]) => `<div><span>${ic(i)} ${k === 'cond' ? '컨디션' : statName(k, S.pos)}</span><small>${t}</small></div>`).join('')}</div>
     <p class="lb-note">훈련으로는 99까지 · 100부터는 <b>한계 돌파 시험</b>을 통과해야 올라요 (최대 ${STAT_MAX})</p>
     ${skCard()}
     <div class="label">${ic('sparkles')} 특성 · 상태</div>
@@ -2023,16 +2032,22 @@ function simulate(){
   const Wk = S.week || {}, WXe = WEATHER[Wk.wx ?? 0][4], RFe = REFS[Wk.ref ?? 1][3], PF = Wk.psyFx || {}, RX = relFx();
   let lt = 1.35 * Math.pow(ts / os, 2.4) * (PF.team || 1) * RX.team * (WXe.goal || 1) * (WXe.swing ? rand(1 - WXe.swing, 1 + WXe.swing) : 1);
   let lo = 1.35 * Math.pow(os / ts, 2.4) * (WXe.goal || 1) * (WXe.swing ? rand(1 - WXe.swing, 1 + WXe.swing) : 1);
-  if (mins && (S.pos === 'GK' || S.pos === 'DF')) lo *= clamp(1 - (ovr - 55) / 160, .6, 1.1);
+  if (mins && S.pos === 'DF') lo *= clamp(1 - (S.stats.def * .7 + S.stats.phy * .3 - 55) / 160, .6, 1.1);
+  if (mins && S.pos === 'GK') lo *= clamp(1 - (S.stats.def * .85 + S.stats.phy * .15 - 55) / 130, .55, 1.1);
   if (mins && hasT('def')) lo *= .9;
   if (mins){ lo *= 1 - .04 * lv('wall'); lt *= 1 + .03 * lv('maestro'); }
   const tg = Math.min(7, poisson(lt)), og = Math.min(7, poisson(lo));
-  const ev = [], sk = clamp(ovr / 65, .6, 1.6);
+  // 골은 슈팅(+드리블·피지컬), 도움은 패스(+드리블)로 정하고, 컨디션이 낮으면 둘 다 떨어진다
+  const St = S.stats, cf = .75 + S.cond / 400;
+  const dfp = S.pos === 'DF'; // 수비수 골은 세트피스 헤더(피지컬) 비중이 크다
+  const gSk = clamp((dfp ? St.phy * .5 + St.sho * .3 + St.dri * .2 : St.sho * .65 + St.dri * .2 + St.phy * .15) / 65, .5, 1.8) * cf;
+  const aSk = clamp((dfp ? St.pas * .8 + St.dri * .2 : S.pos === 'GK' ? St.pas : St.pas * .65 + St.dri * .35) / 65, .5, 1.8) * cf;
+  const ev = [];
   for (let i = 0; i < tg; i++){
     const m = ri(1, 90), on = m >= from;
     let who = 'team', ast = false;
-    if (on && Math.random() < P.goalP * sk * (hasT('sho') ? 1.25 : 1) * (PF.goal || 1) * (1 + .06 * lv('finish'))) who = 'me';
-    else if (on && Math.random() < P.astP * sk * (hasT('pas') ? 1.3 : 1) * (PF.ast || 1) * RX.ast * (1 + .08 * lv('vision'))) ast = true;
+    if (on && Math.random() < P.goalP * gSk * (hasT('sho') ? 1.25 : 1) * (PF.goal || 1) * (1 + .06 * lv('finish'))) who = 'me';
+    else if (on && Math.random() < P.astP * aSk * (hasT('pas') ? 1.3 : 1) * (PF.ast || 1) * RX.ast * (1 + .08 * lv('vision'))) ast = true;
     ev.push({m, side:'us', who, ast});
   }
   for (let i = 0; i < og; i++) ev.push({m: ri(1, 90), side:'them'});
@@ -2041,12 +2056,12 @@ function simulate(){
   if (mins && (S.pos === 'FW' || S.pos === 'MF') && Math.random() < .14 * (RFe.pk || 1) * (PF.pk || 1)) ev.push({m: onPitch(), side:'pk', dir: wpick([[.4,0],[.2,1],[.4,2]])[1], roll: Math.random()});
   if (mins && S.pos === 'GK' && Math.random() < .14 * (RFe.pk || 1)) ev.push({m: onPitch(), side:'opk', dir: wpick([[.42,0],[.16,1],[.42,2]])[1], roll: Math.random()});
   if (mins && S.pos !== 'GK' && Math.random() < .22) ev.push({m: onPitch(), side:'post'});
-  if (mins && S.pos !== 'GK' && Math.random() < .32) ev.push({m: onPitch(), side:'chance', roll: Math.random()});
-  if (mins && Math.random() < .1 * (RFe.card || 1) * (PF.card || 1)) ev.push({m: onPitch(), side:'yellow'});
+  if (mins && S.pos !== 'GK' && Math.random() < .26) ev.push({m: onPitch(), side:'chance', roll: Math.random()});
+  if (mins && Math.random() < (S.pos === 'DF' ? .14 : .09) * clamp(1.3 - S.stats.def / 200, .8, 1.2) * (RFe.card || 1) * (PF.card || 1)) ev.push({m: onPitch(), side:'yellow'});
   if (Math.random() < .14) ev.push({m: ri(10, 88), side:'var'});
   if (Math.random() < .06) ev.push({m: ri(30, 85), side:'red'});
   ev.sort((a, b) => a.m - b.m);
-  return {opp, home, role, from, mins, tg, og, ev, noise: rand(-.7, .7), buff: S.buff, ovr, fx:{k:fxx.k, comp:fxx.comp || '', stage:fxx.stage || ''}, so: fxx.k !== 'L' ? genSo() : null, big: (bigMatch(fxx) || {}).label || '', wx: Wk.wx ?? 0, ref: Wk.ref ?? 1, drain: WXe.drain || 1, psy: (PF.rt || 0) + RX.rt, wq: Math.random(), wqv: rand(62, 99), wd: ri(0, WONDER.length - 1)};
+  return {opp, home, role, from, mins, tg, og, ev, noise: rand(-.7, .7), buff: S.buff, ovr, fx:{k:fxx.k, comp:fxx.comp || '', stage:fxx.stage || ''}, so: fxx.k !== 'L' ? genSo() : null, big: (bigMatch(fxx) || {}).label || '', wx: Wk.wx ?? 0, ref: Wk.ref ?? 1, drain: WXe.drain || 1, psy: (PF.rt || 0) + RX.rt, wq: Math.random(), wqv: rand(62, 99), wd: ri(0, WONDER.length - 1), injR: Math.random()};
 }
 function finalize(p){
   let tg = p.tg, og = p.og, goals = 0, assists = 0, bonus = 0, first = null, clutchOk = 0, yellow = false;
@@ -2068,12 +2083,14 @@ function finalize(p){
   const res = tg > og ? 'W' : tg < og ? 'L' : 'D';
   let rating = null;
   if (p.mins){
-    rating = 6.0 + (p.ovr - 62) * .035 + (S.cond - 70) * .01 + goals * .9 + assists * .55 + (res === 'W' ? .35 : res === 'L' ? -.35 : 0) + p.noise + p.buff + (p.psy || 0) + (hasT('dri') ? .2 : 0) + .1 * lv('tempo') + (goals >= 2 ? .3 * lv('killer') : 0) + (p.big || (p.fx && p.fx.k !== 'L') ? .15 * lv('nerve') : 0) + bonus;
+    rating = 6.0 + (p.ovr - 62) * .035 + (S.cond - 70) * .01 + goals * .9 + assists * .55 + (res === 'W' ? .35 : res === 'L' ? -.35 : 0) + p.noise + clamp(p.buff, -.6, .6) + (p.psy || 0) + (hasT('dri') ? .2 : 0) + .1 * lv('tempo') + (goals >= 2 ? .3 * lv('killer') : 0) + (p.big || (p.fx && p.fx.k !== 'L') ? .15 * lv('nerve') : 0) + bonus;
     if (S.pos === 'GK' || S.pos === 'DF') rating += og === 0 ? .7 : -og * .2;
+    if (S.pos === 'DF') rating += .2 + (S.stats.def - 60) * .01;
+    if (S.pos === 'GK') rating += .3 + (S.stats.def - 60) * .015;
     if (p.role === 'sub') rating = 6 + (rating - 6) * .7;
     rating = Math.round(clamp(rating, 3, 10) * 10) / 10;
   }
-  return {opp:p.opp, home:p.home, role:p.role, from:p.from, mins:p.mins, tg, og, goals, assists, res, rating, fx:p.fx, big:p.big || '', goalMins, yellow, clutchOk, comeback: first === 'them' && res === 'W', drain: p.drain || 1, cs: !!(p.mins && og === 0 && (S.pos === 'GK' || S.pos === 'DF')), wq: p.wq ?? 1, wqv: p.wqv || 70, wd: p.wd || 0};
+  return {opp:p.opp, home:p.home, role:p.role, from:p.from, mins:p.mins, tg, og, goals, assists, res, rating, fx:p.fx, big:p.big || '', goalMins, yellow, clutchOk, comeback: first === 'them' && res === 'W', drain: p.drain || 1, cs: !!(p.mins && og === 0 && (S.pos === 'GK' || S.pos === 'DF')), wq: p.wq ?? 1, wqv: p.wqv || 70, wd: p.wd || 0, injR: p.injR ?? 1, cond0: S.cond};
 }
 function applyMatch(r){
   const se = S.season; se[r.res]++; se.results[S.round] = r.res;
@@ -2085,7 +2102,9 @@ function applyMatch(r){
     if (r.big) dp *= 2;
     if (dp > 0) dp = Math.round(dp * (1 + .1 * lv('fans')));
     const dt = r.rating >= 7.5 ? 3 : r.rating >= 6.5 ? 1 : r.rating < 5.5 ? -3 : 0;
-    fx.push(...applyFx({pop: dp, trust: dt, cond: Math.round((r.role === 'start' ? -12 : -5) * (hasT('phy') ? .5 : 1) * (r.drain || 1) * (1 - .15 * lv('iron')))}));
+    fx.push(...applyFx({pop: dp, trust: dt, cond: Math.round((r.role === 'start' ? -12 : -5) * (hasT('phy') ? .5 : 1) * (r.drain || 1) * (1 - .15 * lv('iron')) * clamp(1.25 - S.stats.phy / 200, .7, 1.1))}));
+    const risk = (S.pos === 'GK' ? .5 : 1) * (.012 + Math.max(0, 45 - (r.cond0 ?? S.cond)) * .004) * clamp(1.3 - S.stats.phy / 150, .6, 1.2) * (1 - .2 * lv('recovery'));
+    if (r.injR != null && r.injR < risk){ S.injury = r.injR < risk / 3 ? 2 : 1; fx.push(['부상', -1, `🤕 경기 중 부상 · ${S.injury}주 결장`]); addNews(`🤕 ${S.name}, ${r.opp}전 부상… ${S.injury}주 결장 예상`); }
     S.best.rating = Math.max(S.best.rating, r.rating);
     if (r.goals >= 3) S.rec.hat = (S.rec.hat || 0) + 1;
     if (r.goals >= 3) addNews(`🎩 ${S.name} 해트트릭! ${S.club}, ${r.opp}에 ${r.tg}-${r.og} 대승`);
@@ -2451,6 +2470,7 @@ function nextRound(){
   S.earn += Math.round(S.salary / Math.max(ROUNDS, S.schedule.length)); // 연봉은 매주 나눠 지급
   S.round++; S.last = null; S.interview = null; S.week = null;
   skipOut(); worldNews(); starsWeek(); if (S.lbCd > 0) S.lbCd--;
+  S.cond = clamp(S.cond + Math.round(4 + S.stats.phy / 20), 0, 100); // 주간 자연 회복
   UI.tab = 'match';
   if (S.round >= S.schedule.length){ startNego(); makeAwards(); S.phase = 'awards'; return go(); }
   const sacked = sackCheck(done); if (sacked) UI.sacked = sacked;
