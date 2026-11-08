@@ -585,6 +585,61 @@ table.standings tr.me em{color:var(--gold);font-weight:900}
 .tn-head{display:flex;align-items:center;gap:14px}
 .tn-head small{display:block;color:var(--muted);font-size:12px}
 
+/* ---------- 줄바꿈: 한국어는 단어(띄어쓰기) 단위로 ---------- */
+body{word-break:keep-all;overflow-wrap:anywhere}
+h1,h2,h3,h4,.disp,.btn,.label,.speech,.note p,.outcome,.paper h3,.modal-card p,.vs .side b,.mpick-h,.tag{text-wrap:balance}
+p,small,.talk .line,.fans li,.feed li,.dlg p,.news li,.twist,.memo{text-wrap:pretty}
+.btn{white-space:normal;line-height:1.25;text-align:center}
+.strip b{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.15;font-size:clamp(14px,4.4vw,18px)}
+.club span{white-space:normal;text-align:center;line-height:1.2}
+.ts-cont-main em{white-space:normal}
+.lg-clubs em{white-space:normal;line-height:1.2}
+.res .rt span{overflow:hidden;text-overflow:ellipsis}
+.appeal .n,.appeal .d,.act .n{text-wrap:balance}
+/* ---------- 미션 고르기 · 경기 조건 ---------- */
+.conds{position:relative;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px}
+.conds span{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid var(--edge)}
+.conds .ico{color:var(--cyan)}
+.conds em{font-style:normal;color:var(--gold);font-weight:900}
+.mpick{position:relative;margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.mpick-h{font-family:var(--f-display);font-size:14px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
+.mpick-h .ico{color:var(--cyan)}
+.mpick-h small{font-family:var(--f-body);font-size:11px;color:var(--muted);width:100%}
+.mopts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.mopt{--mc:var(--cyan);display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;padding:9px 5px;border-radius:14px;border:2px solid var(--edge);background:rgba(11,17,40,.75);min-width:0;transition:transform .12s,border-color .15s,box-shadow .15s}
+.mopt.easy{--mc:var(--turf)} .mopt.norm{--mc:var(--cyan)} .mopt.hard{--mc:var(--hot)} .mopt.legend{--mc:#b98bff}
+.mopt:hover{transform:translateY(-2px)}
+.mopt.on{border-color:var(--mc);box-shadow:0 0 0 3px color-mix(in srgb,var(--mc) 30%,transparent);background:color-mix(in srgb,var(--mc) 14%,rgba(11,17,40,.85))}
+.mopt .md{font-family:var(--f-display);font-size:12px;color:var(--mc);display:inline-flex;align-items:center;gap:3px}
+.mopt .lucky{font-style:normal;color:var(--turf);display:inline-flex;align-items:center;gap:1px;font-size:11px}
+.mopt .lucky .ico{width:12px;height:12px}
+.mopt b{font-family:var(--f-display);font-weight:400;font-size:14px;line-height:1.2;text-wrap:balance}
+.mopt small{font-size:10px;color:var(--muted);line-height:1.3}
+.mcond{display:block;font-family:var(--f-body);font-size:12px;font-weight:700;opacity:.85;margin-top:2px}
+.mcond .ico{width:13px;height:13px}
+@media (max-width:360px){ .mopts{grid-template-columns:1fr} .mopt{flex-direction:row;flex-wrap:wrap;justify-content:space-between;text-align:left} .mopt small{width:100%} }
+
+/* ---------- 좁은 화면 다듬기 ---------- */
+.tag{white-space:nowrap;flex:none}
+.lg-clubs span{display:inline}
+.lg-clubs > span{display:flex}
+.lg-clubs > span .crest{padding:0;background:none}
+.ach-pop b,.ach-pop em,.ach-pop small{white-space:nowrap}
+.offer{flex-wrap:wrap}
+.offer > div{flex:1;min-width:0}
+.offer .btn{margin-left:0;width:100%}
+.appeal .i .ico{width:26px;height:26px;color:var(--gold)}
+table.standings{min-width:0}
+@media (max-width:400px){
+  .res{padding:4px 5px}
+  .res .rt{font-size:10px;gap:2px}
+  .res .rt .ico{width:11px;height:11px}
+  .res .rt span{overflow:visible;text-overflow:clip}
+  table.standings .gp{display:none}
+  table.standings th,table.standings td{padding:7px 3px}
+  table.standings .tc em{max-width:96px}
+}
+
 @keyframes enter{from{opacity:0;transform:translateY(14px) scale(.98)}}
 @keyframes dealIn{from{opacity:0;transform:translateY(18px) rotate(-2deg) scale(.92)}}
 @keyframes slideIn{from{opacity:0;transform:translateX(-16px)}}
@@ -982,6 +1037,7 @@ function validPending(p){
   if (p.soProg){ const bo = a => Array.isArray(a) ? a.slice(0, 12).map(Boolean) : []; p.soProg = {U: bo(p.soProg.U), T: bo(p.soProg.T)}; }
   ['tg','og','from','mins','ovr'].forEach(k => p[k] = int(p[k], 0, 99, 0));
   p.big = typeof p.big === 'string' ? p.big.slice(0, 30) : '';
+  p.wx = int(p.wx, 0, WEATHER.length - 1, 0); p.ref = int(p.ref, 0, REFS.length - 1, 1); p.drain = clamp(Number(p.drain) || 1, 1, 2);
   p.noise = clamp(Number(p.noise) || 0, -1, 1); p.buff = clamp(Number(p.buff) || 0, -1, 1); p.home = !!p.home;
   p.fx = p.fx && ['L','C','X'].includes(p.fx.k) ? {k:p.fx.k, comp:String(p.fx.comp || '').slice(0, 30), stage:String(p.fx.stage || '').slice(0, 10)} : {k:'L', comp:'', stage:''};
   const arr = (a, f) => Array.isArray(a) && a.length === 12 ? a.map(f) : null;
@@ -1032,7 +1088,7 @@ function load(){
     r.season.obj = Array.isArray(r.season.obj) ? r.season.obj.filter(o => o && OBJ[o.k]).map(o => ({k:o.k, n: o.k === 'rating' ? clamp(Number(o.n) || 6.8, 5, 9) : int(o.n, 1, 99, 1)})).slice(0, 3) : null;
     r.season.objRes = Array.isArray(r.season.objRes) ? r.season.objRes.map(Boolean).slice(0, 3) : undefined;
     r.ach = Array.isArray(r.ach) ? [...new Set(r.ach.filter(a => ACH.some(x => x[0] === a)))] : [];
-    r.rec = Object.fromEntries(['hat','so','clutch','events','objAll','missions'].map(k => [k, int(r.rec?.[k], 0, 99999, 0)]));
+    r.rec = Object.fromEntries(['hat','so','clutch','events','objAll','missions','hardMis'].map(k => [k, int(r.rec?.[k], 0, 99999, 0)]));
     r.mgrs = Object.fromEntries(Object.entries(r.mgrs && typeof r.mgrs === 'object' ? r.mgrs : {}).filter(([c, v]) => CLUB[c] && v && MGR[v.t] && typeof v.m === 'string').map(([c, v]) => [c, {m: v.m.slice(0, 16), t: v.t}]));
     r.season.ratings = (Array.isArray(r.season.ratings) ? r.season.ratings : []).map(Number).filter(Number.isFinite);
     ['apps','starts','goals','assists','cs','W','D','L'].forEach(k => r.season[k] = int(r.season[k], 0, 99, 0));
@@ -1047,11 +1103,13 @@ function load(){
     const needs = w && Array.isArray(w.needs) ? w.needs.filter(n => ACT_IDS.includes(n)) : [];
     r.week = w && needs.length && typeof w.text === 'string' ? {needs, text:w.text.slice(0, 200), rumor:!!w.rumor, fortune:int(w.fortune, 0, FORTUNES.length - 1, 2), revealed:!!w.revealed,
       event: EVENTS.some(e => e.id === w.event) ? w.event : null, eventRes: w.eventRes && typeof w.eventRes.text === 'string' ? {text:w.eventRes.text.slice(0, 200)} : null,
-      mini: MINIS[w.mini] ? w.mini : null, miniDone:!!w.miniDone, mission: MISSION[w.mission] ? w.mission : null, speech: typeof w.speech === 'string' ? w.speech.slice(0, 80) : ''} : null;
+      mini: MINIS[w.mini] ? w.mini : null, miniDone:!!w.miniDone, mission: MISSION[w.mission] ? w.mission : null,
+      mOpts: Array.isArray(w.mOpts) ? w.mOpts.filter(o => o && MISSION[o.k]).map(o => ({k:o.k, lucky:!!o.lucky})).slice(0, 3) : null,
+      mPick: w.mPick == null ? null : int(w.mPick, 0, 2, 1), wx:int(w.wx, 0, WEATHER.length - 1, 0), ref:int(w.ref, 0, REFS.length - 1, 1), speech: typeof w.speech === 'string' ? w.speech.slice(0, 80) : ''} : null;
     r.prev = r.prev ? {rating:Number(r.prev.rating) || 0, goals:int(r.prev.goals, 0, 9, 0), mins:int(r.prev.mins, 0, 90, 0)} : null;
     r.pending = validPending(r.pending);
     if (r.phase === 'match' && !r.pending) r.phase = 'week';
-    if (r.last){ const L = r.last; ['tg','og','goals','assists'].forEach(k => L[k] = int(L[k], 0, 12, 0)); L.mins = int(L.mins, 0, 90, 0); L.rating = L.rating == null ? null : clamp(Number(L.rating) || 6, 3, 10); L.fx = cleanFx(L.fx); L.iv = L.iv !== false; L.mis = L.mis && MISSION[L.mis.k] ? {k:L.mis.k, ok: L.mis.ok == null ? null : !!L.mis.ok} : null; L.big = typeof L.big === 'string' ? L.big.slice(0, 30) : ''; if (!CLUB[L.opp]) r.last = null; }
+    if (r.last){ const L = r.last; ['tg','og','goals','assists'].forEach(k => L[k] = int(L[k], 0, 12, 0)); L.mins = int(L.mins, 0, 90, 0); L.rating = L.rating == null ? null : clamp(Number(L.rating) || 6, 3, 10); L.fx = cleanFx(L.fx); L.iv = L.iv !== false; L.mis = L.mis && MISSION[L.mis.k] ? {k:L.mis.k, ok: L.mis.ok == null ? null : !!L.mis.ok, lucky:!!L.mis.lucky} : null; L.big = typeof L.big === 'string' ? L.big.slice(0, 30) : ''; if (!CLUB[L.opp]) r.last = null; }
     if (r.phase === 'interview' && !r.last) r.phase = 'week';
     if (r.interview){
       const iv = r.interview.set;
@@ -1210,7 +1268,8 @@ function makeWeek(){
   const roll = Math.random(); // 한 주에 돌발 이벤트 또는 미니게임 중 최대 하나만
   const event = !S.injury && roll < .26 ? pick(EVENTS).id : null;
   const mini = !S.injury && !event && roll < .42 ? pick(Object.keys(MINIS)) : null;
-  const mission = S.injury ? null : makeMission();
+  const mOpts = S.injury ? null : makeMissions();
+  const wx = WEATHER.indexOf(wpick(WEATHER)), ref = REFS.indexOf(wpick(REFS));
   let needs, text, rumor = false;
   if (S.injury){ needs = ['rest']; text = '🤕 부상 부위가 아직 욱신거린다.'; }
   else {
@@ -1230,7 +1289,7 @@ function makeWeek(){
   }
   S.buff = r2(clamp(S.buff + FORTUNES[fortune][4], -1, 1));
   if (mgr().volatile) S.mood = ri(-2, 2);
-  return {needs, text, rumor, fortune, revealed:false, event, eventRes:null, mini, miniDone:false, mission};
+  return {needs, text, rumor, fortune, revealed:false, event, eventRes:null, mini, miniDone:false, mOpts, mPick:null, mission:null, wx, ref};
 }
 const SPEECH = {
   '-2':['요즘 다들 정신 못 차리지? 이번 주 지면 각오해.','훈련장에 웃음소리가 들리면 가만 안 둔다.'],
@@ -1244,7 +1303,8 @@ const SPEECH = {
 function renderHub(){
   if (!S.week){ S.week = makeWeek(); save(); }
   if (!S.season.obj) S.season.obj = makeObjectives();
-  if (S.week && S.week.mission === undefined) S.week.mission = S.injury ? null : makeMission();
+  if (S.week && !S.week.mOpts && !S.injury){ S.week.mOpts = makeMissions(); S.week.mPick = null; S.week.mission = null; }
+  if (S.week && S.week.mOpts && S.week.mPick != null && !S.week.mOpts[S.week.mPick]){ S.week.mPick = null; S.week.mission = null; }
   if (S.equip.arm === 'captain' && S.trust < 70){ delete S.equip.arm; save(); setTimeout(() => toast('감독 신뢰가 70 아래로 떨어져 주장 완장을 내려놓았다'), 300); }
   if (!S.week.speech){ S.week.speech = pick([...SPEECH[String(S.mood)], ...(S.mood >= 0 ? mgr().pos : mgr().neg).map(x => x.replace(/"/g, ''))]); save(); }
   const t = UI.tab;
@@ -1256,7 +1316,7 @@ function renderHub(){
   else { frame(matchTab(), true); bindMatchTab(); }
 }
 function matchTab(){
-  const f = curFx(), opp = f.opp, home = f.home, M = mgr(), W = S.week, F = FORTUNES[W.fortune], big = bigMatch(f), mr = W.mission && missionReward(W.mission, big);
+  const f = curFx(), opp = f.opp, home = f.home, M = mgr(), W = S.week, F = FORTUNES[W.fortune], big = bigMatch(f), WX = WEATHER[W.wx ?? 0], RF = REFS[W.ref ?? 1];
   const se = S.season, avg = se.ratings.length ? (se.ratings.reduce((a,b) => a+b, 0) / se.ratings.length).toFixed(1) : '-';
   return `
     <section class="panel next ${f.k !== 'L' ? 'cup' : ''} ${big ? 'bigm' : ''}">
@@ -1268,7 +1328,10 @@ function matchTab(){
         <div class="vs-mid">VS</div>
         <div class="side">${crest(opp, 'xl')}<b>${esc(opp)}</b><small>${CLUB[opp].lg !== CLUB[S.club].lg ? LEAGUES[CLUB[opp].lg].f + ' ' : ''}전력 ${CLUB[opp].s} · #${STYLE_NAME[CLUB[opp].sty]}</small></div>
       </div>
-      ${W.mission ? `<div class="mission">${ic('target')}<div><small>이번 경기 감독 미션</small><b>${MISSION[W.mission].n}</b></div><em>+${mr.xp} XP<br>신뢰 +${mr.trust}</em></div>` : ''}
+      <div class="conds"><span>${ic(WX[1])} ${WX[2]}${WX[3] ? ` <em>${WX[3]}</em>` : ''}</span><span>${ic('scale')} ${RF[1]}${RF[2] ? ` <em>${RF[2]}</em>` : ''}</span></div>
+      ${W.mOpts ? `<div class="mpick"><div class="mpick-h">${ic('target')} 감독 미션 · 하나 골라 도전 <small>${W.mPick == null ? '안 고르면 보통 미션으로 진행' : '경기 시작 전까지 바꿀 수 있어요'}</small></div>
+        <div class="mopts">${W.mOpts.map((o, i) => { const M = MISSION[o.k], rw = missionReward(o.k, big, o.lucky), dd = DIFF[M.d]; return `<button type="button" class="mopt ${dd[1]} ${W.mPick === i ? 'on' : ''}" data-mi="${i}">
+          <span class="md">${dd[0]}${o.lucky ? ` <i class="lucky">${ic('clover')}x2</i>` : ''}</span><b>${M.n}</b><small>경험치 +${rw.xp} · 신뢰 +${rw.trust}${rw.fail ? `<br>실패 시 신뢰 ${rw.fail}` : ''}</small></button>`; }).join('')}</div></div>` : ''}
     </section>
     <div class="panel track"><span class="lab">SEASON</span>${S.schedule.map((x, i) => { const r = S.season.results[i], skip = !r && i < S.round, out = x.k !== 'L' && S.out[x.comp] && !r; return `<span class="n ${x.k !== 'L' ? 'cupn' : ''} ${r ? 'r-' + r : ''} ${skip || out ? 'gone' : ''} ${i === S.round ? 'now' : ''}" title="${esc(fxLabel(x))}">${r ? {W:'승',D:'무',L:'패'}[r] : x.k === 'L' ? x.lr : x.k === 'X' ? '⭐' : '🏆'}</span>`; }).join('')}</div>
     <div class="speech">${M.i} “${esc(W.speech)}”</div>
@@ -1298,6 +1361,12 @@ function bindMatchTab(){
     setTimeout(() => { if (F[4] > 0) SFX.good(); else if (F[4] < 0) SFX.bad(); toast(`${F[2]} ${F[1]} · ${F[4] > 0 ? '다음 경기 자신감 상승!' : F[4] < 0 ? '다음 경기 살짝 불안…' : '평범한 하루'}`); }, 500);
   };
   root.querySelectorAll('.act').forEach(b => b.onclick = () => doAction(b.dataset.a));
+  root.querySelectorAll('.mopt').forEach(b => b.onclick = () => {
+    if (S.phase !== 'week' || !S.week.mOpts) return;
+    const i = Number(b.dataset.mi); S.week.mPick = i; S.week.mission = S.week.mOpts[i].k; save();
+    root.querySelectorAll('.mopt').forEach(x => x.classList.toggle('on', x === b));
+    const h = root.querySelector('.mpick-h small'); if (h) h.textContent = '경기 시작 전까지 바꿀 수 있어요';
+  });
   if (UI.splash){ UI.splash = false; roundSplash(); }
   const delay = RM ? 0 : (document.querySelector('.splash') ? 1400 : 450);
   if (UI.sacked){ const o = UI.sacked; UI.sacked = null; setTimeout(() => sackModal(o), delay); return; }
@@ -1466,6 +1535,7 @@ async function doAction(id){
     if (special) special.go();
   }
   gainXp(hit ? 8 : 3);
+  if (S.week.mOpts && S.week.mPick == null){ S.week.mPick = 1; S.week.mission = S.week.mOpts[1].k; }
   S.pending = simulate(); S.phase = 'match'; save();
   if (hit) SFX.good();
   toast(msgs.join(' · '));
@@ -1508,8 +1578,9 @@ function simulate(){
   const mins = role === 'start' ? 90 : role === 'sub' ? 90 - from : 0;
   const myImpact = mins ? (ovr - 62) * .25 * (mins / 90) * (S.cond / 100 + .3) : 0;
   const ts = CLUB[S.club].s + myImpact + (home ? 2 : -2), os = CLUB[opp].s;
-  const lt = 1.35 * Math.pow(ts / os, 2.4);
-  let lo = 1.35 * Math.pow(os / ts, 2.4);
+  const Wk = S.week || {}, WXe = WEATHER[Wk.wx ?? 0][4], RFe = REFS[Wk.ref ?? 1][3];
+  let lt = 1.35 * Math.pow(ts / os, 2.4) * (WXe.goal || 1) * (WXe.swing ? rand(1 - WXe.swing, 1 + WXe.swing) : 1);
+  let lo = 1.35 * Math.pow(os / ts, 2.4) * (WXe.goal || 1) * (WXe.swing ? rand(1 - WXe.swing, 1 + WXe.swing) : 1);
   if (mins && (S.pos === 'GK' || S.pos === 'DF')) lo *= clamp(1 - (ovr - 55) / 160, .6, 1.1);
   if (mins && hasT('def')) lo *= .9;
   const tg = Math.min(7, poisson(lt)), og = Math.min(7, poisson(lo));
@@ -1524,19 +1595,26 @@ function simulate(){
   for (let i = 0; i < og; i++) ev.push({m: ri(1, 90), side:'them'});
   if (role === 'sub') ev.push({m: from, side:'sub'});
   const onPitch = () => ri(Math.max(from, 5), 88);
-  if (mins && (S.pos === 'FW' || S.pos === 'MF') && Math.random() < .14) ev.push({m: onPitch(), side:'pk', dir: wpick([[.4,0],[.2,1],[.4,2]])[1], roll: Math.random()});
-  if (mins && S.pos === 'GK' && Math.random() < .14) ev.push({m: onPitch(), side:'opk', dir: wpick([[.42,0],[.16,1],[.42,2]])[1], roll: Math.random()});
+  if (mins && (S.pos === 'FW' || S.pos === 'MF') && Math.random() < .14 * (RFe.pk || 1)) ev.push({m: onPitch(), side:'pk', dir: wpick([[.4,0],[.2,1],[.4,2]])[1], roll: Math.random()});
+  if (mins && S.pos === 'GK' && Math.random() < .14 * (RFe.pk || 1)) ev.push({m: onPitch(), side:'opk', dir: wpick([[.42,0],[.16,1],[.42,2]])[1], roll: Math.random()});
   if (mins && S.pos !== 'GK' && Math.random() < .22) ev.push({m: onPitch(), side:'post'});
   if (mins && S.pos !== 'GK' && Math.random() < .32) ev.push({m: onPitch(), side:'chance', roll: Math.random()});
-  if (mins && Math.random() < .1) ev.push({m: onPitch(), side:'yellow'});
+  if (mins && Math.random() < .1 * (RFe.card || 1)) ev.push({m: onPitch(), side:'yellow'});
   if (Math.random() < .14) ev.push({m: ri(10, 88), side:'var'});
   if (Math.random() < .06) ev.push({m: ri(30, 85), side:'red'});
   ev.sort((a, b) => a.m - b.m);
-  return {opp, home, role, from, mins, tg, og, ev, noise: rand(-.7, .7), buff: S.buff, ovr, fx:{k:fxx.k, comp:fxx.comp || '', stage:fxx.stage || ''}, so: fxx.k !== 'L' ? genSo() : null, big: (bigMatch(fxx) || {}).label || ''};
+  return {opp, home, role, from, mins, tg, og, ev, noise: rand(-.7, .7), buff: S.buff, ovr, fx:{k:fxx.k, comp:fxx.comp || '', stage:fxx.stage || ''}, so: fxx.k !== 'L' ? genSo() : null, big: (bigMatch(fxx) || {}).label || '', wx: Wk.wx ?? 0, ref: Wk.ref ?? 1, drain: WXe.drain || 1};
 }
 function finalize(p){
-  let tg = p.tg, og = p.og, goals = 0, assists = 0, bonus = 0;
+  let tg = p.tg, og = p.og, goals = 0, assists = 0, bonus = 0, first = null, clutchOk = 0, yellow = false;
+  const goalMins = [];
   for (const e of p.ev){
+    const usGoal = e.side === 'us' || (e.side === 'pk' && e.res) || (e.side === 'chance' && e.kind && e.res);
+    const themGoal = e.side === 'them' || (e.side === 'opk' && !e.res);
+    if (!first && (usGoal || themGoal)) first = usGoal ? 'us' : 'them';
+    if ((e.side === 'us' && e.who === 'me') || (e.side === 'pk' && e.res) || (e.side === 'chance' && e.res && e.kind !== 'pas')) goalMins.push(e.m);
+    if (e.side === 'chance' && e.res) clutchOk++;
+    if (e.side === 'yellow') yellow = true;
     if (e.side === 'us'){ if (e.who === 'me') goals++; if (e.ast) assists++; }
     if (e.side === 'pk'){ if (e.res){ tg++; goals++; } else bonus -= .4; }
     if (e.side === 'opk'){ if (e.res) bonus += .8; else og++; }
@@ -1552,7 +1630,7 @@ function finalize(p){
     if (p.role === 'sub') rating = 6 + (rating - 6) * .7;
     rating = Math.round(clamp(rating, 3, 10) * 10) / 10;
   }
-  return {opp:p.opp, home:p.home, role:p.role, from:p.from, mins:p.mins, tg, og, goals, assists, res, rating, fx:p.fx, big:p.big || '', cs: !!(p.mins && og === 0 && (S.pos === 'GK' || S.pos === 'DF'))};
+  return {opp:p.opp, home:p.home, role:p.role, from:p.from, mins:p.mins, tg, og, goals, assists, res, rating, fx:p.fx, big:p.big || '', goalMins, yellow, clutchOk, comeback: first === 'them' && res === 'W', drain: p.drain || 1, cs: !!(p.mins && og === 0 && (S.pos === 'GK' || S.pos === 'DF'))};
 }
 function applyMatch(r){
   const se = S.season; se[r.res]++; se.results[S.round] = r.res;
@@ -1563,7 +1641,7 @@ function applyMatch(r){
     let dp = r.goals * 2 + r.assists + (r.rating >= 8 ? 3 : r.rating >= 7 ? 1 : r.rating < 5.5 ? -2 : 0) + (r.res === 'W' ? 1 : 0);
     if (r.big) dp *= 2;
     const dt = r.rating >= 7.5 ? 3 : r.rating >= 6.5 ? 1 : r.rating < 5.5 ? -3 : 0;
-    fx.push(...applyFx({pop: dp, trust: dt, cond: Math.round((r.role === 'start' ? -12 : -5) * (hasT('phy') ? .5 : 1))}));
+    fx.push(...applyFx({pop: dp, trust: dt, cond: Math.round((r.role === 'start' ? -12 : -5) * (hasT('phy') ? .5 : 1) * (r.drain || 1))}));
     S.best.rating = Math.max(S.best.rating, r.rating);
     if (r.goals >= 3) S.rec.hat = (S.rec.hat || 0) + 1;
     if (r.goals >= 3) addNews(`🎩 ${S.name} 해트트릭! ${S.club}, ${r.opp}에 ${r.tg}-${r.og} 대승`);
@@ -1588,8 +1666,11 @@ function applyMatch(r){
   const mk = S.week && S.week.mission;
   if (mk){
     if (!r.mins) r.mis = {k:mk, ok:null};
-    else if (MISSION[mk].ok(r)){ const rw = missionReward(mk, r.big); fx.push(...applyFx({trust:rw.trust, pop:rw.pop})); fx.push(gainXp(rw.xp)); r.mis = {k:mk, ok:true}; S.rec.missions = (S.rec.missions || 0) + 1; }
-    else r.mis = {k:mk, ok:false};
+    else {
+      const lucky = !!(S.week.mOpts && S.week.mPick != null && S.week.mOpts[S.week.mPick] && S.week.mOpts[S.week.mPick].lucky), rw = missionReward(mk, r.big, lucky);
+      if (MISSION[mk].ok(r)){ fx.push(...applyFx({trust:rw.trust, pop:rw.pop})); fx.push(gainXp(rw.xp)); r.mis = {k:mk, ok:true, lucky}; S.rec.missions = (S.rec.missions || 0) + 1; if (MISSION[mk].d >= 3) S.rec.hardMis = (S.rec.hardMis || 0) + 1; }
+      else { if (rw.fail) fx.push(...applyFx({trust: rw.fail})); r.mis = {k:mk, ok:false, lucky}; }
+    }
   }
   S.buff = 0;
   S.last = {...r, fx};
@@ -1612,7 +1693,7 @@ async function runMatch(){
         <div class="tm">${crest(aN, 'lg')}<span>${esc(aN)}</span></div>
       </div></div>
       <div class="mom" aria-hidden="true"><i id="momL" style="width:50%;background:${CLUB[hN].c}"></i><i id="momR" style="width:50%;background:${CLUB[aN].c}"></i></div>
-      <div class="myrole">${roleTxt}</div>
+      <div class="myrole">${roleTxt}<span class="mcond">${ic(WEATHER[p.wx ?? 0][1])} ${WEATHER[p.wx ?? 0][2]} · ${REFS[p.ref ?? 1][1]}</span></div>
     </div>
     <div class="label">LIVE 중계</div>
     <div class="panel"><ul class="feed" id="tl"><li><span class="m">0'</span>🏁 킥오프!</li>${p.big ? `<li class="big"><span class="m">0'</span>🔥 ${esc(p.big)}! 경기장이 터질 듯한 함성</li>` : ''}</ul></div>
@@ -1677,7 +1758,7 @@ async function runMatch(){
     ${r.rating != null ? `<div class="label">MY RATING</div><div class="rating" style="${rc}" id="rt">0.0</div>
       <div style="font-weight:900">${r.goals ? `⚽ ${r.goals}골 ` : ''}${r.assists ? `🅰️ ${r.assists}도움 ` : ''}${r.cs ? '🧤 클린시트 ' : ''}${!r.goals && !r.assists && !r.cs ? `${r.mins}분 출전` : ''}</div>`
       : `<div class="label">${r.role === 'injured' ? '부상 회복 중' : '출전하지 못했다'}</div><div style="font-size:48px">${r.role === 'injured' ? '🤕' : '🪑'}</div>`}
-    ${L.mis ? `<div class="mis-res ${L.mis.ok ? 'ok' : L.mis.ok === false ? 'no' : ''}">${ic('target')} 감독 미션 · ${MISSION[L.mis.k].n} — <b>${L.mis.ok ? '성공!' : L.mis.ok === false ? '실패' : '출전 못 해 무효'}</b></div>` : ''}
+    ${L.mis ? `<div class="mis-res ${L.mis.ok ? 'ok' : L.mis.ok === false ? 'no' : ''}">${ic('target')} <span>${DIFF[MISSION[L.mis.k].d][0]} 미션${L.mis.lucky ? ' (럭키 x2)' : ''} · ${MISSION[L.mis.k].n}</span> <b>${L.mis.ok ? '성공!' : L.mis.ok === false ? '실패' : '출전 못 해 무효'}</b></div>` : ''}
     <div class="chips">${chipsHtml(L.fx)}</div>
     ${r.iv ? '' : `<div class="noiv">${r.role === 'injured' ? '' : pick(['📵 오늘은 인터뷰 요청이 없었다.','🚌 기자들이 상대 팀 선수에게 몰려갔다.','🤫 조용히 버스에 올랐다.'])}</div>`}
     <button class="btn block" id="toIv" type="button">${r.iv ? `${ic('mic')} 기자회견장으로` : '다음 주로 ▶'}</button>
@@ -1966,11 +2047,11 @@ function startNego(){
   addNews(`${S.year} 시즌 종료 — ${S.name} ${se.apps}경기 ${se.goals}골 ${se.assists}도움 (평점 ${se.ratings.length ? S.nego.avg.toFixed(2) : '-'})`);
 }
 const APPEALS = {
-  record:{i:'📊', n:'기록 어필', d:'"이번 시즌 기록을 보세요."', line:'제 기록을 보시면 이 정도는 받아야 한다고 생각합니다.'},
-  pop:{i:'🌟', n:'인기 어필', d:'"팬들이 저를 원합니다."', line:'유니폼 판매량, 관중 수… 제가 구단에 기여하는 게 많잖아요.'},
-  loyal:{i:'🤝', n:'충성 어필', d:'"이 팀에 뼈를 묻겠습니다."', line:'저는 이 팀에서 오래 뛰고 싶습니다. 그 마음을 알아주세요.'},
-  transfer:{i:'💼', n:'이적 카드', d:'"다른 팀 제안이 있어요."', line:'솔직히 다른 구단에서도 제안이 왔습니다.'},
-  accept:{i:'✍️', n:'제시액 수용', d:'구단 제시액에 바로 사인', line:'구단 제시액 그대로 받아들이겠습니다.'},
+  record:{i:'clipboard-list', n:'기록 어필', d:'"이번 시즌 기록을 보세요."', line:'제 기록을 보시면 이 정도는 받아야 한다고 생각합니다.'},
+  pop:{i:'star', n:'인기 어필', d:'"팬들이 저를 원합니다."', line:'유니폼 판매량, 관중 수… 제가 구단에 기여하는 게 많잖아요.'},
+  loyal:{i:'heart-handshake', n:'충성 어필', d:'"이 팀에 뼈를 묻겠습니다."', line:'저는 이 팀에서 오래 뛰고 싶습니다. 그 마음을 알아주세요.'},
+  transfer:{i:'briefcase', n:'이적 카드', d:'"다른 팀 제안이 있어요."', line:'솔직히 다른 구단에서도 제안이 왔습니다.'},
+  accept:{i:'pen-tool', n:'제시액 수용', d:'구단 제시액에 바로 사인', line:'구단 제시액 그대로 받아들이겠습니다.'},
 };
 function appealOdds(k){
   if (k === 'accept') return 1;
@@ -2029,7 +2110,7 @@ function renderNego(){
   if (n.result) return showVerdict(false);
   $('#negoBody').innerHTML = `${n.round > 1 ? `<p class="small" style="margin:0 0 8px;color:var(--gold)">🔁 추가 협상은 1차에서 확보한 ${money(n.base)}에서 출발해요. 성공하면 더 오르고, 실패하면 이 금액에서 깎여요.</p>` : ''}<p class="small muted" style="margin:0 0 10px">어떻게 어필할까? 결과에 따라 <b>상승 · 유지 · 삭감</b>. 감독 성향과 기분, 구단 재정이 성공률과 삭감 폭을 바꿔요.</p>
     <div class="appeals">${Object.entries(APPEALS).map(([k,a],i) => `<button class="appeal" type="button" data-k="${k}" ${n.used.includes(k) ? 'disabled' : ''} style="animation-delay:${i*60}ms">
-      <span class="i">${a.i}</span><span class="n">${a.n}</span><span class="d">${esc(a.d)}</span>${k === 'accept' ? '<span class="odds hi">확정 · 신뢰 +5</span>' : oddsTag(appealOdds(k))}</button>`).join('')}</div>`;
+      <span class="i">${ic(a.i)}</span><span class="n">${a.n}</span><span class="d">${esc(a.d)}</span>${k === 'accept' ? '<span class="odds hi">확정 · 신뢰 +5</span>' : oddsTag(appealOdds(k))}</button>`).join('')}</div>`;
   root.querySelectorAll('.appeal').forEach(b => b.onclick = () => negotiate(b.dataset.k));
 }
 async function negotiate(k){
@@ -2733,19 +2814,51 @@ function bigMatch(f){
   return null;
 }
 const MISSION = {
-  goal:{n:'골 넣기', ok: r => r.goals >= 1}, brace:{n:'멀티골', ok: r => r.goals >= 2, hard:true},
-  assist:{n:'도움 기록', ok: r => r.assists >= 1}, point:{n:'공격 포인트 1개', ok: r => r.goals + r.assists >= 1},
-  cs:{n:'무실점 (클린시트)', ok: r => !!r.cs}, r7:{n:'평점 7.0 이상', ok: r => r.rating >= 7},
-  r75:{n:'평점 7.5 이상', ok: r => r.rating >= 7.5, hard:true}, win:{n:'팀 승리', ok: r => r.res === 'W'},
+  // 쉬움
+  mins60:{n:'60분 이상 소화', d:1, ok: r => r.mins >= 60},
+  unbeaten:{n:'지지 않기', d:1, ok: r => r.res !== 'L'},
+  noCard:{n:'경고 없이 마치기', d:1, ok: r => !r.yellow},
+  r65:{n:'평점 6.5 이상', d:1, ok: r => r.rating >= 6.5},
+  // 보통
+  goal:{n:'골 넣기', d:2, pos:'FW MF', ok: r => r.goals >= 1},
+  assist:{n:'도움 기록', d:2, pos:'FW MF', ok: r => r.assists >= 1},
+  point:{n:'공격 포인트 1개', d:2, pos:'FW MF', ok: r => r.goals + r.assists >= 1},
+  cs:{n:'무실점 (클린시트)', d:2, pos:'DF GK', ok: r => !!r.cs},
+  r7:{n:'평점 7.0 이상', d:2, ok: r => r.rating >= 7},
+  win:{n:'팀 승리', d:2, ok: r => r.res === 'W'},
+  clutch:{n:'결정적 순간 성공', d:2, pos:'FW MF DF', ok: r => r.clutchOk > 0},
+  // 어려움
+  brace:{n:'멀티골', d:3, pos:'FW MF', ok: r => r.goals >= 2},
+  point2:{n:'공격 포인트 2개', d:3, pos:'FW MF', ok: r => r.goals + r.assists >= 2},
+  r75:{n:'평점 7.5 이상', d:3, ok: r => r.rating >= 7.5},
+  r8:{n:'평점 8.0 이상', d:3, pos:'DF GK', ok: r => r.rating >= 8},
+  firstHalf:{n:'전반전 안에 골', d:3, pos:'FW MF', ok: r => (r.goalMins || []).some(m => m <= 45)},
+  late:{n:'75분 이후 골', d:3, pos:'FW MF', ok: r => (r.goalMins || []).some(m => m >= 75)},
+  cleanWin:{n:'무실점 승리', d:3, pos:'DF GK', ok: r => !!r.cs && r.res === 'W'},
+  comeback:{n:'선제골 내주고 역전승', d:3, ok: r => !!r.comeback},
+  // 전설 (가끔 어려움 자리에 등장)
+  hat:{n:'해트트릭', d:4, pos:'FW', ok: r => r.goals >= 3},
+  r9:{n:'평점 9.0 이상', d:4, ok: r => r.rating >= 9},
 };
-function makeMission(){
-  const pool = {FW:['goal','goal','point','r7','brace','win'], MF:['assist','point','r7','win','r75'], DF:['cs','r7','win','cs'], GK:['cs','cs','r7','win']}[S.pos];
-  return pick(pool);
+const DIFF = {1:['쉬움','easy'], 2:['보통','norm'], 3:['어려움','hard'], 4:['전설','legend']};
+const missionPool = d => Object.keys(MISSION).filter(k => MISSION[k].d === d && (!MISSION[k].pos || MISSION[k].pos.split(' ').includes(S.pos)));
+function makeMissions(){
+  const top = Math.random() < .12 && missionPool(4).length ? 4 : 3;
+  const opts = [1, 2, top].map(d => ({k: pick(missionPool(d)), lucky:false}));
+  if (Math.random() < .2) pick(opts).lucky = true; // 🍀 럭키 미션: 보상 2배
+  return opts;
 }
-function missionReward(k, big){
-  const m = (MISSION[k].hard ? 1.6 : 1) * (big ? 1.5 : 1);
-  return {xp: Math.round(40 * m), trust: Math.round(3 * m), pop: Math.round(2 * m)};
+function missionReward(k, big, lucky){
+  const d = MISSION[k].d, base = {1:{xp:20, trust:1, pop:1}, 2:{xp:45, trust:3, pop:2}, 3:{xp:100, trust:6, pop:5}, 4:{xp:220, trust:10, pop:10}}[d];
+  const m = (big ? 1.5 : 1) * (lucky ? 2 : 1);
+  return {xp: Math.round(base.xp * m), trust: Math.round(base.trust * m), pop: Math.round(base.pop * m), fail: d >= 3 ? -2 : 0};
 }
+// 경기 조건: 날씨 · 주심 (매주 무작위)
+const WEATHER = [
+  [40,'sun','맑음','', {}], [18,'cloud-rain','비','골↓ · 실수↑', {goal:.88}], [7,'snowflake','눈','골↓↓ · 이변 가능', {goal:.78, swing:.35}],
+  [12,'thermometer','폭염','체력 소모↑', {drain:1.5}], [12,'wind','강풍','결과 요동', {swing:.3}], [11,'cloud','흐림','', {}],
+];
+const REFS = [[30,'관대한 주심','경고·PK↓', {card:.5, pk:.6}], [45,'보통 주심','', {}], [25,'엄격한 주심','경고·PK↑', {card:2, pk:1.7}]];
 
 // ---------- 이적 협상 (구단을 고른 뒤 그 구단 디렉터와 연봉 협상) ----------
 const TAPPEALS = {
@@ -2789,7 +2902,7 @@ function renderTN(){
   body.innerHTML = `<p class="small muted" style="margin:0 0 10px">어필은 최대 3번 (${left}번 남음). 실패하면 상대가 협상을 접을 수도 있어요.${T.perk ? ' · <b style="color:var(--turf)">출전 보장 특약 확보</b>' : ''}</p>
     <div class="appeals">${Object.entries(TAPPEALS).map(([k, a], i) => `<button class="appeal" type="button" data-k="${k}" ${T.used.includes(k) || left <= 0 ? 'disabled' : ''} style="animation-delay:${i*60}ms">
       <span class="i">${ic(a.i)}</span><span class="n">${a.n}</span><span class="d">${esc(a.d)}</span>${tnOddsTag(tnOdds(k))}</button>`).join('')}</div>
-    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn dark sm" id="tnQuit" type="button" style="flex:1">협상 포기</button><button class="btn turf" id="tnSign" type="button" style="flex:1.4">${ic('pen-tool')} 이 조건에 사인</button></div>`;
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn dark sm" id="tnQuit" type="button" style="flex:1">협상 포기</button><button class="btn turf" id="tnSign" type="button" style="flex:1.4">${ic('pen-tool')} 사인하기</button></div>`;
   root.querySelectorAll('.appeal').forEach(b => b.onclick = () => tnAppeal(b.dataset.k));
   $('#tnQuit').onclick = () => { addNews(`${S.name}, ${T.club}와 이적 협상 중단`); tnLeave(true); };
   $('#tnSign').onclick = tnSign;
@@ -2865,6 +2978,7 @@ const ACH = [
   ['fashion','shirt','패셔니스타','악세사리 5개 보유', s => s.items.length >= 5, 80],
   ['events30','dice-5','파란만장','돌발 이벤트 30회 경험', s => s.rec.events >= 30, 100],
   ['mission10','target','미션 클리어','감독 미션 10회 성공', s => s.rec.missions >= 10, 150],
+  ['hardMis5','flame','도전자','어려움 이상 미션 5회 성공', s => s.rec.hardMis >= 5, 250],
   ['veteran','medal','베테랑','5시즌 완주', s => s.history.length >= 5, 200],
 ];
 function checkAch(){
@@ -2994,8 +3108,8 @@ function tableHtml(){
   const rows = standings(), n = rows.length, lg = CLUB[S.club].lg;
   const zone = i => i === 0 ? 'z-champ' : (LEAGUES[lg].cont && i < 3) ? 'z-cont' : i >= n - 2 ? 'z-down' : '';
   return `<div class="panel tbl"><table class="standings">
-    <thead><tr><th>#</th><th class="l">구단</th><th>경기</th><th>승</th><th>무</th><th>패</th><th>득실</th><th>승점</th></tr></thead>
-    <tbody>${rows.map((r, i) => `<tr class="${r.c === S.club ? 'me' : ''} ${zone(i)}"><td><span class="rk">${i + 1}</span></td><td class="l"><span class="tc">${crest(r.c)}<em>${esc(r.c)}</em></span></td><td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${r.gd > 0 ? '+' : ''}${r.gd}</td><td><b>${r.pts}</b></td></tr>`).join('')}</tbody>
+    <thead><tr><th>#</th><th class="l">구단</th><th class="gp">경기</th><th>승</th><th>무</th><th>패</th><th>득실</th><th>승점</th></tr></thead>
+    <tbody>${rows.map((r, i) => `<tr class="${r.c === S.club ? 'me' : ''} ${zone(i)}"><td><span class="rk">${i + 1}</span></td><td class="l"><span class="tc">${crest(r.c)}<em>${esc(r.c)}</em></span></td><td class="gp">${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${r.gd > 0 ? '+' : ''}${r.gd}</td><td><b>${r.pts}</b></td></tr>`).join('')}</tbody>
   </table></div>
   <div class="legend-z"><span><i class="z-champ"></i>우승</span>${LEAGUES[lg].cont ? `<span><i class="z-cont"></i>${esc(LEAGUES[lg].cont)} 진출권</span>` : ''}<span><i class="z-down"></i>하위권</span></div>`;
 }
