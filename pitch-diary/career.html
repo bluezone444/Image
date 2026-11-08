@@ -9,9 +9,6 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Jua&family=Noto+Sans+KR:wght@400;700;900&display=swap">
-<script src="vendor/three.min.js"></script>
-<script src="vendor/GLTFLoader.js"></script>
-<script src="vendor/player-glb.js"></script>
 <style>
 /* 레이아웃 컨셉: 야간 경기장 위에 떠 있는 세로형 게임 HUD — 상단 자원 바, 가운데 장면, 하단 도크 */
 :root{
@@ -817,6 +814,57 @@ table.standings{min-width:0}
 .vc-gap{margin:0 0 6px !important} .vc-gap b{color:var(--gold)}
 .lg-top{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink);padding:6px 10px;border-radius:10px;background:rgba(255,200,61,.08)}
 .lg-top .ico{color:var(--gold);width:15px;height:15px;flex:none}
+
+/* ---------- 2D 치비 선수 ---------- */
+.chibi-host{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:34px 12px 46px;cursor:pointer;transition:transform .17s ease-in;-webkit-tap-highlight-color:transparent}
+.chibi-host.turn{transform:scaleX(0)}
+.viewer.sm .chibi-host{padding:12px 12px 8px}
+.viewer.hero .chibi-host{padding:10px 0 4px}
+.chibi{width:100%;height:100%;max-width:300px;overflow:visible;filter:drop-shadow(0 8px 14px rgba(0,0,0,.35))}
+.chibi .whole{transform-box:view-box;transform-origin:100px 246px;animation:cbBreath 2.8s ease-in-out infinite}
+.chibi .head{transform-box:fill-box;transform-origin:50% 92%;animation:cbHead 3.4s ease-in-out infinite}
+.chibi .eyes{transform-box:fill-box;transform-origin:50% 60%;animation:cbBlink 4.6s infinite}
+.chibi .armL,.chibi .armR,.chibi .legL,.chibi .legR{transform-box:fill-box;transform-origin:50% 4%}
+.chibi .armL{transform:rotate(12deg)} .chibi .armR{transform:rotate(-12deg)}
+.chibi .ball-r{transform-box:fill-box;transform-origin:center}
+.chibi .shadow{transform-box:fill-box;transform-origin:center}
+@keyframes cbBreath{50%{transform:translateY(-1.5px) scale(1.012,.99)}}
+@keyframes cbHead{0%,100%{transform:rotate(-2.5deg)}50%{transform:rotate(2.5deg)}}
+@keyframes cbBlink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
+[data-cpose=run] .whole{animation:cbRun .46s ease-in-out infinite}
+[data-cpose=run] .legL{animation:cbLeg .46s ease-in-out infinite}
+[data-cpose=run] .legR{animation:cbLeg .46s ease-in-out infinite reverse}
+[data-cpose=run] .armL{animation:cbArm .46s ease-in-out infinite}
+[data-cpose=run] .armR{animation:cbArm .46s ease-in-out infinite reverse}
+[data-cpose=run] .ball-r{animation:cbRoll .6s linear infinite}
+@keyframes cbRun{0%,100%{transform:translateY(0) rotate(4deg)}50%{transform:translateY(-7px) rotate(4deg)}}
+@keyframes cbLeg{0%,100%{transform:rotate(28deg)}50%{transform:rotate(-28deg)}}
+@keyframes cbArm{0%,100%{transform:rotate(-38deg)}50%{transform:rotate(38deg)}}
+@keyframes cbRoll{to{transform:rotate(360deg)}}
+[data-cpose=clap] .armL{animation:cbClapL .32s ease-in-out infinite alternate}
+[data-cpose=clap] .armR{animation:cbClapR .32s ease-in-out infinite alternate}
+[data-cpose=clap] .whole{animation:cbHop .64s ease-in-out infinite}
+@keyframes cbClapL{from{transform:rotate(-28deg)}to{transform:rotate(-58deg)}}
+@keyframes cbClapR{from{transform:rotate(28deg)}to{transform:rotate(58deg)}}
+@keyframes cbHop{50%{transform:translateY(-4px)}}
+[data-cpose=jump] .whole{animation:cbJump .95s cubic-bezier(.3,.7,.4,1) infinite}
+[data-cpose=jump] .armL{transform:rotate(150deg)} [data-cpose=jump] .armR{transform:rotate(-150deg)}
+[data-cpose=jump] .shadow{animation:cbShadow .95s cubic-bezier(.3,.7,.4,1) infinite}
+@keyframes cbJump{0%,100%{transform:translateY(0) scale(1.06,.93)}18%{transform:translateY(0) scale(.95,1.05)}50%{transform:translateY(-36px) scale(1)}82%{transform:translateY(0) scale(1)}}
+@keyframes cbShadow{50%{transform:scale(.6);opacity:.12}}
+@media (prefers-reduced-motion: reduce){ .chibi *{animation:none!important} .chibi-host{transition:none} }
+/* ---------- 한계 돌파 ---------- */
+.lb-modal .modal-card{border-color:var(--hot);box-shadow:0 0 40px rgba(255,77,109,.45)}
+.lb-big{color:var(--gold);animation:pulse 1.2s ease-in-out infinite} .lb-big.fail{color:var(--muted);animation:none}
+.lb-steps{display:flex;gap:8px;justify-content:center;margin:6px 0 4px}
+.lb-steps i{width:34px;height:10px;border-radius:6px;background:rgba(255,255,255,.12)}
+.lb-steps i.ok{background:var(--turf);box-shadow:0 0 10px var(--turf)} .lb-steps i.no{background:var(--hot)}
+.lb-stage{font-family:var(--f-display);color:var(--gold);letter-spacing:.14em;font-size:13px;margin-top:6px}
+.lb-flash{font-family:var(--f-display);font-size:30px;padding:24px 0;animation:pop .35s both} .lb-flash.ok{color:var(--turf)} .lb-flash.no{color:var(--hot)}
+.hs.lim{border-color:var(--gold);background:linear-gradient(180deg,#3a2a06,#0b1128);box-shadow:0 0 8px rgba(255,200,61,.45)} .hs.lim b{color:#fff3b0}
+.sb .t i.over{background:linear-gradient(90deg,var(--gold),var(--hot))}
+.sb small.lim{display:block;font-size:10px;color:var(--gold);font-weight:900}
+.lb-note{font-size:12px;color:var(--muted);text-align:center;margin:-4px 0 0}
 </style>
 </head>
 <body>
@@ -1181,7 +1229,7 @@ function validPending(p){
   if (!['start','sub','bench','injured'].includes(p.role)) return null;
   p.ev.forEach(e => { e.m = int(e.m, 0, 90, 45); if (e.dir != null) e.dir = int(e.dir, 0, 2, 1); if (e.roll != null) e.roll = clamp(Number(e.roll) || 0, 0, 1); if (e.res != null) e.res = !!e.res; if (e.kind != null && !CH[e.kind]) e.kind = null; });
   if (p.soProg){ const bo = a => Array.isArray(a) ? a.slice(0, 12).map(Boolean) : []; p.soProg = {U: bo(p.soProg.U), T: bo(p.soProg.T)}; }
-  ['tg','og','from','mins','ovr'].forEach(k => p[k] = int(p[k], 0, 99, 0));
+  ['tg','og','from','mins'].forEach(k => p[k] = int(p[k], 0, 99, 0)); p.ovr = int(p.ovr, 0, 130, 60);
   p.big = typeof p.big === 'string' ? p.big.slice(0, 30) : '';
   p.wx = int(p.wx, 0, WEATHER.length - 1, 0); p.ref = int(p.ref, 0, REFS.length - 1, 1); p.drain = clamp(Number(p.drain) || 1, 1, 2);
   p.noise = clamp(Number(p.noise) || 0, -1, 1); p.psy = clamp(Number(p.psy) || 0, -.6, .6); p.wq = clamp(Number(p.wq ?? 1), 0, 1); p.wqv = clamp(Number(p.wqv) || 70, 0, 100); p.wd = int(p.wd, 0, WONDER.length - 1, 0); p.buff = clamp(Number(p.buff) || 0, -1, 1); p.home = !!p.home;
@@ -1199,7 +1247,7 @@ function load(){
     r.lookSet = !!r.look && r.lookSet !== false; r.look = cleanLook(r.look); r.xp = int(r.xp, 0, 1e7, 0);
     r.items = Array.isArray(r.items) ? [...new Set(r.items.filter(i => SHOP.some(x => x.id === i)))] : [];
     r.equip = Object.fromEntries(Object.entries(r.equip && typeof r.equip === 'object' ? r.equip : {}).filter(([slot, id]) => r.items.includes(id) && SHOP.find(x => x.id === id).slot === slot));
-    r.stats = r.stats || {}; STAT_KEYS.forEach(k => r.stats[k] = int(r.stats[k], 1, 99, 50));
+    r.stats = r.stats || {}; STAT_KEYS.forEach(k => r.stats[k] = int(r.stats[k], 1, 120, 50)); r.lbCd = int(r.lbCd, 0, 10, 0);
     ['pop','trust','cond'].forEach(k => r[k] = int(r[k], 0, 100, 50));
     r.age = int(r.age, 16, 45, 19); r.year = int(r.year, 2000, 2100, 2027); r.round = int(r.round, 0, 40, 0);
     r.salary = int(r.salary, MIN_SALARY, 2000000, 3000); r.earn = int(r.earn, 0, 1e9, 0); r.injury = int(r.injury, 0, 10, 0);
@@ -1238,7 +1286,7 @@ function load(){
     r.season.obj = Array.isArray(r.season.obj) ? r.season.obj.filter(o => o && OBJ[o.k]).map(o => ({k:o.k, n: o.k === 'rating' ? clamp(Number(o.n) || 6.8, 5, 9) : int(o.n, 1, 99, 1)})).slice(0, 3) : null;
     r.season.objRes = Array.isArray(r.season.objRes) ? r.season.objRes.map(Boolean).slice(0, 3) : undefined;
     r.ach = Array.isArray(r.ach) ? [...new Set(r.ach.filter(a => ACH.some(x => x[0] === a)))] : [];
-    r.rec = Object.fromEntries(['hat','so','clutch','events','objAll','missions','hardMis','psyW','vbest'].map(k => [k, int(r.rec?.[k], 0, 99999, 0)]));
+    r.rec = Object.fromEntries(['hat','so','clutch','events','objAll','missions','hardMis','psyW','vbest','lb'].map(k => [k, int(r.rec?.[k], 0, 99999, 0)]));
     r.mgrs = Object.fromEntries(Object.entries(r.mgrs && typeof r.mgrs === 'object' ? r.mgrs : {}).filter(([c, v]) => CLUB[c] && v && MGR[v.t] && typeof v.m === 'string').map(([c, v]) => [c, {m: v.m.slice(0, 16), t: v.t}]));
     r.season.ratings = (Array.isArray(r.season.ratings) ? r.season.ratings : []).map(Number).filter(Number.isFinite);
     ['apps','starts','goals','assists','cs','W','D','L'].forEach(k => r.season[k] = int(r.season[k], 0, 99, 0));
@@ -1255,7 +1303,7 @@ function load(){
       event: EVENTS.some(e => e.id === w.event) ? w.event : null, eventRes: w.eventRes && typeof w.eventRes.text === 'string' ? {text:w.eventRes.text.slice(0, 200)} : null,
       mini: MINIS[w.mini] ? w.mini : null, miniDone:!!w.miniDone, mission: MISSION[w.mission] ? w.mission : null,
       mOpts: Array.isArray(w.mOpts) ? w.mOpts.filter(o => o && MISSION[o.k]).map(o => ({k:o.k, lucky:!!o.lucky})).slice(0, 3) : null,
-      mPick: w.mPick == null ? null : int(w.mPick, 0, 2, 1), wx:int(w.wx, 0, WEATHER.length - 1, 0), ref:int(w.ref, 0, REFS.length - 1, 1), psy: cleanPsy(w.psy), psyFx: cleanPsyFx(w.psyFx), speech: typeof w.speech === 'string' ? w.speech.slice(0, 80) : ''} : null;
+      mPick: w.mPick == null ? null : int(w.mPick, 0, 2, 1), wx:int(w.wx, 0, WEATHER.length - 1, 0), ref:int(w.ref, 0, REFS.length - 1, 1), psy: cleanPsy(w.psy), psyFx: cleanPsyFx(w.psyFx), lb: w.lb && STAT_KEYS.includes(w.lb.k) ? {k:w.lb.k, started:!!w.lb.started, res: ['ok','fail'].includes(w.lb.res) ? w.lb.res : null} : null, speech: typeof w.speech === 'string' ? w.speech.slice(0, 80) : ''} : null;
     r.prev = r.prev ? {rating:Number(r.prev.rating) || 0, goals:int(r.prev.goals, 0, 9, 0), mins:int(r.prev.mins, 0, 90, 0)} : null;
     r.pending = validPending(r.pending);
     if (r.phase === 'match' && !r.pending) r.phase = 'week';
@@ -1293,7 +1341,7 @@ function applyFx(e){
   }
   if (e.buff){ const b0 = S.buff; S.buff = r2(clamp(S.buff + e.buff, -1, 1)); const d = r2(S.buff - b0); if (d) out.push([d > 0 ? '자신감' : '부담감', d, d > 0 ? '🔥 다음 경기 자신감↑' : '😰 다음 경기 부담감↑']); }
   if (e.earn){ S.earn = Math.max(0, S.earn + e.earn); out.push(['수입', e.earn, `💰 ${e.earn > 0 ? '+' : '−'}${money(Math.abs(e.earn))}`]); }
-  if (e.best){ const k = mainStat(), b = S.stats[k]; S.stats[k] = clamp(b + e.best, 1, 99); const d = S.stats[k] - b; if (d) out.push([statName(k, S.pos), d, '']); }
+  if (e.best){ const k = mainStat(); const d = addStat(k, e.best); if (d) out.push([statName(k, S.pos), d, '']); }
   return out;
 }
 const chipsHtml = arr => arr.map(([l, d, txt], i) => `<span class="chip ${d > 0 ? 'up' : 'down'}" style="animation-delay:${i*90}ms">${txt ? esc(txt) : `${esc(l)} ${d > 0 ? '+' : ''}${d}`}</span>`).join('');
@@ -1316,7 +1364,7 @@ function hud(){
     <div class="hud-res">${res('star', S.pop, 'var(--gold)', '인기')}${res('handshake', S.trust, 'var(--cyan)', '신뢰')}${res('zap', S.cond, S.cond < 35 ? 'var(--hot)' : 'var(--turf)', '컨디션')}
       <div class="res money xp" title="개인 경험치 (상점에서 사용)"><div class="rt">${ic('gem')}<span>경험치</span></div><b>${(S.xp || 0) >= 1000 ? ((S.xp || 0) / 1000).toFixed(1) + 'k' : (S.xp || 0)}</b></div>
       <div class="res money" title="연봉 ${money(S.salary)}"><div class="rt">${ic('wallet')}<span>연봉</span></div><b>${S.salary >= 10000 ? (S.salary / 10000).toFixed(S.salary >= 100000 ? 0 : 1) + '억' : (S.salary / 1000).toFixed(S.salary % 1000 ? 1 : 0) + '천만'}</b></div></div>
-    <div class="hud-stats">${STAT_KEYS.map(k => { const v = S.stats[k], d = UI.prev ? v - UI.prev[k] : 0; return `<div class="hs ${d > 0 ? 'upd' : d < 0 ? 'dnd' : ''} ${v >= 75 ? 'hi' : v >= 60 ? 'mid' : ''}"><span>${statName(k, S.pos)}</span><b>${v}</b>${d ? `<i>${d > 0 ? '▲' : '▼'}${Math.abs(d)}</i>` : ''}</div>`; }).join('')}</div>
+    <div class="hud-stats">${STAT_KEYS.map(k => { const v = S.stats[k], d = UI.prev ? v - UI.prev[k] : 0; return `<div class="hs ${d > 0 ? 'upd' : d < 0 ? 'dnd' : ''} ${v >= 100 ? 'lim' : v >= 75 ? 'hi' : v >= 60 ? 'mid' : ''}"><span>${statName(k, S.pos)}</span><b>${v}</b>${d ? `<i>${d > 0 ? '▲' : '▼'}${Math.abs(d)}</i>` : ''}</div>`; }).join('')}</div>
   </div></header>`;
 }
 function bindHud(){ UI.prev = {...S.stats}; const b = $('#sfxBtn'); if (b) b.onclick = () => { sfxOn = !sfxOn; lsSet(SFX_KEY, sfxOn ? 'on' : 'off'); b.innerHTML = ic(sfxOn ? 'volume-2' : 'volume-x'); }; }
@@ -1359,10 +1407,10 @@ function renderTitle(){
       <ul class="ts-feats">
         <li>${ic('globe')}<span>7개 리그</span></li>
         <li>${ic('zap')}<span>돌발 이벤트 126종</span></li>
-        <li>${ic('user-round')}<span>3D 선수 꾸미기</span></li>
+        <li>${ic('user-round')}<span>선수 꾸미기</span></li>
         <li>${ic('briefcase')}<span>연봉협상 · 이적</span></li>
       </ul>
-      <footer class="ts-foot"><a class="t-diary" href="index.html">${ic('book-open')} 직관 일기</a><span>3D 모델 Quaternius (CC0) · 아이콘 Lucide</span></footer>
+      <footer class="ts-foot"><a class="t-diary" href="index.html">${ic('book-open')} 직관 일기</a><span>아이콘 Lucide</span></footer>
     </section>
   </div>`;
   mountViewer($('#tv'), {...demo, pose:'idle'});
@@ -1386,7 +1434,7 @@ function renderCreate(){
         <div class="field"><label class="label" for="nm">선수 이름</label><input id="nm" maxlength="12" placeholder="예) 김민재" value="${esc(nm)}"></div>
         <div class="field"><span class="label">포지션</span><div class="pos-grid">${Object.entries(POS).map(([k,p]) => `<button type="button" class="pos ${k === pos ? 'on' : ''}" data-p="${k}"><b>${k}</b><small>${ic(p.av)} ${p.name}</small></button>`).join('')}</div></div>
       </div>
-      <div class="label">${ic('user-round')} 외모 · 드래그하면 돌려볼 수 있어요</div>
+      <div class="label">${ic('user-round')} 외모 · 캐릭터를 탭하면 뒷모습</div>
       <div class="panel pad stack"><div class="viewer" id="cv"></div>${lookControls(look)}</div>
       <div class="label">입단 구단 · 감독 성향을 확인하세요</div>
       <div class="club-grid">${CLUBS.map(([n]) => `<button type="button" class="club ${n === club ? 'on' : ''}" data-c="${esc(n)}">${crest(n, 'lg')}<span>${esc(n)}</span></button>`).join('')}</div>
@@ -1417,9 +1465,10 @@ function renderCreate(){
 function makeWeek(){
   const fortune = FORTUNES.indexOf(wpick(FORTUNES));
   const roll = Math.random(); // 한 주에 돌발 이벤트 또는 미니게임 중 최대 하나만
-  const event = !S.injury && roll < .26 ? pick(EVENTS).id : null;
-  const mini = !S.injury && !event && roll < .42 ? pick(Object.keys(MINIS)) : null;
-  const psy = !S.injury && !event && !mini && roll < .62 ? makePsy() : null; // 감독·동료와의 심리전
+  const lb = S.injury ? null : makeLB(); // 한계 돌파 시험(능력치 99 이상일 때만)
+  const event = !S.injury && !lb && roll < .26 ? pick(EVENTS).id : null;
+  const mini = !S.injury && !lb && !event && roll < .42 ? pick(Object.keys(MINIS)) : null;
+  const psy = !S.injury && !lb && !event && !mini && roll < .62 ? makePsy() : null; // 감독·동료와의 심리전
   const mOpts = S.injury ? null : makeMissions();
   const wx = WEATHER.indexOf(wpick(WEATHER)), ref = REFS.indexOf(wpick(REFS));
   let needs, text, rumor = false;
@@ -1441,7 +1490,7 @@ function makeWeek(){
   }
   S.buff = r2(clamp(S.buff + FORTUNES[fortune][4], -1, 1));
   if (mgr().volatile) S.mood = ri(-2, 2);
-  return {needs, text, rumor, fortune, revealed:false, event, eventRes:null, mini, miniDone:false, mOpts, mPick:null, mission:null, wx, ref, psy, psyFx:null};
+  return {needs, text, rumor, fortune, revealed:false, event, eventRes:null, mini, miniDone:false, mOpts, mPick:null, mission:null, wx, ref, psy, psyFx:null, lb};
 }
 const SPEECH = {
   '-2':['요즘 다들 정신 못 차리지? 이번 주 지면 각오해.','훈련장에 웃음소리가 들리면 가만 안 둔다.'],
@@ -1460,6 +1509,7 @@ function renderHub(){
   if (S.equip.arm === 'captain' && S.trust < 70){ delete S.equip.arm; save(); setTimeout(() => toast('감독 신뢰가 70 아래로 떨어져 주장 완장을 내려놓았다'), 300); }
   if (!S.week.speech){ S.week.speech = pick([...SPEECH[String(S.mood)], ...(S.mood >= 0 ? mgr().pos : mgr().neg).map(x => x.replace(/"/g, ''))]); save(); }
   if (!S.v0){ S.v0 = myValue(); save(); }
+  if (S.week && S.week.lb && S.week.lb.started && !S.week.lb.res){ S.week.lb.res = 'fail'; S.lbCd = 3; save(); setTimeout(() => toast('한계 돌파 시험을 중간에 포기했다… 몇 주 뒤 다시 기회가 와요'), 600); }
   if (UI.vToast){ const m = UI.vToast; UI.vToast = null; setTimeout(() => toast(m), 1200); }
   const t = UI.tab;
   if (t === 'player'){ frame(playerTab(), true); bindPlayer(); }
@@ -1525,7 +1575,8 @@ function bindMatchTab(){
   if (UI.splash){ UI.splash = false; roundSplash(); }
   const delay = RM ? 0 : (document.querySelector('.splash') ? 1400 : 450);
   if (UI.sacked){ const o = UI.sacked; UI.sacked = null; setTimeout(() => sackModal(o), delay); return; }
-  if (S.week.event && !S.week.eventRes) setTimeout(showEvent, delay);
+  if (S.week.lb && !S.week.lb.started) setTimeout(showLB, delay);
+  else if (S.week.event && !S.week.eventRes) setTimeout(showEvent, delay);
   else if (S.week.mini && !S.week.miniDone) setTimeout(showMini, delay);
   else if (S.week.psy && !S.week.psy.done) setTimeout(showPsy, delay);
   const tv = $('#toValue2'); if (tv) tv.onclick = goValue;
@@ -1535,7 +1586,7 @@ function playerTab(){
   return `
     <div class="viewer tall" id="viewer"><div class="v-tag">${esc(S.name)} · ${S.pos} · OVR ${ovr}</div>
       <div class="v-poses">${[['idle','기본'],['run','달리기'],['clap','박수'],['jump','점프']].map(([k, n]) => `<button type="button" class="opt ${k === 'idle' ? 'on' : ''}" data-pose="${k}">${n}</button>`).join('')}</div></div>
-    <div class="small muted" style="text-align:center;margin-top:-6px">피지컬 ${S.stats.phy} · ${S.stats.phy >= 75 ? '탄탄한 근육질 체형' : S.stats.phy >= 55 ? '균형 잡힌 체형' : '호리호리한 체형'} · 드래그해서 돌려보기</div>
+    <div class="small muted" style="text-align:center;margin-top:-6px">피지컬 ${S.stats.phy} · ${S.stats.phy >= 75 ? '탄탄한 근육질 체형' : S.stats.phy >= 55 ? '균형 잡힌 체형' : '호리호리한 체형'} · 캐릭터를 탭하면 뒷모습</div>
     ${S.lookSet ? '' : `<button class="btn cyan block" id="firstLook" type="button">${ic('user-round')} 외모 설정하기 (무료 1회)</button>`}
     <div class="pcard tier-${tier}">
       <div class="top"><div><div class="ovr">${ovr}</div><span class="pp">${S.pos}</span></div>${crest(S.club, 'lg')}</div>
@@ -1545,7 +1596,8 @@ function playerTab(){
     </div>
     ${vMini('toValue')}
     <div class="panel pad" style="display:flex;justify-content:center">${radar()}</div>
-    <div class="panel pad statbars">${STAT_KEYS.map((k, i) => `<div class="sb"><span>${statName(k, S.pos)}</span><div class="t"><i style="width:${S.stats[k]}%;animation-delay:${i*80}ms"></i></div><b>${S.stats[k]}</b></div>`).join('')}</div>
+    <div class="panel pad statbars">${STAT_KEYS.map((k, i) => `<div class="sb"><span>${statName(k, S.pos)}${S.stats[k] >= 99 ? `<small class="lim">${S.stats[k] >= STAT_MAX ? '최대치' : S.stats[k] >= 100 ? '한계 돌파' : '한계 도달'}</small>` : ''}</span><div class="t"><i class="${S.stats[k] >= 99 ? 'over' : ''}" style="width:${Math.min(100, S.stats[k] / STAT_MAX * 100)}%;animation-delay:${i*80}ms"></i></div><b>${S.stats[k]}</b></div>`).join('')}</div>
+    <p class="lb-note">훈련으로는 99까지 · 100부터는 <b>한계 돌파 시험</b>을 통과해야 올라요 (최대 ${STAT_MAX})</p>
     <div class="label">특성 · 상태</div>
     <div class="panel pad" style="display:flex;flex-wrap:wrap;gap:8px">
       <span class="trait">⭐ ${popTier(S.pop)}</span>
@@ -1658,6 +1710,7 @@ function growth(age){ return age <= 21 ? 2.2 : age <= 24 ? 1.7 : age <= 28 ? 1.1
 async function doAction(id){
   if (S.phase !== 'week') return;
   if (S.week.event && !S.week.eventRes){ showEvent(); return; }
+  if (S.week.lb && !S.week.lb.started){ showLB(); return; }
   if (S.week.mini && !S.week.miniDone){ showMini(); return; }
   if (S.week.psy && !S.week.psy.done){ showPsy(); return; }
   root.querySelectorAll('.act').forEach(b => b.disabled = true);
@@ -1672,8 +1725,8 @@ async function doAction(id){
       const g = growth(S.age) * youth * (S.cond / 100) * clamp((99 - S.stats[id]) / 40, .15, 1) * rand(.6, 1.5);
       let gain = Math.max(0, Math.round(g));
       if (hit) gain = Math.max(1, Math.round(gain * 1.5));
-      S.stats[id] = clamp(S.stats[id] + gain, 1, 99); S.cond = clamp(S.cond - 10, 0, 100);
-      msgs.push(gain ? `${statName(id, S.pos)} +${gain}!` : `${statName(id, S.pos)} 훈련… 이번엔 성과 없음`);
+      const capped = S.stats[id] >= 99; gain = addStat(id, gain); S.cond = clamp(S.cond - 10, 0, 100);
+      msgs.push(capped ? `${statName(id, S.pos)} 한계 도달 (99+) · 한계 돌파 시험을 기다리세요` : gain ? `${statName(id, S.pos)} +${gain}!` : `${statName(id, S.pos)} 훈련… 이번엔 성과 없음`);
     }
   } else if (id === 'rest'){
     const g = 25 + (hasT('rest') ? 10 : 0) + (hit ? 10 : 0);
@@ -1690,7 +1743,7 @@ async function doAction(id){
   if (hit){
     S.buff = r2(clamp(S.buff + .2, -1, 1)); msgs.unshift('🎯 상황 적중!');
     const roll = Math.random();
-    if (roll < .04) special = {i:'🌟', t:'잠재력 개방!', d:'모든 능력치 +1', go(){ STAT_KEYS.forEach(k => S.stats[k] = clamp(S.stats[k] + 1, 1, 99)); addNews(`${S.name}, 훈련장서 한 단계 성장… 코치진 감탄`); }};
+    if (roll < .04) special = {i:'🌟', t:'잠재력 개방!', d:'모든 능력치 +1', go(){ STAT_KEYS.forEach(k => addStat(k, 1)); addNews(`${S.name}, 훈련장서 한 단계 성장… 코치진 감탄`); }};
     else if (roll < .22) special = pickSpecial(id);
     if (special) special.go();
   }
@@ -1705,7 +1758,7 @@ async function doAction(id){
 function pickSpecial(id){
   const opts = [];
   if (TRAITS[id] && !hasT(id)) opts.push([3, {i:TRAITS[id].i, t:`특성 획득: ${TRAITS[id].n}`, d:TRAITS[id].d, go(){ S.traits.push(id); addNews(`${S.name}, 새 무기 장착… '${TRAITS[id].n}' 면모 과시`); }}]);
-  if (STAT_KEYS.includes(id)) opts.push([2, {i:'⚡', t:'각성!', d:`${statName(id, S.pos)} +3 추가`, go(){ S.stats[id] = clamp(S.stats[id] + 3, 1, 99); }}]);
+  if (STAT_KEYS.includes(id)) opts.push([2, {i:'⚡', t:'각성!', d:`${statName(id, S.pos)} +3 추가`, go(){ addStat(id, 3); }}]);
   opts.push([1, {i:'👀', t:'감독이 훈련을 지켜봤다', d:'감독 신뢰 +6', go(){ S.trust = clamp(S.trust + 6, 0, 100); }}]);
   opts.push([1, {i:'📱', t:'훈련 영상 바이럴', d:'인기도 +5', go(){ S.pop = clamp(S.pop + 5, 0, 100); addNews(`${S.name} 훈련 영상, SNS서 화제`); }}]);
   opts.push([1, {i:'💚', t:'최상의 몸 상태', d:'컨디션 100 회복', go(){ S.cond = 100; }}]);
@@ -2162,7 +2215,7 @@ function nextRound(){
   const done = S.schedule[S.round];
   S.earn += Math.round(S.salary / Math.max(ROUNDS, S.schedule.length)); // 연봉은 매주 나눠 지급
   S.round++; S.last = null; S.interview = null; S.week = null;
-  skipOut(); worldNews(); starsWeek();
+  skipOut(); worldNews(); starsWeek(); if (S.lbCd > 0) S.lbCd--;
   UI.tab = 'match';
   if (S.round >= S.schedule.length){ startNego(); makeAwards(); S.phase = 'awards'; return go(); }
   const sacked = sackCheck(done); if (sacked) UI.sacked = sacked;
@@ -2340,8 +2393,8 @@ function signContract(salary, pct, newClub){
   S.age++; S.year++;
   starsSeason();
   const msgs = [];
-  if (S.age <= 23){ const k = pick(STAT_KEYS.filter(k => POS[S.pos].w[k] > .1)); const g = ri(1, 3); S.stats[k] = clamp(S.stats[k] + g, 1, 99); msgs.push(`${statName(k, S.pos)} +${g} 자연 성장`); }
-  if (S.age >= 30){ STAT_KEYS.forEach(k => { S.stats[k] = clamp(S.stats[k] - ri(0, Math.max(1, S.age - 29)), 1, 99); }); msgs.push('노쇠화로 능력치 하락'); }
+  if (S.age <= 23){ const k = pick(STAT_KEYS.filter(k => POS[S.pos].w[k] > .1)); const g = addStat(k, ri(1, 3)); if (g) msgs.push(`${statName(k, S.pos)} +${g} 자연 성장`); }
+  if (S.age >= 30){ STAT_KEYS.forEach(k => { addStat(k, -ri(0, Math.max(1, S.age - 29))); }); msgs.push('노쇠화로 능력치 하락'); }
   S.pop = Math.round(S.pop * .9); S.trust = Math.round(50 + (S.trust - 50) * .6); S.cond = 100; S.injury = 0;
   S.season = freshSeason(); S.round = 0; S.schedule = makeSeason(S.club); S.table = null; S.season.obj = makeObjectives(); S.out = {}; S.nego = null; S.week = null; S.buff = 0;
   Object.keys(S.scout).forEach(l => S.scout[l] = Math.max(0, S.scout[l] - 1));
@@ -2615,12 +2668,12 @@ function radar(){
   return `<svg class="radar" viewBox="0 0 240 230" role="img" aria-label="능력치 레이더">
     ${[.25,.5,.75,1].map(s => `<polygon points="${poly(() => s)}" fill="none" stroke="var(--edge)" stroke-width="1.5"/>`).join('')}
     ${STAT_KEYS.map((_, i) => { const [x, y] = pt(i, 1); return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="var(--edge)" stroke-width="1"/>`; }).join('')}
-    <polygon class="radar-fill" points="${poly(i => S.stats[STAT_KEYS[i]] / 100)}" fill="rgba(255,200,61,.35)" stroke="var(--gold)" stroke-width="2.5"/>
+    <polygon class="radar-fill" points="${poly(i => Math.min(1.1, S.stats[STAT_KEYS[i]] / 100))}" fill="rgba(255,200,61,.35)" stroke="var(--gold)" stroke-width="2.5"/>
     ${STAT_KEYS.map((k, i) => { const [x, y] = pt(i, 1.2); return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" fill="var(--ink)" font-size="12" font-weight="700">${statName(k, S.pos)} <tspan fill="var(--gold)">${S.stats[k]}</tspan></text>`; }).join('')}
   </svg>`;
 }
 
-// ================= 엠블럼 · 외모 · 3D 선수 · 상점 =================
+// ================= 엠블럼 · 외모 · 2D 선수 · 상점 =================
 // 구단 엠블럼: 실제 로고 대신 구단 색으로 만든 오리지널 문장(방패 모양·패턴은 구단 이름으로 결정)
 let crestSeq = 0;
 function hexLum(c){ const n = parseInt(c.slice(1), 16); return (0.299*(n>>16) + 0.587*((n>>8)&255) + 0.114*(n&255)) / 255; }
@@ -2684,202 +2737,132 @@ const CONSUMABLES = [
 ];
 function gainXp(n){ if (!n) return null; S.xp = Math.max(0, (S.xp || 0) + Math.round(n)); return ['XP', n, `🔷 +${Math.round(n)} XP`]; }
 
-// ---------- 3D (three.js) ----------
-let V = null;
-function disposeViewer(){ if (V){ try { V.stop(); } catch {} V = null; } }
-function canvasTex(T, w, h, draw){ const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding; t.anisotropy = 4; return t; }
-function grassTex(T){ return canvasTex(T, 256, 256, (g, w, h) => { for (let i = 0; i < 8; i++){ g.fillStyle = i % 2 ? '#1c7a3c' : '#21904a'; g.fillRect(0, i * h / 8, w, h / 8); } for (let i = 0; i < 1400; i++){ g.fillStyle = `rgba(255,255,255,${Math.random() * .05})`; g.fillRect(Math.random() * w, Math.random() * h, 1, 3); } }); }
-function ballTex(T){ return canvasTex(T, 256, 128, (g, w, h) => { g.fillStyle = '#f4f4f4'; g.fillRect(0, 0, w, h); g.fillStyle = '#1b1b1b'; for (let i = 0; i < 12; i++){ const x = (i % 6) * w / 6 + (i > 5 ? w / 12 : 0), y = i > 5 ? h * .72 : h * .3; g.beginPath(); for (let k = 0; k < 5; k++){ const a = k * Math.PI * 2 / 5 - Math.PI / 2; g.lineTo(x + Math.cos(a) * 13, y + Math.sin(a) * 13); } g.fill(); } }); }
-function backTex(T, name, num, ink){ return canvasTex(T, 256, 256, (g, w) => { g.fillStyle = ink; g.textAlign = 'center'; g.font = '700 34px "Black Han Sans", sans-serif'; g.fillText(name.slice(0, 8), w / 2, 92); g.font = '400 130px "Black Han Sans", sans-serif'; g.fillText(String(num), w / 2, 222); }); }
-function tattooTex(T, skin){ return canvasTex(T, 128, 128, (g, w, h) => { g.fillStyle = skin; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(25,30,45,.85)'; g.lineWidth = 5; for (let i = 0; i < 9; i++){ g.beginPath(); g.moveTo(0, i * 16); g.bezierCurveTo(40, i * 16 - 20, 80, i * 16 + 20, w, i * 16 - 6); g.stroke(); } g.fillStyle = 'rgba(25,30,45,.85)'; for (let i = 0; i < 14; i++){ g.beginPath(); g.arc(Math.random() * w, Math.random() * h, 4, 0, 7); g.fill(); } }); }
-function crestTex(T, club){
-  const c = document.createElement('canvas'); c.width = c.height = 128; const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding;
-  const img = new Image(); img.onload = () => { c.getContext('2d').drawImage(img, 0, 0, 128, 128); t.needsUpdate = true; };
-  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(crestSVG(club)); return t;
-}
+// ---------- 2D 치비 선수 (SVG · 직접 그린 오리지널 캐릭터) ----------
+let V = null, chibiSeq = 0;
+function disposeViewer(){ V = null; }
 const KIT_NUM = {FW:9, MF:8, DF:4, GK:1};
-// 사람 모델: Quaternius "Man" (CC0). 유니폼·피부·머리색은 재질 색을 바꾸고,
-// 헤어 스타일·수염·악세사리·양말·엠블럼·등번호는 뼈대에 붙여 애니메이션을 따라가게 한다.
-let GLB_BUF = null;
-function glbBuffer(){
-  if (!GLB_BUF && window.PLAYER_GLB){ const bin = atob(window.PLAYER_GLB); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); GLB_BUF = u.buffer; }
-  return GLB_BUF;
+const BOOT_C = {bootGold:'#ffc83d', bootPink:'#ff6fb5', bootBlack:'#2a2c38'};
+function shade(hex, f){ const n = parseInt(hex.slice(1), 16); return '#' + [16, 8, 0].map(s => clamp(Math.round(((n >> s) & 255) * f), 0, 255).toString(16).padStart(2, '0')).join(''); }
+function mix(a, b, t){ const A = parseInt(a.slice(1), 16), B = parseInt(b.slice(1), 16); return '#' + [16, 8, 0].map(s => Math.round(((A >> s) & 255) * (1 - t) + ((B >> s) & 255) * t).toString(16).padStart(2, '0')).join(''); }
+// 머리카락: 앞모습 [뒤쪽 레이어, 앞쪽 레이어]
+function hairFront(style, c, d){
+  const P = (p, f = c) => `<path d="${p}" fill="${f}"/>`;
+  const cap = 'M55 84 Q50 30 100 28 Q150 30 145 84 Q140 62 128 56 Q100 46 72 56 Q60 62 55 84Z';
+  switch (style){
+    case 'bald': return ['', '<ellipse cx="84" cy="46" rx="14" ry="7" fill="#fff" opacity=".28" transform="rotate(-20 84 46)"/>'];
+    case 'buzz': return ['', `<path d="M56 78 Q52 32 100 30 Q148 32 144 78 Q138 58 100 54 Q62 58 56 78Z" fill="${c}" opacity=".62"/>`];
+    case 'short': return ['', P(cap) + P('M58 70 Q62 44 86 42 Q80 56 84 66 Q92 50 106 46 Q104 58 110 64 Q118 50 134 50 Q140 58 142 70 Q146 34 100 30 Q54 34 58 70Z') + `<path d="M74 40 Q96 30 120 38" stroke="${shade(c, 1.5)}" stroke-width="3" fill="none" opacity=".5" stroke-linecap="round"/>`];
+    case 'twoblock': return ['', `<path d="M56 82 Q52 50 62 44 L62 74Z" fill="${c}" opacity=".55"/><path d="M144 82 Q148 50 138 44 L138 74Z" fill="${c}" opacity=".55"/>` + P('M58 62 Q56 26 100 22 Q146 24 144 60 Q136 46 120 48 Q112 40 100 46 Q84 38 74 50 Q64 50 58 62Z') + P('M74 50 Q70 34 98 30 Q90 40 92 50Z', d) + `<path d="M80 34 Q104 24 128 36" stroke="${shade(c, 1.55)}" stroke-width="3" fill="none" opacity=".5" stroke-linecap="round"/>`];
+    case 'curly': { let s = ''; for (let i = 0; i <= 10; i++){ const a = Math.PI * (1.05 + i * .09), x = 100 + Math.cos(a) * 44, y = 74 + Math.sin(a) * 42; s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${i % 2 ? 12 : 13}" fill="${c}"/>`; } for (let i = 0; i < 5; i++) s += `<circle cx="${70 + i * 15}" cy="${40 + (i % 2) * 5}" r="12" fill="${c}"/>`; for (let i = 0; i < 6; i++) s += `<circle cx="${66 + i * 13.5}" cy="${54 + (i % 2) * 4}" r="${i % 2 ? 6 : 7}" fill="${c}"/><circle cx="${68 + i * 13.5}" cy="${52 + (i % 2) * 4}" r="2.4" fill="${shade(c, 1.6)}" opacity=".5"/>`; return ['', s]; }
+    case 'long': return [P('M50 84 Q44 30 100 26 Q156 30 150 84 L154 132 Q140 140 128 128 L72 128 Q60 140 46 132Z', d), P('M52 100 Q46 32 100 28 Q154 32 148 100 Q144 70 132 56 Q120 62 102 52 Q100 60 98 52 Q80 62 68 56 Q56 70 52 100Z') + `<path d="M74 38 Q100 28 128 40" stroke="${shade(c, 1.55)}" stroke-width="3" fill="none" opacity=".45" stroke-linecap="round"/>`];
+    case 'mohawk': return ['', `<path d="M56 78 Q52 32 100 30 Q148 32 144 78 Q138 58 100 54 Q62 58 56 78Z" fill="${c}" opacity=".45"/>` + P('M86 54 L84 30 L90 34 L92 14 L98 26 L102 10 L106 26 L110 16 L112 34 L117 30 L114 54 Q100 48 86 54Z')];
+    case 'bun': return ['', P('M56 80 Q50 32 100 30 Q150 32 144 80 Q136 56 100 50 Q64 56 56 80Z') + `<circle cx="100" cy="24" r="14" fill="${c}"/><rect x="90" y="34" width="20" height="5" rx="2.5" fill="${shade(c, .6)}"/><path d="M70 44 Q100 34 130 44" stroke="${shade(c, 1.55)}" stroke-width="3" fill="none" opacity=".45" stroke-linecap="round"/>`];
+  }
+  return ['', ''];
 }
-const POSES = {idle:'Man_Idle', run:'Man_Run', clap:'Man_Clapping', jump:'Man_Jump', walk:'Man_Walk'};
-function regionBoxes(model, names){
-  const T = THREE, out = {};
-  model.traverse(m => {
-    if (!m.isSkinnedMesh) return;
-    const pos = m.geometry.attributes.position, si = m.geometry.attributes.skinIndex, sw = m.geometry.attributes.skinWeight, bones = m.skeleton.bones, v = new T.Vector3();
-    for (let i = 0; i < pos.count; i++){
-      const ws = [sw.getX(i), sw.getY(i), sw.getZ(i), sw.getW(i)], is = [si.getX(i), si.getY(i), si.getZ(i), si.getW(i)];
-      let bi = 0, bw = -1; for (let k = 0; k < 4; k++) if (ws[k] > bw){ bw = ws[k]; bi = is[k]; }
-      const name = bones[bi] && bones[bi].name; if (!names.includes(name)) continue;
-      v.fromBufferAttribute(pos, i); m.boneTransform(i, v); v.applyMatrix4(m.matrixWorld);
-      (out[name] = out[name] || new T.Box3()).expandByPoint(v);
-    }
-  });
-  return out;
+function hairBack(style, c){
+  if (style === 'bald') return '<ellipse cx="100" cy="56" rx="20" ry="8" fill="#fff" opacity=".22"/>';
+  const full = `<path d="M54 92 Q48 30 100 28 Q152 30 146 92 Q142 112 126 118 L74 118 Q58 112 54 92Z" fill="${c}"${style === 'buzz' || style === 'mohawk' ? ' opacity=".6"' : ''}/>`;
+  if (style === 'long') return `<path d="M50 84 Q44 28 100 26 Q156 28 150 84 L153 124 Q100 132 47 124Z" fill="${c}"/>`;
+  if (style === 'curly'){ let s = full; for (let i = 0; i < 14; i++){ const a = Math.PI * (.95 + i * .08), x = 100 + Math.cos(a) * 44, y = 76 + Math.sin(a) * 44; s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="12" fill="${c}"/>`; } return s + `<circle cx="80" cy="100" r="12" fill="${c}"/><circle cx="100" cy="106" r="12" fill="${c}"/><circle cx="120" cy="100" r="12" fill="${c}"/>`; }
+  if (style === 'mohawk') return full + `<path d="M88 112 L86 30 L92 34 L94 12 L100 26 L106 12 L108 34 L114 30 L112 112Z" fill="${c}"/>`;
+  if (style === 'bun') return full + `<circle cx="100" cy="26" r="14" fill="${c}"/><rect x="90" y="36" width="20" height="5" rx="2.5" fill="${shade(c, .6)}"/>`;
+  return full;
+}
+function beardSvg(b, c){
+  return ({stubble:`<path d="M64 96 Q72 126 100 128 Q128 126 136 96 Q128 116 100 118 Q72 116 64 96Z" fill="${c}" opacity=".28"/>`,
+    goatee:`<path d="M93 113 Q100 124 107 113 Q100 117 93 113Z" fill="${c}"/>`,
+    full:`<path d="M58 88 Q58 124 100 130 Q142 124 142 88 Q136 110 120 112 Q100 120 80 112 Q64 110 58 88Z" fill="${c}"/>`,
+    mustache:`<path d="M89 103 Q94 98 100 101.5 Q106 98 111 103 Q106 105 100 103.5 Q94 105 89 103Z" fill="${c}"/>`})[b] || '';
+}
+function chibiSVG(o){
+  const L = cleanLook(o.look), skin = LOOK.skin[L.skin], skinD = shade(skin, .84), hairC = LOOK.hairColor[L.hairColor], hairD = shade(hairC, .72), eyeC = LOOK.eyeColor[L.eyes];
+  const eq = o.equip || {}, CL = CLUB[o.club] || {c:'#3dd6ff'}, gk = o.pos === 'GK', back = !!o.back, uid = 'cb' + (++chibiSeq);
+  const kit = gk ? '#ff9f1c' : CL.c, kitD = shade(kit, .72), light = hexLum(kit) > 150, trim = light ? '#1b1f33' : '#ffffff';
+  const shorts = light ? '#262b45' : '#f4f6ff', shortsD = shade(shorts, .8);
+  const b = clamp(((o.stats && o.stats.phy) || 55) - 40, 0, 50) / 50; // 0 호리호리 ~ 1 근육질
+  const tw = 52 + b * 16, sx = tw / 2, aw = 11 + b * 5, lw = 14 + b * 4, lx = 10 + b * 2;
+  const boot = BOOT_C[eq.boots] || '#f4f6fb', bootS = eq.boots === 'bootGold' ? '#b98200' : eq.boots ? shade(boot, .7) : '#9aa3bd';
+  const glove = gk ? '#c7f464' : eq.hands === 'gloves' ? '#2b2f3f' : null;
+  const num = KIT_NUM[o.pos] || 10;
+  // 팔: 어깨 기준으로 그린 뒤 CSS로 회전 (side: -1 왼쪽, 1 오른쪽)
+  const arm = side => {
+    const cap = side < 0 && eq.arm === 'captain', tat = side > 0 && eq.sleeve === 'tattoo', wb = eq.wrist === 'wrist';
+    return `<g transform="translate(${100 + side * (sx - 2)} 130)"><g class="${side < 0 ? 'armL' : 'armR'}">
+      <rect x="${-aw / 2}" y="10" width="${aw}" height="34" rx="${aw / 2}" fill="${skin}"/>
+      ${tat ? `<path d="M${-aw / 2 + 2} 22 q${aw / 2} 4 ${aw - 4} -2 M${-aw / 2 + 2} 30 q${aw / 2} 5 ${aw - 4} -1 M${-aw / 2 + 3} 38 q${aw / 3} 3 ${aw - 6} 0" stroke="#2b3a55" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".8"/>` : ''}
+      ${wb ? `<rect x="${-aw / 2 - 1}" y="36" width="${aw + 2}" height="6" rx="2" fill="${kit}" stroke="${trim}" stroke-width="1"/>` : ''}
+      <circle cx="0" cy="47" r="${aw / 2 + 2.5}" fill="${glove || skin}"/>${glove ? `<rect x="${-aw / 2 - 2}" y="44" width="${aw + 4}" height="3" fill="${shade(glove, .7)}"/>` : ''}
+      <path d="M${-aw / 2 - 3} 4 Q0 -6 ${aw / 2 + 3} 4 L${aw / 2 + 3} 18 Q0 22 ${-aw / 2 - 3} 18Z" fill="${kit}"/>
+      <path d="M${-aw / 2 - 3} 16 Q0 20 ${aw / 2 + 3} 16" stroke="${trim}" stroke-width="2.4" fill="none"/>
+      ${cap ? `<rect x="${-aw / 2 - 3.5}" y="7" width="${aw + 7}" height="8" rx="2" fill="#ffc83d"/><text x="0" y="13.8" text-anchor="middle" font-size="7" font-weight="900" fill="#231700" font-family="sans-serif">C</text>` : ''}
+    </g></g>`;
+  };
+  const leg = side => `<g transform="translate(${100 + side * lx} 190)"><g class="${side < 0 ? 'legL' : 'legR'}">
+      <rect x="${-lw / 2}" y="0" width="${lw}" height="30" rx="${lw / 2.2}" fill="${skin}"/>
+      <rect x="${-lw / 2 - .5}" y="20" width="${lw + 1}" height="22" rx="4" fill="${kit}"/>
+      <rect x="${-lw / 2 - .5}" y="24" width="${lw + 1}" height="3.5" fill="${trim}" opacity=".9"/>
+      <path d="M${-lw / 2 - 4 + side * 2} 48 Q${-lw / 2 - 4 + side * 2} 38 0 38 Q${lw / 2 + 4 + side * 4} 38 ${lw / 2 + 5 + side * 4} 46 Q${lw / 2 + 6 + side * 4} 51 0 51 Q${-lw / 2 - 4 + side * 2} 51 ${-lw / 2 - 4 + side * 2} 48Z" fill="${boot}"/>
+      <rect x="${-lw / 2 - 3 + side * 2}" y="48.5" width="${lw + 7 + side * 2}" height="3" rx="1.5" fill="${bootS}"/>
+    </g></g>`;
+  const torso = `M${100 - sx + 7} 122 Q100 116 ${100 + sx - 7} 122 Q${100 + sx} 124 ${100 + sx} 134 L${100 + sx - 3} 182 Q100 186 ${100 - sx + 3} 182 L${100 - sx} 134 Q${100 - sx} 124 ${100 - sx + 7} 122Z`;
+  const hf = hairFront(L.hair, hairC, hairD);
+  const nm = String(o.name || '').slice(0, 6), nfs = Math.min(10, 58 / Math.max(3, [...nm].length));
+  const eye = x => `<ellipse cx="${x}" cy="88" rx="8" ry="10" fill="#1d1420"/><ellipse cx="${x}" cy="90" rx="6.2" ry="7.4" fill="${eyeC}"/><ellipse cx="${x}" cy="91" rx="3.4" ry="4.2" fill="#140d12"/><circle cx="${x + 2.8}" cy="84.5" r="3.2" fill="#fff"/><circle cx="${x - 2.6}" cy="93" r="1.5" fill="#fff"/>`;
+  const face = back ? '' : `
+      <ellipse cx="72" cy="101" rx="7.5" ry="4.5" fill="#ff7f96" opacity=".42"/><ellipse cx="128" cy="101" rx="7.5" ry="4.5" fill="#ff7f96" opacity=".42"/>
+      <g class="eyes">${eye(82)}${eye(118)}</g>
+      <path d="M73 72 Q81 67 89 70.5" stroke="${hairD}" stroke-width="2.8" fill="none" stroke-linecap="round"/><path d="M111 70.5 Q119 67 127 72" stroke="${hairD}" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+      <ellipse cx="100" cy="98" rx="2.4" ry="1.6" fill="${skinD}"/>
+      ${beardSvg(L.beard, hairC)}
+      <path d="M93 105 Q100 114 107 105 Q100 107.5 93 105Z" fill="#6b2430"/><path d="M96.5 109 Q100 111.5 103.5 109 Q100 108 96.5 109Z" fill="#ff8fa3"/>`;
+  const acc = [];
+  if (eq.head === 'band') acc.push(`<path d="M56 70 Q100 46 144 70 L144 79 Q100 56 56 79Z" fill="${kit}"/><path d="M56 74 Q100 51 144 74" stroke="${trim}" stroke-width="1.6" fill="none" opacity=".8"/>`);
+  if (eq.head === 'beanie') acc.push(`<path d="M52 78 Q48 20 100 18 Q152 20 148 78Z" fill="#e2485e"/><rect x="50" y="66" width="100" height="15" rx="7" fill="#b8324a"/>${[0,1,2,3,4,5,6,7].map(i => `<rect x="${55 + i * 12}" y="68" width="4" height="11" rx="2" fill="#d23d55"/>`).join('')}<circle cx="100" cy="16" r="10" fill="#fff6e6"/>`);
+  if (!back && eq.face === 'glasses') acc.push(`<rect x="70" y="80" width="25" height="17" rx="7" fill="#151520"/><rect x="105" y="80" width="25" height="17" rx="7" fill="#151520"/><path d="M95 86 Q100 83 105 86" stroke="#151520" stroke-width="3" fill="none"/><path d="M74 84 L80 84" stroke="#fff" stroke-width="2" opacity=".55" stroke-linecap="round"/><path d="M109 84 L115 84" stroke="#fff" stroke-width="2" opacity=".55" stroke-linecap="round"/>`);
+  if (eq.ear === 'earring') acc.push(`<circle cx="${back ? 56 : 144}" cy="98" r="3" fill="#bff3ff" stroke="#fff" stroke-width="1"/>`);
+  return `<svg class="chibi" viewBox="0 0 200 262" role="img" aria-label="선수 캐릭터"><defs><radialGradient id="${uid}g" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#3fbf6a"/><stop offset="1" stop-color="#1c7a3e"/></radialGradient></defs>
+    <ellipse cx="100" cy="246" rx="86" ry="15" fill="url(#${uid}g)" stroke="#ffc83d" stroke-width="2.5"/>
+    <ellipse class="shadow" cx="100" cy="246" rx="38" ry="6" fill="#000" opacity=".28"/>
+    ${back ? '' : `<g class="ball" transform="translate(150 236)"><g class="ball-r"><circle r="10" fill="#fff" stroke="#1b1f33" stroke-width="1.4"/><path d="M0 -4 L3.8 -1.2 L2.4 3.2 L-2.4 3.2 L-3.8 -1.2Z" fill="#1b1f33"/><path d="M0 -4 L0 -9.5 M3.8 -1.2 L9 -3 M2.4 3.2 L5.6 8 M-2.4 3.2 L-5.6 8 M-3.8 -1.2 L-9 -3" stroke="#1b1f33" stroke-width="1.2"/></g></g>`}
+    <g class="whole">
+      ${hf[0] && !back ? `<g class="hairback">${hf[0]}</g>` : ''}
+      ${leg(-1)}${leg(1)}
+      <path d="M${100 - sx + 2} 172 L${100 + sx - 2} 172 L${100 + sx + 1} 199 Q${100 + 6} 201 101 192 L99 192 Q${100 - 6} 201 ${100 - sx - 1} 199Z" fill="${shorts}"/>
+      <path d="M${100 - sx + 1} 194 L${100 - sx + 12} 195" stroke="${kit}" stroke-width="3"/><path d="M${100 + sx - 1} 194 L${100 + sx - 12} 195" stroke="${kit}" stroke-width="3"/>
+      <rect x="93" y="108" width="14" height="18" rx="6" fill="${skinD}"/>
+      <path d="${torso}" fill="${kit}"/>
+      <path d="M${100 - sx + 4} 140 Q${100 - sx + 10} 160 ${100 - sx + 5} 180" stroke="${kitD}" stroke-width="3" fill="none" opacity=".35"/><path d="M${100 + sx - 4} 140 Q${100 + sx - 10} 160 ${100 + sx - 5} 180" stroke="${kitD}" stroke-width="3" fill="none" opacity=".35"/>
+      ${back ? `<path d="M88 121 Q100 127 112 121" stroke="${trim}" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+        ${nm ? `<text x="100" y="142" text-anchor="middle" font-size="${nfs.toFixed(1)}" font-weight="900" fill="${trim}" font-family="'Black Han Sans','Noto Sans KR',sans-serif">${esc(nm)}</text>` : ''}
+        <text x="100" y="${nm ? 172 : 166}" text-anchor="middle" font-size="28" font-weight="900" fill="${trim}" font-family="'Black Han Sans','Noto Sans KR',sans-serif">${num}</text>`
+      : `<path d="M90 120 L100 132 L110 120" stroke="${trim}" stroke-width="3.2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+        <circle cx="${100 + sx * .45}" cy="141" r="5.5" fill="${trim}" opacity=".9"/><circle cx="${100 + sx * .45}" cy="141" r="3.2" fill="${kit}"/>
+        <text x="100" y="166" text-anchor="middle" font-size="16" font-weight="900" fill="${trim}" opacity=".95" font-family="'Black Han Sans','Noto Sans KR',sans-serif">${num}</text>`}
+      ${eq.neck === 'chain' && !back ? `<path d="M88 121 Q100 140 112 121" stroke="#ffc83d" stroke-width="2.6" fill="none" stroke-dasharray="2.4 1.4"/><circle cx="100" cy="132" r="3.4" fill="#ffc83d" stroke="#b98200" stroke-width="1"/>` : ''}
+      ${arm(-1)}${arm(1)}
+      <g class="head">
+        ${back ? '' : ''}
+        <circle cx="56" cy="90" r="8.5" fill="${skin}"/><circle cx="144" cy="90" r="8.5" fill="${skin}"/><circle cx="56" cy="90" r="4" fill="${skinD}" opacity=".6"/><circle cx="144" cy="90" r="4" fill="${skinD}" opacity=".6"/>
+        <ellipse cx="100" cy="82" rx="45" ry="43" fill="${skin}"/>
+        ${back ? hairBack(L.hair, hairC) : face + `<g class="hairfront">${hf[1]}</g>`}
+        ${acc.join('')}
+      </g>
+    </g>
+  </svg>`;
 }
 function mountViewer(el, opts = {}){
-  disposeViewer();
   if (!el) return null;
-  const T = window.THREE;
-  if (!T || !T.GLTFLoader || !glbBuffer()){ el.innerHTML = '<div class="v-fallback">3D 엔진을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.</div>'; return null; }
-  if (T.ColorManagement) T.ColorManagement.legacyMode = false;
-  let w = el.clientWidth || 320, h = el.clientHeight || 340, renderer;
-  try { renderer = new T.WebGLRenderer({antialias:true, alpha:true}); }
-  catch { el.innerHTML = '<div class="v-fallback">이 기기에서는 3D를 표시할 수 없어요.</div>'; return null; }
-  renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1)); renderer.setSize(w, h);
-  renderer.outputEncoding = T.sRGBEncoding; renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 1;
-  renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
-  el.appendChild(renderer.domElement);
-  const scene = new T.Scene();
-  const cam = new T.PerspectiveCamera(28, w / h, .1, 50);
-  const close = !!opts.close;
-  cam.position.set(0, close ? 1.5 : 1.15, close ? 3.2 : 5.4); cam.lookAt(0, close ? 1.38 : .95, 0);
-  scene.add(new T.HemisphereLight(0xdde8ff, 0x22301f, .85));
-  const key = new T.DirectionalLight(0xfff4e6, 1.9); key.position.set(2.2, 4.2, 3.2); key.castShadow = true; key.shadow.mapSize.set(1024, 1024);
-  Object.assign(key.shadow.camera, {left:-1.5, right:1.5, top:2.5, bottom:-.5}); key.shadow.bias = -.0004; scene.add(key);
-  const rim = new T.DirectionalLight(0x7cc4ff, 1.4); rim.position.set(-3, 2.6, -3); scene.add(rim);
-  const warm = new T.PointLight(0xffc83d, .5, 8); warm.position.set(-2, 1.2, 2.5); scene.add(warm);
-  const ground = new T.Mesh(new T.CircleGeometry(1.5, 48), new T.MeshStandardMaterial({map: grassTex(T), roughness:.95})); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
-  const ring = new T.Mesh(new T.RingGeometry(1.5, 1.56, 64), new T.MeshBasicMaterial({color:0xffc83d})); ring.rotation.x = -Math.PI / 2; ring.position.y = .003; scene.add(ring);
-  const ball = new T.Mesh(new T.SphereGeometry(.11, 28, 18), new T.MeshStandardMaterial({map: ballTex(T), roughness:.45})); ball.castShadow = true; ball.position.set(.42, .11, .3); scene.add(ball);
-  const S0 = {alive:true, model:null, mixer:null, actions:{}, cur:null, attach:[], bones:{}, bulk:1, pose: opts.pose || 'idle', gen:0};
-  const disp = o => o.traverse(x => { if (x.geometry) x.geometry.dispose(); if (x.material) [].concat(x.material).forEach(m => { if (m.map) m.map.dispose(); m.dispose(); }); });
-  let rotY = -.35, vel = 0, drag = false, lastX = 0, idle = 0, raf = 0;
-  const dom = renderer.domElement; dom.style.touchAction = 'pan-y'; dom.style.cursor = 'grab';
-  dom.addEventListener('pointerdown', e => { drag = true; lastX = e.clientX; dom.setPointerCapture?.(e.pointerId); dom.style.cursor = 'grabbing'; });
-  dom.addEventListener('pointermove', e => { if (!drag) return; const dx = e.clientX - lastX; lastX = e.clientX; rotY += dx * .012; vel = dx * .012; idle = 0; });
-  const up = () => { drag = false; dom.style.cursor = 'grab'; };
-  dom.addEventListener('pointerup', up); dom.addEventListener('pointercancel', up);
-
-  async function build(){
-    const gen = ++S0.gen;
-    const g = await new Promise(res => new T.GLTFLoader().parse(glbBuffer().slice(0), '', res, () => res(null)));
-    if (!S0.alive || gen !== S0.gen || !g) return;
-    if (S0.model){ scene.remove(S0.model); disp(S0.model); }
-    S0.attach.forEach(a => { scene.remove(a.g); disp(a.g); }); S0.attach = [];
-    const look = opts.look || S.look, st = opts.stats || S.stats, club = opts.club || S.club, eq = opts.equip || S.equip || {}, pos = opts.pos || S.pos, name = opts.name ?? S.name;
-    const model = g.scene, bones = {};
-    model.traverse(x => { if (x.isBone) bones[x.name] = x; if (x.isMesh){ x.castShadow = true; x.receiveShadow = true; x.frustumCulled = false; } });
-    model.updateMatrixWorld(true);
-    const hv = new T.Vector3(); bones.Head.getWorldPosition(hv);
-    const tall = pos === 'GK' ? 1.05 : pos === 'DF' ? 1.02 : 1;
-    model.scale.multiplyScalar(1.6 / hv.y * tall); model.updateMatrixWorld(true);
-    // 재질: 셔츠=유니폼, 바지=반바지, 피부, 머리, 눈
-    const kit = CLUB[club].c, kitDark = hexLum(kit) > .6, skinHex = LOOK.skin[look.skin], hairHex = LOOK.hairColor[look.hairColor];
-    const bootHex = {bootGold:'#ffc83d', bootPink:'#ff4fa3', bootBlack:'#111111'}[eq.boots] || '#f2f2f2';
-    model.traverse(x => { if (!x.isMesh) return; x.material = [].concat(x.material).map(m0 => {
-      const m = m0.clone(), n = m0.name;
-      if (n === 'Shirt') m.color.set(kit);
-      else if (n === 'Pants') m.color.set(kitDark ? '#1a1a22' : '#f4f4f4');
-      else if (n === 'Skin') m.color.set(skinHex);
-      else if (n === 'Hair') m.color.set(look.hair === 'bald' ? skinHex : look.hair === 'buzz' ? new T.Color(skinHex).lerp(new T.Color(hairHex), .6) : hairHex);
-      else if (n === 'Eyes') m.color.set(LOOK.eyeColor[look.eyes] || '#1b1512');
-      else if (n === 'Socks'){ m.color.set(bootHex); if (eq.boots === 'bootGold'){ m.metalness = .85; m.roughness = .25; } }
-      if (m.roughness !== undefined && n !== 'Socks') m.roughness = n === 'Skin' ? .55 : .75;
-      return m; }); if (x.material.length === 1) x.material = x.material[0]; });
-    // 기준 자세에서 부위별 상자 → 악세사리 기준점
-    const R = regionBoxes(model, ['Head','Torso','Abdomen','Neck','UpperArmL','LowerArmL','LowerArmR','PalmL','PalmR','LowerLegL','LowerLegR']);
-    const M = (c, r = .6, mt = 0, x = {}) => new T.MeshStandardMaterial({color:c, roughness:r, metalness:mt, ...x});
-    const att = (boneName, box, build) => {
-      const b = bones[boneName]; if (!b || !box) return;
-      const c = box.getCenter(new T.Vector3()), s = box.getSize(new T.Vector3());
-      const grp = new T.Group(); grp.matrixAutoUpdate = false;
-      build(grp, s);
-      grp.traverse(o => { if (o.isMesh){ o.castShadow = true; } });
-      const C = new T.Matrix4().copy(b.matrixWorld).invert().multiply(new T.Matrix4().makeTranslation(c.x, c.y, c.z));
-      scene.add(grp); S0.attach.push({g:grp, b, C});
-    };
-    const tubeAlong = (s, r, len, mat) => { // 상자의 가장 긴 축을 따라 원통
-      const m = new T.Mesh(new T.CylinderGeometry(r, r, len, 24, 1, true), mat);
-      if (s.x >= s.y && s.x >= s.z) m.rotation.z = Math.PI / 2; else if (s.z >= s.y) m.rotation.x = Math.PI / 2;
-      m.material.side = T.DoubleSide; return m;
-    };
-    const hair = M(hairHex, .85), gold = M('#ffc83d', .2, .95), dark = M('#11151f', .15, .6, {transparent:true, opacity:.92});
-    // 머리: 헤어 스타일 · 수염 · 머리 악세사리
-    att('Head', R.Head, (grp, s) => {
-      const W = s.x, H = s.y, D = s.z, top = H / 2;
-      const hs = eq.head === 'beanie' ? 'beanie' : look.hair;
-      if (hs === 'mohawk') for (let i = 0; i < 7; i++){ const z = D * (.32 - i * .1); const m = new T.Mesh(new T.BoxGeometry(W * .14, H * .22, D * .1), hair); m.position.set(0, top - H * .02 - Math.abs(z) * .25, z); grp.add(m); }
-      if (hs === 'bun'){ const m = new T.Mesh(new T.SphereGeometry(W * .2, 16, 12), hair); m.position.set(0, top - H * .02, -D * .38); grp.add(m); }
-      if (hs === 'curly') for (let i = 0; i < 30; i++){ const th = Math.random() * Math.PI * .42, ph = Math.random() * Math.PI * 2; const m = new T.Mesh(new T.SphereGeometry(W * .12, 10, 8), hair); m.position.set(Math.cos(ph) * Math.sin(th) * W * .5, H * .12 + Math.cos(th) * H * .36, Math.sin(ph) * Math.sin(th) * D * .5 - D * .04); grp.add(m); }
-      if (hs === 'long'){ const m = new T.Mesh(new T.BoxGeometry(W * .92, H * .55, D * .22), hair); m.position.set(0, -H * .08, -D * .44); grp.add(m); for (const sx of [-1, 1]){ const l = new T.Mesh(new T.BoxGeometry(W * .1, H * .45, D * .5), hair); l.position.set(sx * W * .47, -H * .02, -D * .12); grp.add(l); } }
-      if (hs === 'twoblock'){ const m = new T.Mesh(new T.BoxGeometry(W * .82, H * .1, D * .3), hair); m.position.set(0, top - H * .14, D * .34); m.rotation.x = .5; grp.add(m); }
-      if (hs === 'beanie'){
-        const b = new T.Mesh(new T.SphereGeometry(W * .56, 32, 16, 0, Math.PI * 2, 0, Math.PI * .5), M('#2b2f45', .95)); b.scale.set(1, H / W * .85, D / W * 1.02); b.position.y = H * .14; grp.add(b);
-        const rim = new T.Mesh(new T.TorusGeometry(W * .54, W * .07, 10, 40), M('#3a4060', .95)); rim.rotation.x = Math.PI / 2; rim.scale.set(1, D / W, 1); rim.position.y = H * .14; grp.add(rim);
-        const pom = new T.Mesh(new T.SphereGeometry(W * .13, 12, 10), M('#ffc83d', .95)); pom.position.y = top + H * .1; grp.add(pom);
-      }
-      if (eq.head === 'band'){ const b = new T.Mesh(new T.TorusGeometry(W * .54, W * .05, 8, 40), M(kit, .7)); b.rotation.x = Math.PI / 2; b.scale.set(1, D / W * 1.02, 1); b.position.y = H * .2; grp.add(b); }
-      const bd = look.beard;
-      if (bd === 'stubble' || bd === 'full'){
-        const m = new T.Mesh(new T.SphereGeometry(W * .52, 28, 14, Math.PI * .08, Math.PI * .84, Math.PI * .55, Math.PI * .32),
-          bd === 'full' ? hair : M(hairHex, .9, 0, {transparent:true, opacity:.42}));
-        m.scale.set(1.0, H / W * .9, D / W * 1.05); m.position.set(0, -H * .02, D * .02); grp.add(m);
-      }
-      if (bd === 'goatee'){ const m = new T.Mesh(new T.BoxGeometry(W * .2, H * .16, D * .16), hair); m.position.set(0, -H * .4, D * .38); grp.add(m); }
-      if (bd === 'mustache' || bd === 'goatee'){ const m = new T.Mesh(new T.BoxGeometry(W * .34, H * .045, D * .08), hair); m.position.set(0, -H * .2, D * .47); grp.add(m); }
-      if (eq.face === 'glasses'){ for (const sx of [-1, 1]){ const l = new T.Mesh(new T.BoxGeometry(W * .3, H * .12, D * .04), dark); l.position.set(sx * W * .2, H * .02, D * .52); grp.add(l); } const br = new T.Mesh(new T.BoxGeometry(W * .14, H * .025, D * .03), gold); br.position.set(0, H * .05, D * .53); grp.add(br); }
-      if (eq.ear === 'earring'){ const e = new T.Mesh(new T.SphereGeometry(W * .045, 10, 8), M('#bfe9ff', .05, .9)); e.position.set(-W * .5, -H * .12, -D * .02); grp.add(e); }
-    });
-    // 가슴 엠블럼 · 등 이름/번호
-    att('Torso', R.Torso, (grp, s) => {
-      const cp = new T.Mesh(new T.PlaneGeometry(.075, .075), new T.MeshStandardMaterial({map: crestTex(T, club), transparent:true, roughness:.6}));
-      cp.position.set(-s.x * .22, s.y * .2, s.z * .5 + .018); grp.add(cp);
-      const bp = new T.Mesh(new T.PlaneGeometry(.26, .26), new T.MeshStandardMaterial({map: backTex(T, name || '', KIT_NUM[pos], kitDark ? '#15151f' : '#ffffff'), transparent:true, roughness:.7}));
-      bp.position.set(0, -s.y * .05, -s.z * .5 - .035); bp.rotation.y = Math.PI; grp.add(bp);
-    });
-    if (eq.neck === 'chain') att('Neck', R.Neck, (grp, s) => { const c = new T.Mesh(new T.TorusGeometry(Math.max(s.x, s.z) * .62, .006, 8, 40), gold); c.rotation.x = Math.PI / 2 - .35; c.position.y = -s.y * .35; grp.add(c); });
-    if (eq.arm === 'captain') att('UpperArmL', R.UpperArmL, (grp, s) => { const sorted = [s.x, s.y, s.z].sort((a, b) => a - b); const t = tubeAlong(s, sorted[0] * .58, sorted[2] * .2, M('#ffd400', .5)); t.position.y = sorted[2] * .12; grp.add(t); });
-    if (eq.sleeve === 'tattoo') att('LowerArmR', R.LowerArmR, (grp, s) => { const sorted = [s.x, s.y, s.z].sort((a, b) => a - b); grp.add(tubeAlong(s, sorted[0] * .55, sorted[2] * .7, new T.MeshStandardMaterial({map: tattooTex(T, skinHex), roughness:.55}))); });
-    if (eq.wrist === 'wrist') for (const sd of ['L', 'R']) att('LowerArm' + sd, R['LowerArm' + sd], (grp, s) => { const sorted = [s.x, s.y, s.z].sort((a, b) => a - b); const t = tubeAlong(s, sorted[0] * .62, sorted[2] * .14, M(kit, .7)); const k = s.x >= s.y && s.x >= s.z ? 'x' : s.z >= s.y ? 'z' : 'y'; t.position[k] = (k === 'y' ? -1 : (sd === 'L' ? 1 : -1)) * sorted[2] * .38; grp.add(t); });
-    if (eq.hands === 'gloves') for (const sd of ['L', 'R']) att('Palm' + sd, R['Palm' + sd], (grp, s) => { const m = new T.Mesh(new T.SphereGeometry(.5, 16, 12), M('#1d2233', .7)); m.scale.set(s.x * 1.25, s.y * 1.25, s.z * 1.25); grp.add(m); });
-    // 축구 양말 (유니폼 색)
-    for (const sd of ['L', 'R']) att('LowerLeg' + sd, R['LowerLeg' + sd], (grp, s) => { const sorted = [s.x, s.y, s.z].sort((a, b) => a - b); const t = tubeAlong(s, sorted[0] * .5, sorted[2] * .5, M(kit, .85)); t.position.y = sorted[2] * .06; grp.add(t); });
-    // 체형: 피지컬
-    S0.bulk = clamp(.86 + (st.phy - 40) / 150, .86, 1.2);
-    S0.model = model; S0.bones = bones; scene.add(model);
-    S0.mixer = new T.AnimationMixer(model); S0.actions = {};
-    g.animations.forEach(a => { const k = Object.keys(POSES).find(p => a.name.endsWith(POSES[p])); if (k) S0.actions[k] = S0.mixer.clipAction(a); });
-    S0.cur = null; setPose(S0.pose, true);
-  }
-  function setPose(p, instant){
-    S0.pose = p; const a = S0.actions[p] || S0.actions.idle; if (!a || a === S0.cur) return;
-    a.reset().play(); if (S0.cur && !instant) S0.cur.crossFadeTo(a, .35, false); S0.cur = a;
-  }
-  const clock = new T.Clock();
-  const loop = () => {
-    if (!S0.alive) return;
-    const dt = Math.min(.05, clock.getDelta());
-    if (!drag){ vel *= .92; rotY += vel; idle += dt; if (idle > 2.5 && !RM) rotY += .005; }
-    if (S0.model){
-      S0.model.rotation.y = rotY;
-      if (S0.mixer) S0.mixer.update(RM ? 0 : dt);
-      const B = S0.bones, b = S0.bulk;
-      if (B.Torso) B.Torso.scale.set(b, 1, .5 + b * .5);
-      if (B.Neck) B.Neck.scale.set(1 / b, 1, 1 / (.5 + b * .5));
-      for (const sd of ['L', 'R']){
-
-        if (B['UpperLeg' + sd]) B['UpperLeg' + sd].scale.set(b * .95 + .05, 1, b * .95 + .05);
-      }
-      S0.model.updateMatrixWorld(true);
-      for (const a of S0.attach) a.g.matrix.multiplyMatrices(a.b.matrixWorld, a.C);
-      ball.position.set(.42, .11, .3);
-    }
-    renderer.render(scene, cam); raf = requestAnimationFrame(loop);
-  };
-  raf = requestAnimationFrame(loop);
-  const ro = new ResizeObserver(() => { const w2 = el.clientWidth, h2 = el.clientHeight; if (!w2 || !h2) return; renderer.setSize(w2, h2); cam.aspect = w2 / h2; cam.updateProjectionMatrix(); });
-  ro.observe(el);
-  build();
-  V = {
-    stop(){ S0.alive = false; cancelAnimationFrame(raf); ro.disconnect(); disp(scene); S0.attach.forEach(a => disp(a.g)); renderer.dispose(); renderer.forceContextLoss(); dom.remove(); },
-    rebuild(o2){ Object.assign(opts, o2); build(); },
-    pose(p){ setPose(p); },
-  };
+  el.querySelectorAll('.chibi-host').forEach(x => x.remove());
+  const host = document.createElement('div'); host.className = 'chibi-host'; host.title = '탭하면 뒷모습';
+  el.appendChild(host);
+  let back = false;
+  const cur = () => ({look: opts.look || (S && S.look), stats: opts.stats || (S && S.stats), club: opts.club || (S && S.club), equip: opts.equip || (S && S.equip) || {}, pos: opts.pos || (S && S.pos), name: opts.name ?? (S && S.name), back});
+  const draw = () => { host.innerHTML = chibiSVG(cur()); };
+  host.dataset.cpose = opts.pose || 'idle';
+  draw();
+  host.onclick = () => { host.classList.add('turn'); setTimeout(() => { back = !back; draw(); host.classList.remove('turn'); }, RM ? 0 : 170); };
+  V = {stop(){}, rebuild(o2){ Object.assign(opts, o2); draw(); }, pose(p){ host.dataset.cpose = p; if (p !== 'idle' && back){ back = false; draw(); } }};
   return V;
 }
 
@@ -2929,7 +2912,7 @@ function shopTab(){
   return `
     <div class="viewer" id="viewer"></div>
     <div class="xp-bank"><span>${ic('gem')} 보유 경험치</span><b>${S.xp.toLocaleString()} XP</b><small>경기 출전·골·훈련·미니게임·우승으로 모여요. 연봉과는 별개예요.</small></div>
-    <div class="label">${ic('shirt')} 악세사리 · 착용하면 3D 선수에 바로 보여요</div>
+    <div class="label">${ic('shirt')} 악세사리 · 착용하면 내 선수에 바로 보여요</div>
     <div class="shop-grid">${SHOP.map(card).join('')}</div>
     <div class="label">${ic('package')} 소모품</div>
     <div class="shop-grid">${CONSUMABLES.map(c => `<div class="shop-item"><div class="si-i">${c.i}</div><b>${esc(c.n)}</b><small>${esc(c.d)}</small><button class="btn sm" type="button" data-use="${c.id}" ${S.xp < c.p ? 'disabled' : ''}>🔷 ${c.p}</button></div>`).join('')}</div>`;
@@ -2939,7 +2922,7 @@ function bindShop(){
   root.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => {
     const it = SHOP.find(x => x.id === b.dataset.buy); if (!it || S.xp < it.p) return;
     S.xp -= it.p; S.items.push(it.id); if (!(it.req && !it.req())) S.equip[it.slot] = it.id;
-    save(); SFX.coin(); toast(`${it.n} 구매! 3D 선수에 착용했어요`); renderHub();
+    save(); SFX.coin(); toast(`${it.n} 구매! 내 선수에 착용했어요`); renderHub();
   });
   root.querySelectorAll('[data-eq]').forEach(b => b.onclick = () => {
     const it = SHOP.find(x => x.id === b.dataset.eq); if (!it) return;
@@ -3649,6 +3632,61 @@ async function showPsy(){
   round();
 }
 
+// ================= 한계 돌파 =================
+// 훈련·이벤트로 오르는 능력치는 99까지. 100부터는 '한계 돌파 시험'을 통과해야만 오른다(최대 120).
+const STAT_MAX = 120;
+function addStat(k, d){ const b = S.stats[k]; S.stats[k] = d >= 0 ? Math.max(b, clamp(b + d, 1, 99)) : clamp(b + d, 1, STAT_MAX); return S.stats[k] - b; }
+const LB_DESC = {sho:'무회전 슛 100개 연속 성공에 도전한다', pas:'40m 핀포인트 롱패스 시험', dri:'콘 50개 지옥 드리블 코스', def:'1대1 수비 지옥 훈련', phy:'산악 지옥 체력 훈련', gk:'연속 PK 선방 시험'};
+const lbReady = () => STAT_KEYS.filter(k => S.stats[k] >= 99 && S.stats[k] < STAT_MAX);
+function makeLB(){
+  const ks = lbReady(); if (!ks.length || (S.lbCd || 0) > 0 || Math.random() > .4) return null;
+  const main = ks.filter(k => (POS[S.pos].w[k] || 0) >= .2);
+  return {k: pick(main.length ? main : ks), started:false, res:null};
+}
+function lbStage(box, i){
+  return new Promise(res => {
+    const zw = [22, 15, 10][i], z = rand(6, 94 - zw), sp = [1, 1.35, 1.75][i];
+    box.innerHTML = `<div class="lb-stage">STAGE ${i + 1} / 3</div><div class="mg-bar"><span class="mg-zone" style="left:${z}%;width:${zw}%"></span><span class="mg-cursor" id="lbc"></span></div><button class="btn hot block" type="button" id="lbgo">${ic('zap')} 지금!</button>`;
+    const cur = box.querySelector('#lbc'), t0 = performance.now();
+    let x = 0, live = true;
+    const loop = now => { if (!live) return; x = (Math.sin((now - t0) / 1000 * Math.PI * sp - Math.PI / 2) + 1) * 50; cur.style.left = x + '%'; requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+    box.querySelector('#lbgo').onclick = () => { if (!live) return; live = false; res(x >= z && x <= z + zw); };
+  });
+}
+async function showLB(){
+  const W = S.week; if (!W || !W.lb || W.lb.started || document.querySelector('.modal')) return;
+  const L = W.lb, k = L.k, nm = statName(k, S.pos), before = S.stats[k];
+  L.started = true; save(); // 시작하는 순간 기회 소진 (새로고침으로 다시 못 함)
+  const el = modal(`<div class="eyebrow">${ic('flame')} 한계 돌파 시험</div><div class="big lb-big">${ic('zap', 'evi')}</div>
+    <h3>${nm} ${before} · 한계를 넘어라</h3><p>${LB_DESC[k === 'def' && S.pos === 'GK' ? 'gk' : k]}. 3단계 중 2단계를 성공하면 ${nm}이 100을 넘어 성장해요.</p>
+    <div class="lb-steps">${[0, 1, 2].map(i => `<i data-s="${i}"></i>`).join('')}</div><div id="lbb"></div>`);
+  el.classList.add('lb-modal'); SFX.good();
+  const box = el.querySelector('#lbb'); let hits = 0;
+  for (let i = 0; i < 3; i++){
+    const ok = await lbStage(box, i);
+    el.querySelector(`.lb-steps i[data-s="${i}"]`).classList.add(ok ? 'ok' : 'no');
+    if (ok){ hits++; SFX.good(); } else SFX.bad();
+    box.innerHTML = `<div class="lb-flash ${ok ? 'ok' : 'no'}">${ok ? '성공!' : '실패…'}</div>`;
+    await wait(650);
+    if (hits >= 2 || i + 1 - hits >= 2) break;
+  }
+  const pass = hits >= 2, fx = [];
+  if (pass){
+    const g = Math.min(ri(1, 3), STAT_MAX - S.stats[k]); S.stats[k] += g;
+    fx.push([nm, g, ''], ...applyFx({pop:6}));
+    const gx = gainXp(200); if (gx) fx.push(gx);
+    S.rec.lb = (S.rec.lb || 0) + 1; S.lbCd = 2; L.res = 'ok';
+    addNews(`🔥 ${S.name}, ${nm} 한계 돌파! ${before} → ${S.stats[k]} "인간의 영역을 넘었다"`);
+  } else { fx.push(...applyFx({cond:-8})); S.lbCd = 3; L.res = 'fail'; }
+  save();
+  if (pass){ SFX.goal(); confetti(['#ffc83d','#ff4d6d','#ffffff']); } else shake();
+  el.querySelector('.modal-card').innerHTML = `<div class="eyebrow">${ic('flame')} 한계 돌파 ${pass ? '성공' : '실패'}</div><div class="big lb-big ${pass ? '' : 'fail'}">${ic(pass ? 'flame' : 'skull', 'evi')}</div>
+    <h3>${pass ? `${nm} ${before} → ${S.stats[k]}!` : '벽은 아직 높았다…'}</h3><p>${pass ? '한계를 넘어섰다. 몇 주 뒤 다시 더 높은 곳에 도전할 수 있어요.' : '몇 주 뒤 다시 기회가 와요. 능력치가 99 이상인 동안 시험이 찾아와요.'}</p>
+    <div class="chips" style="margin-bottom:14px">${chipsHtml(fx)}</div><button class="btn block" type="button" id="lbok">확인</button>`;
+  el.querySelector('#lbok').onclick = async () => { await el.close(); renderHub(); };
+}
+
 const careerSum = k => S.history.reduce((a, h) => a + (h[k] || 0), 0) + (S.season[k] || 0);
 const ACH = [
   ['debut','user-round','프로 데뷔','첫 공식 경기 출전', s => careerSum('apps') >= 1, 30],
@@ -3678,6 +3716,8 @@ const ACH = [
   ['hardMis5','flame','도전자','어려움 이상 미션 5회 성공', s => s.rec.hardMis >= 5, 250],
   ['veteran','medal','베테랑','5시즌 완주', s => s.history.length >= 5, 200],
   ['psy5','brain','멘탈 갑','심리전 5회 승리', s => s.rec.psyW >= 5, 150],
+  ['limit1','flame','한계 돌파','능력치 100 돌파', s => s.rec.lb >= 1, 300],
+  ['limit5','zap','초월자','한계 돌파 5회 성공', s => s.rec.lb >= 5, 600],
   ['vtop100','badge-dollar-sign','몸값 TOP 100','세계 몸값 랭킹 TOP 100 진입', s => s.rec.vbest > 0 && s.rec.vbest <= 100, 200],
   ['vtop10','trending-up','몸값 TOP 10','세계 몸값 랭킹 TOP 10 진입', s => s.rec.vbest > 0 && s.rec.vbest <= 10, 500],
   ['puskas','sparkles','올해의 골','푸스카스상 수상', s => (s.honors || []).some(h => h.k === 'puskas'), 300],
