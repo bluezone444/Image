@@ -944,6 +944,26 @@ table.standings{min-width:0}
 .shop-link{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;text-align:left;color:var(--ink);border-color:rgba(61,214,255,.5);cursor:pointer}
 .shop-link > .ico{color:var(--cyan);width:24px;height:24px;flex:none} .shop-link > .ico:last-child{margin-left:auto;color:var(--muted);width:20px;height:20px}
 .shop-link div{display:flex;flex-direction:column;line-height:1.3} .shop-link b{font-family:var(--f-display);font-weight:400;font-size:17px} .shop-link small{font-size:12px;color:var(--muted)}
+
+/* ---------- 랭킹 필터 · 상단 뉴스 버튼 ---------- */
+.dock-in{grid-template-columns:repeat(5,1fr)}
+.news-btn{position:relative;margin-left:auto} .news-btn + .icon-btn{margin-left:6px}
+.news-btn.on{border-color:var(--gold);color:var(--gold)}
+.news-btn .dock-badge{top:-6px;right:-6px}
+.vfilter{padding:12px 12px 14px;display:flex;flex-direction:column;gap:8px}
+.vf-h{display:flex;align-items:center;gap:6px;font-family:var(--f-display);font-size:13px;color:#dfe5ff}
+.vf-h .ico{width:16px;height:16px;color:var(--gold)} .vf-h small{margin-left:auto;font-family:var(--f-body);font-size:11px;color:var(--muted)}
+.vf-scroll{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;padding:2px 2px 6px;margin:0 -2px;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)}
+.vf-scroll::-webkit-scrollbar{display:none}
+.vf-lg{flex:none;scroll-snap-align:start;width:76px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px 7px;border-radius:14px;border:2px solid var(--edge);background:rgba(11,17,40,.75);color:var(--muted);position:relative;transition:transform .12s,border-color .15s}
+.vf-lg .vf-flag{font-size:22px;line-height:1}
+.vf-lg b{font-family:var(--f-display);font-weight:400;font-size:12px;white-space:nowrap}
+.vf-lg em{position:absolute;top:-7px;left:50%;transform:translateX(-50%);font-style:normal;font-size:9.5px;font-weight:900;background:var(--cyan);color:#04202b;border-radius:6px;padding:0 5px;white-space:nowrap}
+.vf-lg.on{border-color:var(--gold);color:#fff;background:linear-gradient(180deg,rgba(255,200,61,.28),rgba(255,200,61,.08));box-shadow:0 0 0 3px rgba(255,200,61,.18)}
+.vf-seg{display:grid;grid-template-columns:repeat(5,1fr);padding:4px;gap:4px;border-radius:14px;background:rgba(11,17,40,.8);border:2px solid var(--edge)}
+.vf-seg button{border:0;background:transparent;color:var(--muted);font-family:var(--f-display);font-size:14px;padding:8px 0;border-radius:10px}
+.vf-seg button.on{background:linear-gradient(180deg,var(--gold),var(--gold-d));color:#231700}
+.vf-lg{margin-top:6px}
 </style>
 </head>
 <body>
@@ -1473,6 +1493,7 @@ function hud(){
   return `<header class="hud"><div class="hud-in">
     <div class="hud-me"><span class="ovr-badge tier-${tierOf(ovr)}">${ovr}</span>
       <div style="min-width:0"><b>${esc(S.name)}</b><small>${POS[S.pos].name} · ${S.age}세 · ${esc(S.club)}</small></div>
+      ${S.phase === 'week' ? (() => { const un = Math.min(9, (S.newsN || 0) - (S.newsSeen || 0)); return `<button class="icon-btn news-btn ${UI.tab === 'news' ? 'on' : ''}" id="newsBtn" type="button" aria-label="뉴스">${ic('newspaper')}${un > 0 && UI.tab !== 'news' ? `<em class="dock-badge">${un}</em>` : ''}</button>`; })() : ''}
       <button class="icon-btn" id="sfxBtn" type="button" aria-label="효과음 켜기/끄기">${ic(sfxOn ? 'volume-2' : 'volume-x')}</button></div>
     <div class="hud-res">${res('star', S.pop, 'var(--gold)', '인기')}${res('handshake', S.trust, 'var(--cyan)', '신뢰')}${res('zap', S.cond, S.cond < 35 ? 'var(--hot)' : 'var(--turf)', '컨디션')}
       <div class="res money xp" title="개인 경험치 (상점에서 사용)"><div class="rt">${ic('gem')}<span>경험치</span></div><b>${(S.xp || 0) >= 1000 ? ((S.xp || 0) / 1000).toFixed(1) + 'k' : (S.xp || 0)}</b></div>
@@ -1480,7 +1501,7 @@ function hud(){
     <div class="hud-stats">${STAT_KEYS.map(k => { const v = S.stats[k], d = UI.prev ? v - UI.prev[k] : 0; return `<div class="hs ${d > 0 ? 'upd' : d < 0 ? 'dnd' : ''} ${v >= 100 ? 'lim' : v >= 75 ? 'hi' : v >= 60 ? 'mid' : ''}"><span>${statName(k, S.pos)}</span><b>${v}</b>${d ? `<i>${d > 0 ? '▲' : '▼'}${Math.abs(d)}</i>` : ''}</div>`; }).join('')}</div>
   </div></header>`;
 }
-function bindHud(){ UI.prev = {...S.stats}; const xpb = root.querySelector('.res.xp'); if (xpb && S.phase === 'week') xpb.onclick = () => { UI.tab = 'shop'; renderHub(); }; const b = $('#sfxBtn'); if (b) b.onclick = () => { sfxOn = !sfxOn; lsSet(SFX_KEY, sfxOn ? 'on' : 'off'); b.innerHTML = ic(sfxOn ? 'volume-2' : 'volume-x'); }; }
+function bindHud(){ UI.prev = {...S.stats}; const nb = $('#newsBtn'); if (nb) nb.onclick = () => { UI.tab = UI.tab === 'news' ? 'match' : 'news'; renderHub(); }; const xpb = root.querySelector('.res.xp'); if (xpb && S.phase === 'week') xpb.onclick = () => { UI.tab = 'shop'; renderHub(); }; const b = $('#sfxBtn'); if (b) b.onclick = () => { sfxOn = !sfxOn; lsSet(SFX_KEY, sfxOn ? 'on' : 'off'); b.innerHTML = ic(sfxOn ? 'volume-2' : 'volume-x'); }; }
 function frame(inner, dock){
   disposeViewer();
   root.innerHTML = hud() + `<main class="wrap"><div class="screen stack">${inner}</div></main>` + (dock ? dockHtml() : '');
@@ -1488,7 +1509,7 @@ function frame(inner, dock){
   window.scrollTo({top:0});
 }
 function dockHtml(){
-  return `<nav class="dock"><div class="dock-in">${[['match','house','홈'],['player','user-round','내 선수'],['bench','armchair','벤치'],['club','shield','구단'],['world','globe','세계'],['news','newspaper','뉴스']].map(([k,i,n]) => { const un = k === 'news' ? Math.min(9, (S.newsN || 0) - (S.newsSeen || 0)) : 0; return `<button type="button" data-t="${k}" aria-selected="${UI.tab === k || (k === 'player' && UI.tab === 'shop')}"><span class="i">${ic(i)}${un > 0 && UI.tab !== k ? `<em class="dock-badge">${un}</em>` : ''}</span>${n}</button>`; }).join('')}</div></nav>`;
+  return `<nav class="dock"><div class="dock-in">${[['match','house','홈'],['player','user-round','내 선수'],['bench','armchair','벤치'],['club','shield','구단'],['world','globe','세계']].map(([k,i,n]) => { const un = 0; return `<button type="button" data-t="${k}" aria-selected="${UI.tab === k || (k === 'player' && UI.tab === 'shop')}"><span class="i">${ic(i)}${un > 0 && UI.tab !== k ? `<em class="dock-badge">${un}</em>` : ''}</span>${n}</button>`; }).join('')}</div></nav>`;
 }
 function bindDock(){ root.querySelectorAll('.dock button').forEach(b => b.onclick = () => { UI.tab = b.dataset.t; renderHub(); }); }
 
@@ -1629,7 +1650,7 @@ function renderHub(){
   else if (t === 'shop'){ frame(shopTab(), true); bindShop(); }
   else if (t === 'bench'){ frame(benchTab(), true); bindBench(); }
   else if (t === 'club') frame(clubTab(), true);
-  else if (t === 'news') frame(newsTab(), true);
+  else if (t === 'news'){ frame(newsTab(), true); const nbk = $('#newsBack'); if (nbk) nbk.onclick = () => { UI.tab = 'match'; renderHub(); }; }
   else if (t === 'world'){ frame(worldTab(), true); bindWorld(); }
   else { frame(matchTab(), true); bindMatchTab(); }
 }
@@ -1749,7 +1770,7 @@ function newsTab(){
     if (n.t !== last){ last = n.t; out += `<li class="news-day">${esc(n.t)}</li>`; }
     out += `<li class="${i < un ? 'new' : ''}" style="animation-delay:${Math.min(i, 10)*40}ms">${i < un ? '<em class="new-tag">NEW</em>' : ''}${esc(n.h)}</li>`;
   });
-  return `<div class="label">${ic('newspaper')} PITCH SPORTS</div><p class="small muted" style="margin:-6px 0 0">${un ? `새 소식 ${un}건` : '모든 소식을 읽었어요'} · 최근 순</p><ul class="news">${out}</ul>`;
+  return `<button class="btn dark sm shop-back" type="button" id="newsBack">${ic('arrow-left')} 홈으로</button><div class="label">${ic('newspaper')} PITCH SPORTS</div><p class="small muted" style="margin:-6px 0 0">${un ? `새 소식 ${un}건` : '모든 소식을 읽었어요'} · 최근 순</p><ul class="news">${out}</ul>`;
 }
 function historyTable(){
   return `<table class="hist"><thead><tr><th>시즌</th><th>나이</th><th>구단</th><th>출전</th><th>골</th><th>도움</th><th>평점</th><th>연봉</th></tr></thead><tbody>
@@ -3374,9 +3395,12 @@ function valueBoard(){
       <p class="small muted vc-gap">${ar === 1 ? '세계 최고 몸값 선수예요!' : `${ar <= 100 ? '세계 랭킹 한 계단 위까지' : '세계 TOP 100 진입까지'} <b>+${vfmt(Math.max(100, gap))}</b>`}</p>
       <p class="small muted">능력치 · 나이 · 리그 수준 · 인기 · 이번 시즌 평점 · 수상 경력으로 매겨져요. 유럽 빅리그로 가면 크게 뛰어요.</p>
     </section>
-    <div class="label">${ic('globe')} 리그 선택</div>
-    <div class="vlg">${['', ...ALL_LG].map(k => `<button type="button" class="opt ${lg === k ? 'on' : ''} ${k && k === myLg() ? 'mine' : ''}" data-vl="${k}">${k ? `${LEAGUES[k].f} ${LG_SHORT[k]}` : '🌍 세계'}</button>`).join('')}</div>
-    <div class="vpos">${[['','전체'],['FW','공격수'],['MF','미드필더'],['DF','수비수'],['GK','골키퍼']].map(([k, n]) => `<button type="button" class="opt ${pos === k ? 'on' : ''}" data-vp="${k}">${n}</button>`).join('')}</div>
+    <section class="panel vfilter">
+      <div class="vf-h">${ic('globe')} 리그<small>옆으로 넘겨서 선택</small></div>
+      <div class="vf-scroll" id="vfScroll">${['', ...ALL_LG].map(k => `<button type="button" class="vf-lg ${lg === k ? 'on' : ''}" data-vl="${k}"><span class="vf-flag">${k ? LEAGUES[k].f : '🌍'}</span><b>${k ? LG_SHORT[k] : '세계'}</b>${k && k === myLg() ? '<em>내 리그</em>' : ''}</button>`).join('')}</div>
+      <div class="vf-h">${ic('users')} 포지션</div>
+      <div class="vf-seg">${[['','전체'],['FW','FW'],['MF','MF'],['DF','DF'],['GK','GK']].map(([k, n]) => `<button type="button" class="${pos === k ? 'on' : ''}" data-vp="${k}">${n}</button>`).join('')}</div>
+    </section>
     <div class="label">${scope} 몸값 ${lg ? '랭킹' : `TOP ${cap}`}${pos ? ' · ' + POSN[pos] : ''}</div>
     ${lsum}
     <div class="panel vlist">${list.length ? list.slice(0, show).map(row).join('') + (meI >= show ? `<div class="vgap">⋯</div>${row(list[meI], meI)}` : '') : '<p class="small muted pad" style="margin:0">선수가 없어요.</p>'}</div>
@@ -3415,7 +3439,8 @@ function worldTab(){
 function bindWorld(){
   root.querySelectorAll('[data-ws]').forEach(b => b.onclick = () => { UI.wsub = b.dataset.ws; renderHub(); });
   root.querySelectorAll('[data-vp]').forEach(b => b.onclick = () => { UI.vpos = b.dataset.vp; renderHub(); });
-  root.querySelectorAll('[data-vl]').forEach(b => b.onclick = () => { UI.vlg = b.dataset.vl; UI.vmore = false; renderHub(); });
+  root.querySelectorAll('[data-vl]').forEach(b => b.onclick = () => { UI.vlg = b.dataset.vl; UI.vmore = false; UI.vfX = $('#vfScroll') ? $('#vfScroll').scrollLeft : 0; renderHub(); });
+  const vs = $('#vfScroll'); if (vs){ const on = vs.querySelector('.on'); vs.scrollLeft = UI.vfX ?? 0; if (on && (on.offsetLeft < vs.scrollLeft || on.offsetLeft + on.offsetWidth > vs.scrollLeft + vs.clientWidth)) vs.scrollLeft = on.offsetLeft - (vs.clientWidth - on.offsetWidth) / 2; }
   root.querySelectorAll('[data-golg]').forEach(b => b.onclick = () => { UI.wsub = 'value'; UI.vlg = b.dataset.golg; UI.vpos = ''; UI.vmore = false; renderHub(); });
   const m = $('#vmore'); if (m) m.onclick = () => { UI.vmore = !UI.vmore; renderHub(); };
 }
