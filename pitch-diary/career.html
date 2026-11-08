@@ -567,6 +567,24 @@ table.standings tr.me em{color:var(--gold);font-weight:900}
 @keyframes achIn{from{opacity:0;transform:translate(-50%,-120%)}}
 @keyframes achOut{to{opacity:0;transform:translate(-50%,-120%)}}
 
+/* ---------- 빅매치 · 미션 · 이적 협상 ---------- */
+.next.bigm{border-color:var(--hot);box-shadow:0 6px 0 rgba(0,0,0,.35),0 0 34px rgba(255,77,109,.35)}
+.big-banner{position:relative;margin-top:8px;text-align:center;font-family:var(--f-display);font-size:14px;color:#fff;background:linear-gradient(90deg,var(--hot),#ff9f1c);border-radius:8px;padding:5px 8px;animation:pulse 1.6s ease-in-out infinite}
+.big-banner .ico{vertical-align:-.2em}
+.mission{position:relative;display:flex;align-items:center;gap:10px;margin-top:14px;padding:10px 12px;border-radius:14px;background:rgba(61,214,255,.1);border:1px solid rgba(61,214,255,.45)}
+.mission > .ico{width:26px;height:26px;color:var(--cyan)}
+.mission div{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.mission small{font-size:11px;color:var(--muted)}
+.mission b{font-family:var(--f-display);font-weight:400;font-size:17px}
+.mission em{font-style:normal;font-size:11px;font-weight:900;color:var(--cyan);text-align:right;line-height:1.3}
+.mis-res{display:flex;align-items:center;gap:6px;justify-content:center;flex-wrap:wrap;font-size:14px;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.06)}
+.mis-res.ok{background:rgba(74,222,128,.14);color:var(--up)} .mis-res.no{background:rgba(255,107,129,.12);color:var(--down)}
+.splash.big .band{background:linear-gradient(90deg,var(--hot),#ff9f1c)}
+.splash.big .band b,.splash.big .band small{color:#fff}
+.stars{color:var(--gold);letter-spacing:1px;font-size:13px}
+.tn-head{display:flex;align-items:center;gap:14px}
+.tn-head small{display:block;color:var(--muted);font-size:12px}
+
 @keyframes enter{from{opacity:0;transform:translateY(14px) scale(.98)}}
 @keyframes dealIn{from{opacity:0;transform:translateY(18px) rotate(-2deg) scale(.92)}}
 @keyframes slideIn{from{opacity:0;transform:translateX(-16px)}}
@@ -963,6 +981,7 @@ function validPending(p){
   p.ev.forEach(e => { e.m = int(e.m, 0, 90, 45); if (e.dir != null) e.dir = int(e.dir, 0, 2, 1); if (e.roll != null) e.roll = clamp(Number(e.roll) || 0, 0, 1); if (e.res != null) e.res = !!e.res; if (e.kind != null && !CH[e.kind]) e.kind = null; });
   if (p.soProg){ const bo = a => Array.isArray(a) ? a.slice(0, 12).map(Boolean) : []; p.soProg = {U: bo(p.soProg.U), T: bo(p.soProg.T)}; }
   ['tg','og','from','mins','ovr'].forEach(k => p[k] = int(p[k], 0, 99, 0));
+  p.big = typeof p.big === 'string' ? p.big.slice(0, 30) : '';
   p.noise = clamp(Number(p.noise) || 0, -1, 1); p.buff = clamp(Number(p.buff) || 0, -1, 1); p.home = !!p.home;
   p.fx = p.fx && ['L','C','X'].includes(p.fx.k) ? {k:p.fx.k, comp:String(p.fx.comp || '').slice(0, 30), stage:String(p.fx.stage || '').slice(0, 10)} : {k:'L', comp:'', stage:''};
   const arr = (a, f) => Array.isArray(a) && a.length === 12 ? a.map(f) : null;
@@ -998,7 +1017,13 @@ function load(){
     if (r.window && !r.window.offers.length) r.window = null;
     r.news = (Array.isArray(r.news) ? r.news : []).filter(n => n && typeof n.h === 'string').slice(0, 40).map(n => ({h:n.h.slice(0, 160), t:String(n.t || '').slice(0, 30)}));
     r.history = (Array.isArray(r.history) ? r.history : []).filter(h => h && CLUB[h.club]).map(h => ({year:int(h.year,2000,2100,2027), age:int(h.age,16,45,19), club:h.club, apps:int(h.apps,0,99), goals:int(h.goals,0,99), assists:int(h.assists,0,99), avg:String(h.avg).slice(0,5), salary:int(h.salary,0,2000000), change:int(h.change,-100,500)}));
-    if (!['week','match','interview','nego','retired','window'].includes(r.phase)) r.phase = 'week';
+    if (!['week','match','interview','nego','retired','window','tnego'].includes(r.phase)) r.phase = 'week';
+    const tn = r.tn;
+    r.tn = tn && CLUB[tn.club] && ['nego','window'].includes(tn.back) ? {club:tn.club, back:tn.back, max:int(tn.max, MIN_SALARY, 2000000, MIN_SALARY), cur:int(tn.cur, MIN_SALARY, 2000000, MIN_SALARY), open:int(tn.open, MIN_SALARY, 2000000, MIN_SALARY),
+      used:(Array.isArray(tn.used) ? tn.used : []).filter(k => TAPPEALS[k]).slice(0, 4), log:(Array.isArray(tn.log) ? tn.log : []).filter(l => l && typeof l.t === 'string').map(l => ({who: l.who === 'me' ? 'me' : 'dir', t: l.t.slice(0, 200)})).slice(0, 12),
+      status: tn.status === 'walked' ? 'walked' : 'open', mood:int(tn.mood, -5, 5, 0), perk:!!tn.perk} : null;
+    if (r.tn) r.tn.cur = Math.min(r.tn.cur, r.tn.max);
+    r.perk = r.perk && CLUB[r.perk.club] ? {club:r.perk.club, year:int(r.perk.year, 2000, 2100, 2027)} : null;
     if (r.phase === 'window' && !r.window) r.phase = 'week';
     r.season = Object.assign(freshSeason(), r.season || {});
     r.season.rank = r.season.rank ? int(r.season.rank, 1, 20, 1) : undefined;
@@ -1007,7 +1032,7 @@ function load(){
     r.season.obj = Array.isArray(r.season.obj) ? r.season.obj.filter(o => o && OBJ[o.k]).map(o => ({k:o.k, n: o.k === 'rating' ? clamp(Number(o.n) || 6.8, 5, 9) : int(o.n, 1, 99, 1)})).slice(0, 3) : null;
     r.season.objRes = Array.isArray(r.season.objRes) ? r.season.objRes.map(Boolean).slice(0, 3) : undefined;
     r.ach = Array.isArray(r.ach) ? [...new Set(r.ach.filter(a => ACH.some(x => x[0] === a)))] : [];
-    r.rec = Object.fromEntries(['hat','so','clutch','events','objAll'].map(k => [k, int(r.rec?.[k], 0, 99999, 0)]));
+    r.rec = Object.fromEntries(['hat','so','clutch','events','objAll','missions'].map(k => [k, int(r.rec?.[k], 0, 99999, 0)]));
     r.mgrs = Object.fromEntries(Object.entries(r.mgrs && typeof r.mgrs === 'object' ? r.mgrs : {}).filter(([c, v]) => CLUB[c] && v && MGR[v.t] && typeof v.m === 'string').map(([c, v]) => [c, {m: v.m.slice(0, 16), t: v.t}]));
     r.season.ratings = (Array.isArray(r.season.ratings) ? r.season.ratings : []).map(Number).filter(Number.isFinite);
     ['apps','starts','goals','assists','cs','W','D','L'].forEach(k => r.season[k] = int(r.season[k], 0, 99, 0));
@@ -1022,11 +1047,11 @@ function load(){
     const needs = w && Array.isArray(w.needs) ? w.needs.filter(n => ACT_IDS.includes(n)) : [];
     r.week = w && needs.length && typeof w.text === 'string' ? {needs, text:w.text.slice(0, 200), rumor:!!w.rumor, fortune:int(w.fortune, 0, FORTUNES.length - 1, 2), revealed:!!w.revealed,
       event: EVENTS.some(e => e.id === w.event) ? w.event : null, eventRes: w.eventRes && typeof w.eventRes.text === 'string' ? {text:w.eventRes.text.slice(0, 200)} : null,
-      mini: MINIS[w.mini] ? w.mini : null, miniDone:!!w.miniDone, speech: typeof w.speech === 'string' ? w.speech.slice(0, 80) : ''} : null;
+      mini: MINIS[w.mini] ? w.mini : null, miniDone:!!w.miniDone, mission: MISSION[w.mission] ? w.mission : null, speech: typeof w.speech === 'string' ? w.speech.slice(0, 80) : ''} : null;
     r.prev = r.prev ? {rating:Number(r.prev.rating) || 0, goals:int(r.prev.goals, 0, 9, 0), mins:int(r.prev.mins, 0, 90, 0)} : null;
     r.pending = validPending(r.pending);
     if (r.phase === 'match' && !r.pending) r.phase = 'week';
-    if (r.last){ const L = r.last; ['tg','og','goals','assists'].forEach(k => L[k] = int(L[k], 0, 12, 0)); L.mins = int(L.mins, 0, 90, 0); L.rating = L.rating == null ? null : clamp(Number(L.rating) || 6, 3, 10); L.fx = cleanFx(L.fx); L.iv = L.iv !== false; if (!CLUB[L.opp]) r.last = null; }
+    if (r.last){ const L = r.last; ['tg','og','goals','assists'].forEach(k => L[k] = int(L[k], 0, 12, 0)); L.mins = int(L.mins, 0, 90, 0); L.rating = L.rating == null ? null : clamp(Number(L.rating) || 6, 3, 10); L.fx = cleanFx(L.fx); L.iv = L.iv !== false; L.mis = L.mis && MISSION[L.mis.k] ? {k:L.mis.k, ok: L.mis.ok == null ? null : !!L.mis.ok} : null; L.big = typeof L.big === 'string' ? L.big.slice(0, 30) : ''; if (!CLUB[L.opp]) r.last = null; }
     if (r.phase === 'interview' && !r.last) r.phase = 'week';
     if (r.interview){
       const iv = r.interview.set;
@@ -1045,6 +1070,7 @@ function load(){
       if (n.result){ const x = n.result; x.ok = x.ok !== false; if (!APPEALS[x.k] || !['up','keep','down'].includes(x.kind)) n.result = null; else { x.pct = int(x.pct, -60, 200, 0); x.newSalary = int(x.newSalary, MIN_SALARY, 2000000, r.salary); x.trust = int(x.trust, -30, 30, 0); x.gm = String(x.gm); } }
       n.offers = Array.isArray(n.offers) ? n.offers.filter(o => o && CLUB[o.club] && o.club !== r.club).map(o => ({club:o.club, salary:int(o.salary, MIN_SALARY, 2000000, r.salary)})).slice(0, 2) : null;
     }
+    if (r.phase === 'tnego' && (!r.tn || (r.tn.back === 'nego' && !r.nego) || (r.tn.back === 'window' && !r.window))){ r.phase = r.tn && r.tn.back === 'nego' && r.nego ? 'nego' : 'week'; r.tn = null; }
     return r;
   } catch (e) { console.error('save load failed', e && e.message); return null; }
 }
@@ -1069,7 +1095,7 @@ function go(){
   applyMgrs();
   save();
   if (!S) return renderTitle();
-  ({week:renderHub, match:playMatch, interview:renderInterview, nego:renderNego, retired:renderRetired, window:renderWindow})[S.phase]();
+  ({week:renderHub, match:playMatch, interview:renderInterview, nego:renderNego, retired:renderRetired, window:renderWindow, tnego:renderTN})[S.phase]();
 }
 function hud(){
   const ovr = ovrOf(S.stats, S.pos);
@@ -1181,8 +1207,10 @@ function renderCreate(){
 // ---------- 주간 생성 ----------
 function makeWeek(){
   const fortune = FORTUNES.indexOf(wpick(FORTUNES));
-  const event = !S.injury && Math.random() < .3 ? pick(EVENTS).id : null;
-  const mini = !S.injury && Math.random() < (event ? .2 : .4) ? pick(Object.keys(MINIS)) : null;
+  const roll = Math.random(); // 한 주에 돌발 이벤트 또는 미니게임 중 최대 하나만
+  const event = !S.injury && roll < .26 ? pick(EVENTS).id : null;
+  const mini = !S.injury && !event && roll < .42 ? pick(Object.keys(MINIS)) : null;
+  const mission = S.injury ? null : makeMission();
   let needs, text, rumor = false;
   if (S.injury){ needs = ['rest']; text = '🤕 부상 부위가 아직 욱신거린다.'; }
   else {
@@ -1202,7 +1230,7 @@ function makeWeek(){
   }
   S.buff = r2(clamp(S.buff + FORTUNES[fortune][4], -1, 1));
   if (mgr().volatile) S.mood = ri(-2, 2);
-  return {needs, text, rumor, fortune, revealed:false, event, eventRes:null, mini, miniDone:false};
+  return {needs, text, rumor, fortune, revealed:false, event, eventRes:null, mini, miniDone:false, mission};
 }
 const SPEECH = {
   '-2':['요즘 다들 정신 못 차리지? 이번 주 지면 각오해.','훈련장에 웃음소리가 들리면 가만 안 둔다.'],
@@ -1216,6 +1244,7 @@ const SPEECH = {
 function renderHub(){
   if (!S.week){ S.week = makeWeek(); save(); }
   if (!S.season.obj) S.season.obj = makeObjectives();
+  if (S.week && S.week.mission === undefined) S.week.mission = S.injury ? null : makeMission();
   if (S.equip.arm === 'captain' && S.trust < 70){ delete S.equip.arm; save(); setTimeout(() => toast('감독 신뢰가 70 아래로 떨어져 주장 완장을 내려놓았다'), 300); }
   if (!S.week.speech){ S.week.speech = pick([...SPEECH[String(S.mood)], ...(S.mood >= 0 ? mgr().pos : mgr().neg).map(x => x.replace(/"/g, ''))]); save(); }
   const t = UI.tab;
@@ -1227,17 +1256,19 @@ function renderHub(){
   else { frame(matchTab(), true); bindMatchTab(); }
 }
 function matchTab(){
-  const f = curFx(), opp = f.opp, home = f.home, M = mgr(), W = S.week, F = FORTUNES[W.fortune];
+  const f = curFx(), opp = f.opp, home = f.home, M = mgr(), W = S.week, F = FORTUNES[W.fortune], big = bigMatch(f), mr = W.mission && missionReward(W.mission, big);
   const se = S.season, avg = se.ratings.length ? (se.ratings.reduce((a,b) => a+b, 0) / se.ratings.length).toFixed(1) : '-';
   return `
-    <section class="panel next ${f.k !== 'L' ? 'cup' : ''}">
+    <section class="panel next ${f.k !== 'L' ? 'cup' : ''} ${big ? 'bigm' : ''}">
       <div class="next-top"><span class="tag gold">${S.year} · ${esc(fxLabel(f))}</span><span class="tag">${f.k === 'L' ? `현재 ${myRank()}위 · ` : ''}${home ? 'HOME' : 'AWAY'}</span></div>
+      ${big ? `<div class="big-banner">${ic('flame')} ${esc(big.label)} · 인기·경험치 보상 2배</div>` : ''}
       ${f.k !== 'L' ? `<div class="cup-banner">${f.k === 'X' ? '⭐' : '🏆'} 토너먼트 · 지면 탈락 · 비기면 승부차기</div>` : ''}
       <div class="vs">
         <div class="side">${crest(S.club, 'xl')}<b>${esc(S.club)}</b><small>전력 ${CLUB[S.club].s}</small></div>
         <div class="vs-mid">VS</div>
         <div class="side">${crest(opp, 'xl')}<b>${esc(opp)}</b><small>${CLUB[opp].lg !== CLUB[S.club].lg ? LEAGUES[CLUB[opp].lg].f + ' ' : ''}전력 ${CLUB[opp].s} · #${STYLE_NAME[CLUB[opp].sty]}</small></div>
       </div>
+      ${W.mission ? `<div class="mission">${ic('target')}<div><small>이번 경기 감독 미션</small><b>${MISSION[W.mission].n}</b></div><em>+${mr.xp} XP<br>신뢰 +${mr.trust}</em></div>` : ''}
     </section>
     <div class="panel track"><span class="lab">SEASON</span>${S.schedule.map((x, i) => { const r = S.season.results[i], skip = !r && i < S.round, out = x.k !== 'L' && S.out[x.comp] && !r; return `<span class="n ${x.k !== 'L' ? 'cupn' : ''} ${r ? 'r-' + r : ''} ${skip || out ? 'gone' : ''} ${i === S.round ? 'now' : ''}" title="${esc(fxLabel(x))}">${r ? {W:'승',D:'무',L:'패'}[r] : x.k === 'L' ? x.lr : x.k === 'X' ? '⭐' : '🏆'}</span>`; }).join('')}</div>
     <div class="speech">${M.i} “${esc(W.speech)}”</div>
@@ -1268,7 +1299,7 @@ function bindMatchTab(){
   };
   root.querySelectorAll('.act').forEach(b => b.onclick = () => doAction(b.dataset.a));
   if (UI.splash){ UI.splash = false; roundSplash(); }
-  const delay = RM ? 0 : (document.querySelector('.splash') ? 1700 : 450);
+  const delay = RM ? 0 : (document.querySelector('.splash') ? 1400 : 450);
   if (UI.sacked){ const o = UI.sacked; UI.sacked = null; setTimeout(() => sackModal(o), delay); return; }
   if (S.week.event && !S.week.eventRes) setTimeout(showEvent, delay);
   else if (S.week.mini && !S.week.miniDone) setTimeout(showMini, delay);
@@ -1464,6 +1495,7 @@ function startChance(ovr){
   let p = .46 + (S.pos === 'GK' ? .1 : 0) + (ovr - 55) / 35 * (t === 'tactician' ? 1.3 : 1) + (S.trust - 50) / 120 * (t === 'charisma' ? 1.8 : t === 'tactician' ? .5 : 1)
         + (S.cond - 60) / 250 - (CLUB[S.club].s - 70) / 60 + S.mood * (M.volatile ? .06 : .03) + (hasT('talk') ? .1 : 0);
   if (t === 'showman') p += (S.pop - 30) / 200;
+  if (S.perk && S.perk.club === S.club && S.perk.year === S.year) p += .15;
   if (M.youth) p += S.age <= 23 ? .12 : -.03;
   return clamp(p, .05, .97);
 }
@@ -1500,7 +1532,7 @@ function simulate(){
   if (Math.random() < .14) ev.push({m: ri(10, 88), side:'var'});
   if (Math.random() < .06) ev.push({m: ri(30, 85), side:'red'});
   ev.sort((a, b) => a.m - b.m);
-  return {opp, home, role, from, mins, tg, og, ev, noise: rand(-.7, .7), buff: S.buff, ovr, fx:{k:fxx.k, comp:fxx.comp || '', stage:fxx.stage || ''}, so: fxx.k !== 'L' ? genSo() : null};
+  return {opp, home, role, from, mins, tg, og, ev, noise: rand(-.7, .7), buff: S.buff, ovr, fx:{k:fxx.k, comp:fxx.comp || '', stage:fxx.stage || ''}, so: fxx.k !== 'L' ? genSo() : null, big: (bigMatch(fxx) || {}).label || ''};
 }
 function finalize(p){
   let tg = p.tg, og = p.og, goals = 0, assists = 0, bonus = 0;
@@ -1520,7 +1552,7 @@ function finalize(p){
     if (p.role === 'sub') rating = 6 + (rating - 6) * .7;
     rating = Math.round(clamp(rating, 3, 10) * 10) / 10;
   }
-  return {opp:p.opp, home:p.home, role:p.role, from:p.from, mins:p.mins, tg, og, goals, assists, res, rating, fx:p.fx, cs: !!(p.mins && og === 0 && (S.pos === 'GK' || S.pos === 'DF'))};
+  return {opp:p.opp, home:p.home, role:p.role, from:p.from, mins:p.mins, tg, og, goals, assists, res, rating, fx:p.fx, big:p.big || '', cs: !!(p.mins && og === 0 && (S.pos === 'GK' || S.pos === 'DF'))};
 }
 function applyMatch(r){
   const se = S.season; se[r.res]++; se.results[S.round] = r.res;
@@ -1528,7 +1560,8 @@ function applyMatch(r){
   if (r.mins){
     se.apps++; if (r.role === 'start') se.starts++;
     se.goals += r.goals; se.assists += r.assists; se.ratings.push(r.rating); if (r.cs) se.cs++;
-    const dp = r.goals * 2 + r.assists + (r.rating >= 8 ? 3 : r.rating >= 7 ? 1 : r.rating < 5.5 ? -2 : 0) + (r.res === 'W' ? 1 : 0);
+    let dp = r.goals * 2 + r.assists + (r.rating >= 8 ? 3 : r.rating >= 7 ? 1 : r.rating < 5.5 ? -2 : 0) + (r.res === 'W' ? 1 : 0);
+    if (r.big) dp *= 2;
     const dt = r.rating >= 7.5 ? 3 : r.rating >= 6.5 ? 1 : r.rating < 5.5 ? -3 : 0;
     fx.push(...applyFx({pop: dp, trust: dt, cond: Math.round((r.role === 'start' ? -12 : -5) * (hasT('phy') ? .5 : 1))}));
     S.best.rating = Math.max(S.best.rating, r.rating);
@@ -1549,8 +1582,15 @@ function applyMatch(r){
     else addNews(`${r.fx.comp} ${r.fx.stage} 통과! ${S.club}, ${r.opp} 꺾고 다음 라운드로`);
   }
   const sc = scoutCheck(r); if (sc) fx.push(['스카우트', 1, sc]);
-  const xpN = (r.mins ? (r.role === 'start' ? 12 : 7) : 3) + r.goals * 15 + r.assists * 10 + (r.rating >= 7.5 ? 10 : 0) + (r.res === 'W' ? 5 : 0) + (r.trophy ? 100 : 0);
+  const xpN = ((r.mins ? (r.role === 'start' ? 12 : 7) : 3) + r.goals * 15 + r.assists * 10 + (r.rating >= 7.5 ? 10 : 0) + (r.res === 'W' ? 5 : 0)) * (r.big ? 2 : 1) + (r.trophy ? 100 : 0);
   fx.push(gainXp(xpN));
+  // 감독 미션
+  const mk = S.week && S.week.mission;
+  if (mk){
+    if (!r.mins) r.mis = {k:mk, ok:null};
+    else if (MISSION[mk].ok(r)){ const rw = missionReward(mk, r.big); fx.push(...applyFx({trust:rw.trust, pop:rw.pop})); fx.push(gainXp(rw.xp)); r.mis = {k:mk, ok:true}; S.rec.missions = (S.rec.missions || 0) + 1; }
+    else r.mis = {k:mk, ok:false};
+  }
   S.buff = 0;
   S.last = {...r, fx};
 }
@@ -1575,7 +1615,7 @@ async function runMatch(){
       <div class="myrole">${roleTxt}</div>
     </div>
     <div class="label">LIVE 중계</div>
-    <div class="panel"><ul class="feed" id="tl"><li><span class="m">0'</span>🏁 킥오프!</li></ul></div>
+    <div class="panel"><ul class="feed" id="tl"><li><span class="m">0'</span>🏁 킥오프!</li>${p.big ? `<li class="big"><span class="m">0'</span>🔥 ${esc(p.big)}! 경기장이 터질 듯한 함성</li>` : ''}</ul></div>
     <div id="after"></div>`, false);
   SFX.whistle();
   const tl = $('#tl'), sc = $('#sc');
@@ -1628,7 +1668,7 @@ async function runMatch(){
     } else r.adv = r.res === 'W';
   }
   const ivP = r.role === 'injured' ? 0 : r.role === 'bench' ? .25 : (r.role === 'sub' && (r.goals || r.assists)) ? .75 : (r.goals || r.rating >= 7.6) ? .85 : r.rating < 5.8 ? .6 : r.res === 'L' ? .45 : .32;
-  r.iv = Math.random() < ivP;
+  r.iv = Math.random() < (r.big && r.role !== 'injured' ? Math.max(ivP, .7) : ivP);
   applyMatch(r); S.pending = null; S.phase = 'interview'; S.interview = null; save();
   SFX.whistle();
   add(90, 'big', `📣 경기 종료 — ${r.res === 'W' ? '🎉 승리!' : r.res === 'D' ? '🤝 무승부' : '😢 패배'}`);
@@ -1637,6 +1677,7 @@ async function runMatch(){
     ${r.rating != null ? `<div class="label">MY RATING</div><div class="rating" style="${rc}" id="rt">0.0</div>
       <div style="font-weight:900">${r.goals ? `⚽ ${r.goals}골 ` : ''}${r.assists ? `🅰️ ${r.assists}도움 ` : ''}${r.cs ? '🧤 클린시트 ' : ''}${!r.goals && !r.assists && !r.cs ? `${r.mins}분 출전` : ''}</div>`
       : `<div class="label">${r.role === 'injured' ? '부상 회복 중' : '출전하지 못했다'}</div><div style="font-size:48px">${r.role === 'injured' ? '🤕' : '🪑'}</div>`}
+    ${L.mis ? `<div class="mis-res ${L.mis.ok ? 'ok' : L.mis.ok === false ? 'no' : ''}">${ic('target')} 감독 미션 · ${MISSION[L.mis.k].n} — <b>${L.mis.ok ? '성공!' : L.mis.ok === false ? '실패' : '출전 못 해 무효'}</b></div>` : ''}
     <div class="chips">${chipsHtml(L.fx)}</div>
     ${r.iv ? '' : `<div class="noiv">${r.role === 'injured' ? '' : pick(['📵 오늘은 인터뷰 요청이 없었다.','🚌 기자들이 상대 팀 선수에게 몰려갔다.','🤫 조용히 버스에 올랐다.'])}</div>`}
     <button class="btn block" id="toIv" type="button">${r.iv ? `${ic('mic')} 기자회견장으로` : '다음 주로 ▶'}</button>
@@ -2036,7 +2077,7 @@ function showVerdict(anim){
   } else el.textContent = money(r.newSalary);
   if (canRetry) $('#retry').onclick = () => { n.round = 2; n.base = r.newSalary; n.result = null; n.offers = null; S.trust = clamp(S.trust - 4, 0, 100); save(); renderNego(); };
   $('#sign').onclick = () => signContract(r.newSalary, total, null);
-  root.querySelectorAll('.offer button').forEach(b => b.onclick = () => { const o = n.offers[Number(b.dataset.o)]; signContract(o.salary, Math.round((o.salary / n.orig - 1) * 100), o.club); });
+  root.querySelectorAll('.offer button').forEach(b => b.onclick = () => startTN(n.offers[Number(b.dataset.o)], 'nego'));
 }
 function signContract(salary, pct, newClub){
   const n = S.nego, se = S.season;
@@ -2289,17 +2330,18 @@ function makeOffers(base, winter){
   }
   return picks.map(c => ({club:c, salary: Math.max(MIN_SALARY, Math.round(base * LEAGUES[CLUB[c].lg].pay / LEAGUES[cur].pay * rand(1.05, 1.5) * (CLUB[c].w === 'rich' ? 1.15 : CLUB[c].w === 'poor' ? .9 : 1) / 100) * 100)}));
 }
-const offerCard = (o, i) => `<div class="offer">${crest(o.club, 'lg')}<div style="min-width:0"><b>${LEAGUES[CLUB[o.club].lg].f} ${esc(o.club)}</b><small>${esc(LEAGUES[CLUB[o.club].lg].n)} · 전력 ${CLUB[o.club].s} · ${MGR[CLUB[o.club].t].i} ${esc(CLUB[o.club].m)} 감독(${MGR[CLUB[o.club].t].n})<br>제시 연봉 <b style="display:inline;color:var(--gold)">${money(o.salary)}</b></small></div><button class="btn cyan sm" type="button" data-o="${i}">이적</button></div>`;
+const interestOf = o => { const fair = S.salary * LEAGUES[CLUB[o.club].lg].pay / LEAGUES[CLUB[S.club].lg].pay, r = o.salary / Math.max(1, fair); return r >= 1.35 ? 3 : r >= 1.18 ? 2 : 1; };
+const offerCard = (o, i) => { const n = interestOf(o); return `<div class="offer">${crest(o.club, 'lg')}<div style="min-width:0"><b>${LEAGUES[CLUB[o.club].lg].f} ${esc(o.club)}</b><small>${esc(LEAGUES[CLUB[o.club].lg].n)} · 전력 ${CLUB[o.club].s} · ${MGR[CLUB[o.club].t].i} ${esc(CLUB[o.club].m)} 감독(${MGR[CLUB[o.club].t].n})<br>관심도 <span class="stars">${'★'.repeat(n)}${'☆'.repeat(3 - n)}</span> · 연봉은 협상으로 결정</small></div><button class="btn cyan sm" type="button" data-o="${i}">협상하기</button></div>`; };
 function renderWindow(){
   const w = S.window;
   frame(`
     <div class="label">${ic(w.kind === 'agent' ? 'phone' : 'snowflake')} ${w.kind === 'agent' ? '에이전트 긴급 연락' : '겨울 이적시장'}</div>
     <div class="speech">${ic('briefcase')} 에이전트: "${w.kind === 'agent' ? '스카우트들이 네 경기를 계속 보고 있었어. 제안이 왔다!' : '시즌 중이지만 제안이 들어왔어. 잘 생각해 봐.'}"</div>
     <div class="panel pad stack">${w.offers.map(offerCard).join('')}
-      <p class="small muted" style="margin:0">이적하면 남은 리그 경기를 새 팀에서 뛰고, 이번 시즌 컵 대회는 더 이상 나가지 못해요.</p>
+      <p class="small muted" style="margin:0">구단을 고르면 그 구단 디렉터와 연봉 협상을 시작해요. 이적하면 남은 리그 경기를 새 팀에서 뛰고, 이번 시즌 컵 대회는 더 이상 나가지 못해요.</p>
       <button class="btn dark block" id="stay" type="button">${ic('house')} 잔류한다 (감독 신뢰 +3)</button></div>`, false);
   $('#stay').onclick = () => { S.trust = clamp(S.trust + 3, 0, 100); addNews(`${S.name}, 이적설 일축… "${S.club}에서 끝까지"`); S.window = null; S.phase = 'week'; UI.splash = true; go(); };
-  root.querySelectorAll('.offer button').forEach(b => b.onclick = () => transferMid(w.offers[Number(b.dataset.o)]));
+  root.querySelectorAll('.offer button').forEach(b => b.onclick = () => startTN(w.offers[Number(b.dataset.o)], 'window'));
 }
 function transferMid(o){
   const old = S.club;
@@ -2674,6 +2716,128 @@ function bindShop(){
   });
 }
 
+// ---------- 빅매치 · 감독 미션 ----------
+const DERBIES = [
+  ['울산 HD','포항 스틸러스','동해안 더비'],['전북 현대','울산 HD','현대가 더비'],['FC서울','FC안양','연고 더비'],['대구 FC','포항 스틸러스','영남 더비'],['대전 하나시티즌','수원 FC','중부 더비'],
+  ['맨체스터 시티','맨체스터 유나이티드','맨체스터 더비'],['아스널','토트넘','노스런던 더비'],['리버풀','맨체스터 유나이티드','노스웨스트 더비'],['첼시','아스널','런던 더비'],
+  ['레알 마드리드','바르셀로나','엘 클라시코'],['레알 마드리드','아틀레티코 마드리드','마드리드 더비'],['세비야','레알 베티스','세비야 더비'],['아틀레틱 빌바오','레알 소시에다드','바스크 더비'],
+  ['인터 밀란','AC 밀란','밀라노 더비'],['유벤투스','인터 밀란','이탈리아 더비'],['AS 로마','라치오','로마 더비'],['나폴리','AS 로마','태양의 더비'],
+  ['바이에른 뮌헨','도르트문트','데어 클라시커'],['감바 오사카','비셀 고베','간사이 더비'],['우라와 레즈','가시마 앤틀러스','J리그 클라시코'],['요코하마 F. 마리노스','가와사키 프론탈레','가나가와 더비'],
+];
+function bigMatch(f){
+  if (!f || !S) return null;
+  const d = DERBIES.find(([a, b]) => (a === S.club && b === f.opp) || (b === S.club && a === f.opp));
+  if (d) return {label: d[2]};
+  if (f.k !== 'L' && f.stage === '결승') return {label: `${f.comp} 결승`};
+  if (f.k === 'L' && f.lr >= 4 && S.table){ const top = standings().slice(0, 3).map(r => r.c); if (top.includes(S.club) && top.includes(f.opp)) return {label:'선두권 맞대결'}; }
+  return null;
+}
+const MISSION = {
+  goal:{n:'골 넣기', ok: r => r.goals >= 1}, brace:{n:'멀티골', ok: r => r.goals >= 2, hard:true},
+  assist:{n:'도움 기록', ok: r => r.assists >= 1}, point:{n:'공격 포인트 1개', ok: r => r.goals + r.assists >= 1},
+  cs:{n:'무실점 (클린시트)', ok: r => !!r.cs}, r7:{n:'평점 7.0 이상', ok: r => r.rating >= 7},
+  r75:{n:'평점 7.5 이상', ok: r => r.rating >= 7.5, hard:true}, win:{n:'팀 승리', ok: r => r.res === 'W'},
+};
+function makeMission(){
+  const pool = {FW:['goal','goal','point','r7','brace','win'], MF:['assist','point','r7','win','r75'], DF:['cs','r7','win','cs'], GK:['cs','cs','r7','win']}[S.pos];
+  return pick(pool);
+}
+function missionReward(k, big){
+  const m = (MISSION[k].hard ? 1.6 : 1) * (big ? 1.5 : 1);
+  return {xp: Math.round(40 * m), trust: Math.round(3 * m), pop: Math.round(2 * m)};
+}
+
+// ---------- 이적 협상 (구단을 고른 뒤 그 구단 디렉터와 연봉 협상) ----------
+const TAPPEALS = {
+  record:{i:'clipboard-list', n:'기록 어필', d:'"제 기록이면 더 받을 자격이 있죠."', line:'제 기록을 보시면 이 금액은 아니라고 생각합니다.'},
+  pop:{i:'star', n:'인기 어필', d:'"유니폼 판매로 몸값 이상 돌려드려요."', line:'저를 영입하면 유니폼과 티켓 판매가 확실히 오를 겁니다.'},
+  rival:{i:'swords', n:'경쟁 구단 언급', d:'"다른 팀도 저를 원합니다."', line:'솔직히 다른 구단에서도 더 좋은 조건을 받았습니다.'},
+  role:{i:'shield', n:'출전 보장 요구', d:'연봉 대신 선발 확률 ↑ (한 시즌)', line:'연봉보다 출전이 중요합니다. 주전 기회를 약속해 주세요.'},
+};
+function startTN(o, back){
+  const base = o.salary;
+  const cur = Math.max(MIN_SALARY, Math.round(base * rand(.78, .92) / 100) * 100);
+  S.tn = {club:o.club, back, max: Math.round(base * rand(1.05, 1.25) / 100) * 100, cur, open:cur, used:[], status:'open', mood:0, perk:false,
+    log:[{who:'dir', t:`${S.name} 선수, 반갑습니다. ${o.club}가 준비한 조건은 연봉 ${money(cur)}입니다. 어떻게 생각하세요?`}]};
+  S.phase = 'tnego'; SFX.good(); go();
+}
+function tnOdds(k){
+  const T = S.tn, ovr = ovrOf(S.stats, S.pos), list = T.back === 'nego' ? (S.nego.offers || []) : (S.window.offers || []);
+  const rivals = list.length + (T.back === 'nego' ? 1 : 0); // 시즌 종료 땐 원소속팀 재계약안도 협상 카드
+  const p = {record: 1 / (1 + Math.exp(-(seasonPerf().score - 10) / 8)), pop: clamp((S.pop - 15) / 70, .1, .9),
+    rival: rivals >= 2 ? .6 : .3, role: clamp(.35 + (ovr - CLUB[T.club].s + 10) / 40, .1, .85)}[k];
+  return clamp(p * (1 + T.mood * .08), .05, .95);
+}
+function tnOddsTag(p){ return p >= .65 ? '<span class="odds hi">성공 가능성 높음</span>' : p >= .4 ? '<span class="odds mid">성공 가능성 보통</span>' : '<span class="odds lo">성공 가능성 낮음</span>'; }
+function renderTN(){
+  const T = S.tn, C = CLUB[T.club], L = LEAGUES[C.lg], M = MGR[C.t];
+  const pct = Math.round((T.cur / S.salary - 1) * 100);
+  frame(`
+    <div class="label">${ic('briefcase')} 이적 협상 · ${L.f} ${esc(L.n)}</div>
+    <div class="panel pad tn-head">${crest(T.club, 'xl')}<div style="min-width:0"><b class="disp" style="font-size:22px">${esc(T.club)}</b><small>전력 ${C.s} · ${M.i} ${esc(C.m)} 감독 (${M.n}) · ${WEALTH[C.w]}</small></div></div>
+    <div class="strip" style="grid-template-columns:1fr 1fr"><div><b>${money(S.salary)}</b><span>지금 연봉</span></div><div><b style="color:${pct > 0 ? 'var(--up)' : pct < 0 ? 'var(--down)' : 'inherit'}">${money(T.cur)}</b><span>상대 제시액 (${pct > 0 ? '+' : ''}${pct}%)</span></div></div>
+    <div class="panel office">
+      <div class="talk" id="talk">${T.log.map(l => `<div class="line ${l.who === 'me' ? 'me' : 'gm'}"><small>${l.who === 'me' ? '나' : `${esc(T.club)} 디렉터`}</small>${esc(l.t)}</div>`).join('')}</div>
+      <div id="tnBody"></div>
+    </div>`, false);
+  const body = $('#tnBody');
+  if (T.status === 'walked'){
+    body.innerHTML = `<div class="verdict"><span class="stampv down">협상 결렬</span><p class="small muted" style="margin:0">${esc(T.club)}가 협상 테이블을 떠났다.</p><button class="btn block" id="tnBack" type="button">다른 선택지로 돌아가기</button></div>`;
+    $('#tnBack').onclick = () => tnLeave(true); return;
+  }
+  const left = 3 - T.used.length;
+  body.innerHTML = `<p class="small muted" style="margin:0 0 10px">어필은 최대 3번 (${left}번 남음). 실패하면 상대가 협상을 접을 수도 있어요.${T.perk ? ' · <b style="color:var(--turf)">출전 보장 특약 확보</b>' : ''}</p>
+    <div class="appeals">${Object.entries(TAPPEALS).map(([k, a], i) => `<button class="appeal" type="button" data-k="${k}" ${T.used.includes(k) || left <= 0 ? 'disabled' : ''} style="animation-delay:${i*60}ms">
+      <span class="i">${ic(a.i)}</span><span class="n">${a.n}</span><span class="d">${esc(a.d)}</span>${tnOddsTag(tnOdds(k))}</button>`).join('')}</div>
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn dark sm" id="tnQuit" type="button" style="flex:1">협상 포기</button><button class="btn turf" id="tnSign" type="button" style="flex:1.4">${ic('pen-tool')} 이 조건에 사인</button></div>`;
+  root.querySelectorAll('.appeal').forEach(b => b.onclick = () => tnAppeal(b.dataset.k));
+  $('#tnQuit').onclick = () => { addNews(`${S.name}, ${T.club}와 이적 협상 중단`); tnLeave(true); };
+  $('#tnSign').onclick = tnSign;
+}
+async function tnAppeal(k){
+  const T = S.tn; if (!T || T.status !== 'open' || T.used.includes(k) || T.used.length >= 3) return;
+  root.querySelectorAll('.appeal, #tnSign, #tnQuit').forEach(b => b.disabled = true);
+  const ok = Math.random() < tnOdds(k), before = T.cur;
+  let line;
+  if (k === 'role'){
+    if (ok){ T.perk = true; line = '좋습니다. 감독님께 주전 기회를 보장하라고 전하겠습니다.'; } else { T.mood--; line = '주전은 실력으로 따내는 겁니다. 약속은 못 드려요.'; }
+  } else if (ok){
+    T.cur = Math.min(T.max, Math.round(T.cur * (1 + rand(.08, k === 'rival' ? .22 : .16)) / 100) * 100);
+    line = T.cur >= T.max ? `…알겠습니다. ${money(T.cur)}, 이게 저희 최대치입니다.` : `일리 있네요. ${money(T.cur)}까지 올려 드리죠.`;
+  } else {
+    T.mood--;
+    const walkP = k === 'rival' ? .35 : .12 + Math.max(0, -T.mood - 1) * .1;
+    if (Math.random() < walkP){ T.status = 'walked'; line = k === 'rival' ? '그럼 그 구단으로 가시죠. 저희는 여기까지입니다.' : '서로 생각이 너무 다르군요. 이번 협상은 없던 일로 하죠.'; }
+    else { if (k === 'rival') T.cur = Math.max(MIN_SALARY, Math.round(T.cur * .95 / 100) * 100); line = k === 'rival' ? `블러핑은 통하지 않습니다. 제시액을 ${money(T.cur)}로 조정하겠습니다.` : '그 부분은 이미 금액에 반영돼 있습니다.'; }
+  }
+  T.used.push(k); T.log.push({who:'me', t:TAPPEALS[k].line}); T.log.push({who:'dir', t:line}); save(); // 결과는 즉시 저장
+  $('#talk').insertAdjacentHTML('beforeend', `<div class="line me"><small>나</small>${esc(TAPPEALS[k].line)}</div><div class="line gm"><small>${esc(T.club)} 디렉터</small><span id="dt">. . .</span></div>`);
+  $('#tnBody').innerHTML = '';
+  await wait(1100); await typeIn($('#dt'), line, 26);
+  if (T.status === 'walked') SFX.bad(); else if (T.cur > before || (k === 'role' && ok)) SFX.coin(); else SFX.bad();
+  await wait(400); renderTN();
+}
+function tnLeave(remove){
+  const T = S.tn, list = T.back === 'nego' ? S.nego.offers : S.window.offers;
+  if (remove && list){ const i = list.findIndex(o => o.club === T.club); if (i >= 0) list.splice(i, 1); }
+  S.tn = null;
+  if (T.back === 'nego'){ S.phase = 'nego'; return go(); }
+  if (!S.window.offers.length){ S.window = null; S.phase = 'week'; UI.splash = true; toast('남은 제안이 없어 지금 팀에 남았다'); return go(); }
+  S.phase = 'window'; go();
+}
+function tnSign(){
+  const T = S.tn; if (!T || T.status !== 'open') return;
+  S.tn = null;
+  addNews(`${T.club}, ${S.name}과(와) 연봉 ${money(T.cur)}에 합의${T.perk ? ' · 출전 보장 특약 포함' : ''}`);
+  if (T.back === 'nego'){
+    if (T.perk) S.perk = {club:T.club, year:S.year + 1};
+    signContract(T.cur, Math.round((T.cur / S.nego.orig - 1) * 100), T.club);
+  } else {
+    if (T.perk) S.perk = {club:T.club, year:S.year};
+    transferMid({club:T.club, salary:T.cur});
+  }
+}
+
 // ---------- 업적 · 시즌 목표 · 감독 교체 · 결정적 순간 ----------
 const careerSum = k => S.history.reduce((a, h) => a + (h[k] || 0), 0) + (S.season[k] || 0);
 const ACH = [
@@ -2700,6 +2864,7 @@ const ACH = [
   ['traits3','badge-check','만능 플레이어','특성 3개 획득', s => s.traits.length >= 3, 150],
   ['fashion','shirt','패셔니스타','악세사리 5개 보유', s => s.items.length >= 5, 80],
   ['events30','dice-5','파란만장','돌발 이벤트 30회 경험', s => s.rec.events >= 30, 100],
+  ['mission10','target','미션 클리어','감독 미션 10회 성공', s => s.rec.missions >= 10, 150],
   ['veteran','medal','베테랑','5시즌 완주', s => s.history.length >= 5, 200],
 ];
 function checkAch(){
@@ -2840,9 +3005,10 @@ function shake(){ if (RM) return; root.classList.remove('shake'); void root.offs
 function roundSplash(){
   if (RM) return;
   const f = curFx(); if (!f) return;
-  const el = document.createElement('div'); el.className = 'splash' + (f.k !== 'L' ? ' cup' : '');
-  el.innerHTML = `<div class="band">${crest(S.club, 'lg')}<div><b>${f.k === 'L' ? `ROUND ${f.lr}` : esc(f.stage)}</b><small>${f.k === 'L' ? '' : esc(f.comp) + ' · '}VS ${esc(f.opp)}</small></div>${crest(f.opp, 'lg')}</div>`;
-  document.body.appendChild(el); SFX.whistle(); setTimeout(() => el.remove(), 1650);
+  const big = bigMatch(f);
+  const el = document.createElement('div'); el.className = 'splash' + (big ? ' big' : f.k !== 'L' ? ' cup' : '');
+  el.innerHTML = `<div class="band">${crest(S.club, 'lg')}<div><b>${big ? esc(big.label) : f.k === 'L' ? `ROUND ${f.lr}` : esc(f.stage)}</b><small>${f.k === 'L' ? '' : esc(f.comp) + ' · '}VS ${esc(f.opp)}</small></div>${crest(f.opp, 'lg')}</div>`;
+  document.body.appendChild(el); SFX.whistle(); setTimeout(() => el.remove(), 1350);
 }
 
 function flash(text){
