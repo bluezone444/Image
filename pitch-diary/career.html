@@ -1396,6 +1396,11 @@ table.standings{min-width:0}
 .trn-gains .rel-bar i{display:block;height:100%} .trn-gains .rel-bar i.was{background:#5b6385} .trn-gains .rel-bar i.add{min-width:10px;box-shadow:0 0 10px var(--up);background:linear-gradient(90deg,var(--gold),var(--up));animation:trnGrow .9s cubic-bezier(.3,1.4,.6,1) both .2s}
 @keyframes trnGrow{from{transform:scaleX(0);transform-origin:left}to{transform:scaleX(1);transform-origin:left}}
 .trn-gains .plus{display:inline-block;margin-left:4px;padding:1px 8px;border-radius:99px;background:rgba(74,222,128,.18);color:var(--up);font-size:14px;animation:skLearn .6s cubic-bezier(.3,1.6,.6,1) both .5s}
+.sk-role{display:block;font-size:9.5px;font-weight:700;opacity:.7;letter-spacing:.04em;margin-top:1px}
+.c-gold{--kc:var(--gold)}
+.trial-end{align-items:center;text-align:center;padding-top:18vh}
+.trial-ic{width:84px;height:84px;border-radius:26px;display:grid;place-items:center;background:rgba(255,200,61,.15);color:var(--gold);border:2px solid rgba(255,200,61,.5)} .trial-ic .ico{width:44px;height:44px}
+.trial-end h2{font-family:var(--f-display);font-weight:400;font-size:26px;margin:6px 0 0} .trial-end p{margin:0;color:var(--muted);line-height:1.6}
 </style>
 </head>
 <body>
@@ -1843,7 +1848,7 @@ function load(slot = curSlot){
     r.home = cleanHome(r.home); r.wl = cleanWl(r.wl); r.inc = r.inc == null ? 500 + (Array.isArray(r.history) ? r.history : []).reduce((a, h) => a + (int(h && h.salary, 0, SAL_MAX, 0)), 0) : int(r.inc, 0, 1e12, 0);
     r.newsN = int(r.newsN, 0, 1e9, 0); r.newsSeen = int(r.newsSeen, 0, r.newsN, r.newsN);
     r.rel = Object.fromEntries(Object.keys(MATES).map(k => [k, int(r.rel && r.rel[k], 0, 100, REL_DEF[k])]));
-    r.sp = r.sp == null ? 1 + 3 * (Array.isArray(r.history) ? r.history.length : 0) : int(r.sp, 0, 999, 0); { const raw = r.skills && typeof r.skills === 'object' ? r.skills : {}; r.cls = SK_CLS[r.cls] ? r.cls : null; let back = 0; for (const [k, v] of Object.entries(raw)) if (!SKILLS[k] || SKILLS[k].cls !== r.cls) back += int(v, 0, 9, 0); r.skills = Object.fromEntries(Object.entries(cleanSkills(raw)).filter(([k]) => SKILLS[k].cls === r.cls)); r.sp += back; }
+    r.sp = r.sp == null ? 1 + 3 * (Array.isArray(r.history) ? r.history.length : 0) : int(r.sp, 0, 999, 0); { const raw = r.skills && typeof r.skills === 'object' ? r.skills : {}; r.cls = typeof r.cls === 'string' ? migrateCls(r.cls, r.pos, raw) : null; const ok = k => SKILLS[k] && r.cls && SK_CLS[r.cls].trees.includes(SKILLS[k].tree); let back = 0; for (const [k, v] of Object.entries(raw)) if (!ok(k)) back += int(v, 0, 9, 0); r.skills = Object.fromEntries(Object.entries(cleanSkills(raw)).filter(([k]) => ok(k))); r.sp += back; }
     r.nat = NATS[r.nat] ? r.nat : 'kor'; r.captain = !!r.captain; if (r.hof) r.hof = {score:int(r.hof.score, 0, 9999, 0), in:!!r.hof.in, saved:!!r.hof.saved};
     r.mood = int(r.mood, -2, 2, 0); r.media = int(r.media, -2, 2, 0); r.fast = !!r.fast;
     if (Array.isArray(r.schedule) && r.schedule.every(n => typeof n === 'string' && CLUB[n])) r.schedule = r.schedule.map((opp, i) => ({k:'L', opp, home: i % 2 === 0, lr: i + 1}));
@@ -1943,7 +1948,28 @@ const chipsHtml = arr => arr.map(([l, d, txt], i) => `<span class="chip ${d > 0 
 
 // ================= 화면 라우터 =================
 const root = $('#game');
+// ---------- 체험판 기간 ----------
+// 배포 빌드가 TRIAL_END를 만료 시각(ms)으로 바꿔 넣는다. 0이면 기간 제한 없음(개발·미리보기용).
+const TRIAL_END = 0;
+const TRIAL_KEY = 'pitch-career.seen';
+function trialLeft(){
+  if (!TRIAL_END) return Infinity;
+  const now = Date.now(), seen = Number(lsGet(TRIAL_KEY)) || 0;
+  if (seen && now + 36e5 < seen) return -1; // 기기 시계를 과거로 돌린 경우
+  if (now > seen) lsSet(TRIAL_KEY, String(now));
+  return TRIAL_END - now;
+}
+const trialDate = () => { const d = new Date(TRIAL_END); return `${d.getMonth() + 1}월 ${d.getDate()}일 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+function trialGate(){
+  if (trialLeft() > 0) return false;
+  disposeViewer(); document.querySelectorAll('.modal').forEach(m => m.remove());
+  root.innerHTML = `<main class="wrap"><div class="screen stack trial-end"><div class="trial-ic">${ic('timer')}</div><h2>체험 기간이 끝났어요</h2>
+    <p>PITCH CAREER 체험판은 ${trialDate()}까지 플레이할 수 있었어요.<br>함께해 주셔서 고마워요!</p>
+    <p class="small muted">키우던 선수 기록은 이 기기에 그대로 남아 있어요. 정식 버전에서 이어서 할 수 있어요.</p></div></main>`;
+  return true;
+}
 function go(){
+  if (trialGate()) return;
   applyMgrs();
   save();
   if (!S) return renderTitle();
@@ -1977,6 +2003,7 @@ function bindDock(){ root.querySelectorAll('.dock button').forEach(b => b.onclic
 
 // ---------- 타이틀 / 생성 ----------
 function renderTitle(){
+  if (trialGate()) return;
   disposeViewer();
   const saves = Array.from({length:SLOTS}, (_, i) => load(i)), cnt = saves.filter(Boolean).length;
   const hero = saves[curSlot] ? curSlot : saves.findIndex(Boolean), sv = hero >= 0 ? saves[hero] : null, has = !!sv, firstEmpty = saves.findIndex(x => !x);
@@ -1996,7 +2023,7 @@ function renderTitle(){
     <div class="ts-beams" aria-hidden="true"><i></i><i></i><i></i></div>
     <header class="ts-top">
       <div class="ts-brand"><span class="ts-mark">${ic('goal')}</span><span>PITCH CAREER</span></div>
-      <span class="ts-chip">${new Date().getFullYear() + 1} SEASON</span>
+      <span class="ts-chip">${TRIAL_END ? `체험판 · ${trialDate()}까지` : `${new Date().getFullYear() + 1} SEASON`}</span>
     </header>
     <div class="ts-stage"><div class="viewer hero" id="tv"></div><div class="ts-floor" aria-hidden="true"></div></div>
     <section class="ts-body">
@@ -2130,6 +2157,7 @@ function salaryFixModal(){
   };
 }
 function renderHub(){
+  if (trialGate()) return;
   if (!S.week){ S.week = makeWeek(); save(); }
   if (!S.season.obj) S.season.obj = makeObjectives();
   if (S.week && !S.week.mOpts && !S.injury){ S.week.mOpts = makeMissions(); S.week.mPick = null; S.week.mission = null; }
@@ -2550,13 +2578,13 @@ function matchModel(o){ // o: {os 상대 전력, home, mins}
   const dfp = S.pos === 'DF';
   const fin = clamp((dfp ? St.phy * .5 + St.sho * .3 + St.dri * .2 : St.sho * .65 + St.dri * .2 + St.phy * .15) / 65, .5, 1.8) * cf;  // 결정력
   const vis = clamp((dfp ? St.pas * .8 + St.dri * .2 : S.pos === 'GK' ? St.pas : St.pas * .65 + St.dri * .35) / 65, .5, 1.8) * cf; // 시야
-  const shotP = on ? R.shot * clamp(.7 + (fin - 1) * .6, .4, 1.5) : 0;                                                   // 이 찬스의 슈터가 나일 확률
+  const shotP = on ? R.shot * clamp(.7 + (fin - 1) * .6, .4, 1.5) * (1 + skm('shot')) : 0;                                                   // 이 찬스의 슈터가 나일 확률
   const finM = fin * (hasT('sho') ? 1.25 : 1) * (PF.goal || 1) * (1 + skm('goal'));                                       // 내 슈팅의 득점 배수
-  const kpP = on ? R.kp * clamp(.7 + (vis - 1) * .7, .4, 1.6) * (hasT('pas') ? 1.3 : 1) * (PF.ast || 1) * RX.ast * (1 + skm('ast')) : 0; // 내 킬패스로 만든 찬스일 확률
-  const kpUp = clamp(.35 + (vis - 1) * .5, .2, .8);                                                                      // 킬패스가 찬스를 한 단계 키울 확률
+  const kpP = on ? R.kp * clamp(.7 + (vis - 1) * .7, .4, 1.6) * (hasT('pas') ? 1.3 : 1) * (PF.ast || 1) * RX.ast * (1 + skm('ast') + skm('kp')) : 0; // 내 킬패스로 만든 찬스일 확률
+  const kpUp = clamp(.35 + (vis - 1) * .5 + skm('kpq'), .2, .9);                                                                      // 킬패스가 찬스를 한 단계 키울 확률
   const dSk = St.def * .7 + St.phy * .3, gSk = St.def * .85 + St.phy * .15;
-  const blkP = on && dfp ? clamp(.06 + (dSk - 55) / 160, .02, .32) : on && S.pos === 'MF' ? clamp(.02 + (St.def - 50) / 500, 0, .08) : 0; // 골이 될 슈팅을 몸으로 막을 확률
-  const svP = on && S.pos === 'GK' ? clamp(ENG_KEEP + (gSk - 60) / 100, .03, .5) : ENG_KEEP;                             // 골이 될 슈팅을 막을 확률
+  const blkP = on && dfp ? clamp(.06 + (dSk - 55) / 160 + skm('block'), .02, .4) : on && S.pos === 'MF' ? clamp(.02 + (St.def - 50) / 500 + skm('block'), 0, .15) : 0; // 골이 될 슈팅을 몸으로 막을 확률
+  const svP = on && S.pos === 'GK' ? clamp(ENG_KEEP + (gSk - 60) / 100 + skm('save'), .03, .6) : ENG_KEEP;                             // 골이 될 슈팅을 막을 확률
   const qKp = ENG_Q.reduce((a, [t, w, q]) => a + w * (kpUp * ENG_Q.find(x => x[0] === ENG_NEXT[t])[2] + (1 - kpUp) * q), 0);
   const share = mins / 90, base = cUs * convUs * (1 - ENG_KEEP);
   const gUs = base * (ENG_AVGQ * (1 - shotP - kpP) + ENG_AVGQ * finM * shotP + qKp * kpP * (1 - shotP)) * (on ? 1 : 1);
@@ -5693,86 +5721,225 @@ const MOD = {
   inj:['부상 위험 감소','%'], start:['선발 확률','%p'], pop:['경기 인기 획득','%'], fan:['팬 미팅 인기','+'], psy:['심리전 표정 읽기','%p'],
   value:['몸값','%'], wonder:['원더골 확률','%'], xp:['경험치 획득','%'], trust:['좋은 경기 감독 신뢰','+'], card:['경고 확률 감소','%'],
   ntCall:['대표팀 발탁 확률','%p'], train:['훈련 성장','%'],
+  shot:['슈팅 찬스 관여','%'], kp:['킬패스 시도','%'], kpq:['킬패스→빅찬스','%p'], block:['결정적 차단 확률','%p'], save:['선방률','%p'],
 };
 const fmtMod = (k, v) => { const [n, u] = MOD[k]; return u === '+' ? `${n} +${Number.isInteger(v) ? v : v.toFixed(2).replace(/0$/, '')}` : `${n} ${u === '%p' ? '+' : k === 'pk' || k === 'drain' || k === 'inj' || k === 'conc' || k === 'card' ? '−' : '+'}${Math.round(v * 100)}${u}`; };
+// 포지션마다 성장 타입 3개 · 타입 = [포지션 핵심 트리, 타입 고유 트리, 공용 트리]
+const SK_TREES = {fin:'결정력', run:'침투', star:'스타 플레이어', aerial:'공중전', link:'연계', pass:'패스 마스터', drib:'드리블러', brain:'그라운드의 두뇌', engine:'무한 엔진', cond:'지휘자',
+  def:'수비 장인', iron:'강철 체력', cap:'캡틴', build:'빌드업', overlap:'오버래핑', save:'선방', reflex:'반사신경', sweep:'스위퍼 키퍼', box:'공중볼 지배'};
 const SK_CLS = {
-  striker:{n:'골잡이', i:'target', c:'hot', d:'골, 슈팅, 스타성. 공격수에게 추천', trees:['결정력','침투','스타 스트라이커']},
-  maestro:{n:'플레이메이커', i:'arrow-right-left', c:'cyan', d:'패스, 드리블, 경기 운영. 미드필더에게 추천', trees:['패스 마스터','드리블러','그라운드의 두뇌']},
-  guardian:{n:'철벽 수비', i:'shield-half', c:'turf', d:'수비, 체력, 리더십. 수비수와 골키퍼에게 추천', trees:['수비 장인','강철 체력','캡틴']},
+  poacher:{pos:'FW', n:'골문 앞 사냥꾼', i:'target', c:'hot', d:'침투와 마무리로 골을 쓸어 담는다', trees:['fin','run','star']},
+  target:{pos:'FW', n:'타겟맨', i:'arrow-up', c:'gold', d:'헤더와 몸싸움, 공을 지켜내는 최전방 기둥', trees:['fin','aerial','iron']},
+  false9:{pos:'FW', n:'펄스 나인', i:'arrow-right-left', c:'cyan', d:'내려와서 찬스를 만들고 직접 마무리까지', trees:['fin','link','brain']},
+  artist:{pos:'MF', n:'테크니션', i:'wand-sparkles', c:'cyan', d:'패스와 개인기로 경기를 지배한다', trees:['pass','drib','brain']},
+  b2b:{pos:'MF', n:'박스 투 박스', i:'activity', c:'turf', d:'공수 양쪽을 쉬지 않고 누빈다', trees:['pass','engine','iron']},
+  regista:{pos:'MF', n:'레지스타', i:'presentation', c:'gold', d:'후방에서 템포를 조율하는 지휘자', trees:['pass','cond','cap']},
+  leader:{pos:'DF', n:'수비 리더', i:'shield', c:'turf', d:'몸을 던지고 수비 라인을 지휘한다', trees:['def','cap','iron']},
+  builder:{pos:'DF', n:'빌드업 수비수', i:'arrow-up-right', c:'cyan', d:'뒤에서부터 침착하게 공격을 연다', trees:['def','build','brain']},
+  fullback:{pos:'DF', n:'공격형 풀백', i:'fast-forward', c:'hot', d:'측면을 오르내리며 찬스를 만든다', trees:['def','overlap','star']},
+  shotstop:{pos:'GK', n:'슈퍼세이버', i:'hand', c:'hot', d:'불가능한 슈팅도 막아내는 반사신경', trees:['save','reflex','star']},
+  sweeper:{pos:'GK', n:'스위퍼 키퍼', i:'footprints', c:'cyan', d:'박스 밖까지 나와 공격을 끊고 역습을 연다', trees:['save','sweep','brain']},
+  commander:{pos:'GK', n:'박스 지휘관', i:'megaphone', c:'gold', d:'공중볼을 지배하고 수비 라인을 이끈다', trees:['save','box','cap']},
 };
-// [트리 번호, 단계, id, 이름, 아이콘, 최대, {보정: 1레벨당}]
+const TREE_ROLE = ['핵심', '고유', '공용'];
+// [단계, id, 이름, 아이콘, 최대, {보정: 1레벨당}]
 const SK_DEF = {
-  striker:[
-    [0,1,'s_finish','침착한 마무리','target',5,{goal:.04}], [0,1,'s_sense','슈팅 감각','crosshair',5,{csho:.02}],
-    [0,2,'s_oneshot','원샷원킬','zap',5,{goal:.03,wonder:.06}], [0,2,'s_pk','PK 장인','goal',5,{pk:.08}],
-    [0,3,'s_fox','골문 앞 여우','eye',3,{goal:.05,rtMulti:.1}], [0,4,'s_killer','킬러 본능','flame',3,{rtMulti:.15,wonder:.15}], [0,5,'s_machine','득점 기계','crown',1,{goal:.15,rt:.2}],
-    [1,1,'s_touch','퍼스트 터치','footprints',5,{cdri:.02}], [1,1,'s_burst','순간 가속','wind',5,{start:.01,drain:.02}],
-    [1,2,'s_run','치고 달리기','activity',5,{cdri:.02,goal:.01}], [1,2,'s_space','공간 침투','move-up-right',5,{goal:.02}],
-    [1,3,'s_counter','역습 선봉','fast-forward',3,{team:.02}], [1,4,'s_behind','뒷공간 지배','trending-up',3,{goal:.03,ast:.03}], [1,5,'s_bolt','번개','zap',1,{cdri:.1,goal:.08}],
-    [2,1,'s_nerve','강심장','heart',5,{rtBig:.06}], [2,1,'s_fans','팬 서비스','users',5,{fan:1,pop:.04}],
-    [2,2,'s_bigman','빅매치 사나이','flame',5,{rtBig:.06,goal:.01}], [2,2,'s_celeb','세리머니 장인','party-popper',5,{pop:.06}],
-    [2,3,'s_media','미디어 스타','tv',3,{value:.04}], [2,4,'s_nation','국가대표 단골','flag',3,{ntCall:.05,lead:2}], [2,5,'s_superstar','슈퍼스타','sparkles',1,{value:.15,pop:.2}],
-  ],
-  maestro:[
-    [0,1,'m_vision','넓은 시야','eye',5,{ast:.05}], [0,1,'m_short','짧은 패스','arrow-right-left',5,{cpas:.02}],
-    [0,2,'m_through','스루 패스','arrow-up-right',5,{ast:.04,cpas:.01}], [0,2,'m_tempo','템포 조율','activity',5,{rt:.04}],
-    [0,3,'m_switch','전환 패스','repeat',3,{team:.02}], [0,4,'m_key','키 패스','key-round',3,{ast:.06,cpas:.03}], [0,5,'m_maestro','마에스트로','crown',1,{team:.08,ast:.1}],
-    [1,1,'m_ball','볼 키핑','circle-dot',5,{cdri:.02}], [1,1,'m_feint','페인트','drama',5,{cdri:.015,card:.04}],
-    [1,2,'m_turn','탈압박','refresh-cw',5,{cdri:.02,rt:.02}], [1,2,'m_flair','개인기','sparkles',5,{pop:.04,wonder:.05}],
-    [1,3,'m_solo','단독 돌파','wind',3,{goal:.04,cdri:.02}], [1,4,'m_magic','마법사','wand-sparkles',3,{rt:.06,wonder:.1}], [1,5,'m_artist','아티스트','crown',1,{cdri:.1,rt:.15}],
-    [2,1,'m_read','경기 읽기','brain',5,{psy:.03}], [2,1,'m_study','분석 노트','notebook-pen',5,{xp:.03}],
-    [2,2,'m_calm','침착함','snowflake',5,{rt:.03,card:.04}], [2,2,'m_learn','빠른 습득','graduation-cap',5,{train:.05}],
-    [2,3,'m_coachy','감독의 페르소나','handshake',3,{trust:1}], [2,4,'m_general','야전 사령관','presentation',3,{team:.02,start:.02,lead:3}], [2,5,'m_genius','천재','lightbulb',1,{xp:.15,train:.15,rt:.1}],
-  ],
-  guardian:[
-    [0,1,'g_tackle','태클 장인','shield-half',5,{conc:.02}], [0,1,'g_position','위치 선정','map-pin',5,{rtCS:.06}],
-    [0,2,'g_mark','대인 마크','user-round',5,{conc:.02,card:.04}], [0,2,'g_air','제공권','arrow-up',5,{conc:.015,goal:.03}],
-    [0,3,'g_wall','통곡의 벽','brick-wall',3,{conc:.04}], [0,4,'g_clean','클린시트 수호자','shield',3,{rtCS:.15}], [0,5,'g_fortress','철옹성','crown',1,{conc:.12,rt:.15}],
-    [1,1,'g_iron','강철 체력','battery-full',5,{drain:.05}], [1,1,'g_rest','회복력','bed',5,{rest:2}],
-    [1,2,'g_body','강인한 몸','dumbbell',5,{inj:.08}], [1,2,'g_recov','빠른 회복','heart-pulse',5,{recov:1}],
-    [1,3,'g_engine','무한 엔진','activity',3,{drain:.08,start:.02}], [1,4,'g_tough','부상 없는 몸','stethoscope',3,{inj:.12,recov:1}], [1,5,'g_titan','타이탄','crown',1,{drain:.2,inj:.3}],
-    [2,1,'g_voice','목소리','megaphone',5,{trust:.4,lead:2}], [2,1,'g_leader','솔선수범','flag',5,{start:.01,lead:2}],
-    [2,2,'g_lockerroom','라커룸 리더','users',5,{psy:.03,pop:.03}], [2,2,'g_disc','규율','gavel',5,{card:.06}],
-    [2,3,'g_captain','캡틴','shield',3,{start:.03,team:.01,lead:4}], [2,4,'g_spirit','팀 정신','heart-handshake',3,{team:.02,conc:.02}], [2,5,'g_legend','클럽 레전드','crown',1,{start:.08,trust:2,value:.08,lead:10}],
-  ],
+  fin:[
+    [1,'s_finish','침착한 마무리','target',5,{goal:.04}],
+    [1,'s_sense','슈팅 감각','crosshair',5,{csho:.02}],
+    [2,'s_oneshot','원샷원킬','zap',5,{goal:.03,wonder:.06}],
+    [2,'s_pk','PK 장인','goal',5,{pk:.08}],
+    [3,'s_fox','골문 앞 여우','eye',3,{goal:.05,rtMulti:.1}],
+    [4,'s_killer','킬러 본능','flame',3,{rtMulti:.15,wonder:.15}],
+    [5,'s_machine','득점 기계','crown',1,{goal:.15,rt:.2}]],
+  run:[
+    [1,'s_touch','퍼스트 터치','footprints',5,{cdri:.02}],
+    [1,'s_burst','순간 가속','wind',5,{start:.01,drain:.02}],
+    [2,'s_run','치고 달리기','activity',5,{cdri:.02,goal:.01}],
+    [2,'s_space','공간 침투','move-up-right',5,{goal:.02}],
+    [3,'s_counter','역습 선봉','fast-forward',3,{team:.02}],
+    [4,'s_behind','뒷공간 지배','trending-up',3,{goal:.03,ast:.03}],
+    [5,'s_bolt','번개','zap',1,{cdri:.1,goal:.08}]],
+  star:[
+    [1,'s_nerve','강심장','heart',5,{rtBig:.06}],
+    [1,'s_fans','팬 서비스','users',5,{fan:1,pop:.04}],
+    [2,'s_bigman','빅매치 사나이','flame',5,{rtBig:.06,goal:.01}],
+    [2,'s_celeb','세리머니 장인','party-popper',5,{pop:.06}],
+    [3,'s_media','미디어 스타','tv',3,{value:.04}],
+    [4,'s_nation','국가대표 단골','flag',3,{ntCall:.05,lead:2}],
+    [5,'s_superstar','슈퍼스타','sparkles',1,{value:.15,pop:.2}]],
+  pass:[
+    [1,'m_vision','넓은 시야','eye',5,{ast:.05}],
+    [1,'m_short','짧은 패스','arrow-right-left',5,{cpas:.02}],
+    [2,'m_through','스루 패스','arrow-up-right',5,{ast:.04,cpas:.01}],
+    [2,'m_tempo','템포 조율','activity',5,{rt:.04}],
+    [3,'m_switch','전환 패스','repeat',3,{team:.02}],
+    [4,'m_key','키 패스','key-round',3,{ast:.06,cpas:.03}],
+    [5,'m_maestro','마에스트로','crown',1,{team:.08,ast:.1}]],
+  drib:[
+    [1,'m_ball','볼 키핑','circle-dot',5,{cdri:.02}],
+    [1,'m_feint','페인트','drama',5,{cdri:.015,card:.04}],
+    [2,'m_turn','탈압박','refresh-cw',5,{cdri:.02,rt:.02}],
+    [2,'m_flair','개인기','sparkles',5,{pop:.04,wonder:.05}],
+    [3,'m_solo','단독 돌파','wind',3,{goal:.04,cdri:.02}],
+    [4,'m_magic','마법사','wand-sparkles',3,{rt:.06,wonder:.1}],
+    [5,'m_artist','아티스트','crown',1,{cdri:.1,rt:.15}]],
+  brain:[
+    [1,'m_read','경기 읽기','brain',5,{psy:.03}],
+    [1,'m_study','분석 노트','notebook-pen',5,{xp:.03}],
+    [2,'m_calm','침착함','snowflake',5,{rt:.03,card:.04}],
+    [2,'m_learn','빠른 습득','graduation-cap',5,{train:.05}],
+    [3,'m_coachy','감독의 페르소나','handshake',3,{trust:1}],
+    [4,'m_general','야전 사령관','presentation',3,{team:.02,start:.02,lead:3}],
+    [5,'m_genius','천재','lightbulb',1,{xp:.15,train:.15,rt:.1}]],
+  def:[
+    [1,'g_tackle','태클 장인','shield-half',5,{conc:.02}],
+    [1,'g_position','위치 선정','map-pin',5,{rtCS:.06}],
+    [2,'g_mark','대인 마크','user-round',5,{conc:.02,card:.04}],
+    [2,'g_air','제공권','arrow-up',5,{conc:.015,goal:.03}],
+    [3,'g_wall','통곡의 벽','brick-wall',3,{conc:.04}],
+    [4,'g_clean','클린시트 수호자','shield',3,{rtCS:.15}],
+    [5,'g_fortress','철옹성','crown',1,{conc:.12,rt:.15}]],
+  iron:[
+    [1,'g_iron','강철 체력','battery-full',5,{drain:.05}],
+    [1,'g_rest','회복력','bed',5,{rest:2}],
+    [2,'g_body','강인한 몸','dumbbell',5,{inj:.08}],
+    [2,'g_recov','빠른 회복','heart-pulse',5,{recov:1}],
+    [3,'g_engine','무한 엔진','activity',3,{drain:.08,start:.02}],
+    [4,'g_tough','부상 없는 몸','stethoscope',3,{inj:.12,recov:1}],
+    [5,'g_titan','타이탄','crown',1,{drain:.2,inj:.3}]],
+  cap:[
+    [1,'g_voice','목소리','megaphone',5,{trust:.4,lead:2}],
+    [1,'g_leader','솔선수범','flag',5,{start:.01,lead:2}],
+    [2,'g_lockerroom','라커룸 리더','users',5,{psy:.03,pop:.03}],
+    [2,'g_disc','규율','gavel',5,{card:.06}],
+    [3,'g_captain','캡틴','shield',3,{start:.03,team:.01,lead:4}],
+    [4,'g_spirit','팀 정신','heart-handshake',3,{team:.02,conc:.02}],
+    [5,'g_legend','클럽 레전드','crown',1,{start:.08,trust:2,value:.08,lead:10}]],
+  aerial:[
+    [1,'t_head','헤더 장인','arrow-up',5,{goal:.03,shot:.03}],
+    [1,'t_hold','등지는 플레이','shield',5,{ast:.03,team:.005}],
+    [2,'t_leap','점프력','trending-up',5,{goal:.03}],
+    [2,'t_body','몸싸움','dumbbell',5,{inj:.05,card:.03}],
+    [3,'t_post','포스트 플레이','circle-dot',3,{kp:.05,team:.01}],
+    [4,'t_tower','공중 타워','brick-wall',3,{shot:.06,rtMulti:.1}],
+    [5,'t_king','공중전의 왕','crown',1,{goal:.12,shot:.1}]],
+  link:[
+    [1,'n_drop','내려오는 움직임','repeat',5,{kp:.04}],
+    [1,'n_wall','원투 패스','arrow-right-left',5,{cpas:.02,ast:.03}],
+    [2,'n_create','찬스 메이킹','key-round',5,{kp:.04,kpq:.01}],
+    [2,'n_shoot','중거리 마무리','target',5,{goal:.03,wonder:.04}],
+    [3,'n_free','자유로운 영혼','wind',3,{shot:.04,kp:.04}],
+    [4,'n_link','공격의 연결고리','link',3,{team:.02,ast:.04}],
+    [5,'n_nine','진짜 9번','crown',1,{goal:.08,kp:.1,kpq:.05}]],
+  engine:[
+    [1,'e_lungs','강철 폐활량','battery-full',5,{drain:.04}],
+    [1,'e_press','전방 압박','zap',5,{team:.006,block:.004}],
+    [2,'e_late','늦은 침투','move-up-right',5,{shot:.05,goal:.02}],
+    [2,'e_win','볼 탈취','shield-half',5,{block:.006,conc:.01}],
+    [3,'e_long','중거리 대포','target',3,{goal:.05,wonder:.08}],
+    [4,'e_both','공수 겸장','activity',3,{team:.015,conc:.015}],
+    [5,'e_motor','무한 동력','crown',1,{drain:.15,team:.05,conc:.04}]],
+  cond:[
+    [1,'r_long','롱패스','arrow-up-right',5,{kp:.04}],
+    [1,'r_tempo','템포 조절','timer',5,{rt:.03}],
+    [2,'r_switch','방향 전환','repeat',5,{kpq:.015}],
+    [2,'r_set','세트피스 키커','flag',5,{ast:.04,wonder:.03}],
+    [3,'r_deep','딥라잉','eye',3,{kp:.05,conc:.01}],
+    [4,'r_master','경기 조율사','presentation',3,{team:.02,rt:.05}],
+    [5,'r_pirlo','레지스타','crown',1,{kp:.12,kpq:.06,team:.04}]],
+  build:[
+    [1,'b_cool','침착한 볼 처리','snowflake',5,{rt:.03,card:.03}],
+    [1,'b_pass','전진 패스','arrow-up-right',5,{kp:.06}],
+    [2,'b_carry','볼 운반','footprints',5,{cdri:.02,team:.005}],
+    [2,'b_read','패스 길 읽기','eye',5,{block:.006}],
+    [3,'b_libero','리베로','wind',3,{kp:.06,ast:.04}],
+    [4,'b_quarter','후방 사령관','presentation',3,{team:.02,conc:.015}],
+    [5,'b_beck','후방의 지휘자','crown',1,{kp:.15,team:.05,block:.02}]],
+  overlap:[
+    [1,'o_speed','측면 스피드','wind',5,{cdri:.02}],
+    [1,'o_cross','얼리 크로스','arrow-up-right',5,{kp:.05}],
+    [2,'o_over','오버래핑','fast-forward',5,{kp:.04,shot:.04}],
+    [2,'o_track','트래킹 백','shield-half',5,{block:.006}],
+    [3,'o_wing','윙백','activity',3,{ast:.05,team:.01}],
+    [4,'o_inv','인버티드 풀백','repeat',3,{kpq:.02,goal:.03}],
+    [5,'o_rocket','측면의 로켓','crown',1,{kp:.12,ast:.08,drain:.08}]],
+  save:[
+    [1,'k_react','기본 반응','hand',5,{save:.008}],
+    [1,'k_angle','각도 좁히기','map-pin',5,{conc:.015}],
+    [2,'k_catch','안정된 캐칭','shield',5,{save:.006,rtCS:.04}],
+    [2,'k_dive','다이빙','trending-down',5,{save:.008}],
+    [3,'k_spider','거미손','brick-wall',3,{save:.015}],
+    [4,'k_clean','클린시트 수호자','shield-half',3,{rtCS:.12,conc:.02}],
+    [5,'k_guard','수호신','crown',1,{save:.05,rt:.15}]],
+  reflex:[
+    [1,'x_quick','순발력','zap',5,{save:.006}],
+    [1,'x_read','슈팅 예측','eye',5,{save:.004,psy:.02}],
+    [2,'x_1v1','1:1 방어','user-round',5,{save:.01}],
+    [2,'x_show','빅세이브 쇼맨','sparkles',5,{pop:.05,rtBig:.05}],
+    [3,'x_double','더블 세이브','repeat',3,{save:.012}],
+    [4,'x_mental','강철 멘탈','brain',3,{rtBig:.1,psy:.04}],
+    [5,'x_miracle','기적의 선방','crown',1,{save:.06,pop:.15}]],
+  sweep:[
+    [1,'w_kick','정확한 롱킥','arrow-up-right',5,{team:.006}],
+    [1,'w_out','전진 수비','footprints',5,{conc:.015}],
+    [2,'w_foot','발밑 기술','circle-dot',5,{rt:.03,team:.005}],
+    [2,'w_rush','과감한 돌진','fast-forward',5,{save:.006,conc:.01}],
+    [3,'w_libero','골키퍼 리베로','wind',3,{team:.02,conc:.015}],
+    [4,'w_launch','역습 발사대','zap',3,{team:.025}],
+    [5,'w_master','스위퍼의 정석','crown',1,{conc:.06,team:.05,save:.02}]],
+  box:[
+    [1,'c_claim','크로스 낚아채기','hand',5,{conc:.015}],
+    [1,'c_voice','지휘','megaphone',5,{lead:2,conc:.008}],
+    [2,'c_punch','펀칭','zap',5,{save:.006}],
+    [2,'c_org','수비 조직','users',5,{conc:.012,team:.003}],
+    [3,'c_air','공중 지배','arrow-up',3,{conc:.025}],
+    [4,'c_setp','세트피스 수비','shield',3,{conc:.02,rtCS:.06}],
+    [5,'c_boss','박스의 주인','crown',1,{conc:.06,lead:8,save:.02}]],
 };
 const SKILLS = {};
-for (const [cls, list] of Object.entries(SK_DEF)) for (const [tr, t, id, n, i, max, mods] of list) SKILLS[id] = {cls, tr, t, id, n, i, max, mods};
-// 선행 조건: 2단계 → 같은 열 1단계 / 3단계 → 2단계 두 개 모두 / 4·5단계 → 바로 윗단계. 단계별 트리 투자 포인트도 필요.
+for (const [tree, list] of Object.entries(SK_DEF)) for (const [t, id, n, i, max, mods] of list) SKILLS[id] = {tree, t, id, n, i, max, mods};
+// 예전 타입(골잡이·플레이메이커·철벽 수비)과 다른 포지션 타입은 포지션 타입 중 가장 많이 겹치는 것으로 옮기고 나머지 포인트는 돌려준다
+function migrateCls(cls, pos, raw){
+  if (SK_CLS[cls] && SK_CLS[cls].pos === pos) return cls;
+  let best = null, bp = 0;
+  for (const [k, C] of Object.entries(SK_CLS)){ if (C.pos !== pos) continue; const pts = Object.entries(raw).reduce((a, [id, v]) => a + (SKILLS[id] && C.trees.includes(SKILLS[id].tree) ? int(v, 0, 9, 0) : 0), 0); if (pts > bp){ bp = pts; best = k; } }
+  return best;
+}
 const SK_TIER_NEED = {1:0, 2:1, 3:4, 4:8, 5:12};
-const treeOf = (cls, tr) => Object.values(SKILLS).filter(x => x.cls === cls && x.tr === tr);
+const treeOf = tree => Object.values(SKILLS).filter(x => x.tree === tree);
 function skReq(K){
-  const T = treeOf(K.cls, K.tr), by = t => T.filter(x => x.t === t);
+  const T = treeOf(K.tree), by = t => T.filter(x => x.t === t);
   if (K.t === 1) return [];
   if (K.t === 2) return [by(1)[by(2).indexOf(K)].id];
   if (K.t === 3) return by(2).map(x => x.id);
   return [by(K.t - 1)[0].id];
 }
 const lv = k => (S && S.skills && S.skills[k]) || 0;
-const treePts = (cls, tr) => treeOf(cls, tr).reduce((a, x) => a + lv(x.id), 0);
+const treePts = tree => treeOf(tree).reduce((a, x) => a + lv(x.id), 0);
 function skm(key){ if (!S || !S.skills) return 0; let v = 0; for (const [id, r] of Object.entries(S.skills)){ const K = SKILLS[id]; if (K && K.mods[key]) v += K.mods[key] * r; } return v; }
 function skState(id){
   const K = SKILLS[id], r = lv(id);
-  if (!S.cls || K.cls !== S.cls) return 'other';
+  if (!S.cls || !SK_CLS[S.cls] || !SK_CLS[S.cls].trees.includes(K.tree)) return 'other';
   if (r >= K.max) return 'max';
-  if (skReq(K).some(q => lv(q) < 1) || treePts(K.cls, K.tr) < SK_TIER_NEED[K.t]) return 'locked';
+  if (skReq(K).some(q => lv(q) < 1) || treePts(K.tree) < SK_TIER_NEED[K.t]) return 'locked';
   return (S.sp || 0) > 0 ? 'avail' : 'wait';
 }
 const skDesc = (K, r) => Object.entries(K.mods).map(([k, v]) => fmtMod(k, v * r)).join(' · ');
 function cleanSkills(o){ return Object.fromEntries(Object.entries(o && typeof o === 'object' ? o : {}).filter(([k]) => SKILLS[k]).map(([k, v]) => [k, int(v, 0, SKILLS[k].max, 0)]).filter(([, v]) => v > 0)); }
 const SK_POS = {1:[[27,9],[73,9]], 2:[[27,29],[73,29]], 3:[[50,50]], 4:[[50,70]], 5:[[50,90]]};
-function skPos(K){ const same = treeOf(K.cls, K.tr).filter(x => x.t === K.t); return SK_POS[K.t][same.indexOf(K)]; }
+function skPos(K){ const same = treeOf(K.tree).filter(x => x.t === K.t); return SK_POS[K.t][same.indexOf(K)]; }
 function skillsTab(){
   const sp = S.sp || 0;
   const head = `<button class="btn dark sm shop-back" type="button" id="skBack">${ic('arrow-left')} 내 선수로</button>
     <section class="panel sk-head"><div><small>기술 포인트</small><b>${sp}</b></div><p>매 시즌 +3 · 시상식 수상마다 +1<br>${S.cls ? `타입: <b class="c-${SK_CLS[S.cls].c} sk-clsn">${SK_CLS[S.cls].n}</b>` : '먼저 성장 타입을 하나 골라요'}</p></section>`;
   if (!S.cls) return head + `<div class="label">${ic('git-branch')} 성장 타입 선택</div>
-    <p class="small muted" style="margin:-6px 0 0">한 타입만 키울 수 있어요. 타입마다 3개 트리 · 21개 기술이 있어요.</p>
-    <div class="cls-list">${Object.entries(SK_CLS).map(([k, C]) => `<button type="button" class="panel cls-card c-${C.c}" data-cls="${k}"><span class="cls-ic">${ic(C.i)}</span><div><b>${C.n}</b><small>${C.d}</small><em>${C.trees.join(' · ')}</em></div>${ic('chevron-right')}</button>`).join('')}</div>`;
-  const C = SK_CLS[S.cls], tr = int(UI.skTr, 0, 2, 0), T = treeOf(S.cls, tr), pts = treePts(S.cls, tr);
+    <p class="small muted" style="margin:-6px 0 0">${POS[S.pos].name} 전용 타입 3개 중 하나만 키울 수 있어요. 타입마다 ${POS[S.pos].name} 핵심 트리 + 타입 고유 트리 + 공용 트리, 기술 21개.</p>
+    <div class="cls-list">${Object.entries(SK_CLS).filter(([, C]) => C.pos === S.pos).map(([k, C]) => `<button type="button" class="panel cls-card c-${C.c}" data-cls="${k}"><span class="cls-ic">${ic(C.i)}</span><div><b>${C.n}</b><small>${C.d}</small><em>${C.trees.map((t, i) => `${SK_TREES[t]}${i ? '' : ' (핵심)'}`).join(' · ')}</em></div>${ic('chevron-right')}</button>`).join('')}</div>`;
+  const C = SK_CLS[S.cls], tr = int(UI.skTr, 0, 2, 0), tid = C.trees[tr], T = treeOf(tid), pts = treePts(tid);
   const lines = T.flatMap(K => skReq(K).map(q => { const a = skPos(SKILLS[q]), b = skPos(K); return `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" class="${lv(q) > 0 ? 'on' : ''}"/>`; })).join('');
   return head + `
-    <div class="sk-tabs three">${C.trees.map((n, i) => `<button type="button" class="${i === tr ? 'on' : ''} c-${C.c}" data-tr="${i}"><span>${n}</span><em>${treePts(S.cls, i)}</em></button>`).join('')}</div>
+    <div class="sk-tabs three">${C.trees.map((t, i) => `<button type="button" class="${i === tr ? 'on' : ''} c-${C.c}" data-tr="${i}"><span>${SK_TREES[t]}<small class="sk-role">${TREE_ROLE[i]}</small></span><em>${treePts(t)}</em></button>`).join('')}</div>
     <section class="panel sk-tree tall c-${C.c}">
       <svg class="sk-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>
       ${[2,3,4,5].map(t => `<span class="sk-tier ${pts >= SK_TIER_NEED[t] ? 'ok' : ''}" style="top:${SK_POS[t][0][1] - 9}%">${t}단계 · 트리 ${SK_TIER_NEED[t]}포인트</span>`).join('')}
@@ -5785,12 +5952,12 @@ function skPopup(id){
   const K = SKILLS[id]; if (!K) return;
   const el = modal('<div id="skp"></div>'); el.classList.add('sk-modal');
   const draw = () => {
-    const r = lv(id), st = skState(id), req = skReq(K), C = SK_CLS[K.cls];
-    el.querySelector('#skp').innerHTML = `<div class="eyebrow">${C.n} · ${C.trees[K.tr]} · ${K.t}단계${K.t === 5 ? ' · 궁극기' : ''}</div>
+    const r = lv(id), st = skState(id), req = skReq(K), C = SK_CLS[S.cls] || {n:'', c:'cyan'}, TN = SK_TREES[K.tree];
+    el.querySelector('#skp').innerHTML = `<div class="eyebrow">${C.n} · ${TN} · ${K.t}단계${K.t === 5 ? ' · 궁극기' : ''}</div>
       <div class="sk-pop-ic c-${C.c} ${st}">${ic(K.i)}</div><h3>${K.n}</h3><div class="sk-pips big">${Array.from({length:K.max}, (_, i) => `<i class="${i < r ? 'on' : ''}"></i>`).join('')}</div>
       ${r ? `<div class="sk-eff now">${ic('check')} 현재 ${r}레벨: ${skDesc(K, r)}</div>` : ''}
       ${r < K.max ? `<div class="sk-eff next">${ic('arrow-up')} ${r ? `${r + 1}레벨` : '배우면'}: ${skDesc(K, r + 1)}</div>` : '<div class="sk-eff now">최고 레벨 달성!</div>'}
-      ${req.length || SK_TIER_NEED[K.t] ? `<div class="sk-reqs">${req.map(q => `<span class="${lv(q) ? 'ok' : ''}">${lv(q) ? ic('check') : ic('lock')} ${SKILLS[q].n} 1레벨</span>`).join('')}${SK_TIER_NEED[K.t] ? `<span class="${treePts(K.cls, K.tr) >= SK_TIER_NEED[K.t] ? 'ok' : ''}">${treePts(K.cls, K.tr) >= SK_TIER_NEED[K.t] ? ic('check') : ic('lock')} ${C.trees[K.tr]} 트리에 ${SK_TIER_NEED[K.t]}포인트 (지금 ${treePts(K.cls, K.tr)})</span>` : ''}</div>` : ''}
+      ${req.length || SK_TIER_NEED[K.t] ? `<div class="sk-reqs">${req.map(q => `<span class="${lv(q) ? 'ok' : ''}">${lv(q) ? ic('check') : ic('lock')} ${SKILLS[q].n} 1레벨</span>`).join('')}${SK_TIER_NEED[K.t] ? `<span class="${treePts(K.tree) >= SK_TIER_NEED[K.t] ? 'ok' : ''}">${treePts(K.tree) >= SK_TIER_NEED[K.t] ? ic('check') : ic('lock')} ${TN} 트리에 ${SK_TIER_NEED[K.t]}포인트 (지금 ${treePts(K.tree)})</span>` : ''}</div>` : ''}
       <p class="sk-ask">${st === 'avail' ? `<b>${K.n}</b>${r ? '의 레벨을 올리시겠습니까?' : '을(를) 배우시겠습니까?'} <small>(포인트 1 · 남은 포인트 ${S.sp})</small>` : st === 'max' ? '이미 최고 레벨이에요.' : st === 'locked' ? '아직 조건이 부족해요.' : '기술 포인트가 없어요. 다음 시즌이나 시상식에서 받아요.'}</p>
       <div class="sk-btns"><button class="btn dark" type="button" id="skNo">닫기</button><button class="btn ${st === 'avail' ? '' : 'dark'}" type="button" id="skYes" ${st === 'avail' ? '' : 'disabled'}>${r ? '레벨 업' : '배우기'}</button></div>`;
     el.querySelector('#skNo').onclick = async () => { await el.close(); };
@@ -5812,7 +5979,7 @@ function bindSkills(){
   root.querySelectorAll('[data-sk]').forEach(b => b.onclick = () => skPopup(b.dataset.sk));
   root.querySelectorAll('[data-cls]').forEach(b => b.onclick = async () => {
     const k = b.dataset.cls, C = SK_CLS[k];
-    const el = modal(`<div class="eyebrow">성장 타입 선택</div><div class="sk-pop-ic c-${C.c} avail">${ic(C.i)}</div><h3>${C.n}로 키우시겠습니까?</h3><p>${C.d}<br><b>${C.trees.join(' · ')}</b> 트리의 기술 21개를 배울 수 있어요.<br><small class="muted">다른 타입 기술은 배울 수 없어요. 바꾸려면 경험치 3000으로 초기화해야 해요.</small></p><div class="sk-btns"><button class="btn dark" type="button" id="cNo">다시 고를래요</button><button class="btn" type="button" id="cYes">${C.n}로 결정</button></div>`);
+    const el = modal(`<div class="eyebrow">성장 타입 선택</div><div class="sk-pop-ic c-${C.c} avail">${ic(C.i)}</div><h3>${C.n}로 키우시겠습니까?</h3><p>${C.d}<br><b>${C.trees.map(t => SK_TREES[t]).join(' · ')}</b> 트리의 기술 21개를 배울 수 있어요.<br><small class="muted">다른 타입 기술은 배울 수 없어요. 바꾸려면 경험치 3000으로 초기화해야 해요.</small></p><div class="sk-btns"><button class="btn dark" type="button" id="cNo">다시 고를래요</button><button class="btn" type="button" id="cYes">${C.n}로 결정</button></div>`);
     el.querySelector('#cNo').onclick = () => el.close();
     el.querySelector('#cYes').onclick = async () => { S.cls = k; UI.skTr = 0; save(); SFX.goal(); await el.close(); addNews(`🧬 ${S.name}, '${C.n}' 타입으로 성장 시작`); refreshTree(); };
   });
@@ -5828,7 +5995,7 @@ function skCard(){
   const got = Object.keys(S.skills || {}).filter(k => SKILLS[k] && lv(k) > 0), C = S.cls && SK_CLS[S.cls];
   return `<div class="label">${ic('git-branch')} 기술 트리</div>
     <button type="button" class="panel sk-link ${(S.sp || 0) > 0 ? 'has' : ''}" id="toSkills"><div class="sk-l-top"><b>${C ? `${C.n} · ` : ''}기술 포인트 ${S.sp || 0}</b>${!C ? '<em>타입을 골라요!</em>' : (S.sp || 0) > 0 ? '<em>찍을 수 있어요!</em>' : '<small>매 시즌 +3</small>'}${ic('chevron-right')}</div>
-      <div class="sk-l-chips">${got.length ? got.map(k => `<span class="c-${SK_CLS[SKILLS[k].cls].c}">${ic(SKILLS[k].i)} ${SKILLS[k].n} ${lv(k)}</span>`).join('') : `<small>${C ? '아직 배운 기술이 없어요. 눌러서 첫 기술을 골라보세요.' : '골잡이 · 플레이메이커 · 철벽 수비 중 하나로 키워요.'}</small>`}</div></button>`;
+      <div class="sk-l-chips">${got.length ? got.map(k => `<span class="c-${C ? C.c : 'cyan'}">${ic(SKILLS[k].i)} ${SKILLS[k].n} ${lv(k)}</span>`).join('') : `<small>${C ? '아직 배운 기술이 없어요. 눌러서 첫 기술을 골라보세요.' : `${Object.values(SK_CLS).filter(x => x.pos === S.pos).map(x => x.n).join(' · ')} 중 하나로 키워요.`}</small>`}</div></button>`;
 }
 
 const careerSum = k => S.history.reduce((a, h) => a + (h[k] || 0), 0) + (S.season[k] || 0);
