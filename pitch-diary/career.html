@@ -3338,6 +3338,10 @@ function backupData(){
 async function downloadBackup(){
   if (S) save();
   const d = new Date(), name = `pitch-career-backup-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.json`, data = backupData();
+  if (window.AndroidBridge && typeof window.AndroidBridge.saveFile === 'function'){ // 안드로이드 앱: 다운로드 폴더에 저장
+    try { toast(window.AndroidBridge.saveFile(name, data) ? '다운로드 폴더에 백업 파일을 저장했어요' : '백업 파일을 저장하지 못했어요'); } catch { toast('백업 파일을 저장하지 못했어요'); }
+    return;
+  }
   let dl = null; try { dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null; } catch { dl = null; }
   if (dl){
     try { await dl.save({filename:name, data}); toast('백업 파일을 저장했어요'); }
