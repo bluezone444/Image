@@ -1374,6 +1374,28 @@ table.standings{min-width:0}
 .keystat .rel-bar{grid-column:1/-1}
 .keystat .rel-bar i{background:linear-gradient(90deg,var(--gold-d),var(--gold))}
 .modal-card .look{margin-bottom:16px}
+.trn-list{display:flex;flex-direction:column;gap:8px;margin:4px 0 12px}
+.trn{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;width:100%;padding:10px 12px;border-radius:14px;border:2px solid var(--edge);background:var(--panel-2);color:var(--ink);text-align:left;cursor:pointer;font-family:var(--f-body)}
+.trn:not(:disabled):active{transform:scale(.98)} .trn:not(:disabled):hover{border-color:var(--gold)}
+.trn.poor{opacity:.5}
+.trn-i{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:rgba(255,200,61,.14);color:var(--gold)} .trn-i .ico{width:24px;height:24px}
+.trn-b{display:flex;flex-direction:column;gap:3px;min-width:0} .trn-b b{font-size:14px} .trn-b small{font-size:11.5px;color:var(--muted);line-height:1.4} .trn-b em{font-style:normal;font-size:11px;color:var(--cyan);display:flex;align-items:center;gap:4px} .trn-b em .ico{width:12px;height:12px;flex:none}
+.trn-p{font-family:var(--f-display);font-size:13px;color:var(--gold);text-align:right;white-space:nowrap;display:flex;flex-direction:column;gap:2px} .trn-p small{font-family:var(--f-body);font-size:10px;color:var(--down)}
+.trn-cut{height:150px;display:grid;place-items:center;margin:4px 0}
+.trn-cut .cb{width:110px;height:146px} .trn-cut .cb svg{width:100%;height:100%}
+.trn-weeks{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.trn-weeks i{font-style:normal;font-size:11px;padding:6px 0;border-radius:8px;background:rgba(255,255,255,.06);color:var(--dim);transition:background .3s,color .3s}
+.trn-weeks i.on{background:var(--gold);color:#231700;font-weight:800}
+.trn-line{min-height:1.5em;margin:0 0 6px;color:var(--ink)!important}
+.trn-head{font-family:var(--f-display);font-size:26px;margin:4px 0 6px;line-height:1.2}
+.trn-head.great{color:var(--gold);text-shadow:0 0 18px rgba(255,200,61,.5)} .trn-head.ok{color:var(--cyan)} .trn-head.bad{color:var(--down)}
+.trn-gains{display:flex;flex-direction:column;gap:10px;margin:10px 0 14px;text-align:left}
+.trn-gains > div{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center}
+.trn-gains span{font-size:13px;color:var(--muted)} .trn-gains b{font-family:var(--f-display);font-size:16px} .trn-gains em{font-style:normal;color:var(--up)}
+.trn-gains .rel-bar{grid-column:1/-1;display:flex}
+.trn-gains .rel-bar i{display:block;height:100%} .trn-gains .rel-bar i.was{background:#5b6385} .trn-gains .rel-bar i.add{min-width:10px;box-shadow:0 0 10px var(--up);background:linear-gradient(90deg,var(--gold),var(--up));animation:trnGrow .9s cubic-bezier(.3,1.4,.6,1) both .2s}
+@keyframes trnGrow{from{transform:scaleX(0);transform-origin:left}to{transform:scaleX(1);transform-origin:left}}
+.trn-gains .plus{display:inline-block;margin-left:4px;padding:1px 8px;border-radius:99px;background:rgba(74,222,128,.18);color:var(--up);font-size:14px;animation:skLearn .6s cubic-bezier(.3,1.6,.6,1) both .5s}
 </style>
 </head>
 <body>
@@ -1876,7 +1898,7 @@ function load(slot = curSlot){
       event: EVENTS.some(e => e.id === w.event) ? w.event : null, eventRes: w.eventRes && typeof w.eventRes.text === 'string' ? {text:w.eventRes.text.slice(0, 200)} : null,
       mini: MINIS[w.mini] ? w.mini : null, miniDone:!!w.miniDone, mission: MISSION[w.mission] ? w.mission : null,
       mOpts: Array.isArray(w.mOpts) ? w.mOpts.filter(o => o && MISSION[o.k]).map(o => ({k:o.k, lucky:!!o.lucky})).slice(0, 3) : null,
-      mPick: w.mPick == null ? null : int(w.mPick, 0, 2, 1), hang: MATES[w.hang] ? w.hang : null, drv: !!w.drv, wx:int(w.wx, 0, WEATHER.length - 1, 0), ref:int(w.ref, 0, REFS.length - 1, 1), psy: cleanPsy(w.psy), psyFx: cleanPsyFx(w.psyFx), lb: w.lb && STAT_KEYS.includes(w.lb.k) ? {k:w.lb.k, started:!!w.lb.started, res: ['ok','fail'].includes(w.lb.res) ? w.lb.res : null} : null, speech: typeof w.speech === 'string' ? w.speech.slice(0, 80) : ''} : null;
+      mPick: w.mPick == null ? null : int(w.mPick, 0, 2, 1), hang: MATES[w.hang] ? w.hang : null, drv: !!w.drv, trn: cleanTrn(w.trn), wx:int(w.wx, 0, WEATHER.length - 1, 0), ref:int(w.ref, 0, REFS.length - 1, 1), psy: cleanPsy(w.psy), psyFx: cleanPsyFx(w.psyFx), lb: w.lb && STAT_KEYS.includes(w.lb.k) ? {k:w.lb.k, started:!!w.lb.started, res: ['ok','fail'].includes(w.lb.res) ? w.lb.res : null} : null, speech: typeof w.speech === 'string' ? w.speech.slice(0, 80) : ''} : null;
     r.prev = r.prev ? {rating:Number(r.prev.rating) || 0, goals:int(r.prev.goals, 0, 9, 0), mins:int(r.prev.mins, 0, 90, 0)} : null;
     r.pending = validPending(r.pending);
     if (r.phase === 'match' && !r.pending) r.phase = 'week';
@@ -2307,9 +2329,91 @@ function typeIn(el, text, speed = 24){
   });
 }
 
+// ---------- 개인 트레이너 면접 ----------
+// 비용은 연봉에 비례한다. 결과는 면접장에 들어갈 때 미리 굴려 저장한다(새로고침으로 다시 못 굴림).
+const TRN = {
+  legend:{n:'전 국가대표 피지컬 코치', i:'medal', pct:.22, min:1500, cap:400000, blurb:'월드컵 4강 팀을 만든 명장. 비싸지만 실패가 거의 없다.', hint:'후기 312개 · 평점 4.8', out:[[70,'great'],[25,'good'],[5,'over']]},
+  sns:{n:'구독자 200만 SNS 트레이너', i:'smartphone', pct:.09, min:700, cap:150000, blurb:'화려한 훈련 영상으로 유명하다. 효과는 사람마다 극과 극.', hint:'후기 9,999+ · 대부분 지난주에 작성됨', out:[[35,'viral'],[35,'meh'],[30,'scam']]},
+  hermit:{n:'산속의 재야 고수', i:'mountain', pct:.025, min:200, cap:40000, blurb:'정체불명. 전설의 선수를 키웠다는 소문만 돈다.', hint:'후기 없음 · 연락은 손편지로만', out:[[15,'master'],[45,'small'],[40,'hike']]},
+  shady:{n:'"기적의 프로그램" 브로커', i:'zap', pct:.15, min:1200, cap:300000, blurb:'"4주 만에 다른 사람이 된다." 수상할 만큼 자신만만하다.', hint:'계약서에 비밀유지 조항만 3페이지', out:[[50,'miracle'],[50,'doping']]},
+};
+const TRN_OUT = {
+  great:{h:'4주 지옥 훈련 완주!', t:'몸이 완전히 달라졌다. 거울 속 내가 낯설다.', g:[[0, 4], [1, 3]], fx:{cond:20, buff:.3}, good:2},
+  good:{h:'탄탄한 성장', t:'명장의 프로그램답게 확실히 늘었다.', g:[[0, 3], [1, 1]], fx:{cond:10}, good:1},
+  over:{h:'과훈련 부상…', t:'너무 몰아붙였다. 근육이 놀라 1주 쉬어야 한다.', g:[[0, 2]], fx:{cond:-20}, inj:1, good:-1},
+  viral:{h:'훈련 영상 1,000만 뷰!', t:'실력도 인기도 동시에 폭발했다.', g:[[0, 5]], fx:{pop:8, buff:.2}, good:2},
+  meh:{h:'영상은 멋졌는데…', t:'카메라 각도만 기억에 남는다. 효과는 그럭저럭.', g:[[0, 1]], fx:{pop:2}, good:0},
+  scam:{h:'먹튀! 트레이너 잠적', t:'선입금만 받고 연락이 끊겼다. 기사까지 났다.', g:[], fx:{pop:-3}, news:'💸 {N}, SNS 트레이너에게 사기 피해… "선입금 받고 잠적"', good:-2},
+  master:{h:'진짜 고수였다!', t:'비전의 기술을 전수받았다. 아무도 모르는 무기가 생겼다.', g:[[0, 4], [2, 3]], fx:{buff:.3}, trait:true, good:2},
+  small:{h:'장작만 4주 팼다', t:'도끼질뿐이었지만 그래도 조금은 늘었다.', g:[[2, 2]], fx:{}, good:0},
+  hike:{h:'매일 산 정상까지 행군', t:'기초 체력만 바닥났다. 다리가 후들거린다.', g:[], fx:{cond:-30}, injP:.25, good:-1},
+  miracle:{h:'믿을 수 없는 변화!', t:'경기장이 술렁인다. 다들 내 몸만 쳐다본다.', g:[[0, 6], [3, 3]], fx:{buff:.4}, good:2},
+  doping:{h:'금지 약물 검출!', t:'"기적의 프로그램"의 정체가 드러났다. 출전 정지와 벌금이 내려졌다.', g:[], fx:{pop:-10, trust:-8}, inj:2, fine:.5, news:'🚨 {N}, 금지 약물 검출… 출전 정지 징계', good:-3},
+};
+const trnPrice = k => Math.round(clamp(S.salary * TRN[k].pct, TRN[k].min, TRN[k].cap) / 10) * 10;
+function makeTrn(){
+  const ks = shuffle(Object.keys(TRN)).slice(0, 3);
+  return {list: ks.map(k => ({k, price: trnPrice(k), out: wpick(TRN[k].out.map(([w, o]) => [w, o]))[1]})), done:false};
+}
+function cleanTrn(t){
+  if (!t || !Array.isArray(t.list)) return null;
+  const list = t.list.filter(x => x && TRN[x.k] && TRN_OUT[x.out] && TRN[x.k].out.some(o => o[1] === x.out)).slice(0, 3).map(x => ({k:x.k, price:int(x.price, 0, 1e7, TRN[x.k].min), out:x.out}));
+  return list.length ? {list, done:!!t.done} : null;
+}
+// 능력치 순서: 0 주 능력치 · 1 두 번째 · 2 아무거나 · 3 피지컬. 99에 닿은 능력치는 다른 능력치로 돌린다.
+function trnStat(slot){
+  const order = STAT_KEYS.slice().sort((a, b) => (POS[S.pos].w[b] || 0) - (POS[S.pos].w[a] || 0));
+  let k = slot === 0 ? order[0] : slot === 1 ? order[1] : slot === 3 ? 'phy' : pick(STAT_KEYS);
+  if (S.stats[k] >= 99) k = order.find(x => S.stats[x] < 99) || k;
+  return k;
+}
+async function showTrainer(){
+  const W = S.week; if (!W || W.eventRes || document.querySelector('.modal')) return;
+  if (!W.trn){ W.trn = makeTrn(); save(); }
+  const T = W.trn;
+  const el = modal(`<div class="eyebrow">${ic('dumbbell')} 개인 트레이너 면접</div><h3>누구와 4주 프로그램을 할까?</h3><p class="small muted" style="min-height:0">비싸다고 무조건 좋은 건 아니고, 싸다고 무조건 나쁜 것도 아니에요. 후기를 잘 읽어 보세요.</p>
+    <div class="trn-list">${T.list.map((x, i) => { const R = TRN[x.k], poor = S.earn < x.price; return `<button type="button" class="trn ${poor ? 'poor' : ''}" data-ti="${i}" ${poor ? 'disabled' : ''}><span class="trn-i">${ic(R.i)}</span><span class="trn-b"><b>${esc(R.n)}</b><small>${esc(R.blurb)}</small><em>${ic('search')} ${esc(R.hint)}</em></span><span class="trn-p">${money(x.price)}${poor ? '<small>잔고 부족</small>' : ''}</span></button>`; }).join('')}</div>
+    <button class="btn dark block" type="button" id="trnNo">이번엔 혼자 훈련할게요</button>`);
+  el.classList.add('trn-modal'); el.querySelector('.modal-card').classList.add('wide'); SFX.good();
+  el.querySelector('#trnNo').onclick = async () => { W.eventRes = {text:'트레이너 없이 혼자 훈련하기로 했다.'}; save(); await el.close(); renderHub(); };
+  el.querySelectorAll('[data-ti]').forEach(b => b.onclick = async () => {
+    if (W.eventRes) return;
+    const x = T.list[+b.dataset.ti], R = TRN[x.k], O = TRN_OUT[x.out]; if (!x || S.earn < x.price) return;
+    // 돈과 결과를 즉시 확정·저장
+    S.earn -= x.price; S.rec.events = (S.rec.events || 0) + 1;
+    const before = {...S.stats}, gains = [];
+    for (const [slot, d] of O.g){ const k = trnStat(slot), got = addStat(k, d); if (got) gains.push([k, got]); }
+    const fx = applyFx(O.fx);
+    if (O.fine){ const f = Math.round(x.price * O.fine); S.earn = Math.max(0, S.earn - f); fx.push(['벌금', -1, `💸 벌금 ${money(f)}`]); }
+    const inj = O.inj || (O.injP && Math.random() < O.injP ? 1 : 0);
+    if (inj){ S.injury = Math.max(S.injury, inj); fx.push(['부상', -1, x.out === 'doping' ? `🚨 ${inj}주 출전 정지` : `🤕 ${inj}주 결장`]); }
+    if (O.trait){ const nt = shuffle(Object.keys(TRAITS).filter(t => !S.traits.includes(t)))[0]; if (nt){ S.traits.push(nt); fx.push(['특성', 1, `✨ 새 특성 · ${TRAITS[nt].n}`]); } }
+    if (O.news) addNews(O.news.replace('{N}', S.name));
+    else if (O.good >= 2) addNews(`💪 ${S.name}, ${R.n}${josa(R.n, '와')} 4주 특훈… "완전히 다른 선수가 됐다"`);
+    const g = gainXp(O.good >= 1 ? 30 : 10); if (g) fx.push(g);
+    W.eventRes = {text:`${R.n}: ${O.h}`}; save();
+    // 4주 몽타주
+    const card = el.querySelector('.modal-card');
+    card.innerHTML = `<div class="eyebrow">${ic(R.i)} ${esc(R.n)}</div><div class="trn-cut"><div class="cb" data-cpose="run">${meSvg()}</div></div><div class="trn-weeks">${[1,2,3,4].map(w => `<i data-w="${w}">${w}주차</i>`).join('')}</div><p class="trn-line" id="trnLine">계약서에 사인했다…</p>`;
+    const lines = x.out === 'scam' ? ['첫 수업 영상 촬영!', '2주차… 트레이너가 "개인 사정"으로 휴강', '3주차… 연락이 안 된다', '4주차… 계정이 사라졌다'] :
+      x.out === 'doping' ? ['"이 음료만 마시면 됩니다"', '힘이 넘친다… 이상할 정도로', '경기 전 도핑 검사 통지서가 왔다', '…결과 통보 전화가 울린다'] :
+      x.out === 'hike' || x.out === 'small' ? ['새벽 4시 기상', '오늘도 산을 오른다', '장작을 팬다', '또 산을 오른다'] :
+      ['기초 체력 측정', '지옥의 인터벌 트레이닝', '포지션 맞춤 특훈', '마지막 테스트'];
+    for (let w = 1; w <= 4; w++){ if (!RM) await wait(520); const it = card.querySelector(`[data-w="${w}"]`); if (it) it.classList.add('on'); const ln = card.querySelector('#trnLine'); if (ln) ln.textContent = lines[w - 1]; SFX.click && SFX.click(); }
+    if (!RM) await wait(600);
+    const tone = O.good >= 2 ? 'great' : O.good >= 0 ? 'ok' : 'bad';
+    if (O.good >= 2){ SFX.goal(); confetti(['#ffc83d','#ffffff','#4ade80']); } else if (O.good < 0){ SFX.bad(); shake(); } else SFX.good();
+    card.innerHTML = `<div class="eyebrow">${ic(R.i)} 4주 프로그램 결과</div><div class="trn-head ${tone}">${esc(O.h)}</div><div class="outcome">${esc(O.t)}</div>
+      ${gains.length ? `<div class="trn-gains">${gains.map(([k, d]) => `<div><span>${statName(k, S.pos)}</span><b>${before[k]} → <em>${S.stats[k]}</em> <strong class="plus">+${d}</strong></b><div class="rel-bar"><i class="was" style="width:${before[k] / STAT_MAX * 100}%"></i><i class="add" style="width:${d / STAT_MAX * 100}%"></i></div></div>`).join('')}</div>` : ''}
+      <div class="chips" style="margin-bottom:14px">${chipsHtml(fx)}</div><button class="btn block" type="button" id="evok">확인</button>`;
+    card.querySelector('#evok').onclick = async () => { await el.close(); renderHub(); };
+  });
+}
+
 // ---------- 돌발 이벤트 ----------
 async function showEvent(){
   const W = S.week; if (!W || !W.event || W.eventRes || document.querySelector('.modal')) return;
+  if (W.event === 'trainer') return showTrainer();
   const ev = EVENTS.find(e => e.id === W.event);
   const el = modal(`<div class="eyebrow">${ic('zap')} 돌발 이벤트</div><div class="big">${ic(ev.i, 'evi')}</div><h3>${esc(ev.t)}</h3><p id="evd"></p>
     <div class="choice-list" id="evc" hidden>${ev.c.map(([t, outs], i) => { const need = Math.max(0, ...outs.map(o => -(o[2].earn || 0))), poor = need > S.earn; return `<button class="btn ${i ? 'dark' : 'cyan'} block" type="button" data-i="${i}" ${poor ? 'disabled' : ''}>${esc(t)}${poor ? ` <small>(잔고 ${money(need)} 필요)</small>` : ''}</button>`; }).join('')}</div>`);
@@ -5134,6 +5238,16 @@ const PSY_SC = [
   {who:'captain', t:'회식 자리의 진심', d:'회식 자리에서 주장 {C}가 "너, 우리 팀에 오래 있을 거지?"라며 속을 떠본다.', cap:true, r:['당연하죠. 이 팀에서 오래 뛰고 싶어요.','더 큰 무대도 꿈꾸지만 지금은 여기서 최고가 될게요.','주장님 은퇴하실 때까진 있을게요.']},
   {who:'star', t:'에이스의 패스 거부', d:'팀 에이스 {A}가 훈련 게임에서 계속 나에게 패스를 안 준다.', r:['패스 하나만 주면 확실히 마무리할게.','나한테 주면 도움 하나 느는 거야. 손해 아니잖아.','안 주면 네 몫까지 내가 다 뛴다?']},
   {who:'star', t:'등번호 신경전', d:'팀 에이스 {A}가 "그 번호, 너한테 좀 무겁지 않아?"라며 웃는다.', r:['번호보다 경기력으로 보여줄게.','무거우면 더 열심히 뛰면 되지.','번호가 무거워서 하체가 튼튼해졌어.']},
+  {who:'mgr', t:'인터뷰 기사 호출', d:'{M} 감독이 내 인터뷰 기사를 책상 위에 툭 던졌다. "이게 무슨 소리야?"', r:['오해가 생겼다면 죄송합니다. 제 뜻은 그게 아니었어요.','제 생각을 솔직하게 말했을 뿐입니다.','기자님이 제 매력을 너무 잘 쓰셨네요.']},
+  {who:'mgr', t:'교체 아웃 물병 사건', d:'교체되며 물병을 걷어찼던 장면을 {M} 감독이 조용히 꺼낸다.', r:['감정 조절 못 한 건 제 잘못입니다.','더 뛰고 싶었습니다. 그게 진심이에요.','물병이 먼저 시비 걸었어요. 정말이에요.']},
+  {who:'mgr', t:'야식 사진 적발', d:'{M} 감독이 내 SNS 야식 사진을 보여주며 눈을 가늘게 뜬다.', r:['식단 다시 철저히 관리하겠습니다.','다음 날 팀에서 제일 많이 뛴 게 저예요.','치팅데이였어요. 감독님 몫도 시킬까요?']},
+  {who:'mgr', t:'화이트보드 테스트', d:'{M} 감독이 화이트보드에 상대 전술을 그리고 "너라면 어떻게 깰래?"라고 묻는다.', r:['지시하신 라인부터 지키면서 틈을 보겠습니다.','제가 직접 측면을 파고들어 균열을 내겠습니다.','상대 감독님께 커피를 쏴서 방심시키는 건…?']},
+  {who:'rival', t:'연봉 자랑', d:'{R}가 "연봉은 내가 더 받던데?"라며 슬쩍 흘린다.', r:['돈보다 경기장에서 누가 잘하는지가 중요하지.','올해 끝나면 순서 바뀔 거야.','그럼 오늘 밥은 네가 사는 걸로.']},
+  {who:'rival', t:'인터뷰 저격', d:'{R}가 인터뷰에서 "주전은 실력순"이라며 나를 겨냥했다.', r:['맞는 말이야. 그래서 열심히 하는 거고.','다음 경기 끝나고 기자들한테 다시 물어봐.','인터뷰 연습 많이 했네? 발음 좋더라.']},
+  {who:'veteran', t:'요즘 애들', d:'{V}가 "요즘 애들은 정신력이 약해"라며 혀를 찬다.', r:['선배님 노하우 많이 배우고 싶어요.','정신력은 경기에서 보여드릴게요.','선배님 때는 공이 네모였다면서요?']},
+  {who:'captain', t:'대리 주장 시험', d:'경기 전 주장 {C}가 "오늘 내가 빠지면 네가 팀을 이끌 수 있겠어?"라고 묻는다.', cap:true, r:['주장님 몫까지 차분하게 챙기겠습니다.','맡겨주세요. 팀을 끌고 가겠습니다.','완장 차면 사진부터 찍어도 되죠?']},
+  {who:'star', t:'세리머니 주도권', d:'팀 에이스 {A}가 "골 넣으면 세리머니는 내 거 따라 해"라며 웃는다.', r:['팀이 이기면 뭐든 좋지.','내 골엔 내 세리머니야.','그럼 네 골엔 내 세리머니 해 줄래?']},
+  {who:'star', t:'프리킥 쟁탈전', d:'{A}가 지난 경기 결정적인 프리킥 장면을 다시 꺼내며 "그때 나한테 줬어야지"라고 한다.', r:['그땐 네가 더 좋은 위치였을 수도 있어.','다음에도 내가 찬다. 넣을 자신 있어.','가위바위보 3판 2선승 어때?']},
 ];
 const PSY_TIER = {
   big:{n:'완벽한 기선 제압', i:'flame', rt:.4, goal:1.15, start:.1, card:.85},
@@ -5161,16 +5275,16 @@ function makePsy(){
   // 경험이 쌓일수록 상대의 속내가 잘 읽힌다. 독불장군형 감독과 능구렁이 베테랑은 읽기 어렵다.
   const rel = clamp(.6 + Math.max(0, S.age - 19) * .015 - (P.who === 'mgr' && t === 'maverick' ? .15 : 0) - (P.who === 'veteran' ? .07 : 0) + skm('psy'), .4, .93);
   const gen = {calm:shuffle(PSY_GEN.calm), bold:shuffle(PSY_GEN.bold), wit:shuffle(PSY_GEN.wit)};
-  const rounds = [0, 1, 2].map(i => {
+  const rounds = [0].map(i => {
     const md = wpick(PSY_MOODS.map((k, j) => [bias[j], k]))[1];
     const tk = Math.random() < rel ? md : pick(PSY_MOODS.filter(k => k !== md)); // 가끔은 표정이 속마음과 다르다
     return {md, tell: pick(PSY_MOOD[tk].tells), say: pick(PSY_MOOD[md].say), opts: PSY_KEYS.map((k, j) => i === 0 && P.r ? `"${P.r[j]}"` : gen[k][i])};
   });
-  return {sc, who:P.who, rounds, picks:[], done:false, rel: Math.round(rel * 100)};
+  return {sc, who:P.who, rounds, picks:[], done:false, rel: Math.round(rel * 100), luck: Math.random()};
 }
 function cleanPsy(q){
-  if (!q || !PSY_SC[q.sc] || !Array.isArray(q.rounds) || q.rounds.length !== 3 || !q.rounds.every(x => x && PSY_MOOD[x.md] && typeof x.tell === 'string' && typeof x.say === 'string' && Array.isArray(x.opts) && x.opts.length === 3)) return null;
-  return {sc:q.sc, who:PSY_SC[q.sc].who, rounds:q.rounds.map(x => ({md:x.md, tell:x.tell.slice(0, 60), say:x.say.slice(0, 60), opts:x.opts.map(o => String(o).slice(0, 60))})), picks:(Array.isArray(q.picks) ? q.picks : []).filter(k => PSY_ST[k]).slice(0, 3), done:!!q.done, rel:int(q.rel, 30, 95, 60)};
+  if (!q || !PSY_SC[q.sc] || !Array.isArray(q.rounds) || q.rounds.length < 1 || q.rounds.length > 3 || !q.rounds.every(x => x && PSY_MOOD[x.md] && typeof x.tell === 'string' && typeof x.say === 'string' && Array.isArray(x.opts) && x.opts.length === 3)) return null;
+  return {sc:q.sc, who:PSY_SC[q.sc].who, rounds:q.rounds.map(x => ({md:x.md, tell:x.tell.slice(0, 60), say:x.say.slice(0, 60), opts:x.opts.map(o => String(o).slice(0, 60))})), picks:(Array.isArray(q.picks) ? q.picks : []).filter(k => PSY_ST[k]).slice(0, q.rounds.length), done:!!q.done, rel:int(q.rel, 30, 95, 60), luck:clamp(Number(q.luck) || 0, 0, 1)};
 }
 function cleanPsyFx(f){
   if (!f || typeof f !== 'object' || !PSY_TIER[f.tier]) return null;
@@ -5180,7 +5294,9 @@ function cleanPsyFx(f){
 const psyOut = (m, md) => m === PSY_MOOD[md].best ? 1 : m === PSY_MOOD[md].worst ? -1 : 0;
 function psyResolve(){
   const Q = S.week.psy, t = CLUB[S.club].t, W = PSY_WHO[Q.who];
-  const sum = Q.picks.reduce((s, m, i) => s + psyOut(m, Q.rounds[i].md), 0);
+  const raw = Q.picks.reduce((s, m, i) => s + psyOut(m, Q.rounds[i].md), 0);
+  // 한 번에 끝나는 신경전: 맞히면 우세, 운까지 따르면(30%) 완벽한 기선 제압 · 틀리면 흔들림, 운까지 나쁘면 완전히 말림
+  const sum = Q.rounds.length === 1 ? (raw > 0 ? (Q.luck < .3 ? 2 : 1) : raw < 0 ? (Q.luck < .3 ? -2 : -1) : 0) : raw;
   const tier = sum >= 2 ? 'big' : sum === 1 ? 'win' : sum === 0 ? 'draw' : sum === -1 ? 'lose' : 'crush';
   const T = PSY_TIER[tier], good = sum > 0, bad = sum < 0;
   const f = {tier, rt:T.rt, goal:T.goal, start:T.start, card:T.card, ast:1, team:1, pk:1};
@@ -5189,11 +5305,11 @@ function psyResolve(){
   if (bad){ f.start -= W.start || 0; f.pk /= W.pk || 1; f.team /= W.team || 1; f.ast /= W.ast || 1; }
   if (Q.who === 'mgr'){
     eff.trust = good ? (sum >= 2 ? 6 : 4) : bad ? (sum <= -2 ? -5 : -3) : 0;
-    const atk = Q.picks.filter(k => k === 'bold').length, fe = Q.picks.filter(k => k === 'wit').length;
-    if (good && t === 'charisma' && atk >= 2){ eff.trust = -2; text = `결과는 내 판정승. 하지만 ${mgrName()} 감독은 "버릇없다"며 못마땅해한다.`; }
+    const atk = Q.picks.filter(k => k === 'bold').length, fe = Q.picks.filter(k => k === 'wit').length, half = Math.max(1, Math.ceil(Q.picks.length * .6));
+    if (good && t === 'charisma' && atk >= half){ eff.trust = -2; text = `결과는 내 판정승. 하지만 ${mgrName()} 감독은 "버릇없다"며 못마땅해한다.`; }
     if (good && t === 'showman' && fe >= 1){ eff.pop = 3; text += ' 감독이 기자들 앞에서 내 배짱을 자랑했다.'; }
     if (bad && t === 'warm'){ eff.trust = Math.ceil(eff.trust / 2); text += ` "괜찮다, 그럴 수 있지." ${mgrName()} 감독이 어깨를 두드렸다.`; }
-    if (t === 'tactician' && Q.picks.filter(k => k === 'calm').length >= 2 && !bad){ eff.trust = (eff.trust || 0) + 2; text += ' 감정을 섞지 않는 태도에 전술가 감독이 흡족해한다.'; }
+    if (t === 'tactician' && Q.picks.filter(k => k === 'calm').length >= half && !bad){ eff.trust = (eff.trust || 0) + 2; text += ' 감정을 섞지 않는 태도에 전술가 감독이 흡족해한다.'; }
   } else if (good) eff.pop = sum >= 2 ? 2 : 1;
   const tags = []; // 화살표(↑↓)가 단어에서 떨어져 줄바꿈되지 않도록 단어 결합 문자로 붙인다
   if (f.rt) tags.push(`평점 ${f.rt > 0 ? '+' : ''}${f.rt.toFixed(1)}`);
@@ -5225,19 +5341,20 @@ async function showPsy(){
   SFX.good();
   await typeIn(el.querySelector('#psyd'), fillPsy(P.d));
   const box = el.querySelector('#psyb');
-  const meter = () => { const s = Q.picks.reduce((a, m, i) => a + psyOut(m, Q.rounds[i].md), 0); return `<div class="psy-meter" aria-label="기세">${[-3,-2,-1,0,1,2,3].map(v => `<i class="${v === s ? 'on' : ''} ${v < 0 ? 'mneg' : v > 0 ? 'mpos' : ''}"></i>`).join('')}<small>${s > 0 ? '내가 우세' : s < 0 ? '상대가 우세' : '팽팽'}</small></div>`; };
+  const N = Q.rounds.length;
+  const meter = () => { if (N === 1) return ''; const s = Q.picks.reduce((a, m, i) => a + psyOut(m, Q.rounds[i].md), 0); return `<div class="psy-meter" aria-label="기세">${[-3,-2,-1,0,1,2,3].map(v => `<i class="${v === s ? 'on' : ''} ${v < 0 ? 'mneg' : v > 0 ? 'mpos' : ''}"></i>`).join('')}<small>${s > 0 ? '내가 우세' : s < 0 ? '상대가 우세' : '팽팽'}</small></div>`; };
   const finish = async () => {
     const R = psyResolve(), T = PSY_TIER[R.tier];
     if (R.sum > 0){ SFX.goal(); confetti(['#3dd6ff','#ffffff','#ffc83d']); } else if (R.sum < 0){ SFX.bad(); shake(); } else SFX.good();
     el.querySelector('.modal-card').innerHTML = `<div class="eyebrow">${ic('brain')} 심리전 결과</div><div class="big psy-res ${R.sum > 0 ? 'good' : R.sum < 0 ? 'bad' : ''}">${ic(T.i, 'evi')}</div><h3>${T.n}</h3>
-      <div class="psy-hist">${Q.picks.map((m, i) => { const o = psyOut(m, Q.rounds[i].md); return `<span class="${o > 0 ? 'w' : o < 0 ? 'l' : 'd'}">R${i + 1} ${PSY_MOOD[Q.rounds[i].md].n} → ${PSY_ST[m].n} ${o > 0 ? '통함' : o < 0 ? '역효과' : '무난'}</span>`; }).join('')}</div>
+      <div class="psy-hist">${Q.picks.map((m, i) => { const o = psyOut(m, Q.rounds[i].md); return `<span class="${o > 0 ? 'w' : o < 0 ? 'l' : 'd'}">${N > 1 ? `R${i + 1} ` : ''}${PSY_MOOD[Q.rounds[i].md].n} → ${PSY_ST[m].n} ${o > 0 ? '통함' : o < 0 ? '역효과' : '무난'}</span>`; }).join('')}</div>
       <div class="outcome">${esc(R.text)}</div><div class="chips" style="margin-bottom:14px">${chipsHtml(R.fx)}</div><button class="btn block" type="button" id="psyok">확인</button>`;
     el.querySelector('#psyok').onclick = async () => { await el.close(); renderHub(); };
   };
   const round = () => {
-    const i = Q.picks.length; if (i >= 3) return finish();
+    const i = Q.picks.length; if (i >= N) return finish();
     const r = Q.rounds[i];
-    box.innerHTML = `${meter()}<div class="psy-round">ROUND ${i + 1} / 3</div>
+    box.innerHTML = `${meter()}${N > 1 ? `<div class="psy-round">ROUND ${i + 1} / ${N}</div>` : '<div class="psy-round">단 한 번의 대답</div>'}
       <div class="psy-tell">${ic('eye')}<span><b>${esc(nm)}</b>${josa(nm, '은')} ${esc(r.tell)}</span></div>
       <div class="psy-rule"><span>${ic('angry')} 흥분 → 차분하게</span><span>${ic('eye')} 시험 → 자신 있게</span><span>${ic('laugh')} 장난 → 재치 있게</span></div>
       <div class="psy-acc">표정이 속마음과 다를 때도 있어요 · 읽기 정확도 ${Q.rel}%</div>
@@ -5254,7 +5371,7 @@ async function showPsy(){
         <div class="pr-mood">${ic(MD.i)} ${esc(nm)}${josa(nm, '은')} <b>${MD.n}</b> 중이었다</div>
         <p class="pr-me">나: ${esc(r.opts[PSY_KEYS.indexOf(b.dataset.k)])}</p>
         <p>${esc(nm)}: ${esc(r.say)}</p><div class="pr-res">${o > 0 ? `통했다! ${MD.hit}` : o < 0 ? `역효과… ${MD.miss}` : '무난했다 · 큰 변화 없음'}</div></div>
-        <button class="btn block ${i === 2 ? 'cyan' : 'dark'}" type="button" id="psyn">${i === 2 ? '결과 보기' : '다음 라운드 ▶'}</button>`;
+        <button class="btn block ${i === N - 1 ? 'cyan' : 'dark'}" type="button" id="psyn">${i === N - 1 ? '결과 보기' : '다음 라운드 ▶'}</button>`;
       box.querySelector('#psyn').onclick = round;
     });
   };
