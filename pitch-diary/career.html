@@ -1358,6 +1358,9 @@ table.standings{min-width:0}
 @keyframes diceRoll{50%{transform:rotate(200deg) scale(1.2)}100%{transform:rotate(360deg)}}
 .look-pane{display:flex;flex-direction:column;gap:10px}
 .look-pane[hidden]{display:none}
+.shop-item.fun .si-prev{width:100%;max-width:96px;aspect-ratio:1/1;border-radius:14px;background:radial-gradient(80% 80% at 50% 40%,rgba(61,214,255,.18),rgba(0,0,0,.15));overflow:hidden;margin:0 auto}
+.shop-item.fun .si-prev .chibi{width:100%;height:100%;max-width:none;filter:none}
+.shop-item.fun .si-prev .chibi .whole,.shop-item.fun .si-prev .chibi .head{animation:none}
 </style>
 </head>
 <body>
@@ -2015,16 +2018,16 @@ function renderCreate(){
         <div class="small">${esc(M.d)}</div>
       </div>
       <button class="btn turf block" id="startBtn" type="button">✍️ 입단 계약하기</button>
-      <button class="btn dark sm" id="back" type="button">← 타이틀</button>
     </div></main>`;
     const base = {...POS[pos].base};
     const v = mountViewer($('#cv'), {look, stats: base, club, pos, name: nm, equip:{}});
     bindLook(root, look, l => v && v.rebuild({look:l}));
+    if (UI.lookTab){ const t = root.querySelector(`[data-lt="${UI.lookTab}"]`); if (t) t.click(); }
+    root.querySelectorAll('[data-lt]').forEach(b => b.addEventListener('click', () => { UI.lookTab = b.dataset.lt; }));
     $('#nm').oninput = e => { nm = e.target.value; if (v) v.rebuild({name: nm}); };
     root.querySelectorAll('.pos').forEach(b => b.onclick = () => { pos = b.dataset.p; draw(); });
     root.querySelectorAll('.club').forEach(b => b.onclick = () => { club = b.dataset.c; draw(); });
     root.querySelectorAll('[data-nat]').forEach(b => b.onclick = () => { nat = b.dataset.nat; const x = $('#natScroll').scrollLeft; draw(); $('#natScroll').scrollLeft = x; });
-    $('#back').onclick = () => { disposeViewer(); renderTitle(); };
     $('#startBtn').onclick = () => {
       const name = $('#nm').value.replace(/[\u0000-\u001F\u007F<>]/g, '').trim().slice(0, 12);
       if (!name){ toast('선수 이름을 입력해 주세요'); $('#nm').focus(); return; }
@@ -3447,7 +3450,55 @@ const SHOP = [
   {id:'bootGold', slot:'boots', i:ic('footprints'), n:'골드 축구화', p:7000, d:'득점왕의 상징'},
   {id:'bootPink', slot:'boots', i:ic('footprints'), n:'핑크 축구화', p:1500, d:'눈에 띄는 형광 핑크'},
   {id:'bootBlack', slot:'boots', i:ic('footprints'), n:'블랙아웃 축구화', p:1100, d:'클래식한 올블랙'},
+  {id:'hRabbit', slot:'head', fun:1, n:'토끼 탈', p:2600, d:'쫑긋한 긴 귀'},
+  {id:'hLion', slot:'head', fun:1, n:'사자 탈', p:3200, d:'풍성한 갈기로 위엄 있게'},
+  {id:'hBear', slot:'head', fun:1, n:'곰 탈', p:2400, d:'동글동글 곰돌이'},
+  {id:'hCat', slot:'head', fun:1, n:'고양이 탈', p:2400, d:'뾰족 귀 고양이'},
+  {id:'hDino', slot:'head', fun:1, n:'공룡 탈', p:3000, d:'이빨과 등 가시까지'},
+  {id:'hPanda', slot:'head', fun:1, n:'판다 탈', p:2800, d:'까만 귀 판다'},
+  {id:'hCrown', slot:'head', fun:1, n:'황금 왕관', p:9000, d:'그라운드의 왕'},
+  {id:'hWizard', slot:'head', fun:1, n:'마법사 모자', p:3500, d:'별이 반짝이는 고깔'},
+  {id:'hPirate', slot:'head', fun:1, n:'해적 모자', p:2800, d:'캡틴의 삼각 모자'},
+  {id:'hViking', slot:'head', fun:1, n:'바이킹 투구', p:3400, d:'뿔 달린 투구'},
+  {id:'hSanta', slot:'head', fun:1, n:'산타 모자', p:1600, d:'겨울 이적시장 한정 느낌'},
+  {id:'hParty', slot:'head', fun:1, n:'파티 고깔', p:900, d:'우승 파티 필수품'},
+  {id:'fHeart', slot:'face', fun:1, n:'하트 안경', p:1400, d:'세상이 핑크빛'},
+  {id:'fPatch', slot:'face', fun:1, n:'해적 안대', p:1200, d:'한쪽 눈은 골대만 본다'},
+  {id:'bCape', slot:'back', fun:1, n:'히어로 망토', p:4200, d:'역전골의 주인공'},
+  {id:'bWings', slot:'back', fun:1, n:'천사 날개', p:5200, d:'하늘을 나는 헤더'},
+  {id:'bTail', slot:'back', fun:1, n:'공룡 꼬리', p:2600, d:'공룡 탈과 세트로'},
 ];
+// 탈: 머리를 통째로 덮는다 (머리카락은 그리지 않음)
+const HOOD = {hRabbit:['#f5f5f7','#ffb3c7'], hLion:['#f2b24a','#c8782a'], hBear:['#8a5a3b','#d9a77a'], hCat:['#f4a259','#ffd1b0'], hDino:['#4caf6e','#ffd166'], hPanda:['#f5f5f7','#1b1d27']};
+function hoodSvg(id, back){
+  const [c, c2] = HOOD[id], dk = shade(c, .82);
+  let pre = '', post = '';
+  if (id === 'hRabbit') pre = `<g transform="rotate(-12 80 30)"><ellipse cx="80" cy="4" rx="12" ry="32" fill="${c}" stroke="${dk}" stroke-width="1.5"/><ellipse cx="80" cy="8" rx="5.5" ry="22" fill="${c2}"/></g><g transform="rotate(12 120 30)"><ellipse cx="120" cy="4" rx="12" ry="32" fill="${c}" stroke="${dk}" stroke-width="1.5"/><ellipse cx="120" cy="8" rx="5.5" ry="22" fill="${c2}"/></g>`;
+  if (id === 'hLion'){ for (let i = 0; i < 16; i++){ const a = i / 16 * Math.PI * 2, x = 100 + Math.cos(a) * 58, y = 82 + Math.sin(a) * 55; pre += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="15" fill="${i % 2 ? c2 : shade(c2, .85)}"/>`; } pre += `<circle cx="66" cy="34" r="11" fill="${c}"/><circle cx="134" cy="34" r="11" fill="${c}"/><circle cx="66" cy="34" r="5.5" fill="${c2}"/><circle cx="134" cy="34" r="5.5" fill="${c2}"/>`; }
+  if (id === 'hBear' || id === 'hPanda'){ const ec = id === 'hPanda' ? c2 : c; pre = `<circle cx="60" cy="38" r="14" fill="${ec}"/><circle cx="140" cy="38" r="14" fill="${ec}"/>` + (id === 'hBear' ? `<circle cx="60" cy="38" r="7" fill="${c2}"/><circle cx="140" cy="38" r="7" fill="${c2}"/>` : ''); }
+  if (id === 'hCat') pre = `<path d="M56 54 L58 14 L88 34Z" fill="${c}" stroke="${dk}" stroke-width="1.5" stroke-linejoin="round"/><path d="M144 54 L142 14 L112 34Z" fill="${c}" stroke="${dk}" stroke-width="1.5" stroke-linejoin="round"/><path d="M62 44 L63 24 L79 35Z" fill="${c2}"/><path d="M138 44 L137 24 L121 35Z" fill="${c2}"/>`;
+  if (id === 'hDino'){ pre = [[78,30],[100,24],[122,30]].map(([x, y]) => `<path d="M${x - 9} ${y + 6} L${x} ${y - 14} L${x + 9} ${y + 6}Z" fill="${c2}" stroke="${shade(c2, .8)}" stroke-width="1.2" stroke-linejoin="round"/>`).join(''); if (!back) post = [72, 82, 92, 102, 112, 122].map((x, i) => `<path d="M${x} ${60 + Math.abs(i - 2.5) * 1.2} l5 7 l5 -7Z" fill="#fff"/>`).join(''); }
+  const outer = 'M45 80 a55 52 0 1 0 110 0 a55 52 0 1 0 -110 0Z', hole = 'M61 92 a39 35 0 1 0 78 0 a39 35 0 1 0 -78 0Z';
+  const stripe = id === 'hPanda' && !back ? `<ellipse cx="80" cy="88" rx="11" ry="9" fill="${c2}" opacity=".18"/><ellipse cx="120" cy="88" rx="11" ry="9" fill="${c2}" opacity=".18"/>` : '';
+  return pre + `<path d="${back ? outer : outer + ' ' + hole}" fill="${c}" fill-rule="evenodd" stroke="${dk}" stroke-width="2"/>` + (back ? '' : `<path d="${hole}" fill="none" stroke="${dk}" stroke-width="2.5"/>`) + stripe + post;
+}
+function funHat(id){
+  switch (id){
+    case 'hCrown': return `<path d="M68 44 L72 14 L86 30 L100 6 L114 30 L128 14 L132 44Z" fill="#ffc83d" stroke="#b98200" stroke-width="2" stroke-linejoin="round"/><rect x="66" y="40" width="68" height="9" rx="3" fill="#f0b323" stroke="#b98200" stroke-width="1.5"/><circle cx="100" cy="44.5" r="3.4" fill="#ff4d6d"/><circle cx="82" cy="44.5" r="2.6" fill="#3dd6ff"/><circle cx="118" cy="44.5" r="2.6" fill="#4ade80"/><circle cx="100" cy="8" r="3" fill="#fff6d6"/>`;
+    case 'hWizard': return `<path d="M58 52 Q100 42 142 52 L112 -34 Q106 -40 104 -30Z" fill="#5b3fd0" stroke="#3a2690" stroke-width="2" stroke-linejoin="round"/><ellipse cx="100" cy="52" rx="54" ry="10" fill="#4a32b0" stroke="#3a2690" stroke-width="2"/><path d="M96 10 l2.4 5 5.4 .6 -4 3.6 1.2 5.4 -5 -2.8 -5 2.8 1.2 -5.4 -4 -3.6 5.4 -.6Z" fill="#ffd166"/><circle cx="114" cy="30" r="2.4" fill="#ffd166"/><circle cx="104" cy="-12" r="1.8" fill="#ffd166"/><circle cx="84" cy="36" r="1.6" fill="#fff6d6"/>`;
+    case 'hPirate': return `<path d="M40 56 Q100 18 160 56 Q150 26 100 22 Q50 26 40 56Z" fill="#1b1d27" stroke="#000" stroke-width="1.5"/><path d="M44 54 Q100 30 156 54" stroke="#ffc83d" stroke-width="2.5" fill="none"/><circle cx="100" cy="36" r="6" fill="#fff"/><path d="M93 44 L107 50 M107 44 L93 50" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="98" cy="35" r="1.3" fill="#1b1d27"/><circle cx="102" cy="35" r="1.3" fill="#1b1d27"/>`;
+    case 'hViking': return `<path d="M60 52 Q38 46 32 16 Q48 36 66 40Z" fill="#f1e6c8" stroke="#bfae84" stroke-width="1.5"/><path d="M140 52 Q162 46 168 16 Q152 36 134 40Z" fill="#f1e6c8" stroke="#bfae84" stroke-width="1.5"/><path d="M55 64 Q55 24 100 22 Q145 24 145 64Z" fill="#9aa3bd" stroke="#6b7288" stroke-width="2"/><rect x="53" y="58" width="94" height="9" rx="3" fill="#7b839e"/><path d="M100 22 V58" stroke="#7b839e" stroke-width="5"/>${[64, 80, 120, 136].map(x => `<circle cx="${x}" cy="62.5" r="1.8" fill="#dfe3ec"/>`).join('')}`;
+    case 'hSanta': return `<path d="M56 60 Q60 20 104 20 Q144 24 158 74 L146 70 Q134 44 104 42 Q74 44 66 60Z" fill="#e0283f" stroke="#a81d2f" stroke-width="1.5"/><rect x="50" y="54" width="100" height="14" rx="7" fill="#fff"/><circle cx="154" cy="76" r="9" fill="#fff"/>`;
+    case 'hParty': return `<path d="M76 52 L100 -6 L124 52Z" fill="#3dd6ff" stroke="#157a99" stroke-width="1.5" stroke-linejoin="round"/><path d="M84 34 L116 34 M90 20 L110 20 M80 46 L120 46" stroke="#ff4fa3" stroke-width="4"/><circle cx="100" cy="-8" r="6" fill="#ffc83d"/><path d="M76 52 Q60 80 62 96 M124 52 Q140 80 138 96" stroke="#fff" stroke-width="1" fill="none" opacity=".6"/>`;
+  }
+  return '';
+}
+function backGear(id, back){
+  if (id === 'bCape') return `<path d="M72 122 Q56 176 52 224 Q100 234 148 224 Q144 176 128 122Z" fill="#e0283f" stroke="#a81d2f" stroke-width="2"/>${back ? `<path d="M100 128 L100 224" stroke="#c4203a" stroke-width="2" opacity=".5"/><path d="M86 140 L100 130 L114 140 L108 156 L92 156Z" fill="#ffc83d" stroke="#b98200" stroke-width="1.5"/>` : ''}`;
+  if (id === 'bWings'){ const w = sd => { const m = x => 100 + sd * (x - 100); return `<path d="M${m(90)} 132 Q${m(46)} 96 ${m(14)} 118 Q${m(26)} 128 ${m(20)} 140 Q${m(34)} 142 ${m(30)} 156 Q${m(48)} 156 ${m(48)} 168 Q${m(70)} 160 ${m(92)} 150Z" fill="#ffffff" stroke="#c9d3ee" stroke-width="2" stroke-linejoin="round"/><path d="M${m(84)} 140 Q${m(58)} 128 ${m(32)} 124 M${m(84)} 146 Q${m(60)} 142 ${m(40)} 142 M${m(86)} 150 Q${m(66)} 152 ${m(54)} 160" stroke="#c9d3ee" stroke-width="1.6" fill="none"/>`; }; return w(-1) + w(1); }
+  if (id === 'bTail') return `<path d="M108 178 Q150 184 176 212 Q184 222 172 222 Q146 210 104 200Z" fill="#4caf6e" stroke="#2f8f4e" stroke-width="2" stroke-linejoin="round"/>${[[128,183],[146,191],[162,203]].map(([x, y]) => `<path d="M${x - 5} ${y + 1} L${x} ${y - 9} L${x + 5} ${y + 2}Z" fill="#ffd166"/>`).join('')}`;
+  return '';
+}
 const CONSUMABLES = [
   {id:'drink', i:ic('cup-soda'), n:'에너지 드링크', p:300, d:'컨디션 +30', use: () => applyFx({cond:30})},
   {id:'mental', i:ic('brain'), n:'멘탈 코칭', p:450, d:'다음 경기 자신감 +0.2', use: () => applyFx({buff:.2})},
@@ -3611,6 +3662,11 @@ function chibiSVG(o){
   const acc = [];
   if (eq.head === 'band') acc.push(`<path d="M56 70 Q100 46 144 70 L144 79 Q100 56 56 79Z" fill="${kit}"/><path d="M56 74 Q100 51 144 74" stroke="${trim}" stroke-width="1.6" fill="none" opacity=".8"/>`);
   if (eq.head === 'beanie') acc.push(`<path d="M52 78 Q48 20 100 18 Q152 20 148 78Z" fill="#e2485e"/><rect x="50" y="66" width="100" height="15" rx="7" fill="#b8324a"/>${[0,1,2,3,4,5,6,7].map(i => `<rect x="${55 + i * 12}" y="68" width="4" height="11" rx="2" fill="#d23d55"/>`).join('')}<circle cx="100" cy="16" r="10" fill="#fff6e6"/>`);
+  if (HOOD[eq.head]) acc.push(hoodSvg(eq.head, back));
+  if (eq.head && !HOOD[eq.head]) acc.push(funHat(eq.head));
+  if (!back && eq.face === 'fHeart') acc.push([82, 118].map(x => `<path d="M${x} 99 L${x - 12} 87 Q${x - 15} 76 ${x - 6} 76 Q${x} 76 ${x} 82 Q${x} 76 ${x + 6} 76 Q${x + 15} 76 ${x + 12} 87Z" fill="#ff4fa3" stroke="#c81d7a" stroke-width="2" stroke-linejoin="round" opacity=".92"/><path d="M${x - 7} 81 L${x - 3} 81" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".7"/>`).join('') + `<path d="M94 84 Q100 81 106 84" stroke="#c81d7a" stroke-width="2.5" fill="none"/>`);
+  if (!back && eq.face === 'fPatch') acc.push(`<path d="M56 70 L144 98" stroke="#1b1d27" stroke-width="2.5"/><ellipse cx="118" cy="89" rx="11" ry="10" fill="#1b1d27"/><path d="M112 84 Q118 82 123 85" stroke="#4a4f66" stroke-width="1.5" fill="none"/>`);
+  if (back && (eq.face === 'fPatch')) acc.push(`<path d="M56 74 L144 82" stroke="#1b1d27" stroke-width="2.5"/>`);
   if (!back && eq.face === 'glasses') acc.push(`<rect x="70" y="80" width="25" height="17" rx="7" fill="#151520"/><rect x="105" y="80" width="25" height="17" rx="7" fill="#151520"/><path d="M95 86 Q100 83 105 86" stroke="#151520" stroke-width="3" fill="none"/><path d="M74 84 L80 84" stroke="#fff" stroke-width="2" opacity=".55" stroke-linecap="round"/><path d="M109 84 L115 84" stroke="#fff" stroke-width="2" opacity=".55" stroke-linecap="round"/>`);
   if (eq.ear === 'earring') acc.push(`<circle cx="${back ? 56 : 144}" cy="98" r="3" fill="#bff3ff" stroke="#fff" stroke-width="1"/>`);
   return `<svg class="chibi" viewBox="0 0 200 262" role="img" aria-label="선수 캐릭터"><defs><radialGradient id="${uid}g" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#3fbf6a"/><stop offset="1" stop-color="#1c7a3e"/></radialGradient></defs>
@@ -3618,7 +3674,8 @@ function chibiSVG(o){
     <ellipse class="shadow" cx="100" cy="246" rx="38" ry="6" fill="#000" opacity=".28"/>`}
     ${back || o.bare ? '' : `<g class="ball" transform="translate(150 236)"><g class="ball-r"><circle r="10" fill="#fff" stroke="#1b1f33" stroke-width="1.4"/><path d="M0 -4 L3.8 -1.2 L2.4 3.2 L-2.4 3.2 L-3.8 -1.2Z" fill="#1b1f33"/><path d="M0 -4 L0 -9.5 M3.8 -1.2 L9 -3 M2.4 3.2 L5.6 8 M-2.4 3.2 L-5.6 8 M-3.8 -1.2 L-9 -3" stroke="#1b1f33" stroke-width="1.2"/></g></g>`}
     <g class="whole">
-      ${hf[0] && !back ? `<g class="hairback">${hf[0]}</g>` : ''}
+      ${hf[0] && !back && !HOOD[eq.head] ? `<g class="hairback">${hf[0]}</g>` : ''}
+      ${eq.back && !back ? backGear(eq.back, false) : ''}
       ${leg(-1)}${leg(1)}
       <path d="M${100 - sx + 2} 172 L${100 + sx - 2} 172 L${100 + sx + 1} 199 Q${100 + 6} 201 101 192 L99 192 Q${100 - 6} 201 ${100 - sx - 1} 199Z" fill="${shorts}"/>
       <path d="M${100 - sx + 1} 194 L${100 - sx + 12} 195" stroke="${kit}" stroke-width="3"/><path d="M${100 + sx - 1} 194 L${100 + sx - 12} 195" stroke="${kit}" stroke-width="3"/>
@@ -3633,11 +3690,12 @@ function chibiSVG(o){
         <text x="100" y="166" text-anchor="middle" font-size="16" font-weight="900" fill="${trim}" opacity=".95" font-family="'Pretendard Display','Pretendard Variable',sans-serif">${num}</text>`}
       ${eq.neck === 'chain' && !back ? `<path d="M88 121 Q100 140 112 121" stroke="#ffc83d" stroke-width="2.6" fill="none" stroke-dasharray="2.4 1.4"/><circle cx="100" cy="132" r="3.4" fill="#ffc83d" stroke="#b98200" stroke-width="1"/>` : ''}
       ${arm(-1)}${arm(1)}
+      ${eq.back && back ? backGear(eq.back, true) : ''}
       <g class="head">
         ${back ? '' : ''}
         ${(() => { const ex = FACE_EAR[L.face] || 44; return `<circle cx="${100 - ex}" cy="90" r="8.5" fill="${skin}"/><circle cx="${100 + ex}" cy="90" r="8.5" fill="${skin}"/><circle cx="${100 - ex}" cy="90" r="4" fill="${skinD}" opacity=".6"/><circle cx="${100 + ex}" cy="90" r="4" fill="${skinD}" opacity=".6"/>`; })()}
         ${headShape(L.face, skin)}
-        ${back ? hairBack(L.hair, hairC) : face + `<g class="hairfront">${hf[1]}</g>`}
+        ${HOOD[eq.head] ? (back ? '' : face) : back ? hairBack(L.hair, hairC) : face + `<g class="hairfront">${hf[1]}</g>`}
         ${acc.join('')}
       </g>
     </g>
@@ -3706,7 +3764,8 @@ function shopTab(){
   const owned = new Set(S.items);
   const card = it => {
     const has = owned.has(it.id), on = S.equip[it.slot] === it.id, locked = it.req && !it.req();
-    return `<div class="shop-item ${on ? 'on' : ''}"><div class="si-i" style="${{bootGold:'color:#ffc83d',bootPink:'color:#ff6fb5',bootBlack:'color:#8a8fa8'}[it.id] || ''}">${it.i}</div><b>${esc(it.n)}</b><small>${esc(it.d)}</small>
+    const prev = it.fun ? `<div class="si-prev">${chibiSVG({look:S.look, stats:S.stats, club:S.club, pos:S.pos, name:S.name, bare:true, back: it.slot === 'back', equip:{[it.slot]:it.id}}).replace('viewBox="0 0 200 262"', it.slot === 'back' ? 'viewBox="0 70 200 180"' : 'viewBox="22 -40 156 176"')}</div>` : '';
+    return `<div class="shop-item ${on ? 'on' : ''} ${it.fun ? 'fun' : ''}">${prev || `<div class="si-i" style="${{bootGold:'color:#ffc83d',bootPink:'color:#ff6fb5',bootBlack:'color:#8a8fa8'}[it.id] || ''}">${it.i}</div>`}<b>${esc(it.n)}</b><small>${esc(it.d)}</small>
       ${has ? `<button class="btn ${on ? 'dark' : 'cyan'} sm" type="button" data-eq="${it.id}" ${locked && !on ? 'disabled' : ''}>${on ? '벗기' : '착용'}</button>`
             : `<button class="btn sm" type="button" data-buy="${it.id}" ${S.xp < it.p ? 'disabled' : ''}>🔷 ${it.p}</button>`}</div>`;
   };
@@ -3714,8 +3773,10 @@ function shopTab(){
     <button class="btn dark sm shop-back" type="button" id="shopBack">${ic('arrow-left')} 내 선수로</button>
     <div class="viewer" id="viewer"></div>
     <div class="xp-bank"><span>${ic('gem')} 보유 경험치</span><b>${S.xp.toLocaleString()} XP</b><small>경기 출전·골·훈련·미니게임·우승으로 모여요. 연봉과는 별개예요.</small></div>
+    <div class="label">${ic('party-popper')} 탈 · 모자 · 재미있는 의상</div>
+    <div class="shop-grid">${SHOP.filter(x => x.fun).map(card).join('')}</div>
     <div class="label">${ic('shirt')} 악세사리 · 착용하면 내 선수에 바로 보여요</div>
-    <div class="shop-grid">${SHOP.filter(x => !x.hidden).map(card).join('')}</div>
+    <div class="shop-grid">${SHOP.filter(x => !x.hidden && !x.fun).map(card).join('')}</div>
     <div class="label">${ic('package')} 소모품</div>
     <div class="shop-grid">${CONSUMABLES.map(c => { const dd = c.dyn ? c.dyn() : c.d, off = c.dyn && !dd; return `<div class="shop-item ${off ? 'off' : ''}"><div class="si-i">${c.i}</div><b>${esc(c.n)}</b><small>${esc(dd || '모든 능력치가 한계에 도달했어요')}</small><button class="btn sm" type="button" data-use="${c.id}" ${off ? 'disabled ' : ''}${S.xp < c.p ? 'disabled' : ''}>🔷 ${c.p}</button></div>`; }).join('')}</div>`;
 }
