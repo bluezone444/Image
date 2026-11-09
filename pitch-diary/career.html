@@ -1361,6 +1361,18 @@ table.standings{min-width:0}
 .shop-item.fun .si-prev{width:100%;max-width:96px;aspect-ratio:1/1;border-radius:14px;background:radial-gradient(80% 80% at 50% 40%,rgba(61,214,255,.18),rgba(0,0,0,.15));overflow:hidden;margin:0 auto}
 .shop-item.fun .si-prev .chibi{width:100%;height:100%;max-width:none;filter:none}
 .shop-item.fun .si-prev .chibi .whole,.shop-item.fun .si-prev .chibi .head{animation:none}
+.pred{margin-top:10px;padding:10px 12px;border-radius:14px;background:rgba(0,0,0,.22);border:1px solid rgba(154,165,209,.18);display:flex;flex-direction:column;gap:7px;text-align:left}
+.pred-h{display:flex;align-items:baseline;justify-content:space-between;gap:6px;flex-wrap:wrap} .pred-h b{display:flex;align-items:center;gap:5px;font-size:13px} .pred-h b .ico{width:15px;height:15px;color:var(--cyan)} .pred-h small{font-size:10.5px;color:var(--dim)}
+.pred-bar{display:flex;gap:2px;height:10px;border-radius:5px;overflow:hidden}
+.pred-bar i{display:block;min-width:2px}
+.pred .w{background:#0f9fcc} .pred .d{background:#6b7288} .pred .l{background:#e84a66}
+.pred-leg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted)} .pred-leg span{display:flex;align-items:center;gap:5px} .pred-leg i{width:9px;height:9px;border-radius:3px;display:inline-block} .pred-leg b{color:var(--ink)} .pred-leg .xg{margin-left:auto;color:var(--dim)}
+.pred-key{display:flex;flex-wrap:wrap;gap:6px} .pred-key span{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:99px;background:rgba(255,200,61,.12);border:1px solid rgba(255,200,61,.35);font-size:12px} .pred-key .ico{width:14px;height:14px;color:var(--gold)} .pred-key b{color:var(--gold)}
+.keystat{display:flex;flex-direction:column;gap:10px}
+.keystat > div{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px}
+.keystat > div span{display:flex;align-items:center;gap:6px;font-size:13px} .keystat > div span .ico{width:16px;height:16px;color:var(--gold)} .keystat > div b{font-family:var(--f-display);font-size:18px;color:var(--gold)}
+.keystat .rel-bar{grid-column:1/-1}
+.keystat .rel-bar i{background:linear-gradient(90deg,var(--gold-d),var(--gold))}
 </style>
 </head>
 <body>
@@ -1760,10 +1772,10 @@ function newCareer(name, pos, club, look, nat){
 function cleanFx(fx){ return (Array.isArray(fx) ? fx : []).filter(f => Array.isArray(f) && typeof f[0] === 'string').map(f => [f[0], Number(f[1]) || 0, typeof f[2] === 'string' ? f[2] : '']); }
 function validPending(p){
   if (!p || typeof p !== 'object' || !CLUB[p.opp] || !Array.isArray(p.ev)) return null;
-  const sides = ['us','them','sub','pk','opk','post','yellow','var','red','chance'];
+  const sides = ['us','them','sub','pk','opk','post','yellow','var','red','chance','save','block','kpm'];
   if (!p.ev.every(e => e && sides.includes(e.side))) return null;
   if (!['start','sub','bench','injured'].includes(p.role)) return null;
-  p.ev.forEach(e => { e.m = int(e.m, 0, 90, 45); if (e.dir != null) e.dir = int(e.dir, 0, 2, 1); if (e.roll != null) e.roll = clamp(Number(e.roll) || 0, 0, 1); if (e.res != null) e.res = !!e.res; if (e.kind != null && !CH[e.kind]) e.kind = null; });
+  p.ev.forEach(e => { e.m = int(e.m, 0, 90, 45); if (e.big != null) e.big = !!e.big; if (e.side === 'us'){ e.who = e.who === 'me' ? 'me' : 'team'; e.ast = !!e.ast; } if (e.dir != null) e.dir = int(e.dir, 0, 2, 1); if (e.roll != null) e.roll = clamp(Number(e.roll) || 0, 0, 1); if (e.res != null) e.res = !!e.res; if (e.kind != null && !CH[e.kind]) e.kind = null; });
   if (p.soProg){ const bo = a => Array.isArray(a) ? a.slice(0, 12).map(Boolean) : []; p.soProg = {U: bo(p.soProg.U), T: bo(p.soProg.T)}; }
   ['tg','og','from','mins'].forEach(k => p[k] = int(p[k], 0, 99, 0)); p.ovr = int(p.ovr, 0, 130, 60);
   p.big = typeof p.big === 'string' ? p.big.slice(0, 30) : '';
@@ -1849,7 +1861,7 @@ function load(slot = curSlot){
     r.rec = Object.fromEntries(['hat','so','clutch','events','objAll','missions','hardMis','psyW','vbest','lb','wcWin','asianWin','capt'].map(k => [k, int(r.rec?.[k], 0, 99999, 0)]));
     r.mgrs = Object.fromEntries(Object.entries(r.mgrs && typeof r.mgrs === 'object' ? r.mgrs : {}).filter(([c, v]) => CLUB[c] && v && MGR[v.t] && typeof v.m === 'string').map(([c, v]) => [c, {m: v.m.slice(0, 16), t: v.t}]));
     r.season.ratings = (Array.isArray(r.season.ratings) ? r.season.ratings : []).map(Number).filter(Number.isFinite);
-    ['apps','starts','goals','assists','cs','W','D','L'].forEach(k => r.season[k] = int(r.season[k], 0, 99, 0));
+    ['apps','starts','goals','assists','cs','W','D','L','sv','blk','kp'].forEach(k => r.season[k] = int(r.season[k], 0, 99, 0));
     r.season.results = (Array.isArray(r.season.results) ? r.season.results : []).slice(0, 40).map(x => ['W','D','L'].includes(x) ? x : null);
     r.best = {rating: clamp(Number(r.best?.rating) || 0, 0, 10), salary: int(r.best?.salary, 0, SAL_MAX, r.salary)};
     r.traits = Array.isArray(r.traits) ? [...new Set(r.traits.filter(t => TRAITS[t]))] : [];
@@ -1867,7 +1879,7 @@ function load(slot = curSlot){
     r.prev = r.prev ? {rating:Number(r.prev.rating) || 0, goals:int(r.prev.goals, 0, 9, 0), mins:int(r.prev.mins, 0, 90, 0)} : null;
     r.pending = validPending(r.pending);
     if (r.phase === 'match' && !r.pending) r.phase = 'week';
-    if (r.last){ const L = r.last; ['tg','og','goals','assists'].forEach(k => L[k] = int(L[k], 0, 12, 0)); L.mins = int(L.mins, 0, 90, 0); L.rating = L.rating == null ? null : clamp(Number(L.rating) || 6, 3, 10); L.fx = cleanFx(L.fx); L.iv = L.iv !== false; L.mis = L.mis && MISSION[L.mis.k] ? {k:L.mis.k, ok: L.mis.ok == null ? null : !!L.mis.ok, lucky:!!L.mis.lucky} : null; L.big = typeof L.big === 'string' ? L.big.slice(0, 30) : ''; L.wonder = typeof L.wonder === 'string' ? L.wonder.slice(0, 40) : ''; if (!CLUB[L.opp]) r.last = null; }
+    if (r.last){ const L = r.last; ['tg','og','goals','assists','saves','blocks','kps'].forEach(k => L[k] = int(L[k], 0, 12, 0)); L.mins = int(L.mins, 0, 90, 0); L.rating = L.rating == null ? null : clamp(Number(L.rating) || 6, 3, 10); L.fx = cleanFx(L.fx); L.iv = L.iv !== false; L.mis = L.mis && MISSION[L.mis.k] ? {k:L.mis.k, ok: L.mis.ok == null ? null : !!L.mis.ok, lucky:!!L.mis.lucky} : null; L.big = typeof L.big === 'string' ? L.big.slice(0, 30) : ''; L.wonder = typeof L.wonder === 'string' ? L.wonder.slice(0, 40) : ''; if (!CLUB[L.opp]) r.last = null; }
     if (r.phase === 'interview' && !r.last) r.phase = 'week';
     if (r.interview){
       const iv = r.interview.set;
@@ -2131,6 +2143,11 @@ function matchTab(){
         <div class="vs-mid">VS</div>
         <div class="side">${crest(opp, 'xl')}<b>${esc(opp)}</b><small>${CLUB[opp].lg !== CLUB[S.club].lg ? LEAGUES[CLUB[opp].lg].f + ' ' : ''}전력 ${CLUB[opp].s} <span class="nw">· #${STYLE_NAME[CLUB[opp].sty]}</span></small></div>
       </div>
+      ${S.injury ? '' : (() => { const M = matchModel({os: CLUB[opp].s, home, mins: 90}), o = winOdds(M.gUs, M.gThem), w = Math.round(o.w * 100), d = Math.round(o.d * 100), l = 100 - w - d;
+        return `<div class="pred"><div class="pred-h"><b>${ic('activity')} 승부 예측</b><small>선발 90분 기준 · 실제 경기는 찬스마다 굴려요</small></div>
+          <div class="pred-bar" role="img" aria-label="승 ${w}% 무 ${d}% 패 ${l}%"><i class="w" style="flex:${w}"></i><i class="d" style="flex:${d}"></i><i class="l" style="flex:${l}"></i></div>
+          <div class="pred-leg"><span><i class="w"></i>승 <b>${w}%</b></span><span><i class="d"></i>무 <b>${d}%</b></span><span><i class="l"></i>패 <b>${l}%</b></span><span class="xg">예상 ${M.gUs.toFixed(1)} : ${M.gThem.toFixed(1)}</span></div>
+          <div class="pred-key">${keyStats(M).map(([i, n, v]) => `<span>${ic(i)} ${n} <b>${v}%</b></span>`).join('')}</div></div>`; })()}
       <div class="conds"><span>${ic(WX[1])} ${WX[2]}${WX[3] ? ` <em>${WX[3]}</em>` : ''}</span><span>${ic('scale')} ${RF[1]}${RF[2] ? ` <em>${RF[2]}</em>` : ''}</span>${W.psyFx ? `<span class="psyc ${W.psyFx.rt < 0 ? 'down' : ''}">${ic('brain')} ${esc(W.psyFx.label)}</span>` : ''}${S.injury ? '' : (() => { const sc = Math.round(clamp(startChance(ovrOf(S.stats, S.pos)) + (f.k === 'C' && f.stage !== '결승' ? .1 : 0), 0, 1) * 100); return `<span class="${sc < 50 ? 'warn' : ''}">${ic('user-round')} 선발 확률 <em>${S.cond < 15 ? '0' : sc}%</em></span>`; })()}${S.cond < 45 ? `<span class="warn">${ic('heart-pulse')} 컨디션 ${S.cond} <em>평점·골↓ 부상 위험↑</em></span>` : ''}</div>
     </section>
     ${(() => { let n = 0; const st = (icon, t, sub, done, id) => `<div class="step ${done ? 'done' : ''}"><span class="step-n">${(++n, done ? ic('check') : n)}</span><div><b>${ic(icon)} ${t}</b><small${id ? ` id="${id}"` : ''}>${sub}</small></div></div>`;
@@ -2196,7 +2213,11 @@ function playerTab(){
     <div class="label">${ic('activity')} 능력치</div>
     <div class="panel pad" style="display:flex;justify-content:center">${radar()}</div>
     <div class="panel pad statbars">${STAT_KEYS.map((k, i) => `<div class="sb"><span>${statName(k, S.pos)}${S.stats[k] >= 99 ? `<small class="lim">${S.stats[k] >= STAT_MAX ? '최대치' : S.stats[k] >= 100 ? '한계 돌파' : '한계 도달'}</small>` : ''}</span><div class="t"><i class="${S.stats[k] >= 99 ? 'over' : ''}" style="width:${Math.min(100, S.stats[k] / STAT_MAX * 100)}%;animation-delay:${i*80}ms"></i></div><b>${S.stats[k]}</b></div>`).join('')}</div>
-    <div class="panel impact">${[['sho','target','골 확률 · 결정적 슈팅 · PK'],['pas','arrow-right-left','도움 확률 · 킬패스'],['dri','wind','골·도움 보조 · 돌파 성공률'],['def', 'shield-half', S.pos === 'GK' || S.pos === 'DF' ? '팀 실점 감소 · 수비 평점 · 경고 줄이기' : '경고 줄이기 · 팀 수비 소폭'],['phy','dumbbell','체력 소모↓ · 회복↑ · 부상 위험↓' + (S.pos === 'DF' ? ' · 헤딩골' : '')],['cond','heart-pulse','선발 · 평점 · 골/도움 · 부상 위험 (매주 피지컬만큼 자연 회복)']].map(([k, i, t]) => `<div><span>${ic(i)} ${k === 'cond' ? '컨디션' : statName(k, S.pos)}</span><small>${t}</small></div>`).join('')}</div>
+    ${(() => { const L0 = CLUB[S.club].lg, avg = Math.round(CLUBS.filter(([n]) => CLUB[n].lg === L0 && n !== S.club).reduce((a, [n], _, arr) => a + CLUB[n].s / arr.length, 0)) || 70, M = matchModel({os: avg, home: true, mins: 90}), se = S.season;
+      return `<div class="label">${ic('crosshair')} ${POS[S.pos].name} 핵심 지표 · 리그 평균 상대(전력 ${avg}) 홈 선발 기준</div>
+      <div class="panel pad keystat">${keyStats(M).map(([i, n, v]) => `<div><span>${ic(i)} ${n}</span><b>${v}%</b><div class="rel-bar"><i style="width:${v}%"></i></div></div>`).join('')}
+        <p class="small muted" style="margin:0">${{FW:'찬스의 슈터가 될 확률과 결정력(슈팅·드리블·피지컬)이 골을 정해요.', MF:'킬패스로 찬스를 한 단계 키우고(일반→빅찬스) 동료가 넣으면 도움이에요. 패스·드리블이 핵심.', DF:'골이 될 슈팅을 몸으로 막는 결정적 차단이 핵심이에요. 수비·피지컬이 높을수록 자주 막아요.', GK:'골이 될 슈팅을 막아내는 슈퍼세이브가 핵심이에요. 수비(반사신경)·피지컬이 선방률을 정해요.'}[S.pos]} 이번 시즌 ${S.pos === 'GK' ? `슈퍼세이브 ${se.sv || 0}회` : S.pos === 'DF' ? `결정적 차단 ${se.blk || 0}회` : S.pos === 'MF' ? `킬패스 ${se.kp || 0}회` : `${se.goals}골`}.</p></div>`; })()}
+    <div class="panel impact">${[['sho','target', S.pos === 'FW' ? '골 확률 · 결정력 · PK' : S.pos === 'GK' ? '거의 영향 없음' : '중거리·세트피스 골'],['pas','arrow-right-left', S.pos === 'MF' ? '킬패스 확률 · 찬스를 빅찬스로 키움 · 도움' : '도움 확률 · 킬패스'],['dri','wind','골·도움 보조 · 돌파 성공률'],['def', 'shield-half', S.pos === 'GK' ? '슈퍼세이브 확률 · 실점 감소 · 평점' : S.pos === 'DF' ? '결정적 차단 확률 · 실점 감소 · 경고 줄이기' : S.pos === 'MF' ? '가끔 슈팅 차단 · 경고 줄이기' : '경고 줄이기'],['phy','dumbbell','체력 소모↓ · 회복↑ · 부상 위험↓' + (S.pos === 'DF' ? ' · 헤딩골' : '')],['cond','heart-pulse','선발 · 평점 · 골/도움 · 부상 위험 (매주 피지컬만큼 자연 회복)']].map(([k, i, t]) => `<div><span>${ic(i)} ${k === 'cond' ? '컨디션' : statName(k, S.pos)}</span><small>${t}</small></div>`).join('')}</div>
     <p class="lb-note">훈련으로는 99까지 · 100부터는 <b>한계 돌파 시험</b>을 통과해야 올라요 (최대 ${STAT_MAX})</p>
     ${skCard()}
     <div class="label">${ic('sparkles')} 특성 · 상태</div>
@@ -2401,6 +2422,55 @@ function startChance(ovr){
   p += relFx().start;
   return clamp(p, .05, .97);
 }
+// ===== 경기 엔진: 찬스 모델 =====
+// ① 팀 전력 = 구단 전력 + 내 영향력(능력치·출전 시간·컨디션) ± 홈 2 / 원정 2
+// ② 찬스 수 기대값 = 12.5 × (전력비)^1.4 × 보정(심리전·동료 관계·주장·기술·날씨) → 공격 우위가 찬스를 만든다
+// ③ 찬스마다 종류를 뽑는다: 빅찬스 15%(30%) · 일반 50%(12%) · 하프 35%(5%) — 괄호는 기본 득점 확률, 여기에 (전력비)^1.0
+// ④ 내가 뛰는 시간에만 내 역할이 끼어든다
+//    FW 슈터(결정력) · MF 킬패스(찬스를 한 단계 키움 → 도움) · DF 결정적 차단 · GK 슈퍼세이브
+// ⑤ 골이 될 슈팅도 상대/우리 골키퍼가 12%를 막는다(내가 GK면 내 선방 능력으로 바뀜)
+// 모든 굴림은 킥오프 전에 끝내 저장한다 → 새로고침으로 결과를 바꿀 수 없다
+const ENG_Q = [['big', .15, .30], ['mid', .50, .12], ['half', .35, .05]];
+const ENG_NEXT = {half:'mid', mid:'big', big:'big'};
+const ENG_ROLE = {FW:{shot:.30, kp:.10}, MF:{shot:.12, kp:.22}, DF:{shot:.06, kp:.05}, GK:{shot:0, kp:.01}};
+const ENG_AVGQ = ENG_Q.reduce((a, q) => a + q[1] * q[2], 0);
+const ENG_KEEP = .12; // 평균 골키퍼가 골이 될 슈팅을 막는 비율
+function matchModel(o){ // o: {os 상대 전력, home, mins}
+  const mins = o.mins ?? 90, on = mins > 0, ovr = ovrOf(S.stats, S.pos), Wk = S.week || {}, WXe = WEATHER[Wk.wx ?? 0][4], PF = Wk.psyFx || {}, RX = relFx(), St = S.stats, cf = .75 + S.cond / 400, R = ENG_ROLE[S.pos];
+  const myImpact = on ? (ovr - 62) * .25 * (mins / 90) * (S.cond / 100 + .3) : 0;
+  const ts = CLUB[S.club].s + myImpact + (o.home ? 2 : -2), os = o.os, r = ts / os, wg = WXe.goal || 1;
+  const cUs = 12.5 * Math.pow(r, 1.4) * (PF.team || 1) * RX.team * (on ? 1 + skm('team') + (S.captain ? .02 : 0) : 1) * wg;
+  const cThem = 12.5 * Math.pow(1 / r, 1.4) * wg;
+  const convUs = r, convThem = (1 / r) * (on ? (1 - clamp(skm('conc'), 0, .5)) * (hasT('def') ? .9 : 1) : 1);
+  const dfp = S.pos === 'DF';
+  const fin = clamp((dfp ? St.phy * .5 + St.sho * .3 + St.dri * .2 : St.sho * .65 + St.dri * .2 + St.phy * .15) / 65, .5, 1.8) * cf;  // 결정력
+  const vis = clamp((dfp ? St.pas * .8 + St.dri * .2 : S.pos === 'GK' ? St.pas : St.pas * .65 + St.dri * .35) / 65, .5, 1.8) * cf; // 시야
+  const shotP = on ? R.shot * clamp(.7 + (fin - 1) * .6, .4, 1.5) : 0;                                                   // 이 찬스의 슈터가 나일 확률
+  const finM = fin * (hasT('sho') ? 1.25 : 1) * (PF.goal || 1) * (1 + skm('goal'));                                       // 내 슈팅의 득점 배수
+  const kpP = on ? R.kp * clamp(.7 + (vis - 1) * .7, .4, 1.6) * (hasT('pas') ? 1.3 : 1) * (PF.ast || 1) * RX.ast * (1 + skm('ast')) : 0; // 내 킬패스로 만든 찬스일 확률
+  const kpUp = clamp(.35 + (vis - 1) * .5, .2, .8);                                                                      // 킬패스가 찬스를 한 단계 키울 확률
+  const dSk = St.def * .7 + St.phy * .3, gSk = St.def * .85 + St.phy * .15;
+  const blkP = on && dfp ? clamp(.06 + (dSk - 55) / 160, .02, .32) : on && S.pos === 'MF' ? clamp(.02 + (St.def - 50) / 500, 0, .08) : 0; // 골이 될 슈팅을 몸으로 막을 확률
+  const svP = on && S.pos === 'GK' ? clamp(ENG_KEEP + (gSk - 60) / 100, .03, .5) : ENG_KEEP;                             // 골이 될 슈팅을 막을 확률
+  const qKp = ENG_Q.reduce((a, [t, w, q]) => a + w * (kpUp * ENG_Q.find(x => x[0] === ENG_NEXT[t])[2] + (1 - kpUp) * q), 0);
+  const share = mins / 90, base = cUs * convUs * (1 - ENG_KEEP);
+  const gUs = base * (ENG_AVGQ * (1 - shotP - kpP) + ENG_AVGQ * finM * shotP + qKp * kpP * (1 - shotP)) * (on ? 1 : 1);
+  const tq = cThem * convThem * ENG_AVGQ;
+  const gThem = tq * (1 - blkP) * (1 - svP);
+  return {r, ts, os, cUs, cThem, convUs, convThem, shotP, finM, kpP, kpUp, blkP, svP, gUs, gThem,
+    myG: base * ENG_AVGQ * finM * shotP * share, myA: base * qKp * kpP * share, myKp: base * qKp * kpP * share + cUs * kpP * share * (ENG_Q[0][1] + ENG_Q[1][1] * kpUp) * (1 - ENG_Q[0][2] * convUs * (1 - ENG_KEEP)) * .6, myBlk: tq * blkP * share, mySv: S.pos === 'GK' && on ? tq * (1 - blkP) * svP * share : 0, mySuper: S.pos === 'GK' && on ? cThem * convThem * ENG_Q[0][1] * ENG_Q[0][2] * svP * share : 0};
+}
+const pois = (l, k) => { let f = 1; for (let i = 2; i <= k; i++) f *= i; return Math.exp(-l) * Math.pow(l, k) / f; };
+function winOdds(a, b){ let w = 0, d = 0; for (let i = 0; i <= 10; i++) for (let j = 0; j <= 10; j++){ const pr = pois(a, i) * pois(b, j); if (i > j) w += pr; else if (i === j) d += pr; } return {w, d, l: Math.max(0, 1 - w - d)}; }
+const atLeast1 = x => 1 - Math.exp(-x);
+// 포지션별 핵심 지표 (선발 90분 기준)
+function keyStats(M){
+  const pct = x => Math.round(clamp(x, 0, .99) * 100), cs = pct(Math.exp(-M.gThem));
+  return {FW:[['target', '골 확률', pct(atLeast1(M.myG))], ['arrow-right-left', '도움 확률', pct(atLeast1(M.myA))]],
+    MF:[['arrow-right-left', '킬패스 확률', pct(atLeast1(M.myKp))], ['target', '골 확률', pct(atLeast1(M.myG))]],
+    DF:[['shield-half', '결정적 차단 확률', pct(atLeast1(M.myBlk))], ['shield', '클린시트 확률', cs]],
+    GK:[['hand', '슈퍼세이브 확률', pct(atLeast1(M.mySv))], ['shield', '클린시트 확률', cs]]}[S.pos];
+}
 function simulate(){
   const fxx = curFx(), opp = fxx.opp, home = fxx.home, P = POS[S.pos], ovr = ovrOf(S.stats, S.pos);
   let role = 'bench', from = 91;
@@ -2408,30 +2478,31 @@ function simulate(){
   else if (S.cond >= 15 && Math.random() < startChance(ovr) + (fxx.k === 'C' && fxx.stage !== '결승' ? .1 : 0)){ role = 'start'; from = 0; }
   else if (Math.random() < .72 && S.pos !== 'GK'){ role = 'sub'; from = ri(50, 78); }
   const mins = role === 'start' ? 90 : role === 'sub' ? 90 - from : 0;
-  const myImpact = mins ? (ovr - 62) * .25 * (mins / 90) * (S.cond / 100 + .3) : 0;
-  const ts = CLUB[S.club].s + myImpact + (home ? 2 : -2), os = CLUB[opp].s;
   const Wk = S.week || {}, WXe = WEATHER[Wk.wx ?? 0][4], RFe = REFS[Wk.ref ?? 1][3], PF = Wk.psyFx || {}, RX = relFx();
-  let lt = 1.35 * Math.pow(ts / os, 2.4) * (PF.team || 1) * RX.team * (WXe.goal || 1) * (WXe.swing ? rand(1 - WXe.swing, 1 + WXe.swing) : 1);
-  let lo = 1.35 * Math.pow(os / ts, 2.4) * (WXe.goal || 1) * (WXe.swing ? rand(1 - WXe.swing, 1 + WXe.swing) : 1);
-  if (mins && S.pos === 'DF') lo *= clamp(1 - (S.stats.def * .7 + S.stats.phy * .3 - 55) / 160, .6, 1.1);
-  if (mins && S.pos === 'GK') lo *= clamp(1 - (S.stats.def * .85 + S.stats.phy * .15 - 55) / 130, .55, 1.1);
-  if (mins && hasT('def')) lo *= .9;
-  if (mins){ lo *= 1 - clamp(skm('conc'), 0, .5); lt *= 1 + skm('team') + (S.captain ? .02 : 0); }
-  const tg = Math.min(7, poisson(lt)), og = Math.min(7, poisson(lo));
-  // 골은 슈팅(+드리블·피지컬), 도움은 패스(+드리블)로 정하고, 컨디션이 낮으면 둘 다 떨어진다
-  const St = S.stats, cf = .75 + S.cond / 400;
-  const dfp = S.pos === 'DF'; // 수비수 골은 세트피스 헤더(피지컬) 비중이 크다
-  const gSk = clamp((dfp ? St.phy * .5 + St.sho * .3 + St.dri * .2 : St.sho * .65 + St.dri * .2 + St.phy * .15) / 65, .5, 1.8) * cf;
-  const aSk = clamp((dfp ? St.pas * .8 + St.dri * .2 : S.pos === 'GK' ? St.pas : St.pas * .65 + St.dri * .35) / 65, .5, 1.8) * cf;
+  // 엔진은 '뛰는 동안'의 내 영향력으로 한 번 계산하고, 내 개입은 내가 들어간 뒤의 찬스에만 적용한다
+  const M = matchModel({os: CLUB[opp].s, home, mins}), swing = () => WXe.swing ? rand(1 - WXe.swing, 1 + WXe.swing) : 1;
+  const nUs = Math.min(30, poisson(M.cUs * swing())), nThem = Math.min(30, poisson(M.cThem * swing()));
+  const qType = () => { let x = Math.random(); for (const q of ENG_Q){ if ((x -= q[1]) < 0) return q; } return ENG_Q[2]; };
+  const qOf = t => ENG_Q.find(q => q[0] === t);
   const ev = [];
-  for (let i = 0; i < tg; i++){
-    const m = ri(1, 90), on = m >= from;
-    let who = 'team', ast = false;
-    if (on && Math.random() < P.goalP * gSk * (hasT('sho') ? 1.25 : 1) * (PF.goal || 1) * (1 + skm('goal'))) who = 'me';
-    else if (on && Math.random() < P.astP * aSk * (hasT('pas') ? 1.3 : 1) * (PF.ast || 1) * RX.ast * (1 + skm('ast'))) ast = true;
-    ev.push({m, side:'us', who, ast});
+  for (let i = 0; i < nUs; i++){
+    const m = ri(1, 90), on = mins > 0 && m >= from, x = Math.random();
+    let q = qType(), who = 'team', kp = false;
+    if (on && x < M.shotP) who = 'me';
+    else if (on && x < M.shotP + M.kpP){ kp = true; if (Math.random() < M.kpUp) q = qOf(ENG_NEXT[q[0]]); }
+    const pGoal = clamp(q[2] * M.convUs * (who === 'me' ? M.finM : 1), .01, .9);
+    if (Math.random() < pGoal && Math.random() >= ENG_KEEP) ev.push({m, side:'us', who, ast:kp});
+    else if (kp && q[0] === 'big' && Math.random() < .6) ev.push({m, side:'kpm'});
   }
-  for (let i = 0; i < og; i++) ev.push({m: ri(1, 90), side:'them'});
+  for (let i = 0; i < nThem; i++){
+    const m = ri(1, 90), on = mins > 0 && m >= from, q = qType();
+    if (Math.random() >= clamp(q[2] * M.convThem, .01, .9)) continue; // 빗나간 슈팅
+    if (on && Math.random() < M.blkP){ ev.push({m, side:'block', big: q[0] === 'big'}); continue; }
+    const sv = S.pos === 'GK' && on ? M.svP : ENG_KEEP;
+    if (Math.random() < sv){ if (S.pos === 'GK' && on) ev.push({m, side:'save', big: q[0] === 'big'}); continue; }
+    ev.push({m, side:'them'});
+  }
+  const tg = ev.filter(e => e.side === 'us').length, og = ev.filter(e => e.side === 'them').length;
   if (role === 'sub') ev.push({m: from, side:'sub'});
   const onPitch = () => ri(Math.max(from, 5), 88);
   if (mins && (S.pos === 'FW' || S.pos === 'MF') && Math.random() < .14 * (RFe.pk || 1) * (PF.pk || 1)) ev.push({m: onPitch(), side:'pk', dir: wpick([[.4,0],[.2,1],[.4,2]])[1], roll: Math.random()});
@@ -2445,7 +2516,7 @@ function simulate(){
   return {opp, home, role, from, mins, tg, og, ev, noise: rand(-.7, .7), buff: S.buff, ovr, fx:{k:fxx.k, comp:fxx.comp || '', stage:fxx.stage || ''}, so: fxx.k !== 'L' ? genSo() : null, big: (bigMatch(fxx) || {}).label || '', wx: Wk.wx ?? 0, ref: Wk.ref ?? 1, drain: WXe.drain || 1, psy: (PF.rt || 0) + RX.rt, wq: Math.random(), wqv: rand(62, 99), wd: ri(0, WONDER.length - 1), injR: Math.random()};
 }
 function finalize(p){
-  let tg = p.tg, og = p.og, goals = 0, assists = 0, bonus = 0, first = null, clutchOk = 0, yellow = false;
+  let tg = p.tg, og = p.og, goals = 0, assists = 0, bonus = 0, first = null, clutchOk = 0, yellow = false, saves = 0, blocks = 0, kps = 0;
   const goalMins = [];
   for (const e of p.ev){
     const usGoal = e.side === 'us' || (e.side === 'pk' && e.res) || (e.side === 'chance' && e.kind && e.res);
@@ -2458,6 +2529,11 @@ function finalize(p){
     if (e.side === 'pk'){ if (e.res){ tg++; goals++; } else bonus -= .4; }
     if (e.side === 'opk'){ if (e.res) bonus += .8; else og++; }
     if (e.side === 'post') bonus += .1;
+    if (e.side === 'save'){ saves++; bonus += e.big ? .7 : .45; }
+    if (e.side === 'block'){ blocks++; bonus += e.big ? .55 : .35; }
+    if (e.side === 'kpm'){ kps++; bonus += .15; }
+    if (e.side === 'us' && e.ast) kps++;
+    if (e.side === 'chance' && e.kind === 'pas' && e.res) kps++;
     if (e.side === 'chance' && e.kind){ if (e.res){ tg++; if (e.kind === 'pas') assists++; else goals++; bonus += e.kind === 'dri' ? .5 : .25; } else bonus -= .1; }
     if (e.side === 'yellow') bonus -= .2;
   }
@@ -2471,7 +2547,7 @@ function finalize(p){
     if (p.role === 'sub') rating = 6 + (rating - 6) * .7;
     rating = Math.round(clamp(rating, 3, 10) * 10) / 10;
   }
-  return {opp:p.opp, home:p.home, role:p.role, from:p.from, mins:p.mins, tg, og, goals, assists, res, rating, fx:p.fx, big:p.big || '', goalMins, yellow, clutchOk, comeback: first === 'them' && res === 'W', drain: p.drain || 1, cs: !!(p.mins && og === 0 && (S.pos === 'GK' || S.pos === 'DF')), wq: p.wq ?? 1, wqv: p.wqv || 70, wd: p.wd || 0, injR: p.injR ?? 1, cond0: S.cond};
+  return {opp:p.opp, home:p.home, role:p.role, from:p.from, mins:p.mins, tg, og, goals, assists, res, rating, fx:p.fx, big:p.big || '', goalMins, yellow, clutchOk, comeback: first === 'them' && res === 'W', drain: p.drain || 1, cs: !!(p.mins && og === 0 && (S.pos === 'GK' || S.pos === 'DF')), saves, blocks, kps, wq: p.wq ?? 1, wqv: p.wqv || 70, wd: p.wd || 0, injR: p.injR ?? 1, cond0: S.cond};
 }
 function applyMatch(r){
   const se = S.season; se[r.res]++; se.results[S.round] = r.res;
@@ -2479,6 +2555,7 @@ function applyMatch(r){
   if (r.mins){
     se.apps++; if (r.role === 'start') se.starts++;
     se.goals += r.goals; se.assists += r.assists; se.ratings.push(r.rating); if (r.cs) se.cs++;
+    se.sv = (se.sv || 0) + (r.saves || 0); se.blk = (se.blk || 0) + (r.blocks || 0); se.kp = (se.kp || 0) + (r.kps || 0);
     let dp = r.goals * 2 + r.assists + (r.rating >= 8 ? 3 : r.rating >= 7 ? 1 : r.rating < 5.5 ? -2 : 0) + (r.res === 'W' ? 1 : 0);
     if (r.big) dp *= 2;
     if (dp > 0) dp = Math.round(dp * (1 + skm('pop')));
@@ -2563,6 +2640,9 @@ async function runMatch(){
       } else if (e.side === 'them'){ them++; mom -= .6; setScore(); add(e.m, 'opp', `😣 ${esc(p.opp)} 득점`); if (!fast){ SFX.bad(); await wait(400); } }
       else if (e.side === 'sub') add(e.m, 'me', `🔄 ${esc(S.name)} 교체 투입!`);
       else if (e.side === 'post'){ add(e.m, 'big', `💥 ${esc(S.name)}의 슈팅… 골대를 맞고 나온다!`); if (!fast) await wait(500); }
+      else if (e.side === 'save'){ mom += .3; add(e.m, 'me', e.big ? `🧤 ${esc(S.name)} 슈퍼세이브!!! 1:1 찬스를 막아냈다` : `🧤 ${esc(S.name)}의 동물적인 선방! 골문을 지킨다`); if (!fast){ SFX.good(); if (e.big){ flash('SAVE!'); shake(); } await wait(e.big ? 900 : 500); } }
+      else if (e.side === 'block'){ mom += .25; add(e.m, 'me', e.big ? `🛡️ ${esc(S.name)} 골라인 클리어링!!! 실점 위기를 지웠다` : `🛡️ ${esc(S.name)}의 몸을 던진 태클! 슈팅을 막아냈다`); if (!fast){ SFX.good(); if (e.big) flash('BLOCK!'); await wait(e.big ? 800 : 450); } }
+      else if (e.side === 'kpm'){ add(e.m, 'big', `🎯 ${esc(S.name)}의 킬패스! …하지만 동료의 슈팅이 빗나간다`); if (!fast) await wait(450); }
       else if (e.side === 'yellow') add(e.m, 'opp', `🟨 ${esc(S.name)} 경고`);
       else if (e.side === 'red'){ add(e.m, 'big', `🟥 ${esc(p.opp)} 선수 퇴장!`); mom += .3; }
       else if (e.side === 'var'){
@@ -2606,7 +2686,7 @@ async function runMatch(){
   $('#after').innerHTML = `<div class="panel res-card stack" style="align-items:center">
     <div class="res-cb" data-cpose="${r.role === 'injured' ? 'idle' : r.res === 'W' ? (r.goals ? 'jump' : 'clap') : r.res === 'D' ? 'clap' : 'idle'}">${meSvg()}${r.res === 'W' && r.mins ? '<i class="spark s1"></i><i class="spark s2"></i><i class="spark s3"></i>' : r.res === 'L' ? '<i class="sweat"></i>' : ''}</div>
     ${r.rating != null ? `<div class="label">MY RATING</div><div class="rating" style="${rc}" id="rt">0.0</div>
-      <div style="font-weight:900">${r.goals ? `⚽ ${r.goals}골 ` : ''}${r.assists ? `🅰️ ${r.assists}도움 ` : ''}${r.cs ? '🧤 클린시트 ' : ''}${!r.goals && !r.assists && !r.cs ? `${r.mins}분 출전` : ''}</div>`
+      <div style="font-weight:900">${r.goals ? `⚽ ${r.goals}골 ` : ''}${r.assists ? `🅰️ ${r.assists}도움 ` : ''}${r.saves ? `🧤 슈퍼세이브 ${r.saves} ` : ''}${r.blocks ? `🛡️ 결정적 차단 ${r.blocks} ` : ''}${S.pos === 'MF' && r.kps ? `🎯 킬패스 ${r.kps} ` : ''}${r.cs ? '🧱 클린시트 ' : ''}${!r.goals && !r.assists && !r.cs && !r.saves && !r.blocks && !(S.pos === 'MF' && r.kps) ? `${r.mins}분 출전` : ''}</div>`
       : `<div class="label">${r.role === 'injured' ? '부상 회복 중' : '출전하지 못했다'}</div><div style="font-size:48px">${r.role === 'injured' ? '🤕' : '🪑'}</div>`}
     ${L.mis ? `<div class="mis-res ${L.mis.ok ? 'ok' : L.mis.ok === false ? 'no' : ''}">${ic('target')} <span>${DIFF[MISSION[L.mis.k].d][0]} 미션${L.mis.lucky ? ' (럭키 x2)' : ''} · ${MISSION[L.mis.k].n}</span> <b>${L.mis.ok ? '성공!' : L.mis.ok === false ? '실패' : '출전 못 해 무효'}</b></div>` : ''}
     ${L.wonder ? `<div class="mis-res wonder">${ic('sparkles')} <span>원더골 · ${esc(L.wonder)}</span> <b>푸스카스상 후보!</b></div>` : ''}
@@ -4497,6 +4577,9 @@ const MISSION = {
   r7:{n:'평점 7.0 이상', d:2, ok: r => r.rating >= 7},
   win:{n:'팀 승리', d:2, ok: r => r.res === 'W'},
   clutch:{n:'결정적 순간 성공', d:2, pos:'FW MF DF', ok: r => r.clutchOk > 0},
+  kp:{n:'킬패스 성공 (도움 또는 빅찬스)', d:2, pos:'MF', ok: r => (r.kps || 0) >= 1},
+  block:{n:'결정적 차단', d:2, pos:'DF', ok: r => (r.blocks || 0) >= 1},
+  save:{n:'슈퍼세이브', d:2, pos:'GK', ok: r => (r.saves || 0) >= 1},
   // 어려움
   brace:{n:'멀티골', d:3, pos:'FW MF', ok: r => r.goals >= 2},
   point2:{n:'공격 포인트 2개', d:3, pos:'FW MF', ok: r => r.goals + r.assists >= 2},
@@ -4505,6 +4588,9 @@ const MISSION = {
   firstHalf:{n:'전반전 안에 골', d:3, pos:'FW MF', ok: r => (r.goalMins || []).some(m => m <= 45)},
   late:{n:'75분 이후 골', d:3, pos:'FW MF', ok: r => (r.goalMins || []).some(m => m >= 75)},
   cleanWin:{n:'무실점 승리', d:3, pos:'DF GK', ok: r => !!r.cs && r.res === 'W'},
+  kp2:{n:'킬패스 2회', d:3, pos:'MF', ok: r => (r.kps || 0) >= 2},
+  block2:{n:'결정적 차단 2회', d:3, pos:'DF', ok: r => (r.blocks || 0) >= 2},
+  save2:{n:'슈퍼세이브 2회', d:3, pos:'GK', ok: r => (r.saves || 0) >= 2},
   comeback:{n:'선제골 내주고 역전승', d:3, ok: r => !!r.comeback},
   // 전설 (가끔 어려움 자리에 등장)
   hat:{n:'해트트릭', d:4, pos:'FW', ok: r => r.goals >= 3},
