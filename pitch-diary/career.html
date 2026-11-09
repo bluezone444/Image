@@ -3,27 +3,29 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; font-src 'self'; img-src data:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <title>Pitch Career</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Jua&family=Noto+Sans+KR:wght@400;700;900&display=swap">
 <style>
 /* 레이아웃 컨셉: 야간 경기장 위에 떠 있는 세로형 게임 HUD — 상단 자원 바, 가운데 장면, 하단 도크 */
+/* Pretendard (SIL Open Font License 1.1, fonts/LICENSE-Pretendard.txt) */
+@font-face{font-family:"Pretendard Variable";src:url(fonts/PretendardVariable.woff2) format("woff2-variations"),url(fonts/PretendardVariable.woff2) format("woff2");font-weight:45 920;font-style:normal;font-display:swap}
+@font-face{font-family:"Pretendard Display";src:url(fonts/Pretendard-ExtraBold.woff2) format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
 :root{
   --night:#0a0f1f; --night-2:#101833; --panel:#141c39; --panel-2:#1c2650; --edge:#2a3672;
   --ink:#f2f4ff; --muted:#9aa5d1; --dim:#6b75a3;
   --gold:#ffc83d; --gold-d:#b98200; --hot:#ff4d6d; --hot-d:#a8203b; --cyan:#3dd6ff; --cyan-d:#157a99;
   --turf:#22c55e; --turf-d:#0f7a35; --up:#4ade80; --down:#ff6b81; --paper:#f6f0dc; --paper-ink:#2a2216;
-  --f-display:"Black Han Sans","Noto Sans KR","Apple SD Gothic Neo",sans-serif;
-  --f-fun:"Jua","Noto Sans KR",sans-serif;
-  --f-body:"Noto Sans KR",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-display:"Pretendard Display","Pretendard Variable",-apple-system,"Apple SD Gothic Neo",sans-serif;
+  --f-fun:"Pretendard Variable",-apple-system,"Apple SD Gothic Neo",sans-serif;
+  --f-body:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%}
-body{background:var(--night);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3,h4,.disp{letter-spacing:-.01em}
+body{letter-spacing:-.005em;background:var(--night);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 button,input{font:inherit;color:inherit}
 button{-webkit-tap-highlight-color:transparent;cursor:pointer}
 :focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
@@ -3221,7 +3223,7 @@ function crestSVG(club){
     <g clip-path="url(#${id})"><rect width="100" height="100" fill="${c1}"/>${pt}</g>
     <path d="${sh}" fill="none" stroke="${rim}" stroke-width="5"/>
     <circle cx="50" cy="52" r="${ini.length > 1 ? 25 : 21}" fill="${c1}" stroke="${c2}" stroke-width="3"/>
-    <text x="50" y="${ini.length > 1 ? 61 : 63}" text-anchor="middle" font-family="Black Han Sans, sans-serif" font-size="${ini.length > 1 ? 22 : 30}" fill="${c2}">${esc(ini)}</text>
+    <text x="50" y="${ini.length > 1 ? 61 : 63}" text-anchor="middle" font-family="Pretendard Display, Pretendard Variable, sans-serif" font-size="${ini.length > 1 ? 22 : 30}" fill="${c2}">${esc(ini)}</text>
     ${C.s >= 88 ? `<path d="M50 6 l3 7 7 .5-5.5 4.5 2 7-6.5-4-6.5 4 2-7-5.5-4.5 7-.5z" fill="#ffc83d" stroke="#6b3f00" stroke-width="1"/>` : ''}</svg>`;
 }
 
@@ -3359,11 +3361,11 @@ function chibiSVG(o){
       <path d="${torso}" fill="${kit}"/>
       <path d="M${100 - sx + 4} 140 Q${100 - sx + 10} 160 ${100 - sx + 5} 180" stroke="${kitD}" stroke-width="3" fill="none" opacity=".35"/><path d="M${100 + sx - 4} 140 Q${100 + sx - 10} 160 ${100 + sx - 5} 180" stroke="${kitD}" stroke-width="3" fill="none" opacity=".35"/>
       ${back ? `<path d="M88 121 Q100 127 112 121" stroke="${trim}" stroke-width="3.2" fill="none" stroke-linecap="round"/>
-        ${nm ? `<text x="100" y="142" text-anchor="middle" font-size="${nfs.toFixed(1)}" font-weight="900" fill="${trim}" font-family="'Black Han Sans','Noto Sans KR',sans-serif">${esc(nm)}</text>` : ''}
-        <text x="100" y="${nm ? 172 : 166}" text-anchor="middle" font-size="28" font-weight="900" fill="${trim}" font-family="'Black Han Sans','Noto Sans KR',sans-serif">${num}</text>`
+        ${nm ? `<text x="100" y="142" text-anchor="middle" font-size="${nfs.toFixed(1)}" font-weight="900" fill="${trim}" font-family="'Pretendard Display','Pretendard Variable',sans-serif">${esc(nm)}</text>` : ''}
+        <text x="100" y="${nm ? 172 : 166}" text-anchor="middle" font-size="28" font-weight="900" fill="${trim}" font-family="'Pretendard Display','Pretendard Variable',sans-serif">${num}</text>`
       : `<path d="M90 120 L100 132 L110 120" stroke="${trim}" stroke-width="3.2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
         <circle cx="${100 + sx * .45}" cy="141" r="5.5" fill="${trim}" opacity=".9"/><circle cx="${100 + sx * .45}" cy="141" r="3.2" fill="${kit}"/>
-        <text x="100" y="166" text-anchor="middle" font-size="16" font-weight="900" fill="${trim}" opacity=".95" font-family="'Black Han Sans','Noto Sans KR',sans-serif">${num}</text>`}
+        <text x="100" y="166" text-anchor="middle" font-size="16" font-weight="900" fill="${trim}" opacity=".95" font-family="'Pretendard Display','Pretendard Variable',sans-serif">${num}</text>`}
       ${eq.neck === 'chain' && !back ? `<path d="M88 121 Q100 140 112 121" stroke="#ffc83d" stroke-width="2.6" fill="none" stroke-dasharray="2.4 1.4"/><circle cx="100" cy="132" r="3.4" fill="#ffc83d" stroke="#b98200" stroke-width="1"/>` : ''}
       ${arm(-1)}${arm(1)}
       <g class="head">
