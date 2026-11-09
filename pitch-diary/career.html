@@ -1348,6 +1348,16 @@ table.standings{min-width:0}
 .furn small .fsz{display:block;font-style:normal;color:var(--dim);font-size:10px;margin-top:2px}
 @media (prefers-reduced-motion:reduce){.iso-me{transition:none}.iso .fi3.pk,.iso .ghost polygon,.iso .ws,.iso .fi3.drop{animation:none}}
 .home-strip{border-color:rgba(255,200,61,.55)!important} .home-strip > .ico:first-child{color:var(--gold)}
+.look-top{display:flex;gap:8px;align-items:center}
+.look-tabs{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:4px;padding:4px;border-radius:12px;background:rgba(0,0,0,.25);border:1px solid var(--edge)}
+.look-tabs button{display:flex;align-items:center;justify-content:center;gap:4px;border:0;border-radius:9px;padding:8px 4px;background:transparent;color:var(--muted);font:700 13px var(--f-body);cursor:pointer;word-break:keep-all}
+.look-tabs button .ico{width:15px;height:15px;flex:none}
+.look-tabs button[aria-selected="true"]{background:var(--cyan);color:#05202b}
+.look-dice{flex:none;width:44px;height:44px;border-radius:12px;border:2px solid var(--edge);background:var(--panel-2);color:var(--gold);display:grid;place-items:center;cursor:pointer}
+.look-dice .ico{width:22px;height:22px} .look-dice.roll .ico{animation:diceRoll .5s ease}
+@keyframes diceRoll{50%{transform:rotate(200deg) scale(1.2)}100%{transform:rotate(360deg)}}
+.look-pane{display:flex;flex-direction:column;gap:10px}
+.look-pane[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -1737,7 +1747,7 @@ function newCareer(name, pos, club, look, nat){
   const st = {}; STAT_KEYS.forEach(k => st[k] = clamp(POS[pos].base[k] + ri(-3, 3), 1, 99));
   S = {v:2, name, pos, club, nat: NATS[nat] ? nat : 'kor', captain:false, age:19, year:new Date().getFullYear() + 1, round:0, stats:st, pop:8, trust:45, cond:100, salary:3000, earn:500, injury:0, fast:false,
     schedule:makeSeason(club), out:{}, trophies:[], scout:{}, window:null, season:freshSeason(), history:[], news:[], phase:'week', last:null, interview:null, nego:null, pending:null,
-    best:{rating:0, salary:3000}, traits:[], buff:0, streak:{t:'', n:0}, media:0, toneHist:[], week:null, prev:null, rival:pick(RIVALS), mood:0, look: look || {...DEFAULT_LOOK}, lookSet:true, xp:50, items:[], equip:{}, ach:[], rec:{}, mgrs:{}, sp:1, skills:{}, stars:genStars(), honors:[], awardHist:[], v0:0};
+    best:{rating:0, salary:3000}, traits:[], buff:0, streak:{t:'', n:0}, media:0, toneHist:[], week:null, prev:null, rival:pick(RIVALS), mood:0, look: look || {...DEFAULT_LOOK}, lookSet:true, look2:true, xp:50, items:[], equip:{}, ach:[], rec:{}, mgrs:{}, sp:1, skills:{}, stars:genStars(), honors:[], awardHist:[], v0:0};
   S.season.obj = makeObjectives();
   S.home = cleanHome(null); S.inc = 500; S.wl = []; wlPush();
   addNews(`[오피셜] ${club}, 19세 유망주 ${name} 영입… 연봉 ${money(3000)} · 계약금 ${money(500)}`);
@@ -1777,7 +1787,7 @@ function load(slot = curSlot){
     const r = deepClean(JSON.parse(lsGet(slotKey(slot)) || 'null'));
     if (!r || (r.v !== 1 && r.v !== 2) || !POS[r.pos] || !CLUB[r.club] || typeof r.name !== 'string') return null;
     r.v = 2; r.name = r.name.slice(0, 12) || '선수';
-    r.lookSet = !!r.look && r.lookSet !== false; r.look = cleanLook(r.look); r.xp = int(r.xp, 0, 1e7, 0);
+    r.lookSet = !!r.look && r.lookSet !== false; r.look2 = !!r.look2; r.look = cleanLook(r.look); r.xp = int(r.xp, 0, 1e7, 0);
     r.items = Array.isArray(r.items) ? [...new Set(r.items.filter(i => SHOP.some(x => x.id === i)))] : [];
     if (!r.captain && Array.isArray(r.items) && r.items.includes('captain')){ r.items = r.items.filter(i => i !== 'captain'); r.xp = (Number(r.xp) || 0) + 5000; } // 예전에 산 주장 완장은 환불 (이제 주장 선임 시 지급)
     r.equip = Object.fromEntries(Object.entries(r.equip && typeof r.equip === 'object' ? r.equip : {}).filter(([slot, id]) => r.items.includes(id) && SHOP.find(x => x.id === id).slot === slot));
@@ -2170,7 +2180,7 @@ function playerTab(){
       <div class="v-poses">${[['idle','기본'],['run','달리기'],['clap','박수'],['jump','점프']].map(([k, n]) => `<button type="button" class="opt ${k === 'idle' ? 'on' : ''}" data-pose="${k}">${n}</button>`).join('')}</div></div>
     <div class="small muted" style="text-align:center;margin-top:-6px">피지컬 ${S.stats.phy} · ${S.stats.phy >= 75 ? '탄탄한 근육질 체형' : S.stats.phy >= 55 ? '균형 잡힌 체형' : '호리호리한 체형'} · 캐릭터를 탭하면 뒷모습</div>
     <button type="button" class="panel shop-link" id="toShop">${ic('shopping-bag')}<div><b>상점 · 꾸미기</b><small>보유 경험치 ${(S.xp || 0)} XP · 악세사리와 소모품</small></div>${ic('chevron-right')}</button>
-    ${S.lookSet ? '' : `<button class="btn cyan block" id="firstLook" type="button">${ic('user-round')} 외모 설정하기 (무료 1회)</button>`}
+    ${!S.lookSet ? `<button class="btn cyan block" id="firstLook" type="button">${ic('user-round')} 외모 설정하기 (무료 1회)</button>` : !S.look2 ? `<button class="btn cyan block" id="renewLook" type="button">${ic('sparkles')} 새로 나온 얼굴형·표정·헤어로 꾸미기 (무료 1회)</button>` : ''}
     <div class="label">${ic('user-round')} 선수 카드</div>
     <div class="pcard tier-${tier}">
       <div class="top"><div><div class="ovr">${ovr}</div><span class="pp">${S.pos}</span></div>${crest(S.club, 'lg')}</div>
@@ -2208,6 +2218,7 @@ function bindPlayer(){
   const v = mountViewer($('#viewer'));
   root.querySelectorAll('[data-pose]').forEach(b => b.onclick = () => { if (v) v.pose(b.dataset.pose); root.querySelectorAll('[data-pose]').forEach(x => x.classList.toggle('on', x === b)); });
   const f = $('#firstLook'); if (f) f.onclick = () => openLookEditor('first');
+  const rl = $('#renewLook'); if (rl) rl.onclick = () => openLookEditor('renew');
   const tv = $('#toValue'); if (tv) tv.onclick = goValue;
   const ts = $('#toShop'); if (ts) ts.onclick = () => { UI.tab = 'shop'; renderHub(); };
   const tk = $('#toSkills'); if (tk) tk.onclick = () => { UI.tab = 'skills'; renderHub(); };
@@ -3405,17 +3416,23 @@ function crestSVG(club){
 
 const LOOK = {
   skin:['#f6d7bd','#e9bf9a','#d6a27a','#b07a52','#8a5a3a','#5e3b26'],
-  hair:{bald:'삭발', buzz:'버즈컷', short:'숏컷', twoblock:'투블럭', curly:'곱슬', long:'장발', mohawk:'모히칸', bun:'묶음 머리'},
-  hairColor:['#1b1512','#4a2f1d','#8b5a2b','#d9b25b','#c9c9c9','#b3322a','#2f5fd0'],
+  hair:{bald:'삭발', buzz:'버즈컷', short:'숏컷', side:'가르마', slick:'슬릭백', twoblock:'투블럭', spiky:'스파이크', bowl:'바가지', curly:'곱슬', wavy:'웨이브', afro:'아프로', long:'장발', pony:'포니테일', dread:'드레드', mohawk:'모히칸', bun:'묶음 머리'},
+  hairColor:['#1b1512','#4a2f1d','#8b5a2b','#d9b25b','#c9c9c9','#b3322a','#2f5fd0','#e9e1cf','#e06aa3','#2fa88f'],
+  face:{round:'둥근형', oval:'계란형', slim:'갸름형', square:'각진형', wide:'넓은형'},
+  eyeS:{round:'동그란 눈', big:'큰 눈', dot:'점 눈', smile:'웃는 눈', calm:'또렷한 눈', sharp:'날카로운 눈', sleepy:'반쯤 감은 눈'},
+  brow:{soft:'곡선', straight:'일자', thick:'굵은', thin:'얇은', angry:'치켜뜬', worried:'처진'},
+  mouth:{smile:'미소', grin:'활짝', smirk:'한쪽 미소', cat:'고양이 입', flat:'일자', o:'오므린', frown:'시무룩', teeth:'이 드러냄'},
+  mark:{blush:'볼터치', none:'없음', freckles:'주근깨', mole:'점', bandage:'반창고', tired:'다크서클', scar:'흉터'},
   eyes:{brown:'갈색', black:'검정', blue:'파랑', green:'초록', gray:'회색'},
   eyeColor:{brown:'#4a2c18', black:'#120d0e', blue:'#2f6fd0', green:'#2f8a4f', gray:'#7a8494'},
   beard:{none:'없음', stubble:'수염 자국', goatee:'염소수염', full:'덥수룩', mustache:'콧수염'},
 };
-const DEFAULT_LOOK = {skin:1, hair:'short', hairColor:0, eyes:'brown', beard:'none'};
+const DEFAULT_LOOK = {skin:1, hair:'short', hairColor:0, eyes:'brown', beard:'none', face:'round', eyeS:'round', brow:'soft', mouth:'smile', mark:'blush'};
+const LOOK_PICK = ['face','eyeS','brow','mouth','mark'];
 function cleanLook(l){
   l = l && typeof l === 'object' ? l : {};
   return {skin:int(l.skin, 0, LOOK.skin.length - 1, 1), hair: LOOK.hair[l.hair] ? l.hair : 'short', hairColor:int(l.hairColor, 0, LOOK.hairColor.length - 1, 0),
-    eyes: LOOK.eyes[l.eyes] ? l.eyes : 'brown', beard: LOOK.beard[l.beard] ? l.beard : 'none'};
+    eyes: LOOK.eyes[l.eyes] ? l.eyes : 'brown', beard: LOOK.beard[l.beard] ? l.beard : 'none', ...Object.fromEntries(LOOK_PICK.map(k => [k, LOOK[k][l[k]] ? l[k] : DEFAULT_LOOK[k]]))};
 }
 const SHOP = [
   {id:'band', slot:'head', i:ic('sticker'), n:'헤어밴드', p:900, d:'머리카락을 잡아주는 클럽 컬러 밴드'},
@@ -3437,6 +3454,7 @@ const CONSUMABLES = [
   {id:'pr', i:ic('megaphone'), n:'SNS 홍보 패키지', p:500, d:'인기도 +6', use: () => applyFx({pop:6})},
   {id:'lesson', i:ic('graduation-cap'), n:'개인 레슨', p:1200, d:'주 능력치 +1', use: () => applyFx({best:1}), dyn: () => { const k = growStat(); return k ? `${statName(k, S.pos)} +1${k !== mainStat() ? ` (${statName(mainStat(), S.pos)}은 한계 도달)` : ''}` : null; }},
   {id:'barber', i:ic('scissors'), n:'헤어숍 이용권', p:400, d:'헤어·머리색·수염 바꾸기', use: () => { setTimeout(() => openLookEditor('barber'), 50); return []; }},
+  {id:'stylist', i:ic('smile'), n:'스타일리스트', p:500, d:'눈매·눈동자·눈썹·입·얼굴 포인트 바꾸기', use: () => { setTimeout(() => openLookEditor('stylist'), 50); return []; }},
 ];
 function gainXp(n){ if (!n) return null; if (n > 0) n = n * (1 + skm('xp')); S.xp = Math.max(0, (S.xp || 0) + Math.round(n)); return ['XP', n, `🔷 +${Math.round(n)} XP`]; }
 
@@ -3459,6 +3477,14 @@ function hairFront(style, c, d){
     case 'curly': { let s = ''; for (let i = 0; i <= 10; i++){ const a = Math.PI * (1.05 + i * .09), x = 100 + Math.cos(a) * 44, y = 74 + Math.sin(a) * 42; s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${i % 2 ? 12 : 13}" fill="${c}"/>`; } for (let i = 0; i < 5; i++) s += `<circle cx="${70 + i * 15}" cy="${40 + (i % 2) * 5}" r="12" fill="${c}"/>`; for (let i = 0; i < 6; i++) s += `<circle cx="${66 + i * 13.5}" cy="${54 + (i % 2) * 4}" r="${i % 2 ? 6 : 7}" fill="${c}"/><circle cx="${68 + i * 13.5}" cy="${52 + (i % 2) * 4}" r="2.4" fill="${shade(c, 1.6)}" opacity=".5"/>`; return ['', s]; }
     case 'long': return [P('M50 84 Q44 30 100 26 Q156 30 150 84 L154 132 Q140 140 128 128 L72 128 Q60 140 46 132Z', d), P('M52 100 Q46 32 100 28 Q154 32 148 100 Q144 70 132 56 Q120 62 102 52 Q100 60 98 52 Q80 62 68 56 Q56 70 52 100Z') + `<path d="M74 38 Q100 28 128 40" stroke="${shade(c, 1.55)}" stroke-width="3" fill="none" opacity=".45" stroke-linecap="round"/>`];
     case 'mohawk': return ['', `<path d="M56 78 Q52 32 100 30 Q148 32 144 78 Q138 58 100 54 Q62 58 56 78Z" fill="${c}" opacity=".45"/>` + P('M86 54 L84 30 L90 34 L92 14 L98 26 L102 10 L106 26 L110 16 L112 34 L117 30 L114 54 Q100 48 86 54Z')];
+    case 'side': return ['', P(cap) + P('M57 74 Q56 36 96 31 Q140 30 144 66 Q134 48 116 46 Q96 46 80 58 Q70 64 64 76 Q66 58 82 48 Q70 52 57 74Z') + `<path d="M84 33 Q90 40 88 48" stroke="${d}" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M98 36 Q122 34 136 48" stroke="${shade(c, 1.55)}" stroke-width="3" fill="none" opacity=".5" stroke-linecap="round"/>`];
+    case 'slick': return ['', P('M56 76 Q52 30 100 28 Q148 30 144 76 Q140 56 126 50 Q100 42 74 50 Q60 56 56 76Z') + `<path d="M68 48 Q100 34 134 48 M72 41 Q100 31 128 41 M80 35 Q100 29 120 35" stroke="${shade(c, 1.6)}" stroke-width="2" fill="none" opacity=".45" stroke-linecap="round"/>`];
+    case 'spiky': return ['', P('M56 76 L57 52 L50 46 L64 43 L62 30 L77 35 L78 20 L91 30 L100 14 L109 30 L122 20 L123 35 L138 30 L136 43 L150 46 L143 52 L144 76 Q136 56 100 52 Q64 56 56 76Z') + `<path d="M80 36 L86 46 M100 26 L100 42 M120 36 L114 46" stroke="${shade(c, 1.6)}" stroke-width="2.2" fill="none" opacity=".45" stroke-linecap="round"/>`];
+    case 'bowl': return ['', P('M53 84 Q48 28 100 26 Q152 28 147 84 L146 64 Q100 59 54 64Z') + `<path d="M58 64 Q100 59 142 64" stroke="${d}" stroke-width="2" fill="none"/><path d="M70 40 Q100 30 130 40" stroke="${shade(c, 1.55)}" stroke-width="3" fill="none" opacity=".45" stroke-linecap="round"/>`];
+    case 'wavy': return [P('M50 92 Q44 30 100 26 Q156 30 150 92 Q156 106 147 114 Q140 102 143 94 L57 94 Q60 102 53 114 Q44 106 50 92Z', d), P('M53 88 Q48 30 100 28 Q152 30 147 88 Q145 70 137 62 Q131 73 121 60 Q113 71 103 58 Q95 71 85 58 Q76 71 69 60 Q59 69 53 88Z') + `<path d="M72 40 Q100 30 128 40" stroke="${shade(c, 1.55)}" stroke-width="3" fill="none" opacity=".45" stroke-linecap="round"/>`];
+    case 'afro': { let s = ''; for (let i = 0; i < 9; i++) s += `<circle cx="${62 + i * 9.5}" cy="${50 + (i % 2) * 4}" r="${i % 2 ? 8 : 9}" fill="${c}"/>`; return [`<circle cx="100" cy="58" r="60" fill="${c}"/><circle cx="76" cy="30" r="10" fill="${shade(c, 1.35)}" opacity=".35"/>`, P('M54 76 Q52 40 100 36 Q148 40 146 76 Q140 56 100 54 Q60 56 54 76Z') + s]; }
+    case 'pony': return [P('M134 58 Q172 62 166 108 Q163 122 154 128 Q160 100 142 84Z', d) + `<rect x="132" y="56" width="10" height="12" rx="4" fill="${shade(c, .55)}" transform="rotate(-25 137 62)"/>`, P('M56 78 Q52 30 100 28 Q148 30 144 78 Q140 58 126 52 Q100 44 74 52 Q60 58 56 78Z') + `<path d="M70 46 Q100 33 132 46" stroke="${shade(c, 1.6)}" stroke-width="2.4" fill="none" opacity=".45" stroke-linecap="round"/>`];
+    case 'dread': { let back = '', front = P('M55 80 Q50 30 100 28 Q150 30 145 80 Q138 58 100 52 Q62 58 55 80Z'); for (let i = 0; i < 7; i++){ const x = 50 + i * 16.7; back += `<rect x="${x - 4.5}" y="60" width="9" height="${66 + (i % 3) * 8}" rx="4.5" fill="${i % 2 ? c : d}"/>`; } for (let i = 0; i < 6; i++) front += `<path d="M${66 + i * 13.6} 40 Q${70 + i * 13.6} 50 ${64 + i * 13.6} 60" stroke="${d}" stroke-width="2" fill="none" opacity=".7"/>`; return [back, front]; }
     case 'bun': return ['', P('M56 80 Q50 32 100 30 Q150 32 144 80 Q136 56 100 50 Q64 56 56 80Z') + `<circle cx="100" cy="24" r="14" fill="${c}"/><rect x="90" y="34" width="20" height="5" rx="2.5" fill="${shade(c, .6)}"/><path d="M70 44 Q100 34 130 44" stroke="${shade(c, 1.55)}" stroke-width="3" fill="none" opacity=".45" stroke-linecap="round"/>`];
   }
   return ['', ''];
@@ -3470,7 +3496,69 @@ function hairBack(style, c){
   if (style === 'curly'){ let s = full; for (let i = 0; i < 14; i++){ const a = Math.PI * (.95 + i * .08), x = 100 + Math.cos(a) * 44, y = 76 + Math.sin(a) * 44; s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="12" fill="${c}"/>`; } return s + `<circle cx="80" cy="100" r="12" fill="${c}"/><circle cx="100" cy="106" r="12" fill="${c}"/><circle cx="120" cy="100" r="12" fill="${c}"/>`; }
   if (style === 'mohawk') return full + `<path d="M88 112 L86 30 L92 34 L94 12 L100 26 L106 12 L108 34 L114 30 L112 112Z" fill="${c}"/>`;
   if (style === 'bun') return full + `<circle cx="100" cy="26" r="14" fill="${c}"/><rect x="90" y="36" width="20" height="5" rx="2.5" fill="${shade(c, .6)}"/>`;
+  if (style === 'afro') return `<circle cx="100" cy="64" r="60" fill="${c}"/>`;
+  if (style === 'wavy') return `<path d="M50 90 Q44 28 100 26 Q156 28 150 90 Q156 108 146 118 Q130 124 100 122 Q70 124 54 118 Q44 108 50 90Z" fill="${c}"/>`;
+  if (style === 'pony') return full + `<path d="M92 112 Q86 138 100 156 Q114 138 108 112Z" fill="${c}"/><rect x="92" y="106" width="16" height="8" rx="4" fill="${shade(c, .55)}"/>`;
+  if (style === 'dread'){ let s2 = full; for (let i = 0; i < 7; i++) s2 += `<rect x="${55.5 + i * 13.5}" y="70" width="10" height="${66 + (i % 3) * 8}" rx="5" fill="${i % 2 ? c : shade(c, .78)}"/>`; return s2; }
   return full;
+}
+// 얼굴형: 머리 윤곽 · 귀 위치
+const FACE_EAR = {round:44, oval:42, slim:41, square:45, wide:48};
+function headShape(f, skin){
+  const d = {oval:'M100 39 C127 39 143 58 143 82 C143 108 124 128 100 128 C76 128 57 108 57 82 C57 58 73 39 100 39Z',
+    slim:'M100 39 C128 39 143 57 142 80 C141 98 131 113 114 124 Q100 134 86 124 C69 113 59 98 58 80 C57 57 72 39 100 39Z',
+    square:'M100 39 C132 39 146 54 146 78 L145 109 Q144 124 127 126 L73 126 Q56 124 55 109 L54 78 C54 54 68 39 100 39Z'}[f];
+  if (d) return `<path d="${d}" fill="${skin}"/>`;
+  return f === 'wide' ? `<ellipse cx="100" cy="84" rx="49" ry="41" fill="${skin}"/>` : `<ellipse cx="100" cy="82" rx="45" ry="43" fill="${skin}"/>`;
+}
+// 눈매 (sd: -1 왼쪽 눈, 1 오른쪽 눈 → 바깥쪽 방향)
+function eyeSvg(t, x, sd, ec, skin){
+  const K = '#1d1420', o = x + sd * 9, i = x - sd * 9;
+  switch (t){
+    case 'big': return `<ellipse cx="${x}" cy="88" rx="9.6" ry="11.6" fill="${K}"/><ellipse cx="${x}" cy="90" rx="7.6" ry="9" fill="${ec}"/><ellipse cx="${x}" cy="91.5" rx="4.2" ry="5" fill="#140d12"/><circle cx="${x + 3}" cy="84" r="4" fill="#fff"/><circle cx="${x - 3.2}" cy="94" r="2" fill="#fff"/><circle cx="${x + 4}" cy="93" r="1.1" fill="#fff"/>`;
+    case 'dot': return `<ellipse cx="${x}" cy="89" rx="4.2" ry="5.2" fill="${K}"/><circle cx="${x + 1.4}" cy="87.2" r="1.4" fill="#fff"/>`;
+    case 'smile': return `<path d="M${x - 8} 91 Q${x} 81 ${x + 8} 91" stroke="${K}" stroke-width="3.4" fill="none" stroke-linecap="round"/>`;
+    case 'sleepy': return `<ellipse cx="${x}" cy="89" rx="7.6" ry="8.4" fill="${K}"/><ellipse cx="${x}" cy="91" rx="5.8" ry="6.4" fill="${ec}"/><ellipse cx="${x}" cy="92" rx="3" ry="3.6" fill="#140d12"/><path d="M${x - 10} 78 L${x + 10} 78 L${x + 10} 89.5 Q${x} 92.5 ${x - 10} 89.5Z" fill="${skin}"/><path d="M${x - 8.6} 89.5 Q${x} 92.8 ${x + 8.6} 89.5" stroke="${K}" stroke-width="2.8" fill="none" stroke-linecap="round"/>`;
+    case 'sharp': return `<path d="M${o} 85 Q${x - sd * 1} 80 ${i} 91.5 Q${x} 96 ${o} 85Z" fill="${K}"/><circle cx="${x - sd * .8}" cy="89.2" r="4.1" fill="${ec}"/><circle cx="${x - sd * .8}" cy="89.4" r="2" fill="#140d12"/><circle cx="${x + 1}" cy="87.4" r="1.2" fill="#fff"/><path d="M${o + sd * 1.5} 84 Q${x} 79 ${i - sd * .5} 91" stroke="${K}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+    case 'calm': return `<path d="M${x - 10} 89 Q${x} 79.5 ${x + 10} 89 Q${x} 97 ${x - 10} 89Z" fill="${K}"/><ellipse cx="${x}" cy="89.6" rx="5.2" ry="5.8" fill="${ec}"/><circle cx="${x}" cy="90" r="2.6" fill="#140d12"/><circle cx="${x + 2.2}" cy="87" r="1.8" fill="#fff"/><path d="M${i - sd * .5} 89.5 Q${x} 78 ${o + sd * 2} 87.5" stroke="${K}" stroke-width="2.8" fill="none" stroke-linecap="round"/><path d="M${o + sd * 1} 87.8 l${sd * 3} -2" stroke="${K}" stroke-width="2" stroke-linecap="round"/>`;
+  }
+  return `<ellipse cx="${x}" cy="88" rx="8" ry="10" fill="${K}"/><ellipse cx="${x}" cy="90" rx="6.2" ry="7.4" fill="${ec}"/><ellipse cx="${x}" cy="91" rx="3.4" ry="4.2" fill="#140d12"/><circle cx="${x + 2.8}" cy="84.5" r="3.2" fill="#fff"/><circle cx="${x - 2.6}" cy="93" r="1.5" fill="#fff"/>`;
+}
+function browSvg(t, c){
+  const st = w => `stroke="${c}" stroke-width="${w}" fill="none" stroke-linecap="round"`;
+  switch (t){
+    case 'straight': return `<path d="M73 70 L89 70" ${st(3)}/><path d="M111 70 L127 70" ${st(3)}/>`;
+    case 'thick': return `<path d="M72 72 Q81 66 90 70" ${st(5.2)}/><path d="M110 70 Q119 66 128 72" ${st(5.2)}/>`;
+    case 'thin': return `<path d="M74 71 Q81 67.5 88 70" ${st(1.7)}/><path d="M112 70 Q119 67.5 126 71" ${st(1.7)}/>`;
+    case 'angry': return `<path d="M72 65 L90 73" ${st(3.6)}/><path d="M110 73 L128 65" ${st(3.6)}/>`;
+    case 'worried': return `<path d="M73 71 Q81 69 89 65" ${st(2.8)}/><path d="M111 65 Q119 69 127 71" ${st(2.8)}/>`;
+  }
+  return `<path d="M73 72 Q81 67 89 70.5" ${st(2.8)}/><path d="M111 70.5 Q119 67 127 72" ${st(2.8)}/>`;
+}
+function mouthSvg(t){
+  const K = '#4a1f28', st = w => `stroke="${K}" stroke-width="${w}" fill="none" stroke-linecap="round" stroke-linejoin="round"`;
+  switch (t){
+    case 'grin': return `<path d="M89 103 Q100 120 111 103Z" fill="#6b2430"/><path d="M90.5 104 L109.5 104 L108 107 L92 107Z" fill="#fff"/><path d="M95 113 Q100 116 105 113 Q100 111 95 113Z" fill="#ff8fa3"/>`;
+    case 'smirk': return `<path d="M93 107 Q101 109.5 108 102.5" ${st(2.6)}/><path d="M108.5 101 l1.6 1.4" ${st(1.6)}/>`;
+    case 'cat': return `<path d="M92 104 Q96 109.5 100 105 Q104 109.5 108 104" ${st(2.4)}/>`;
+    case 'flat': return `<path d="M94 107 L106 107" ${st(2.6)}/>`;
+    case 'o': return `<ellipse cx="100" cy="107" rx="3.4" ry="4.2" fill="#6b2430"/>`;
+    case 'frown': return `<path d="M93 109.5 Q100 103 107 109.5" ${st(2.6)}/>`;
+    case 'teeth': return `<path d="M90.5 104 L109.5 104 Q108.5 112.5 100 112.5 Q91.5 112.5 90.5 104Z" fill="#fff" stroke="${K}" stroke-width="1.8" stroke-linejoin="round"/><path d="M90.8 108 L109.2 108 M95.5 104 V112 M100 104 V112.5 M104.5 104 V112" stroke="${K}" stroke-width="1" opacity=".55"/>`;
+  }
+  return `<path d="M93 105 Q100 114 107 105 Q100 107.5 93 105Z" fill="#6b2430"/><path d="M96.5 109 Q100 111.5 103.5 109 Q100 108 96.5 109Z" fill="#ff8fa3"/>`;
+}
+// 얼굴 포인트: under = 눈 아래 레이어, over = 눈 위 레이어
+function markSvg(t, layer, skinD){
+  const blush = `<ellipse cx="72" cy="101" rx="7.5" ry="4.5" fill="#ff7f96" opacity=".42"/><ellipse cx="128" cy="101" rx="7.5" ry="4.5" fill="#ff7f96" opacity=".42"/>`;
+  if (layer === 'under') return t === 'blush' ? blush : t === 'tired' ? `<path d="M75 98 Q82 102 89 98 M111 98 Q118 102 125 98" stroke="#7a5a8a" stroke-width="2.4" fill="none" opacity=".45" stroke-linecap="round"/>` : '';
+  switch (t){
+    case 'freckles': return [[68,99],[73,103],[76,98],[124,98],[127,103],[132,99],[71,95],[129,95]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.3" fill="${shade(skinD, .78)}" opacity=".8"/>`).join('');
+    case 'mole': return `<circle cx="113" cy="101" r="1.6" fill="#3a2418"/>`;
+    case 'bandage': return `<g transform="rotate(-20 127 100)"><rect x="117" y="96" width="20" height="8" rx="3" fill="#f3d9b0" stroke="#d9b98a" stroke-width="1"/><rect x="124" y="96" width="6" height="8" fill="#e8c898"/><circle cx="121" cy="100" r=".8" fill="#c9a777"/><circle cx="133" cy="100" r=".8" fill="#c9a777"/></g>`;
+    case 'scar': return `<path d="M77 62 L86 82" stroke="${shade(skinD, .62)}" stroke-width="2.6" stroke-linecap="round" opacity=".85"/><path d="M77.5 68.5 L84.5 66 M80 74.5 L87 72" stroke="${shade(skinD, .62)}" stroke-width="1.7" stroke-linecap="round" opacity=".85"/>`;
+  }
+  return '';
 }
 function beardSvg(b, c){
   return ({stubble:`<path d="M64 96 Q72 126 100 128 Q128 126 136 96 Q128 116 100 118 Q72 116 64 96Z" fill="${c}" opacity=".28"/>`,
@@ -3511,14 +3599,15 @@ function chibiSVG(o){
   const torso = `M${100 - sx + 7} 122 Q100 116 ${100 + sx - 7} 122 Q${100 + sx} 124 ${100 + sx} 134 L${100 + sx - 3} 182 Q100 186 ${100 - sx + 3} 182 L${100 - sx} 134 Q${100 - sx} 124 ${100 - sx + 7} 122Z`;
   const hf = hairFront(L.hair, hairC, hairD);
   const nm = String(o.name || '').slice(0, 6), nfs = Math.min(10, 58 / Math.max(3, [...nm].length));
-  const eye = x => `<ellipse cx="${x}" cy="88" rx="8" ry="10" fill="#1d1420"/><ellipse cx="${x}" cy="90" rx="6.2" ry="7.4" fill="${eyeC}"/><ellipse cx="${x}" cy="91" rx="3.4" ry="4.2" fill="#140d12"/><circle cx="${x + 2.8}" cy="84.5" r="3.2" fill="#fff"/><circle cx="${x - 2.6}" cy="93" r="1.5" fill="#fff"/>`;
+  const eye = (x, sd) => eyeSvg(L.eyeS, x, sd, eyeC, skin);
   const face = back ? '' : `
-      <ellipse cx="72" cy="101" rx="7.5" ry="4.5" fill="#ff7f96" opacity=".42"/><ellipse cx="128" cy="101" rx="7.5" ry="4.5" fill="#ff7f96" opacity=".42"/>
-      <g class="eyes">${eye(82)}${eye(118)}</g>
-      <path d="M73 72 Q81 67 89 70.5" stroke="${hairD}" stroke-width="2.8" fill="none" stroke-linecap="round"/><path d="M111 70.5 Q119 67 127 72" stroke="${hairD}" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+      ${markSvg(L.mark, 'under', skinD)}
+      <g class="eyes">${eye(82, -1)}${eye(118, 1)}</g>
+      ${browSvg(L.brow, hairD)}
       <ellipse cx="100" cy="98" rx="2.4" ry="1.6" fill="${skinD}"/>
+      ${markSvg(L.mark, 'over', skinD)}
       ${beardSvg(L.beard, hairC)}
-      <path d="M93 105 Q100 114 107 105 Q100 107.5 93 105Z" fill="#6b2430"/><path d="M96.5 109 Q100 111.5 103.5 109 Q100 108 96.5 109Z" fill="#ff8fa3"/>`;
+      ${mouthSvg(L.mouth)}`;
   const acc = [];
   if (eq.head === 'band') acc.push(`<path d="M56 70 Q100 46 144 70 L144 79 Q100 56 56 79Z" fill="${kit}"/><path d="M56 74 Q100 51 144 74" stroke="${trim}" stroke-width="1.6" fill="none" opacity=".8"/>`);
   if (eq.head === 'beanie') acc.push(`<path d="M52 78 Q48 20 100 18 Q152 20 148 78Z" fill="#e2485e"/><rect x="50" y="66" width="100" height="15" rx="7" fill="#b8324a"/>${[0,1,2,3,4,5,6,7].map(i => `<rect x="${55 + i * 12}" y="68" width="4" height="11" rx="2" fill="#d23d55"/>`).join('')}<circle cx="100" cy="16" r="10" fill="#fff6e6"/>`);
@@ -3546,8 +3635,8 @@ function chibiSVG(o){
       ${arm(-1)}${arm(1)}
       <g class="head">
         ${back ? '' : ''}
-        <circle cx="56" cy="90" r="8.5" fill="${skin}"/><circle cx="144" cy="90" r="8.5" fill="${skin}"/><circle cx="56" cy="90" r="4" fill="${skinD}" opacity=".6"/><circle cx="144" cy="90" r="4" fill="${skinD}" opacity=".6"/>
-        <ellipse cx="100" cy="82" rx="45" ry="43" fill="${skin}"/>
+        ${(() => { const ex = FACE_EAR[L.face] || 44; return `<circle cx="${100 - ex}" cy="90" r="8.5" fill="${skin}"/><circle cx="${100 + ex}" cy="90" r="8.5" fill="${skin}"/><circle cx="${100 - ex}" cy="90" r="4" fill="${skinD}" opacity=".6"/><circle cx="${100 + ex}" cy="90" r="4" fill="${skinD}" opacity=".6"/>`; })()}
+        ${headShape(L.face, skin)}
         ${back ? hairBack(L.hair, hairC) : face + `<g class="hairfront">${hf[1]}</g>`}
         ${acc.join('')}
       </g>
@@ -3570,37 +3659,46 @@ function mountViewer(el, opts = {}){
 }
 
 // ---------- 외모 편집기 ----------
-function lookControls(look){
+const LOOK_TABS = [['face','smile','얼굴',[['skin','피부'],['face','얼굴형'],['mark','얼굴 포인트']]],['expr','eye','표정',[['eyeS','눈매'],['eyes','눈동자'],['brow','눈썹'],['mouth','입']]],['hair','scissors','헤어',[['hair','헤어'],['hairColor','머리색'],['beard','수염']]]];
+function lookControls(look, only){
   const sw = (key, arr) => arr.map((c, i) => `<button type="button" class="sw ${look[key] === i ? 'on' : ''}" data-k="${key}" data-v="${i}" style="background:${c}" aria-label="${key} ${i + 1}"></button>`).join('');
   const ch = (key, map) => Object.entries(map).map(([v, n]) => `<button type="button" class="opt ${look[key] === v ? 'on' : ''}" data-k="${key}" data-v="${v}">${n}</button>`).join('');
+  const tabs = LOOK_TABS.filter(t => !only || t[3].some(([k]) => only.includes(k)));
   return `<div class="look">
-    <div class="lrow"><span class="label">피부</span><div class="sws">${sw('skin', LOOK.skin)}</div></div>
-    <div class="lrow"><span class="label">헤어</span><div class="opts">${ch('hair', LOOK.hair)}</div></div>
-    <div class="lrow"><span class="label">머리색</span><div class="sws">${sw('hairColor', LOOK.hairColor)}</div></div>
-    <div class="lrow"><span class="label">눈동자</span><div class="opts">${ch('eyes', LOOK.eyes)}</div></div>
-    <div class="lrow"><span class="label">수염</span><div class="opts">${ch('beard', LOOK.beard)}</div></div>
+    <div class="look-top"><div class="look-tabs" role="tablist">${tabs.map((t, i) => `<button type="button" role="tab" data-lt="${t[0]}" aria-selected="${!i}">${ic(t[1])} ${t[2]}</button>`).join('')}</div><button type="button" class="look-dice" id="lookDice" aria-label="무작위">${ic('dice-5')}</button></div>
+    ${tabs.map((t, i) => `<div class="look-pane" data-lp="${t[0]}" ${i ? 'hidden' : ''}>${t[3].filter(([k]) => !only || only.includes(k)).map(([k, n]) => `<div class="lrow"><span class="label">${n}</span><div class="${k === 'skin' || k === 'hairColor' ? 'sws' : 'opts'}">${k === 'skin' || k === 'hairColor' ? sw(k, LOOK[k]) : ch(k, LOOK[k])}</div></div>`).join('')}</div>`).join('')}
   </div>`;
 }
 function bindLook(host, look, onChange, only){
+  const sync = () => host.querySelectorAll('.look [data-k]').forEach(x => x.classList.toggle('on', String(look[x.dataset.k]) === x.dataset.v));
   host.querySelectorAll('.look [data-k]').forEach(b => {
     if (only && !only.includes(b.dataset.k)){ b.disabled = true; return; }
     b.onclick = () => {
       const k = b.dataset.k, v = b.dataset.v;
       look[k] = (k === 'skin' || k === 'hairColor') ? Number(v) : v;
-      host.querySelectorAll(`.look [data-k="${k}"]`).forEach(x => x.classList.toggle('on', x === b));
-      onChange(look);
+      sync(); onChange(look);
     };
   });
+  host.querySelectorAll('[data-lt]').forEach(b => b.onclick = () => {
+    host.querySelectorAll('[data-lt]').forEach(x => x.setAttribute('aria-selected', x === b));
+    host.querySelectorAll('[data-lp]').forEach(p => p.hidden = p.dataset.lp !== b.dataset.lt);
+  });
+  const dice = host.querySelector('#lookDice');
+  if (dice) dice.onclick = () => {
+    const keys = ['skin','hair','hairColor','eyes','beard', ...LOOK_PICK].filter(k => !only || only.includes(k));
+    for (const k of keys){ if (k === 'skin' || k === 'hairColor') look[k] = ri(0, LOOK[k].length - 1); else { const ks = Object.keys(LOOK[k]); look[k] = k === 'beard' && Math.random() < .55 ? 'none' : ks[ri(0, ks.length - 1)]; } }
+    dice.classList.remove('roll'); void dice.offsetWidth; dice.classList.add('roll'); sync(); onChange(look);
+  };
 }
 async function openLookEditor(mode){
-  const free = mode === 'first';
-  const look = {...S.look};
-  const el = modal(`<div class="eyebrow">${free ? '외모 설정' : '헤어숍'}</div><div class="viewer sm" id="lv"></div>${lookControls(look)}<button class="btn turf block" type="button" id="lok">저장하기</button>`);
+  const free = mode === 'first' || mode === 'renew', only = free ? null : mode === 'stylist' ? ['eyeS','brow','mouth','mark','eyes'] : ['hair','hairColor','beard'];
+  const look = {...cleanLook(S.look)};
+  const el = modal(`<div class="eyebrow">${mode === 'renew' ? '새 얼굴 옵션 · 무료' : free ? '외모 설정' : mode === 'stylist' ? '스타일리스트' : '헤어숍'}</div><div class="viewer sm" id="lv"></div>${lookControls(look, only)}<button class="btn turf block" type="button" id="lok">저장하기</button>`);
   el.querySelector('.modal-card').classList.add('wide');
   const v = mountViewer(el.querySelector('#lv'), {look, close:true});
-  bindLook(el, look, l => v && v.rebuild({look:l}), free ? null : ['hair','hairColor','beard']);
+  bindLook(el, look, l => v && v.rebuild({look:l}), only);
   await new Promise(r => el.querySelector('#lok').onclick = r);
-  S.look = cleanLook(look); S.lookSet = true; save(); disposeViewer(); await el.close(); renderHub();
+  S.look = cleanLook(look); S.lookSet = true; if (free) S.look2 = true; save(); disposeViewer(); await el.close(); renderHub();
 }
 
 // ---------- 상점 ----------
@@ -3638,7 +3736,7 @@ function bindShop(){
     const c = CONSUMABLES.find(x => x.id === b.dataset.use); if (!c || S.xp < c.p || (c.dyn && !c.dyn())) return;
     S.xp -= c.p; const fx = c.use(); save(); SFX.coin();
     toast(`${c.n} 사용! ${fx.map(f => f[2] || `${f[0]} ${f[1] > 0 ? '+' : ''}${f[1]}`).join(' · ')}`);
-    if (c.id !== 'barber') renderHub();
+    if (c.id !== 'barber' && c.id !== 'stylist') renderHub();
   });
 }
 
@@ -5098,7 +5196,9 @@ const HANG = {
   star:{n:'게임 한 판', t:['밤새 게임하며 웃었다. 패스가 잘 통할 것 같다.','팀 에이스와 듀오로 랭크를 올렸다.'], pose:'jump'},
 };
 const HAIRS = Object.keys(LOOK.hair);
-function mateLook(k){ const h = hashStr(MATES[k].nm() + k); return {skin: h % 6, hair: HAIRS[(h >>> 3) % HAIRS.length], hairColor: (h >>> 7) % 5, eyes: Object.keys(LOOK.eyes)[(h >>> 10) % 5], beard: k === 'veteran' ? ['stubble','full','goatee'][(h >>> 12) % 3] : 'none'}; }
+function mateLook(k){ const h = hashStr(MATES[k].nm() + k), h2 = hashStr(k + MATES[k].nm() + 'face'), o = (key, sh) => { const ks = Object.keys(LOOK[key]); return ks[(h2 >>> sh) % ks.length]; };
+  return {skin: h % 6, hair: HAIRS[(h >>> 3) % HAIRS.length], hairColor: (h >>> 7) % 5, eyes: Object.keys(LOOK.eyes)[(h >>> 10) % 5], beard: k === 'veteran' ? ['stubble','full','goatee'][(h >>> 12) % 3] : 'none',
+    face:o('face', 0), eyeS:o('eyeS', 3), brow: k === 'rival' ? 'angry' : o('brow', 6), mouth: k === 'rival' ? 'smirk' : o('mouth', 9), mark:o('mark', 12)}; }
 const mateSvg = (k, bare = true) => chibiSVG({look:mateLook(k), stats:{phy:55 + hashStr(k) % 30}, club:S.club, equip:{}, pos: k === 'star' ? 'FW' : 'MF', name:MATES[k].nm(), bare});
 const mateFace = k => mateSvg(k).replace('viewBox="0 0 200 262"', 'viewBox="42 14 116 116"');
 const meSvg = () => chibiSVG({look:S.look, stats:S.stats, club:S.club, equip:S.equip || {}, pos:S.pos, name:S.name, bare:true});
