@@ -1401,6 +1401,7 @@ table.standings{min-width:0}
 .trial-end{align-items:center;text-align:center;padding-top:18vh}
 .trial-ic{width:84px;height:84px;border-radius:26px;display:grid;place-items:center;background:rgba(255,200,61,.15);color:var(--gold);border:2px solid rgba(255,200,61,.5)} .trial-ic .ico{width:44px;height:44px}
 .trial-end h2{font-family:var(--f-display);font-weight:400;font-size:26px;margin:6px 0 0} .trial-end p{margin:0;color:var(--muted);line-height:1.6}
+.twist.react{border-color:rgba(61,214,255,.5);background:rgba(61,214,255,.08)} .twist.react .ico{width:15px;height:15px;color:var(--cyan);vertical-align:-2px}
 </style>
 </head>
 <body>
@@ -1915,7 +1916,7 @@ function load(slot = curSlot){
       else if (r.interview.res){
         const x = r.interview.res; x.gi = int(x.gi, 0, 4, 2); r.interview.picked = int(r.interview.picked, -1, 3, -1);
         x.fx = cleanFx(x.fx); x.fans = (Array.isArray(x.fans) ? x.fans : []).filter(Array.isArray).map(f => [String(f[0]), String(f[1])]);
-        ['h','said','twist','coach'].forEach(k => x[k] = String(x[k] ?? ''));
+        ['h','said','twist','coach','react'].forEach(k => x[k] = String(x[k] ?? ''));
       }
     }
     if (r.phase === 'nego' && !r.nego) r.phase = 'week';
@@ -2877,13 +2878,13 @@ function countTo(el, to, dec){
 const GRADES = ['jackpot','good','meh','bad','disaster'];
 const TONES = {humble:[4,44,32,17,3], team:[3,40,38,17,2], emotional:[8,40,26,21,5], honest:[9,32,22,28,9], bold:[14,28,14,28,16], funny:[12,30,22,26,10], evasive:[3,20,46,26,5], critical:[7,24,15,31,23], provoke:[17,22,9,30,22]};
 const QA = {
-  hero:{q:['{g}골로 {opp}전 승리를 이끌었습니다. 골 장면, 직접 설명해 주시겠어요?','평점 {rt}, 오늘 그라운드의 주인공이었는데요. 기분이 어떤가요?','요즘 "{N}의 포텐이 터졌다"는 말이 많은데, 본인 생각은요?','경기 끝나고 관중석을 한참 바라보던데, 무슨 생각을 했나요?'],
+  hero:{fun:[['funny','골 넣고 너무 좋아서 세리머니를 까먹었어요. 집에서 연습했는데.'],['funny','오늘 축구화가 혼자 뛰었어요. 저는 따라갔을 뿐입니다.']], q:['{g}골로 {opp}전 승리를 이끌었습니다. 골 장면, 직접 설명해 주시겠어요?','평점 {rt}, 오늘 그라운드의 주인공이었는데요. 기분이 어떤가요?','요즘 "{N}의 포텐이 터졌다"는 말이 많은데, 본인 생각은요?','경기 끝나고 관중석을 한참 바라보던데, 무슨 생각을 했나요?'],
     a:[['humble','동료들이 다 만들어줬어요. 저는 발만 갖다 댔습니다.'],['humble','운이 좋았습니다. 다음 경기가 더 중요해요.'],['bold','이게 제 원래 실력입니다. 이제 시작이에요.'],['bold','득점왕, 한번 노려보겠습니다.'],['emotional','팬분들 함성이 들리는 순간 소름이 돋았어요!'],['funny','몰래 연습한 세리머니 써먹어서 다행이에요.'],['team','감독님 전술이 완벽하게 맞아떨어졌어요.'],['provoke','{opp} 수비, 생각보다 별거 없더라고요.'],['honest','사실 전반엔 너무 못해서 교체될 줄 알았어요.']]},
   heronw:{q:['골을 넣고도 웃지 못했습니다. 심정이 어떤가요?','개인 기록은 좋았지만 팀은 {sc}… 어떻게 보세요?','득점 후 세리머니를 하지 않았는데, 이유가 있나요?'],
     a:[['humble','제 골은 의미 없어요. 팀이 못 이겼으니까요.'],['honest','뒤에서 조금만 더 버텨줬으면 했어요.'],['critical','심판 휘슬이 너무 빨랐어요.'],['team','다 같이 부족했습니다. 같이 반성하겠습니다.'],['bold','다음엔 두 골 넣어서 혼자라도 이기겠습니다.'],['emotional','멀리까지 와주신 팬분들께 죄송할 뿐이에요.'],['evasive','골 얘기는 나중에 하죠.'],['funny','세리머니는 이길 때를 위해 아껴뒀어요.']]},
-  poor:{q:['오늘 평점 {rt}로 부진했습니다. 원인이 뭐라고 보세요?','SNS에서 비판이 많은데, 보셨나요?','교체될 때 표정이 좋지 않았는데요?','오늘 몸이 무거워 보였는데, 컨디션 문제인가요?'],
+  poor:{fun:[['funny','오늘 잔디가 저만 미워했어요. 집에 가서 화해할게요.']], q:['오늘 평점 {rt}로 부진했습니다. 원인이 뭐라고 보세요?','SNS에서 비판이 많은데, 보셨나요?','교체될 때 표정이 좋지 않았는데요?','오늘 몸이 무거워 보였는데, 컨디션 문제인가요?'],
     a:[['honest','변명 안 하겠습니다. 제가 못했어요.'],['critical','잔디 상태가 너무 안 좋았어요.'],['critical','공이 저한테 거의 안 왔잖아요.'],['funny','오늘은 제 쌍둥이가 뛰었나 봐요.'],['evasive','SNS는 안 봅니다.'],['bold','다음 경기 끝나면 다들 사과하실 겁니다.'],['emotional','팬분들 실망시켜 드려서 잠이 안 올 것 같아요.'],['team','팀 전체가 리듬이 안 좋았어요.'],['humble','감독님 믿음에 보답 못 해 죄송합니다.']]},
-  loss:{q:['{opp}에 {sc}로 졌습니다. 패인을 꼽는다면?','오늘 결과로 순위 싸움이 어려워졌는데요?','경기 막판 팬들 야유가 들렸는데, 들으셨나요?'],
+  loss:{fun:[['funny','오늘은 상대 팀 기 살려주는 날이었어요. 다음엔 안 봐줍니다.']], q:['{opp}에 {sc}로 졌습니다. 패인을 꼽는다면?','오늘 결과로 순위 싸움이 어려워졌는데요?','경기 막판 팬들 야유가 들렸는데, 들으셨나요?'],
     a:[['humble','제 책임입니다. 더 뛰었어야 했어요.'],['critical','심판 판정 하나가 경기를 바꿨어요.'],['critical','전술이 상대에게 읽혔다고 생각해요.'],['team','이럴 때일수록 뭉쳐야죠.'],['bold','다음 경기는 무조건 이깁니다. 약속할게요.'],['provoke','{opp}는 운으로 이긴 거예요.'],['funny','오늘 저녁은 쓴 걸로 먹어야겠네요.'],['emotional','야유도 사랑이라고 생각합니다. 죄송합니다.'],['honest','솔직히 준비가 부족했던 경기예요.']]},
   win:{q:['{opp}전 {sc} 승리, 팀 분위기는 어떤가요?','다음 상대는 {next}인데요, 각오 한마디?','경기 전에 감독님이 뭐라고 하셨나요?'],
     a:[['team','원팀의 힘이죠.'],['humble','아직 보완할 점이 많아요.'],['bold','이 기세면 우승도 가능합니다.'],['provoke','{next}요? 별로 안 무섭네요.'],['funny','이기면 회식이라고 하셔서 다들 눈빛이 달랐어요.'],['emotional','팬분들 응원가가 오늘따라 너무 좋았어요.'],['honest','솔직히 경기력은 별로였어요. 결과만 챙겼죠.'],['evasive','감독님 말씀은 라커룸의 비밀입니다.']]},
@@ -2906,6 +2907,57 @@ const QA = {
   chant:{q:['팬들이 새 응원가를 만들었다던데, 들어보셨나요?'],
     a:[['emotional','듣자마자 울컥했어요. 평생 간직할게요.'],['funny','제가 직접 한 소절 불러드릴까요?'],['humble','과분한 사랑에 감사드려요.'],['bold','그 응원가가 더 크게 울리게 만들겠습니다.'],['evasive','아직 못 들어봤어요.']]},
 };
+// 가끔 나오는 엉뚱한 질문: 답마다 [말투, 대답, 현장 반응, 팬 댓글 2개, 잘 풀렸을 때 헤드라인]
+const FUN_Q = [
+  {q:'경기 중 머리 위로 비둘기 떼가 지나갔는데, 신경 쓰이지 않았나요?', a:[
+    ['funny','비둘기들도 제 경기 보러 온 거예요. 시즌권 끊었대요.','기자석이 빵 터졌다. 한 기자는 받아 적다 펜을 떨어뜨렸다.',['비둘기 시즌권 ㅋㅋㅋㅋ','구단 굿즈로 비둘기 인형 내라'],'{N} "비둘기도 시즌권 끊었다"… 입담에 기자회견장 초토화'],
+    ['honest','솔직히 하나가 제 어깨에… 그 얘긴 그만할게요.','기자들이 웃음을 참느라 어깨를 들썩였다.',['어깨에 뭐가요 ㅋㅋㅋ','그거 행운의 징조래요'],'{N}의 솔직 고백 "어깨에 그만…" 팬들 폭소'],
+    ['bold','비둘기보다 제가 더 높이 날았잖아요.','"오늘 헤더 타점 보셨죠?" 한 기자가 맞장구쳤다.',['타점 인정합니다','비둘기 vs {N} 공중전 승'],'{N} "비둘기보다 높이 날았다"'],
+    ['evasive','비둘기 관련해서는 노코멘트하겠습니다.','"비둘기 측 입장도 들어봐야겠네요." 기자가 받아쳤다.',['비둘기 측 입장 ㅋㅋ','노코멘트가 더 웃김'],'{N}, 비둘기 질문에 "노코멘트"'],
+    ['critical','경기장 관리 좀 해주셨으면 해요. 진지하게요.','분위기가 잠시 싸해졌다. 구단 관계자가 메모를 시작했다.',['진지해서 더 웃기다','그래도 맞는 말이긴 함'],'{N}의 진지한 비둘기 대책 촉구']]},
+  {q:'오늘 양말을 짝짝이로 신고 뛰셨는데, 징크스인가요?', a:[
+    ['funny','네, 한 짝은 공격용이고 한 짝은 수비용입니다.','한 기자가 진지하게 "그럼 수비수는…?" 하고 되물었다.',['나도 내일 짝짝이로 신는다','공격용 양말 어디서 팔아요'],'{N} 짝짝이 양말 "공격용·수비용"… 따라 신기 유행'],
+    ['honest','아침에 불 끄고 신었어요…','자취 중인 기자들 사이에서 공감의 박수가 터졌다.',['완전 내 얘기','불은 켜고 신자 ㅋㅋ'],'{N} "불 끄고 신었다"… 자취생 공감 폭발'],
+    ['emotional','할머니가 떠주신 양말이라 한 짝만 남았어요.','분위기가 갑자기 숙연해졌다. 한 기자는 눈시울을 붉혔다.',['갑자기 눈물 나네','할머니 양말 굿즈화 해주세요'],'{N}의 짝짝이 양말에 담긴 할머니의 사랑'],
+    ['bold','다음 경기엔 세 짝 신고 나오겠습니다.','"규정상 가능한가요?" 연맹 관계자가 검색을 시작했다.',['세 짝 ㅋㅋㅋ 기대된다','연맹 긴급 회의 소집 각'],'{N} "다음엔 세 짝"… 연맹 규정 검토?'],
+    ['evasive','양말 얘기는 에이전트랑 해주세요.','에이전트가 뒤에서 조용히 고개를 저었다.',['에이전트 표정 봤냐 ㅋㅋ','양말에도 에이전트가'],'{N}, 양말 질문에 "에이전트에게"']]},
+  {q:'하프타임에 라커룸에서 김밥을 드셨다는 제보가 있는데요?', a:[
+    ['funny','참치김밥이었습니다. 후반에 참치처럼 뛰었잖아요.','"그래서 후반 스프린트가…" 기자들이 고개를 끄덕였다.',['참치김밥 먹고 참치처럼 ㅋㅋ','오늘 저녁은 참치김밥이다'],'{N} "참치김밥 먹고 참치처럼"… 하프타임 식단 화제'],
+    ['honest','배고파서요. 그래도 한 줄만 먹었어요.','"한 줄이면 양호하죠." 기자석에서 관대한 반응이 나왔다.',['한 줄은 국룰','두 줄이면 문제'],'{N} "김밥 한 줄만"… 솔직 고백'],
+    ['team','동료들 거 다 같이 시켰어요. 팀워크죠.','주장이 뒤에서 "계산은 쟤가 했다"고 외쳤다.',['계산까지 했으면 리더지','김밥으로 하나 된 팀'],'김밥으로 뭉친 원팀… {N}이 쐈다'],
+    ['critical','그 제보한 사람 누군지 압니다.','기자들이 서로 눈치를 보기 시작했다.',['제보자 긴장 중 ㅋㅋ','라커룸 스파이 색출'],'{N} "제보자 안다"… 라커룸 스파이 색출 예고'],
+    ['evasive','김밥은 사생활입니다.','"김밥이 사생활이라니…" 기자가 진지하게 메모했다.',['김밥은 사생활 ㅇㅈ','명언 탄생'],'{N} "김밥은 사생활"… 새 어록 탄생']]},
+  {q:'관중석에 "결혼해줘!" 플래카드가 있었는데, 답변 부탁드립니다.', a:[
+    ['funny','먼저 연봉협상부터 해야 할 것 같아요.','뒤에서 듣던 감독이 커피를 뿜었다.',['연봉협상부터 ㅋㅋㅋ 현실적','플래카드 주인 연락 기다림'],'{N}, 깜짝 프러포즈에 "연봉협상부터"… 센스 답변'],
+    ['emotional','마음만으로도 정말 감사해요. 평생 기억할게요.','플래카드 주인이 SNS에 "이걸로 됐다"는 글을 올렸다.',['스윗하다','이게 팬서비스지'],'{N}의 다정한 답변에 플래카드 주인 감동'],
+    ['honest','어머니께 먼저 여쭤봐야 해요.','기자들이 "효자네" 하며 웃었다.',['효자 인증','어머님 답변 기다립니다'],'{N} "어머니께 먼저"… 효자 답변'],
+    ['bold','우승하면 생각해 보겠습니다.','다음 경기 플래카드가 두 배로 늘 것 같은 예감이 든다.',['우승 조건 걸었다 ㅋㅋ','다음 경기 플래카드 만들러 감'],'{N} "우승하면 생각해 보겠다"… 플래카드 대란 예고'],
+    ['evasive','…다음 질문 받겠습니다.','귀가 빨개진 것을 기자들이 놓치지 않았다.',['귀 빨개진 거 다 봄','부끄러워하는 거 귀엽다'],'{N}, 프러포즈 질문에 귀까지 빨개져']]},
+  {q:'경기 전 마스코트와 신경전이 있었다는 목격담이 있는데요?', a:[
+    ['funny','제 자리를 노리고 있더라고요. 주전 경쟁자예요.','구단 마스코트 계정이 "실력으로 증명하겠다"고 답글을 달았다.',['마스코트 선발 출전 가자','장외 신경전 ㅋㅋㅋ'],'{N} vs 마스코트 장외 신경전… 구단 SNS도 참전'],
+    ['provoke','인형 탈 쓴 사람한테는 안 집니다.','마스코트가 기자회견장 뒤에서 팔짱을 꼈다.',['마스코트 팔짱 낀 거 봤냐','다음 홈경기 리벤지 매치'],'{N} "탈 쓴 사람한텐 안 진다"… 마스코트 분노'],
+    ['humble','오히려 배울 점이 많아요. 체력이 대단하세요.','탈 안에서 고개를 끄덕이는 게 보였다.',['마스코트 체력 인정','훈훈하다'],'{N} "마스코트 체력 존경"… 훈훈한 화해'],
+    ['team','마스코트도 우리 팀의 일원이죠.','마스코트가 두 팔로 하트를 그렸다.',['하트 그리는 거 봤어요','우리 팀 분위기 최고'],'{N} "마스코트도 팀원"… 하트로 화답'],
+    ['evasive','그분 정체는 저도 몰라요.','"정체가 궁금하긴 하네요." 기자들이 수군거렸다.',['마스코트 정체 미스터리','탈 안에 감독님 아님?'],'마스코트의 정체… {N}도 "모른다"']]},
+  {q:'{M} 감독님이 경기 중 껌을 47개 씹으셨다는데, 알고 계셨나요?', a:[
+    ['funny','48번째는 제 골 보고 기뻐서 삼키셨대요.','문 옆에서 듣고 있던 감독이 헛기침을 했다.',['48번째 ㅋㅋㅋㅋ','감독님 괜찮으세요'],'{M} 감독 껌 47개… {N} "48번째는 삼키셨다" 폭로'],
+    ['team','그만큼 긴장하셨다는 거죠. 저희가 더 잘해야죠.','지나가던 감독이 말없이 어깨를 툭 쳤다.',['사제 케미 좋다','감독님 껌값은 우리가'],'{N} "감독님 긴장 덜어드리겠다"'],
+    ['honest','저도 두 개 얻어 씹었어요.','"공범이네요." 기자석에서 웃음이 터졌다.',['공범 ㅋㅋㅋ','껌 동맹'],'{N}도 껌 공범… "두 개 얻어 씹었다"'],
+    ['critical','하프타임엔 저한테 뱉으실 뻔했어요.','홍보 담당자가 급히 마이크를 가져갔다.',['마이크 뺏긴 거 봄','이건 선 넘었다 ㅋㅋ'],'{N} "하프타임에 뱉으실 뻔"… 폭로전?'],
+    ['evasive','껌 개수는 세지 않았습니다.','"그럼 누가 센 거죠?" 미스터리로 남았다.',['누가 셌냐고 ㅋㅋ','껌 카운터 기자 찾습니다'],'감독 껌 47개, 누가 셌나… 미스터리']]},
+  {q:'골 넣고 카메라에 윙크하셨는데, 누구에게 보낸 건가요?', a:[
+    ['funny','카메라 감독님이요. 늘 저를 잘 잡아주셔서.','중계 카메라 감독이 SNS에 "평생 간직하겠다"고 남겼다.',['카메라 감독님 승리','윙크 받은 사람 부럽다'],'{N} 윙크의 주인공은 카메라 감독… "늘 잘 잡아줘서"'],
+    ['emotional','집에서 보시는 할머니께요.','할머니가 동네 경로당에서 스타가 됐다는 후문이다.',['할머니 경로당 스타 ㅋㅋ','효손 인증'],'{N} 윙크는 할머니께… 경로당 스타 탄생'],
+    ['bold','전 세계 팬들 모두에게요.','"스케일 보소." 기자가 감탄했다.',['스케일 미쳤다','저도 받았습니다'],'{N} "윙크는 전 세계 팬들에게"'],
+    ['evasive','눈에 먼지가 들어갔어요.','아무도 믿지 않았다.',['먼지라기엔 너무 정확했는데','에이 거짓말'],'{N} "윙크 아니라 먼지"… 아무도 안 믿어'],
+    ['honest','…사실 눈에 땀이 들어갔어요.','기자들이 실망한 기색을 감추지 못했다.',['낭만 깨졌다 ㅋㅋ','땀이었구나…'],'{N} 윙크의 진실 "땀이었다"']]},
+  {q:'오늘 헤어스타일이 화제인데, 직접 하신 건가요?', a:[
+    ['funny','바람이 해줬어요. 90분짜리 자연 스타일링이죠.','미용실 원장들이 "그건 불가능하다"는 반박 영상을 올렸다.',['바람 스타일링 ㅋㅋ','원장님들 반박 영상 웃김'],'{N} "바람이 해준 머리"… 미용계 반박'],
+    ['honest','어제 혼자 자르다가 이렇게 됐어요.','셀프 커트 실패담에 공감 댓글이 쏟아졌다.',['나도 그랬어 ㅠ','그래도 잘생김'],'{N} 셀프 커트 실패 고백… 공감 폭발'],
+    ['bold','다음 경기엔 더 과감하게 갑니다.','구단 홍보팀이 불안한 눈빛을 주고받았다.',['다음 머리 기대된다','홍보팀 긴장 ㅋㅋ'],'{N} "다음엔 더 과감하게"… 헤어 예고'],
+    ['team','동료들이 투표로 정해줬어요.','라커룸 투표 결과가 궁금하다는 댓글이 이어졌다.',['투표 결과 공개하라','동료들 장난 아니네'],'{N} 머리는 라커룸 투표로… 팀 케미 화제'],
+    ['evasive','헤어 디자이너와 계약상 말씀 못 드려요.','"헤어도 계약이…?" 기자가 고개를 갸웃했다.',['헤어 계약 ㅋㅋ','신비주의 헤어'],'{N} "헤어는 계약상 비밀"']]},
+];
 const CURVEBALLS = ['transfer','rival','love','national','feud','chant'];
 const H = {
   humble:{jackpot:['"이 선수 인성 뭐야"… {N} 겸손 인터뷰에 팬心 폭발','{N}의 한마디에 감독도 미소'], good:['[인터뷰] {N} "동료 덕분"… 겸손한 태도 호평','{N}, 들뜨지 않는 프로 정신'], meh:['{N}, 무난한 소감 "다음 경기 집중"','[경기 후] {N} 짧은 소감 남겨'], bad:['"매번 똑같은 말만"… {N} 인터뷰에 팬들 시큰둥','{N}의 겸손, 일부선 "가식적" 반응'], disaster:['{N} 겸손 발언, 동료 실명 언급으로 역풍','"남 탓처럼 들린다" {N} 발언 해석 논란']},
@@ -2931,6 +2983,18 @@ const TWISTS = [
   {ok: gi => gi !== 2, post: gi => ({trust: gi <= 1 ? 5 : -5}), t: gi => gi <= 1 ? '🧑‍🏫 다음 날 감독이 기자회견에서 내 인터뷰를 칭찬했다.' : '🧑‍🏫 다음 날 감독이 기자회견에서 내 발언에 불편함을 드러냈다.'},
   {ok: () => true, post: () => ({cond: 10, buff: .2}), t: () => '🫂 주장이 SNS에 "우리 막내 믿는다" 메시지를 남겼다.'},
 ];
+// 대답 직후 기자회견장 반응 [잘 풀림, 무난, 역풍]
+const REACT = {
+  humble:[['기자들이 고개를 끄덕이며 받아 적는다.','"인성 인터뷰네요." 한 기자가 중얼거렸다.'],['펜 소리만 사각사각 들린다.','기자들이 무난하다는 표정으로 다음 질문을 준비한다.'],['"또 그 얘기네." 뒷줄에서 하품 소리가 들렸다.']],
+  team:[['통역사까지 박수를 쳤다.','주장이 뒤에서 엄지를 들어 보였다.'],['기자들이 무난하게 받아 적었다.'],['"교과서 답변이네요." 기자가 시큰둥하게 말했다.']],
+  emotional:[['카메라 기자 한 명이 슬쩍 눈가를 훔쳤다.','순간 기자회견장이 조용해졌다. 진심이 전해졌다.'],['몇몇 기자가 고개를 끄덕였다.'],['"오버 아닌가?" 뒷줄에서 수군거림이 들렸다.']],
+  honest:[['"이런 솔직함 오랜만이네요." 베테랑 기자가 웃었다.','기자들이 펜을 멈추고 나를 다시 봤다.'],['기자들이 흥미롭다는 듯 메모했다.'],['홍보 담당자의 얼굴이 하얗게 질렸다.']],
+  bold:[['플래시가 한꺼번에 터졌다. 내일 1면 각이다.','"헤드라인 나왔다!" 누군가 외쳤다.'],['기자들이 반신반의하는 눈빛이다.'],['"너무 나간 거 아니야?" 기자석이 술렁였다.']],
+  funny:[['기자회견장이 웃음바다가 됐다. 사회자도 마이크를 내려놓고 웃었다.','한 기자가 웃다가 사레가 들렸다.'],['피식 웃는 소리가 몇 군데서 들렸다.'],['정적. 아무도 웃지 않았다. 에어컨 소리만 크게 들린다.']],
+  evasive:[['"노련하네요." 기자들이 오히려 감탄했다.'],['기자들이 아쉬운 듯 다음 질문으로 넘어갔다.'],['"대답을 안 하시네요?" 기자가 한 번 더 찔렀다.']],
+  critical:[['몇몇 기자가 "맞는 말"이라며 고개를 끄덕였다.'],['기자석이 잠시 웅성거렸다.'],['홍보 담당자가 급히 "오늘은 여기까지"를 외쳤다.']],
+  provoke:[['"이거 다음 경기 흥행 보장이네요." 기자들이 신났다.'],['몇몇 기자가 휘파람을 불었다.'],['상대 팀 담당 기자들이 일제히 녹음기를 들이밀었다.']],
+};
 const MOOD = {'-2':'😶 기자석 분위기가 싸늘하다…','-1':'🤨 몇몇 기자들의 눈빛이 날카롭다.','0':'📸 플래시가 터진다.','1':'🙂 기자석 분위기가 나쁘지 않다.','2':'😊 오늘 기자들 표정이 밝다.'};
 function fillT(s, r){
   const v = {N:S.name, opp:r.opp, sc:`${r.tg}-${r.og}`, g:r.goals, rt:r.rating, next:S.schedule[nextFxIndex()]?.opp || '다음 상대', club:S.club, m:r.mins, R:S.rival, M:mgrName()};
@@ -2945,19 +3009,23 @@ function interviewCat(r){
 }
 function interviewSet(r){
   let cat = interviewCat(r);
+  if (Math.random() < .12){ const F = pick(FUN_Q); return {q: fillT(F.q, r), cat:'fun', a: shuffle(F.a).slice(0, 4).map(([tone, t, re, fan, h]) => ({tone, t: fillT(t, r), re: fillT(re, r), fan: fan.map(x => fillT(x, r)), h: fillT(h, r)}))}; }
   if (Math.random() < .15) cat = pick(CURVEBALLS);
   let q = fillT(pick(QA[cat].q), r);
   if (S.streak.n >= 3 && Math.random() < .5){
     if (cat === 'loss' && S.streak.t === 'L') q = `${S.streak.n}연패입니다. 라커룸 분위기는 어떤가요?`;
     if (cat === 'win' && S.streak.t === 'W') q = `${S.streak.n}연승 행진! 비결이 뭔가요?`;
   }
-  const pool = shuffle(QA[cat].a), chosen = [], tones = new Set();
+  const pool = shuffle([...QA[cat].a, ...(QA[cat].fun || [])]), chosen = [], tones = new Set();
   for (const a of pool) if (chosen.length < 4 && !tones.has(a[0])){ chosen.push(a); tones.add(a[0]); }
   for (const a of pool) if (chosen.length < 4 && !chosen.includes(a)) chosen.push(a);
+  const funA = pool.find(a => a[0] === 'funny');
+  if (funA && !chosen.some(a => a[0] === 'funny') && Math.random() < .5) chosen[3] = funA;
   return {q, cat, a: chosen.map(([tone, t]) => ({tone, t: fillT(t, r)}))};
 }
-function rollGrade(tone, r){
+function rollGrade(tone, r, cat){
   const w = [...TONES[tone]], M = mgr();
+  if (cat === 'fun'){ if (tone === 'funny'){ w[0] *= 2; w[1] *= 1.4; w[4] *= .4; } else if (tone !== 'critical' && tone !== 'provoke'){ w[3] *= .7; w[4] *= .5; } }
   const pf = r.mins ? r.rating - 6.5 : -.5, up = Math.max(pf, 0), dn = Math.max(-pf, 0);
   if (['bold','provoke','funny'].includes(tone)){ w[0] *= 1 + up * .6; w[1] *= 1 + up * .3; w[3] *= 1 + dn * .5; w[4] *= 1 + dn * .6; }
   if (tone === 'critical' && r.res === 'L') w[1] *= 1.3;
@@ -3022,21 +3090,22 @@ async function answer(i){
   const iv = S.interview.set, r = S.last;
   const a = i < 0 ? {tone:'evasive', t:'(말없이 지나간다)'} : iv.a[i];
   const tone = TONES[a.tone] ? a.tone : 'humble';
-  let gi = rollGrade(tone, r), twist = null;
+  let gi = rollGrade(tone, r, iv.cat), twist = null;
   if (Math.random() < .16){ const cand = TWISTS.filter(t => t.ok(gi)); if (cand.length) twist = pick(cand); }
   const gi0 = gi;
   if (twist?.pre) gi = twist.pre(gi);
   const fx = applyFx(toneFx(tone, gi)); fx.push(gainXp(gi <= 1 ? 10 : 4));
   let twistText = '';
   if (twist){ twistText = twist.t(gi0); if (twist.post) fx.push(...applyFx(twist.post(gi))); }
-  const g = GRADES[gi], h = fillT(pick(H[tone][g]), r);
+  const g = GRADES[gi], h = a.h && gi <= 2 ? a.h : fillT(pick(H[tone][g]), r);
   addNews(h);
-  const ids = shuffle(FAN_IDS), lines = shuffle(FANS[g]);
+  const ids = shuffle(FAN_IDS), lines = a.fan && gi <= 2 ? shuffle(a.fan) : shuffle(FANS[g]);
+  const react = a.re ? (gi >= 3 ? `${a.re} …하지만 반응은 차가웠다.` : a.re) : pick(REACT[tone][gi <= 1 ? 0 : gi === 2 ? 1 : 2]);
   const dTrust = fx.filter(x => x[0] === '감독 신뢰').reduce((s, x) => s + x[1], 0);
   const coach = dTrust && Math.random() < .7 ? `${mgrName()} 감독: ${pick(dTrust > 0 ? mgr().pos : mgr().neg)}` : '';
   S.toneHist = [...S.toneHist, tone].slice(-3);
   S.interview.done = true; S.interview.picked = i;
-  S.interview.res = {h, said:a.t, fx, fans:[[ids[0], lines[0]], [ids[1], lines[1]]], twist:twistText, coach, gi};
+  S.interview.res = {h, said:a.t, fx, fans:[[ids[0], lines[0]], [ids[1], lines[1]]], twist:twistText, coach, gi, react};
   save();
   lockAnswers(i);
   await showIvResult(S.interview.res, true);
@@ -3051,6 +3120,7 @@ async function showIvResult(res, anim){
   const pos = [92, 72, 50, 28, 8][res.gi], d = anim ? 1 : 0;
   box.innerHTML = `<div class="opinion"><div class="label">여론</div><div class="scale"><span class="needle" id="needle"></span></div><div class="ends"><span>😡 싸늘</span><span>😐 무덤덤</span><span>😍 열광</span></div></div>
     <div class="paper" style="animation-delay:${d * 1.1}s"><div class="mast"><span>PITCH SPORTS</span><span>${S.year} ${esc(fxLabel(curFx()))}</span></div><h3>${esc(res.h)}</h3><p>"${esc(res.said)}"</p></div>
+    ${res.react ? `<div class="twist react" style="animation-delay:${d * 1.3}s">${ic('mic')} ${esc(res.react)}</div>` : ''}
     ${res.twist ? `<div class="twist" style="animation-delay:${d * 1.6}s">${esc(res.twist)}</div>` : ''}
     <ul class="fans">${res.fans.map((f, i) => `<li style="animation-delay:${d * (1.8 + i * .25)}s"><b>@${esc(f[0])}</b>${esc(f[1])}</li>`).join('')}</ul>
     ${res.coach ? `<div class="twist coach" style="animation-delay:${d * 2.3}s">${mgr().i} ${esc(res.coach)}</div>` : ''}
