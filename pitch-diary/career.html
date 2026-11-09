@@ -152,7 +152,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .fortune{perspective:700px;border:0;background:none;padding:0;min-height:86px}
 .f-inner{position:relative;width:100%;height:100%;min-height:86px;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.3,1.3,.5,1)}
 .fortune.open .f-inner{transform:rotateY(180deg)}
-.f-back,.f-front{position:absolute;inset:0;border-radius:18px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:2px solid var(--edge);padding:6px}
+.f-back,.f-front{position:absolute;inset:0;border-radius:18px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:2px solid var(--edge);padding:6px}
 .f-back{background:repeating-linear-gradient(45deg,#2a1f5c 0 10px,#231a4d 10px 20px);font-size:28px;box-shadow:0 6px 0 rgba(0,0,0,.35)}
 .f-back small{font-family:var(--f-display);font-size:12px;color:var(--gold)}
 .fortune:not(.open) .f-back{animation:wobble 2.6s ease-in-out infinite}
@@ -1137,7 +1137,7 @@ table.standings{min-width:0}
 .cls-card > .ico:last-child{color:var(--muted);flex:none}
 .cls-ic{flex:none;width:52px;height:52px;border-radius:16px;display:grid;place-items:center;background:color-mix(in srgb,var(--kc) 18%,#0b1128);color:var(--kc);border:2px solid var(--kc)}
 .cls-ic .ico{width:28px;height:28px}
-.sk-pop-ic{width:78px;height:78px;margin:6px auto 2px;border-radius:50%;display:grid;place-items:center;border:4px solid var(--kc);color:var(--kc);background:color-mix(in srgb,var(--kc) 16%,#0b1128);box-shadow:0 0 22px color-mix(in srgb,var(--kc) 40%,transparent)}
+.sk-pop-ic{width:78px;height:78px;margin:6px auto 10px;border-radius:50%;display:grid;place-items:center;border:4px solid var(--kc);color:var(--kc);background:color-mix(in srgb,var(--kc) 16%,#0b1128);box-shadow:0 0 22px color-mix(in srgb,var(--kc) 40%,transparent)}
 .sk-pop-ic .ico{width:38px;height:38px}
 .sk-pop-ic.locked,.sk-pop-ic.other{filter:grayscale(.8);opacity:.6}
 .sk-pop-ic.learn{animation:skLearn .6s cubic-bezier(.3,1.6,.6,1)}
@@ -1154,7 +1154,7 @@ table.standings{min-width:0}
 /* ---------- 국적 · 리더십 · 은퇴 · 명예의 전당 ---------- */
 .nat-pick{padding:10px 12px;display:flex;flex-direction:column;gap:6px}
 .nat-pick small{font-size:12px}
-.lead-card{gap:10px} .lead-card.cap{border-color:var(--gold);box-shadow:0 6px 0 rgba(0,0,0,.35),0 0 20px rgba(255,200,61,.25)}
+.lead-card{display:flex;flex-direction:column;gap:10px} .lead-card.cap{border-color:var(--gold);box-shadow:0 6px 0 rgba(0,0,0,.35),0 0 20px rgba(255,200,61,.25)}
 .lead-top{display:flex;align-items:center;gap:12px}
 .lead-top b{display:block;font-family:var(--f-display);font-weight:400;font-size:17px} .lead-top small{font-size:12px;color:var(--muted)}
 .lead-badge{flex:none;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:rgba(255,200,61,.14);color:var(--gold)}
@@ -1248,7 +1248,7 @@ table.standings{min-width:0}
 .furn .fz .ico{width:24px;height:24px;color:rgba(20,22,40,.82)}
 .furn .fz em{position:absolute;right:-6px;bottom:-6px;font:700 10px var(--f-body);font-style:normal;padding:1px 5px;border-radius:99px;background:var(--night);color:var(--muted);border:1px solid var(--edge)}
 .floor-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.floor-sw{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border-radius:14px;border:2px solid var(--edge);background:var(--panel);color:var(--ink);cursor:pointer;font-family:var(--f-body);text-align:center}
+.floor-sw{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 4px;border-radius:14px;border:2px solid var(--edge);background:var(--panel);color:var(--ink);cursor:pointer;font-family:var(--f-body);text-align:center}
 .floor-sw i{width:100%;height:28px;border-radius:8px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
 .floor-sw b{font-size:12px} .floor-sw small{font-size:10px;color:var(--muted)}
 .floor-sw.on{border-color:var(--gold)} .floor-sw:disabled{opacity:.5}
@@ -1373,6 +1373,7 @@ table.standings{min-width:0}
 .keystat > div span{display:flex;align-items:center;gap:6px;font-size:13px} .keystat > div span .ico{width:16px;height:16px;color:var(--gold)} .keystat > div b{font-family:var(--f-display);font-size:18px;color:var(--gold)}
 .keystat .rel-bar{grid-column:1/-1}
 .keystat .rel-bar i{background:linear-gradient(90deg,var(--gold-d),var(--gold))}
+.modal-card .look{margin-bottom:16px}
 </style>
 </head>
 <body>
