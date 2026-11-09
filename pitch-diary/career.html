@@ -5798,24 +5798,24 @@ const MOD = {
   shot:['슈팅 찬스 관여','%'], kp:['킬패스 시도','%'], kpq:['킬패스→빅찬스','%p'], block:['결정적 차단 확률','%p'], save:['선방률','%p'],
 };
 const fmtMod = (k, v) => { const [n, u] = MOD[k]; return u === '+' ? `${n} +${Number.isInteger(v) ? v : v.toFixed(2).replace(/0$/, '')}` : `${n} ${u === '%p' ? '+' : k === 'pk' || k === 'drain' || k === 'inj' || k === 'conc' || k === 'card' ? '−' : '+'}${Math.round(v * 100)}${u}`; };
-// 포지션마다 성장 타입 3개 · 타입 = [포지션 핵심 트리, 타입 고유 트리, 공용 트리]
-const SK_TREES = {fin:'결정력', run:'침투', star:'스타 플레이어', aerial:'공중전', link:'연계', pass:'패스 마스터', drib:'드리블러', brain:'그라운드의 두뇌', engine:'무한 엔진', cond:'지휘자',
-  def:'수비 장인', iron:'강철 체력', cap:'캡틴', build:'빌드업', overlap:'오버래핑', save:'선방', reflex:'반사신경', sweep:'스위퍼 키퍼', box:'공중볼 지배'};
+// 포지션마다 성장 타입 3개 · 타입 = [포지션 핵심 트리, 타입 고유 트리, 포지션 성향 트리] — 모든 트리는 한 포지션 전용
+const SK_TREES = {fin:'결정력', run:'침투', star:'스타 스트라이커', aerial:'공중전', link:'연계', pass:'패스 마스터', drib:'드리블러', brain:'그라운드의 두뇌', engine:'무한 엔진', cond:'지휘자',
+  def:'수비 장인', iron:'투지와 체력', cap:'수비진 캡틴', build:'빌드업', overlap:'오버래핑', save:'선방', reflex:'반사신경', sweep:'스위퍼 키퍼', box:'공중볼 지배', gkid:'골문의 리더'};
 const SK_CLS = {
   poacher:{pos:'FW', n:'골문 앞 사냥꾼', i:'target', c:'hot', d:'침투와 마무리로 골을 쓸어 담는다', trees:['fin','run','star']},
-  target:{pos:'FW', n:'타겟맨', i:'arrow-up', c:'gold', d:'헤더와 몸싸움, 공을 지켜내는 최전방 기둥', trees:['fin','aerial','iron']},
-  false9:{pos:'FW', n:'펄스 나인', i:'arrow-right-left', c:'cyan', d:'내려와서 찬스를 만들고 직접 마무리까지', trees:['fin','link','brain']},
+  target:{pos:'FW', n:'타겟맨', i:'arrow-up', c:'gold', d:'헤더와 몸싸움, 공을 지켜내는 최전방 기둥', trees:['fin','aerial','star']},
+  false9:{pos:'FW', n:'펄스 나인', i:'arrow-right-left', c:'cyan', d:'내려와서 찬스를 만들고 직접 마무리까지', trees:['fin','link','star']},
   artist:{pos:'MF', n:'테크니션', i:'wand-sparkles', c:'cyan', d:'패스와 개인기로 경기를 지배한다', trees:['pass','drib','brain']},
-  b2b:{pos:'MF', n:'박스 투 박스', i:'activity', c:'turf', d:'공수 양쪽을 쉬지 않고 누빈다', trees:['pass','engine','iron']},
-  regista:{pos:'MF', n:'레지스타', i:'presentation', c:'gold', d:'후방에서 템포를 조율하는 지휘자', trees:['pass','cond','cap']},
-  leader:{pos:'DF', n:'수비 리더', i:'shield', c:'turf', d:'몸을 던지고 수비 라인을 지휘한다', trees:['def','cap','iron']},
-  builder:{pos:'DF', n:'빌드업 수비수', i:'arrow-up-right', c:'cyan', d:'뒤에서부터 침착하게 공격을 연다', trees:['def','build','brain']},
-  fullback:{pos:'DF', n:'공격형 풀백', i:'fast-forward', c:'hot', d:'측면을 오르내리며 찬스를 만든다', trees:['def','overlap','star']},
-  shotstop:{pos:'GK', n:'슈퍼세이버', i:'hand', c:'hot', d:'불가능한 슈팅도 막아내는 반사신경', trees:['save','reflex','star']},
-  sweeper:{pos:'GK', n:'스위퍼 키퍼', i:'footprints', c:'cyan', d:'박스 밖까지 나와 공격을 끊고 역습을 연다', trees:['save','sweep','brain']},
-  commander:{pos:'GK', n:'박스 지휘관', i:'megaphone', c:'gold', d:'공중볼을 지배하고 수비 라인을 이끈다', trees:['save','box','cap']},
+  b2b:{pos:'MF', n:'박스 투 박스', i:'activity', c:'turf', d:'공수 양쪽을 쉬지 않고 누빈다', trees:['pass','engine','brain']},
+  regista:{pos:'MF', n:'레지스타', i:'presentation', c:'gold', d:'후방에서 템포를 조율하는 지휘자', trees:['pass','cond','brain']},
+  leader:{pos:'DF', n:'수비 리더', i:'shield', c:'turf', d:'몸을 던지고 수비 라인을 지휘한다', trees:['def','iron','cap']},
+  builder:{pos:'DF', n:'빌드업 수비수', i:'arrow-up-right', c:'cyan', d:'뒤에서부터 침착하게 공격을 연다', trees:['def','build','cap']},
+  fullback:{pos:'DF', n:'공격형 풀백', i:'fast-forward', c:'hot', d:'측면을 오르내리며 찬스를 만든다', trees:['def','overlap','cap']},
+  shotstop:{pos:'GK', n:'슈퍼세이버', i:'hand', c:'hot', d:'불가능한 슈팅도 막아내는 반사신경', trees:['save','reflex','gkid']},
+  sweeper:{pos:'GK', n:'스위퍼 키퍼', i:'footprints', c:'cyan', d:'박스 밖까지 나와 공격을 끊고 역습을 연다', trees:['save','sweep','gkid']},
+  commander:{pos:'GK', n:'박스 지휘관', i:'megaphone', c:'gold', d:'공중볼을 지배하고 수비 라인을 이끈다', trees:['save','box','gkid']},
 };
-const TREE_ROLE = ['핵심', '고유', '공용'];
+const TREE_ROLE = ['핵심', '고유', '성향'];
 // [단계, id, 이름, 아이콘, 최대, {보정: 1레벨당}]
 const SK_DEF = {
   fin:[
@@ -5970,6 +5970,14 @@ const SK_DEF = {
     [3,'c_air','공중 지배','arrow-up',3,{conc:.025}],
     [4,'c_setp','세트피스 수비','shield',3,{conc:.02,rtCS:.06}],
     [5,'c_boss','박스의 주인','crown',1,{conc:.06,lead:8,save:.02}]],
+  gkid:[
+    [1,'q_call','콜 플레이','megaphone',5,{conc:.01,lead:1}],
+    [1,'q_focus','90분 집중력','eye',5,{save:.004,rt:.02}],
+    [2,'q_calm','침착한 멘탈','snowflake',5,{rtBig:.05,psy:.03}],
+    [2,'q_trust','수비진의 신뢰','handshake',5,{trust:.4,start:.01}],
+    [3,'q_line','라인 컨트롤','presentation',3,{conc:.02,team:.005}],
+    [4,'q_wall','넘을 수 없는 벽','brick-wall',3,{rtCS:.1,save:.01}],
+    [5,'q_legend','골문의 전설','crown',1,{save:.03,lead:8,value:.1}]],
 };
 const SKILLS = {};
 for (const [tree, list] of Object.entries(SK_DEF)) for (const [t, id, n, i, max, mods] of list) SKILLS[id] = {tree, t, id, n, i, max, mods};
@@ -6008,7 +6016,7 @@ function skillsTab(){
   const head = `<button class="btn dark sm shop-back" type="button" id="skBack">${ic('arrow-left')} 내 선수로</button>
     <section class="panel sk-head"><div><small>기술 포인트</small><b>${sp}</b></div><p>매 시즌 +3 · 시상식 수상마다 +1<br>${S.cls ? `타입: <b class="c-${SK_CLS[S.cls].c} sk-clsn">${SK_CLS[S.cls].n}</b>` : '먼저 성장 타입을 하나 골라요'}</p></section>`;
   if (!S.cls) return head + `<div class="label">${ic('git-branch')} 성장 타입 선택</div>
-    <p class="small muted" style="margin:-6px 0 0">${POS[S.pos].name} 전용 타입 3개 중 하나만 키울 수 있어요. 타입마다 ${POS[S.pos].name} 핵심 트리 + 타입 고유 트리 + 공용 트리, 기술 21개.</p>
+    <p class="small muted" style="margin:-6px 0 0">${POS[S.pos].name} 전용 타입 3개 중 하나만 키울 수 있어요. 타입마다 ${POS[S.pos].name} 핵심 트리 + 타입 고유 트리 + 포지션 성향 트리, 기술 21개. 모든 기술이 이 포지션 전용이에요.</p>
     <div class="cls-list">${Object.entries(SK_CLS).filter(([, C]) => C.pos === S.pos).map(([k, C]) => `<button type="button" class="panel cls-card c-${C.c}" data-cls="${k}"><span class="cls-ic">${ic(C.i)}</span><div><b>${C.n}</b><small>${C.d}</small><em>${C.trees.map((t, i) => `${SK_TREES[t]}${i ? '' : ' (핵심)'}`).join(' · ')}</em></div>${ic('chevron-right')}</button>`).join('')}</div>`;
   const C = SK_CLS[S.cls], tr = int(UI.skTr, 0, 2, 0), tid = C.trees[tr], T = treeOf(tid), pts = treePts(tid);
   const lines = T.flatMap(K => skReq(K).map(q => { const a = skPos(SKILLS[q]), b = skPos(K); return `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" class="${lv(q) > 0 ? 'on' : ''}"/>`; })).join('');
