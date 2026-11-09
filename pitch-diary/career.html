@@ -949,7 +949,7 @@ table.standings{min-width:0}
 .shop-link div{display:flex;flex-direction:column;line-height:1.3} .shop-link b{font-family:var(--f-display);font-weight:400;font-size:17px} .shop-link small{font-size:12px;color:var(--muted)}
 
 /* ---------- 랭킹 필터 · 상단 뉴스 버튼 ---------- */
-.dock-in{grid-template-columns:repeat(5,1fr)}
+.dock-in{grid-template-columns:repeat(6,1fr)}
 .news-btn{position:relative;margin-left:auto} .news-btn + .icon-btn{margin-left:6px}
 .news-btn.on{border-color:var(--gold);color:var(--gold)}
 .news-btn .dock-badge{top:-6px;right:-6px}
@@ -1347,6 +1347,7 @@ table.standings{min-width:0}
 .f-thumb{width:100%;max-width:92px;height:62px;display:block;margin:0 auto}
 .furn small .fsz{display:block;font-style:normal;color:var(--dim);font-size:10px;margin-top:2px}
 @media (prefers-reduced-motion:reduce){.iso-me{transition:none}.iso .fi3.pk,.iso .ghost polygon,.iso .ws,.iso .fi3.drop{animation:none}}
+.home-strip{border-color:rgba(255,200,61,.55)!important} .home-strip > .ico:first-child{color:var(--gold)}
 </style>
 </head>
 <body>
@@ -1922,9 +1923,9 @@ function frame(inner, dock){
   if (UI.keepScroll != null){ const y = UI.keepScroll; UI.keepScroll = null; requestAnimationFrame(() => window.scrollTo({top:y, behavior:'instant'})); } else window.scrollTo({top:0});
 }
 function dockHtml(){
-  return `<nav class="dock"><div class="dock-in">${[['match','house','홈'],['player','user-round','내 선수'],['bench','armchair','벤치'],['club','shield','구단'],['world','globe','세계']].map(([k,i,n]) => { const un = k === 'player' ? (S.sp || 0) : 0; return `<button type="button" data-t="${k}" aria-selected="${UI.tab === k || (k === 'player' && (UI.tab === 'shop' || UI.tab === 'skills' || UI.tab === 'home'))}"><span class="i">${ic(i)}${un > 0 && UI.tab !== k ? `<em class="dock-badge">${un}</em>` : ''}</span>${n}</button>`; }).join('')}</div></nav>`;
+  return `<nav class="dock"><div class="dock-in">${[['match','house','홈'],['player','user-round','내 선수'],['home','sofa','우리 집'],['bench','armchair','벤치'],['club','shield','구단'],['world','globe','세계']].map(([k,i,n]) => { const un = k === 'player' ? (S.sp || 0) : k === 'home' ? homeBadge() : 0; return `<button type="button" data-t="${k}" aria-selected="${UI.tab === k || (k === 'player' && (UI.tab === 'shop' || UI.tab === 'skills'))}"><span class="i">${ic(i)}${un > 0 && UI.tab !== k ? `<em class="dock-badge">${un}</em>` : ''}</span>${n}</button>`; }).join('')}</div></nav>`;
 }
-function bindDock(){ root.querySelectorAll('.dock button').forEach(b => b.onclick = () => { UI.tab = b.dataset.t; renderHub(); }); }
+function bindDock(){ root.querySelectorAll('.dock button').forEach(b => b.onclick = () => { if (b.dataset.t === 'home' && UI.tab !== 'home'){ UI.hSel = null; UI.hPick = null; } UI.tab = b.dataset.t; renderHub(); }); }
 
 // ---------- 타이틀 / 생성 ----------
 function renderTitle(){
@@ -2120,7 +2121,7 @@ function matchTab(){
       <div class="conds"><span>${ic(WX[1])} ${WX[2]}${WX[3] ? ` <em>${WX[3]}</em>` : ''}</span><span>${ic('scale')} ${RF[1]}${RF[2] ? ` <em>${RF[2]}</em>` : ''}</span>${W.psyFx ? `<span class="psyc ${W.psyFx.rt < 0 ? 'down' : ''}">${ic('brain')} ${esc(W.psyFx.label)}</span>` : ''}${S.injury ? '' : (() => { const sc = Math.round(clamp(startChance(ovrOf(S.stats, S.pos)) + (f.k === 'C' && f.stage !== '결승' ? .1 : 0), 0, 1) * 100); return `<span class="${sc < 50 ? 'warn' : ''}">${ic('user-round')} 선발 확률 <em>${S.cond < 15 ? '0' : sc}%</em></span>`; })()}${S.cond < 45 ? `<span class="warn">${ic('heart-pulse')} 컨디션 ${S.cond} <em>평점·골↓ 부상 위험↑</em></span>` : ''}</div>
     </section>
     ${(() => { let n = 0; const st = (icon, t, sub, done, id) => `<div class="step ${done ? 'done' : ''}"><span class="step-n">${(++n, done ? ic('check') : n)}</span><div><b>${ic(icon)} ${t}</b><small${id ? ` id="${id}"` : ''}>${sub}</small></div></div>`;
-      return `${ntPending() ? `<button type="button" class="nt-strip" id="toNT">${natF()} 국가대표 ${ntName(S.season.nt)} · ${S.season.nt.stages[S.season.nt.idx].nm} 경기가 기다려요 ${ic('chevron-right')}</button>` : ''}<button type="button" class="mgr-strip" id="toBench">${M.i}<span><b>${esc(mgrName())} 감독</b> · ${MOOD_FACE[S.mood]} · 신뢰 ${S.trust}</span><small>벤치</small>${ic('chevron-right')}</button>
+      return `${ntPending() ? `<button type="button" class="nt-strip" id="toNT">${natF()} 국가대표 ${ntName(S.season.nt)} · ${S.season.nt.stages[S.season.nt.idx].nm} 경기가 기다려요 ${ic('chevron-right')}</button>` : ''}${homeBadge() ? `<button type="button" class="mgr-strip home-strip" id="toHomeS">${ic('sofa')}<span><b>우리 집</b> · 받을 수 있는 인테리어 의뢰 보상 ${homeBadge()}개</span><small>받기</small>${ic('chevron-right')}</button>` : ''}<button type="button" class="mgr-strip" id="toBench">${M.i}<span><b>${esc(mgrName())} 감독</b> · ${MOOD_FACE[S.mood]} · 신뢰 ${S.trust}</span><small>벤치</small>${ic('chevron-right')}</button>
     ${W.mOpts ? `${st('target', '감독 미션 고르기', W.mPick == null ? '하나 골라 도전 · 안 고르면 보통 미션으로 진행돼요' : '경기 시작 전까지 바꿀 수 있어요', W.mPick != null, 'mpSub')}
     <div class="panel pad mpick solo"><div class="mopts">${W.mOpts.map((o, i) => { const M = MISSION[o.k], rw = missionReward(o.k, big, o.lucky), dd = DIFF[M.d]; return `<button type="button" class="mopt ${dd[1]} ${W.mPick === i ? 'on' : ''}" data-mi="${i}">
           <span class="md">${dd[0]}${o.lucky ? ` <i class="lucky">${ic('clover')}x2</i>` : ''}</span><b>${M.n}</b><small>경험치 +${rw.xp} · 신뢰 +${rw.trust}${rw.fail ? `<br>실패 시 신뢰 ${rw.fail}` : ''}</small></button>`; }).join('')}</div></div>` : ''}
@@ -2143,6 +2144,7 @@ function actDesc(id){
 function bindMatchTab(){
   $('#fast').onchange = e => { S.fast = e.target.checked; save(); };
   const tb = $('#toBench'); if (tb) tb.onclick = () => { UI.tab = 'bench'; renderHub(); };
+  const th2 = $('#toHomeS'); if (th2) th2.onclick = () => { UI.tab = 'home'; UI.hTab = 'room'; UI.hSel = null; UI.hPick = null; renderHub(); };
   const tn = $('#toNT'); if (tn) tn.onclick = () => showNT();
   root.querySelectorAll('.act').forEach(b => b.onclick = () => doAction(b.dataset.a));
   root.querySelectorAll('.mopt').forEach(b => b.onclick = () => {
@@ -3796,7 +3798,7 @@ function assetCard(){
       <div class="ac-chart" id="wlChart">${wealthChart()}<div class="wl-tip" id="wlTip" hidden></div></div>
       <div class="ac-foot"><span>누적 수입 <b>${money(S.inc || 0)}</b></span><span>연봉 <b>${money(S.salary)}</b></span></div>
     </div>
-    <button type="button" class="panel shop-link home-link" id="toHome">${ic('house')}<div><b>마이 홈 · 차고 · 부동산</b><small>${HOUSES[S.home.live].n} · 집 스타일 ${sc.grade} · 차 ${S.home.cars.length}대</small></div>${ic('chevron-right')}</button>`;
+    <button type="button" class="panel shop-link home-link" id="toHome">${ic('house')}<div><b>우리 집 꾸미기 · 차고 · 부동산</b><small>${HOUSES[S.home.live].n} · 집 스타일 ${sc.grade} · 차 ${S.home.cars.length}대</small></div>${ic('chevron-right')}</button>`;
 }
 const W_W = 320, W_H = 150, W_L = 44, W_R = 10, W_T = 10, W_B = 22;
 function niceMax(v){ if (v <= 0) return 1000; const e = Math.pow(10, Math.floor(Math.log10(v))), f = v / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * e; }
@@ -3833,8 +3835,7 @@ function bindWealth(){
 // ---- 마이 홈 화면 ----
 function homeTab(){
   const H = S.home, A = assets(), sc = homeScore(), t = UI.hTab || 'room';
-  return `<button class="btn dark sm shop-back" type="button" id="homeBack">${ic('arrow-left')} 내 선수로</button>
-    <div class="home-hero"><div><small>순자산</small><b>${money(Math.max(0, A.net))}</b><span>현금 ${vfmt(A.cash)} · 부동산 ${vfmt(A.re)} · 차량 ${vfmt(A.car)}</span></div><div class="hh-grade g-${sc.grade}"><small>집 스타일</small><b>${sc.grade}</b></div></div>
+  return `<div class="home-hero"><div><small>순자산</small><b>${money(Math.max(0, A.net))}</b><span>현금 ${vfmt(A.cash)} · 부동산 ${vfmt(A.re)} · 차량 ${vfmt(A.car)}</span></div><div class="hh-grade g-${sc.grade}"><small>집 스타일</small><b>${sc.grade}</b></div></div>
     <div class="h-seg" role="tablist">${[['room','sofa','내 방'],['garage','car','차고'],['estate','building-2','부동산']].map(([k, i, n]) => `<button type="button" role="tab" data-ht="${k}" aria-selected="${t === k}">${ic(i)} ${n}</button>`).join('')}</div>
     ${t === 'garage' ? garageView() : t === 'estate' ? estateView() : roomView()}`;
 }
@@ -3923,6 +3924,7 @@ const HMIS = [
   ['gradeS','스타일 S 등급', '꿈의 집을 완성해요', c => c.g >= 4, 50000, 200],
 ];
 function misCtx(){ const o = S.home.own[S.home.live], s = homeScore(); return {o, s, n:k => o.items.filter(x => x.i === k).length, wall:(o.wall || []).length, cb:s.cb.length, g:GR_ORDER.indexOf(s.grade)}; }
+const homeBadge = () => { try { const c = misCtx(); return misActive().filter(m => m[3](c)).length; } catch { return 0; } };
 const misActive = () => HMIS.filter(m => !S.home.md.includes(m[0])).slice(0, 3);
 
 // ---- 아이소메트릭 그리기 ----
@@ -4195,7 +4197,6 @@ function bindIsoWrap(){
 }
 function bindHome(){
   const H = S.home;
-  $('#homeBack').onclick = () => { UI.tab = 'player'; UI.hSel = null; UI.hPick = null; renderHub(); };
   root.querySelectorAll('[data-ht]').forEach(b => b.onclick = () => { UI.hTab = b.dataset.ht; UI.hSel = null; UI.hPick = null; renderHub(); });
   if ($('#isoSvg')){
     bindRoom(); bindIsoWrap(); startWalker(); UI.hJust = null; if (UI.hCombo) setTimeout(showCombo, RM ? 0 : 380);
