@@ -1457,6 +1457,32 @@ table.standings{min-width:0}
 .fam-tree{display:flex;flex-direction:column;gap:6px}
 .fam-row{display:flex;align-items:center;gap:10px;padding:10px 12px} .fam-row .crest{width:34px;height:34px;flex:none} .fam-row div{flex:1;display:flex;flex-direction:column;gap:1px;min-width:0} .fam-row b{font-size:14px} .fam-row em{font-style:normal;font-size:11px;color:var(--gold);margin-left:4px} .fam-row small{font-size:11.5px;color:var(--muted)}
 .fam-row.now{border-color:var(--gold)} .fam-hof{color:var(--gold)} .fam-hof .ico{width:20px;height:20px}
+.b11-head{text-align:center;display:flex;flex-direction:column;gap:2px} .b11-head small{font-size:12px;color:var(--gold);font-weight:800} .b11-head b{font-family:var(--f-display);font-size:30px}
+.b11-me{display:flex;flex-direction:column;align-items:center;gap:4px} .b11-cb{width:120px;height:156px;animation:signUp .7s cubic-bezier(.3,1.4,.6,1) both .4s} .b11-cb .chibi{width:100%;height:100%;max-width:none}
+.b11-badge{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:99px;background:linear-gradient(90deg,var(--gold),#ff9f1c);color:#231700;font-weight:900;font-size:15px;box-shadow:0 0 24px rgba(255,200,61,.55);animation:pop .5s ease both 1.1s} .b11-badge .ico{width:17px;height:17px}
+.b11-pitch{position:relative;display:flex;flex-direction:column;gap:12px;padding:16px 8px;border-radius:20px;background:repeating-linear-gradient(0deg,#1f8a47 0 46px,#1c7f41 46px 92px);border:3px solid rgba(255,255,255,.55);box-shadow:inset 0 0 0 2px rgba(0,0,0,.15)}
+.b11-pitch::before{content:"";position:absolute;left:50%;top:50%;width:90px;height:90px;border:2px solid rgba(255,255,255,.4);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
+.b11-row{position:relative;display:flex;justify-content:center;gap:6px}
+.b11-card{width:78px;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 3px;border-radius:12px;background:rgba(10,15,31,.82);border:1px solid rgba(255,255,255,.18);text-align:center;animation:dpick .5s cubic-bezier(.3,1.5,.6,1) both}
+.b11-pic{width:34px;height:34px;display:grid;place-items:center} .b11-pic .crest{width:32px;height:32px} .b11-card.me .b11-pic{width:40px;height:40px;border-radius:50%;overflow:hidden;background:#f6f0dc;border:2px solid var(--gold)} .b11-pic svg.chibi{width:40px;height:40px;max-width:none;overflow:hidden;filter:none}
+.b11-card b{font-size:11px;line-height:1.2;word-break:keep-all;white-space:normal;max-width:100%;min-width:0} .b11-card small{font-size:9px;color:var(--muted);line-height:1.2;max-width:74px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis} .b11-card em{font-style:normal;font-size:11px;font-weight:900;color:var(--gold)}
+.b11-card.me{border:2px solid var(--gold);background:linear-gradient(180deg,rgba(255,200,61,.35),rgba(10,15,31,.9));box-shadow:0 0 18px rgba(255,200,61,.7);animation:dpick .5s cubic-bezier(.3,1.5,.6,1) both,b11glow 1.4s ease-in-out infinite alternate 1s}
+@keyframes b11glow{to{box-shadow:0 0 30px rgba(255,200,61,1)}}
+.me-strip{display:flex;align-items:flex-end;gap:10px;width:100%;padding:0 4px;border:0;background:none;color:var(--ink);cursor:pointer;text-align:left}
+.ms-cb{flex:none;width:64px;height:84px} .ms-cb .chibi{width:100%;height:100%;max-width:none;filter:drop-shadow(0 4px 6px rgba(0,0,0,.35))}
+.ms-bub{position:relative;flex:1;margin-bottom:22px;padding:9px 12px;border-radius:14px;background:#fff;color:#1b1f33;font-size:13px;font-weight:700;line-height:1.4}
+.ms-bub::before{content:"";position:absolute;left:-7px;bottom:10px;border:7px solid transparent;border-right-color:#fff;border-left:0}
+.ms-bub.pop{animation:pop .35s ease both}
+.myrole{display:flex;align-items:center;justify-content:center;gap:10px}
+.mr-t{display:flex;flex-direction:column;align-items:center}
+.live-me{position:relative;flex:none;width:52px;height:68px} .live-me .lm-cb{width:100%;height:100%} .live-me .chibi{width:100%;height:100%;max-width:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.4))}
+.live-me.bench{opacity:.55;filter:grayscale(.4)}
+.lm-bub{position:absolute;left:46px;top:-6px;white-space:nowrap;padding:4px 9px;border-radius:12px;background:#fff;color:#1b1f33;font-size:12px;font-weight:900;font-family:var(--f-body);text-shadow:none;opacity:0;transform:scale(.6);transform-origin:left bottom;pointer-events:none;z-index:2}
+.lm-bub.show{animation:lmBub 1.6s ease both}
+@keyframes lmBub{0%{opacity:0;transform:scale(.6)}12%{opacity:1;transform:scale(1.08)}20%,80%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.9)}}
+.splash-me{position:absolute;bottom:14%;left:-120px;width:90px;height:118px;animation:splashRun 1.35s linear both} .splash-me .chibi{width:100%;height:100%;max-width:none}
+@keyframes splashRun{0%{transform:translateX(0)}100%{transform:translateX(calc(100vw + 240px))}}
+@media (prefers-reduced-motion:reduce){.b11-card,.b11-cb,.b11-badge,.splash-me{animation:none}.splash-me{display:none}}
 </style>
 </head>
 <body>
@@ -1854,7 +1880,7 @@ function newCareer(name, pos, club, look, nat){
   const st = {}; STAT_KEYS.forEach(k => st[k] = clamp(POS[pos].base[k] + ri(-3, 3), 1, 99));
   S = {v:2, name, pos, club, nat: NATS[nat] ? nat : 'kor', captain:false, age:19, year:new Date().getFullYear() + 1, round:0, stats:st, pop:8, trust:45, cond:100, salary:3000, earn:500, injury:0, fast:false,
     schedule:makeSeason(club), out:{}, trophies:[], scout:{}, window:null, season:freshSeason(), history:[], news:[], phase:'week', last:null, interview:null, nego:null, pending:null,
-    best:{rating:0, salary:3000}, traits:[], buff:0, streak:{t:'', n:0}, media:0, toneHist:[], week:null, prev:null, rival:pick(RIVALS), mood:0, look: look || {...DEFAULT_LOOK}, lookSet:true, look2:true, gk2:true, xp:50, items:[], equip:{}, ach:[], rec:{}, mgrs:{}, sp:1, skills:{}, stars:genStars(), honors:[], awardHist:[], v0:0};
+    best:{rating:0, salary:3000}, traits:[], buff:0, streak:{t:'', n:0}, media:0, toneHist:[], week:null, prev:null, rival:pick(RIVALS), mood:0, look: look || {...DEFAULT_LOOK}, lookSet:true, look2:true, gk2:true, xp:50, items:[], equip:{}, ach:[], rec:{}, mgrs:{}, sp:1, skills:{}, stars:genStars(), real1:true, honors:[], awardHist:[], v0:0};
   S.season.obj = makeObjectives();
   S.home = cleanHome(null); S.inc = 500; S.wl = []; wlPush();
   addNews(`[오피셜] ${club}, 19세 유망주 ${name} 영입… 연봉 ${money(3000)} · 계약금 ${money(500)}`);
@@ -1932,7 +1958,8 @@ function load(slot = curSlot){
     if (r.window && !r.window.offers.length) r.window = null;
     r.news = (Array.isArray(r.news) ? r.news : []).filter(n => n && typeof n.h === 'string').slice(0, 40).map(n => ({h:n.h.slice(0, 160), t:String(n.t || '').slice(0, 30)}));
     r.history = (Array.isArray(r.history) ? r.history : []).filter(h => h && CLUB[h.club]).map(h => ({year:int(h.year,2000,2100,2027), age:int(h.age,16,45,19), club:h.club, apps:int(h.apps,0,99), goals:int(h.goals,0,99), assists:int(h.assists,0,99), cs:int(h.cs,0,99,0), avg:String(h.avg).slice(0,5), salary:int(h.salary,0,SAL_MAX), change:int(h.change,-100,500)}));
-    if (!['week','match','interview','nego','retired','window','tnego','awards','school','scout','signing'].includes(r.phase)) r.phase = 'week';
+    if (!['week','match','interview','nego','retired','window','tnego','awards','school','scout','signing','best11'].includes(r.phase)) r.phase = 'week';
+    r.b11 = cleanB11(r.b11); if (r.phase === 'best11' && !r.b11) r.phase = r.nego ? 'nego' : 'week';
     r.hs = cleanHS(r.hs); if (['school','scout'].includes(r.phase) && !r.hs) r.phase = 'week'; if (r.phase === 'signing' && !r.sign) r.phase = 'week';
     r.sign = r.sign && CLUB[r.sign.club] ? {club:r.sign.club, how: r.sign.how === 'draft' ? 'draft' : 'offer', pick:int(r.sign.pick, 0, 30, 0), bonus:int(r.sign.bonus, 0, 1e6, 0), num:int(r.sign.num, 1, 99, 9), school:String(r.sign.school || '').slice(0, 20)} : null;
     r.gen = int(r.gen, 1, 99, 1); r.fam = r.gen > 1 ? cleanFam(r.fam) : null; if (!r.fam) r.gen = 1;
@@ -1948,7 +1975,7 @@ function load(slot = curSlot){
     r.season.rank = r.season.rank ? int(r.season.rank, 1, 20, 1) : undefined;
     r.season.cups = (Array.isArray(r.season.cups) ? r.season.cups : []).filter(c => typeof c === 'string').map(c => c.slice(0, 30)).slice(0, 10);
     { const sw = r.season.wonder; r.season.wonder = sw && typeof sw.d === 'string' ? {opp: CLUB[sw.opp] ? sw.opp : '', d: sw.d.slice(0, 40), q: int(sw.q, 0, 100, 70)} : undefined; }
-    r.stars = cleanStars(r.stars) || genStars(); r.v0 = int(r.v0, 0, 1e9, 0);
+    r.stars = (r.real1 || !REAL_NAMES) && cleanStars(r.stars) || genStars(); r.real1 = true; r.v0 = int(r.v0, 0, 1e9, 0);
     r.honors = (Array.isArray(r.honors) ? r.honors : []).filter(h => h && AWARDS[h.k]).map(h => ({y:int(h.y, 2000, 2100, 2027), k:h.k})).slice(0, 80);
     r.awardHist = cleanHist(r.awardHist); r.awards = cleanAwards(r.awards);
     r.season.nt = cleanNtSeason(r.season.nt); r.season.ntChk = !!r.season.ntChk; r.nt = {caps:int(r.nt && r.nt.caps, 0, 999, 0), goals:int(r.nt && r.nt.goals, 0, 999, 0)};
@@ -2043,7 +2070,7 @@ function go(){
   applyMgrs();
   save();
   if (!S) return renderTitle();
-  ({week:renderHub, match:playMatch, interview:renderInterview, nego:renderNego, retired:renderRetired, window:renderWindow, tnego:renderTN, awards:renderAwards, school:renderSchool, scout:renderScoutDay, signing:renderSigning})[S.phase]();
+  ({week:renderHub, match:playMatch, interview:renderInterview, nego:renderNego, retired:renderRetired, window:renderWindow, tnego:renderTN, awards:renderAwards, school:renderSchool, scout:renderScoutDay, signing:renderSigning, best11:renderBest11})[S.phase]();
 }
 function hud(){
   const ovr = ovrOf(S.stats, S.pos);
@@ -2340,6 +2367,64 @@ function renderSigning(){
   $('#signGo').onclick = () => { S.phase = 'week'; S.sign = null; UI.tab = 'match'; UI.splash = true; save(); go(); };
 }
 
+// ---------- 시즌 베스트 11 (4-3-3) ----------
+const B11_SLOTS = [['FW', 3], ['MF', 3], ['DF', 4], ['GK', 1]];
+function makeBest11(){
+  const lg = CLUB[S.club].lg, me = (S.honors || []).some(h => h.y === S.year && h.k === 'best11'), my = mySeasonStats();
+  const pool = S.stars.filter(x => CLUB[x.c] && CLUB[x.c].lg === lg).map(x => ({x, sc: x.o + (x.fm - 100) / 8 + rand(-2.5, 2.5)}));
+  const list = [];
+  for (const [p, n] of B11_SLOTS){
+    const pick = pool.filter(y => y.x.p === p).sort((a, b) => b.sc - a.sc).slice(0, n).map(({x}) => ({n:x.n, f:x.f, c:x.c, p, rt: r2(clamp(6.85 + (x.o - 70) * .035 + rand(0, .35), 6.6, 8.6)), me:false}));
+    if (me && p === S.pos){ pick.pop(); pick.splice(Math.floor(n / 2), 0, {n:S.name, f:natF(), c:S.club, p, rt: r2(my.rt || 7.2), me:true}); }
+    list.push(...pick);
+  }
+  return {y:S.year, lg, me, list};
+}
+function cleanB11(b){
+  if (!b || !Array.isArray(b.list) || !b.list.length) return null;
+  return {y:int(b.y, 2000, 2400, 2027), lg: LEAGUES[b.lg] ? b.lg : 'K', me:!!b.me, list:b.list.filter(x => x && typeof x.n === 'string' && POS[x.p] && CLUB[x.c]).slice(0, 11).map(x => ({n:x.n.slice(0, 20), f:safeFlag(x.f), c:x.c, p:x.p, rt:clamp(Number(x.rt) || 7, 5, 10), me:!!x.me}))};
+}
+function renderBest11(){
+  const B = S.b11, face = meSvg().replace('viewBox="0 0 200 262"', 'viewBox="42 14 116 116"');
+  disposeViewer();
+  root.innerHTML = `<main class="wrap"><div class="screen stack b11 ${B.me ? 'me-in' : ''}">
+    <div class="b11-head"><small>${LEAGUES[B.lg].f} ${LG_SHORT[B.lg] || LEAGUES[B.lg].n} · ${B.y} 시즌</small><b>베스트 11</b></div>
+    ${B.me ? `<div class="b11-me"><div class="b11-cb" data-cpose="jump">${meSvg()}</div><div class="b11-badge">${ic('users')} 베스트 11 선정!</div></div>` : ''}
+    <div class="b11-pitch">${B11_SLOTS.map(([p]) => `<div class="b11-row r-${p}">${B.list.filter(x => x.p === p).map((x, i) => `<div class="b11-card ${x.me ? 'me' : ''}" style="animation-delay:${(B.list.indexOf(x)) * 90}ms"><span class="b11-pic">${x.me ? face : crest(x.c)}</span><b>${esc(x.n)}</b><small>${x.f} ${esc(x.c)}</small><em>${x.rt.toFixed(2)}</em></div>`).join('')}</div>`).join('')}</div>
+    ${B.me ? '' : `<p class="small muted" style="text-align:center;margin:0">이번엔 이름이 없어요. 다음 시즌엔 저 자리에!</p>`}
+    <button class="btn turf block" type="button" id="b11Go">${S.history.length + 1 >= MAX_SEASONS ? `${ic('crown')} 은퇴식으로` : `${ic('briefcase')} 연봉 협상실로`}</button>
+  </div></main>`;
+  if (B.me){ setTimeout(() => { SFX.goal(); flash('BEST XI'); confetti(['#ffc83d', '#ffffff', CLUB[S.club].c]); setTimeout(() => confetti(['#ffc83d', '#ffffff']), 700); }, RM ? 0 : 1200); } else SFX.whistle();
+  $('#b11Go').onclick = () => { S.b11 = null; if (S.history.length + 1 >= MAX_SEASONS) return retireCareer(); S.phase = 'nego'; save(); go(); };
+}
+
+// ---------- 내 캐릭터 연출 ----------
+// 홈 화면 한 줄: 지금 상태를 캐릭터가 말한다
+function meLine(){
+  const f = curFx(), big = f && bigMatch(f), P = S.prev;
+  if (S.injury) return ['idle', `부상 회복 중… ${S.injury}주만 참자`];
+  if (S.cond < 45) return ['idle', '몸이 무거워… 오늘은 쉬어야 할까?'];
+  if (P && P.mins && P.goals >= 2) return ['jump', '지난 경기 멀티골! 이 기세 그대로!'];
+  if (P && P.mins && P.rating >= 8) return ['jump', '지난 경기 최고였어. 또 가자!'];
+  if (P && P.mins && P.rating < 5.6) return ['idle', '지난 경기는 잊자. 다시 시작!'];
+  if (big) return ['run', `${big.label}! 심장이 터질 것 같아`];
+  if (S.trust < 35) return ['idle', '감독님 눈에 들어야 해…'];
+  return pick([['run', '오늘도 한 골 넣으러 간다!'], ['clap', '컨디션 좋다! 가보자!'], ['run', '몸 다 풀었어. 준비 끝!']]);
+}
+const ME_TAP = ['진짜 나 잘하고 있는 거 맞지?', '배고프다… 경기 끝나고 국밥!', '오늘 머리 괜찮아?', '파이팅!', '세리머니 뭐 하지?', '응원해줘서 고마워!'];
+function meStrip(){ const [pose, line] = meLine(); return `<button type="button" class="me-strip" id="meStrip"><span class="ms-cb" data-cpose="${pose}">${meSvg()}</span><span class="ms-bub" id="msBub">${esc(line)}</span></button>`; }
+function bindMeStrip(){
+  const b = $('#meStrip'); if (!b) return;
+  b.onclick = () => { const cb = b.querySelector('.ms-cb'), bub = $('#msBub'); cb.dataset.cpose = pick(['jump', 'clap', 'run']); bub.textContent = pick(ME_TAP); bub.classList.remove('pop'); void bub.offsetWidth; bub.classList.add('pop'); SFX.click && SFX.click(); };
+}
+// 경기 중계: 내 캐릭터가 장면마다 반응
+function liveReact(pose, text, ms = 1500){
+  const el = $('#liveMe'); if (!el) return;
+  const cb = el.querySelector('.lm-cb'), bub = el.querySelector('.lm-bub');
+  cb.dataset.cpose = pose; if (text){ bub.textContent = text; bub.classList.remove('show'); void bub.offsetWidth; bub.classList.add('show'); }
+  clearTimeout(liveReact._t); liveReact._t = setTimeout(() => { if (cb.isConnected) cb.dataset.cpose = el.classList.contains('bench') ? 'idle' : 'run'; }, RM ? 0 : ms);
+}
+
 // ---------- K리그 다른 구단의 빠른 러브콜 ----------
 function kCall(){
   if (CLUB[S.club].lg !== 'K' || S.round < 2 || (S.kcall || 0) >= 2 || S.round - (S.kcallAt ?? -9) < 4) return null;
@@ -2436,7 +2521,7 @@ function renderHub(){
 function matchTab(){
   const f = curFx(), opp = f.opp, home = f.home, M = mgr(), W = S.week, F = FORTUNES[W.fortune], big = bigMatch(f), WX = WEATHER[W.wx ?? 0], RF = REFS[W.ref ?? 1];
   const se = S.season, avg = se.ratings.length ? (se.ratings.reduce((a,b) => a+b, 0) / se.ratings.length).toFixed(1) : '-';
-  return `
+  return `${meStrip()}
     <section class="panel next ${f.k !== 'L' ? 'cup' : ''} ${big ? 'bigm' : ''}">
       <div class="next-top"><span class="tag gold">${S.year} · ${esc(fxLabel(f))}</span><span class="tag">${f.k === 'L' ? `현재 ${myRank()}위 · ` : ''}${home ? 'HOME' : 'AWAY'}</span></div>
       ${big ? `<div class="big-banner">${ic('flame')} ${esc(big.label)} · 인기·경험치 보상 2배</div>` : ''}
@@ -2475,6 +2560,7 @@ function actDesc(id){
   return {rest:'컨디션↑', fan:'인기도↑', talk:'신뢰 ±'}[id];
 }
 function bindMatchTab(){
+  bindMeStrip();
   $('#fast').onchange = e => { S.fast = e.target.checked; save(); };
   const tb = $('#toBench'); if (tb) tb.onclick = () => { UI.tab = 'bench'; renderHub(); };
   const th2 = $('#toHomeS'); if (th2) th2.onclick = () => { UI.tab = 'home'; UI.hTab = 'room'; UI.hSel = null; UI.hPick = null; renderHub(); };
@@ -3003,7 +3089,7 @@ async function runMatch(){
         <div class="tm">${crest(aN, 'lg')}<span>${esc(aN)}</span></div>
       </div></div>
       <div class="mom" aria-hidden="true"><i id="momL" style="width:50%;background:${CLUB[hN].c}"></i><i id="momR" style="width:50%;background:${CLUB[aN].c}"></i></div>
-      <div class="myrole">${roleTxt}<span class="mcond">${ic(WEATHER[p.wx ?? 0][1])} ${WEATHER[p.wx ?? 0][2]} · ${REFS[p.ref ?? 1][1]}</span></div>
+      <div class="myrole"><div class="live-me ${p.role === 'start' ? '' : 'bench'}" id="liveMe"><div class="lm-cb" data-cpose="${p.role === 'start' ? 'run' : 'idle'}">${meSvg()}</div><b class="lm-bub"></b></div><div class="mr-t">${roleTxt}<span class="mcond">${ic(WEATHER[p.wx ?? 0][1])} ${WEATHER[p.wx ?? 0][2]} · ${REFS[p.ref ?? 1][1]}</span></div></div>
     </div>
     <div class="label">LIVE 중계</div>
     <div class="panel"><ul class="feed" id="tl"><li><span class="m">0'</span>🏁 킥오프!</li>${p.big ? `<li class="big"><span class="m">0'</span>🔥 ${esc(p.big)}! 경기장이 터질 듯한 함성</li>` : ''}</ul></div>
@@ -3021,15 +3107,15 @@ async function runMatch(){
       const e = p.ev[i++];
       if (e.side === 'us'){
         us++; mom += .6; setScore();
-        if (e.who === 'me'){ add(e.m, 'me', `⚽ ${esc(S.name)} 골!!!`); if (!fast){ SFX.goal(); flash('GOAL!'); shake(); confetti([CLUB[S.club].c, '#fff', '#ffc83d']); await wait(1100); } }
-        else if (e.ast){ add(e.m, 'me', `🅰️ ${esc(S.name)}의 어시스트! ${esc(S.club)} 골!`); if (!fast){ SFX.goal(); await wait(600); } }
-        else { add(e.m, '', `⚽ ${esc(S.club)} 골!`); if (!fast){ SFX.good(); await wait(400); } }
-      } else if (e.side === 'them'){ them++; mom -= .6; setScore(); add(e.m, 'opp', `😣 ${esc(p.opp)} 득점`); if (!fast){ SFX.bad(); await wait(400); } }
-      else if (e.side === 'sub') add(e.m, 'me', `🔄 ${esc(S.name)} 교체 투입!`);
+        if (e.who === 'me'){ liveReact('jump', '골!!! 내가 넣었다!', 2200); add(e.m, 'me', `⚽ ${esc(S.name)} 골!!!`); if (!fast){ SFX.goal(); flash('GOAL!'); shake(); confetti([CLUB[S.club].c, '#fff', '#ffc83d']); await wait(1100); } }
+        else if (e.ast){ liveReact('clap', '어시스트!'); add(e.m, 'me', `🅰️ ${esc(S.name)}의 어시스트! ${esc(S.club)} 골!`); if (!fast){ SFX.goal(); await wait(600); } }
+        else { liveReact('clap', pick(['나이스!', '좋았어!', '가자!'])); add(e.m, '', `⚽ ${esc(S.club)} 골!`); if (!fast){ SFX.good(); await wait(400); } }
+      } else if (e.side === 'them'){ liveReact('idle', pick(['아…', '집중하자!', '괜찮아, 다시!'])); them++; mom -= .6; setScore(); add(e.m, 'opp', `😣 ${esc(p.opp)} 득점`); if (!fast){ SFX.bad(); await wait(400); } }
+      else if (e.side === 'sub'){ const lm = $('#liveMe'); if (lm) lm.classList.remove('bench'); liveReact('run', '간다!'); add(e.m, 'me', `🔄 ${esc(S.name)} 교체 투입!`); }
       else if (e.side === 'post'){ add(e.m, 'big', `💥 ${esc(S.name)}의 슈팅… 골대를 맞고 나온다!`); if (!fast) await wait(500); }
-      else if (e.side === 'save'){ mom += .3; add(e.m, 'me', e.big ? `🧤 ${esc(S.name)} 슈퍼세이브!!! 1:1 찬스를 막아냈다` : `🧤 ${esc(S.name)}의 동물적인 선방! 골문을 지킨다`); if (!fast){ SFX.good(); if (e.big){ flash('SAVE!'); shake(); } await wait(e.big ? 900 : 500); } }
-      else if (e.side === 'block'){ mom += .25; add(e.m, 'me', e.big ? `🛡️ ${esc(S.name)} 골라인 클리어링!!! 실점 위기를 지웠다` : `🛡️ ${esc(S.name)}의 몸을 던진 태클! 슈팅을 막아냈다`); if (!fast){ SFX.good(); if (e.big) flash('BLOCK!'); await wait(e.big ? 800 : 450); } }
-      else if (e.side === 'kpm'){ add(e.m, 'big', `🎯 ${esc(S.name)}의 킬패스! …하지만 동료의 슈팅이 빗나간다`); if (!fast) await wait(450); }
+      else if (e.side === 'save'){ liveReact('jump', e.big ? '슈퍼세이브!!' : '막았다!'); mom += .3; add(e.m, 'me', e.big ? `🧤 ${esc(S.name)} 슈퍼세이브!!! 1:1 찬스를 막아냈다` : `🧤 ${esc(S.name)}의 동물적인 선방! 골문을 지킨다`); if (!fast){ SFX.good(); if (e.big){ flash('SAVE!'); shake(); } await wait(e.big ? 900 : 500); } }
+      else if (e.side === 'block'){ liveReact('jump', '차단!'); mom += .25; add(e.m, 'me', e.big ? `🛡️ ${esc(S.name)} 골라인 클리어링!!! 실점 위기를 지웠다` : `🛡️ ${esc(S.name)}의 몸을 던진 태클! 슈팅을 막아냈다`); if (!fast){ SFX.good(); if (e.big) flash('BLOCK!'); await wait(e.big ? 800 : 450); } }
+      else if (e.side === 'kpm'){ liveReact('idle', '아깝다!'); add(e.m, 'big', `🎯 ${esc(S.name)}의 킬패스! …하지만 동료의 슈팅이 빗나간다`); if (!fast) await wait(450); }
       else if (e.side === 'yellow') add(e.m, 'opp', `🟨 ${esc(S.name)} 경고`);
       else if (e.side === 'red'){ add(e.m, 'big', `🟥 ${esc(p.opp)} 선수 퇴장!`); mom += .3; }
       else if (e.side === 'var'){
@@ -3039,6 +3125,7 @@ async function runMatch(){
       } else if (e.side === 'chance'){
         add(e.m, 'big', `⚡ 결정적 순간! ${esc(S.name)}에게 공이 왔다`);
         if (e.kind == null){ await wait(400); await chanceGame(e); }
+        liveReact(e.res ? 'jump' : 'idle', e.res ? '해냈다!!' : '으악…');
         if (e.res){ us++; mom += .6; setScore(); add(e.m, 'me', e.kind === 'pas' ? `🅰️ ${esc(S.name)}의 킬패스! 동료가 마무리!` : e.kind === 'dri' ? `🌀 ${esc(S.name)}, 수비를 제치고 골!!!` : `⚽ ${esc(S.name)}의 강슛 골!!!`); if (!fast && e.kind !== 'pas'){ flash('GOAL!'); shake(); } }
         else add(e.m, 'opp', {sho:'😱 슈팅이 골대를 벗어났다', pas:'😩 패스가 차단당했다', dri:'😵 돌파가 막혔다'}[e.kind] || '😩 기회를 놓쳤다');
       } else if (e.side === 'pk' || e.side === 'opk'){
@@ -3071,6 +3158,7 @@ async function runMatch(){
   applyMatch(r); S.pending = null; S.phase = 'interview'; S.interview = null; save();
   SFX.whistle();
   add(90, 'big', `📣 경기 종료 — ${r.res === 'W' ? '🎉 승리!' : r.res === 'D' ? '🤝 무승부' : '😢 패배'}`);
+  liveReact(r.res === 'W' ? 'jump' : r.res === 'D' ? 'clap' : 'idle', r.res === 'W' ? '이겼다!!' : r.res === 'D' ? '수고했어!' : '다음엔 꼭…', 4000);
   const L = S.last, rc = r.rating == null ? '' : r.rating >= 7.5 ? 'background:linear-gradient(135deg,#4ade80,#0f7a35);color:#03200d' : r.rating < 5.5 ? 'background:linear-gradient(135deg,#ff6b81,#a8203b);color:#fff' : 'background:linear-gradient(135deg,#3dd6ff,#157a99);color:#04202b';
   $('#after').innerHTML = `<div class="panel res-card stack" style="align-items:center">
     <div class="res-cb" data-cpose="${r.role === 'injured' ? 'idle' : r.res === 'W' ? (r.goals ? 'jump' : 'clap') : r.res === 'D' ? 'clap' : 'idle'}">${meSvg()}${r.res === 'W' && r.mins ? '<i class="spark s1"></i><i class="spark s2"></i><i class="spark s3"></i>' : r.res === 'L' ? '<i class="sweat"></i>' : ''}</div>
@@ -5266,7 +5354,14 @@ function starName(used, nat){
 function hashStr(s){ let h = 7; for (const ch of String(s)) h = (h * 31 + ch.codePointAt(0)) >>> 0; return h; }
 function nameFrom(nat, h){ const N = NATIONS.find(x => x[1] === nat) || NATIONS[0]; return fmtName(N, N[2][h % N[2].length], N[3][(h >>> 7) % N[3].length]); }
 // 소속 팀 동료 이름(구단마다 고정)
-function mateName(role){ const h = hashStr(S.club + role); let n = nameFrom(LG_NAT[CLUB[S.club].lg] || '🇰🇷', h); if (n === S.rival || n === S.name) n = nameFrom(LG_NAT[CLUB[S.club].lg] || '🇰🇷', h + 13); return n; }
+function realMate(role){
+  if (!REAL_NAMES || !S.stars) return null;
+  const R = S.stars.filter(x => x.c === S.club && x.n !== S.name && x.n !== S.rival);
+  if (!R.length) return null;
+  const ace = R.slice().sort((a, b) => b.o - a.o)[0], old = R.filter(x => x !== ace).sort((a, b) => b.a - a.a);
+  return role === 'A' ? ace.n : role === 'C' ? (old[0] || null)?.n : role === 'V' ? (old[1] || null)?.n : null;
+}
+function mateName(role){ const rm = realMate(role); if (rm) return rm; const h = hashStr(S.club + role); let n = nameFrom(LG_NAT[CLUB[S.club].lg] || '🇰🇷', h); if (n === S.rival || n === S.name) n = nameFrom(LG_NAT[CLUB[S.club].lg] || '🇰🇷', h + 13); return n; }
 
 const VPOS = {FW:1.1, MF:1, DF:.8, GK:.55}, LG_V = {K:.45, J1:.55, B2:.6, AFC:.5, EPL:1.15, LIGA:1, SA:.92, BUN:.95};
 const POSN = {FW:'공격수', MF:'미드필더', DF:'수비수', GK:'골키퍼'};
@@ -5292,7 +5387,7 @@ const randAge = () => [ri(18, 21), ri(22, 26), ri(27, 30), ri(31, 34)][wpick([[1
 function newLocal(lg, p, used, young){
   const c = pick(leagueClubs(lg)), [n, f] = starName(used, Math.random() < (LG_LOCAL[lg] || .45) ? LG_NAT[lg] : null);
   const a = young ? ri(18, 20) : randAge();
-  const o = clamp(CLUB[c].s + ri(-3, 6) - (a <= 21 ? ri(2, 5) : 0), 55, 90);
+  const o = clamp(CLUB[c].s + ri(-3, 6) - (a <= 21 ? ri(2, 5) : 0), 55, REAL_NAMES && EURO.includes(lg) ? 82 : 90); // 실명 모드: 빅리그 가상 선수는 실제 스타보다 낮게
   return {n, f, p, a, o, c, home:lg, pop: clamp(Math.round((o - 62) * 2.5 + 20 + ri(-8, 8)), 5, 90), fm: ri(88, 112), v:0, v0:0};
 }
 function fillLeagues(list){
@@ -5303,12 +5398,150 @@ function fillLeagues(list){
   }
   return list;
 }
+// ---------- 실제 선수 명단 (2025-26 시즌 기준) ----------
+// [이름, 포지션, 소속, 국기, 능력치, 나이]. 이적·은퇴로 바뀌면 이 표만 고치면 된다. REAL_NAMES를 false로 두면 전부 가상 이름.
+const REAL_NAMES = true;
+const REAL_STARS = [
+  ['엘링 홀란','FW','맨체스터 시티','🇳🇴',91,26],
+  ['로드리','MF','맨체스터 시티','🇪🇸',88,30],
+  ['필 포든','MF','맨체스터 시티','🏴󠁧󠁢󠁥󠁮󠁧󠁿',85,26],
+  ['후벵 디아스','DF','맨체스터 시티','🇵🇹',86,29],
+  ['요슈코 그바르디올','DF','맨체스터 시티','🇭🇷',85,24],
+  ['잔루이지 돈나룸마','GK','맨체스터 시티','🇮🇹',88,27],
+  ['오마르 마르무시','FW','맨체스터 시티','🇪🇬',83,27],
+  ['티자니 라인더르스','MF','맨체스터 시티','🇳🇱',83,27],
+  ['부카요 사카','FW','아스널','🏴󠁧󠁢󠁥󠁮󠁧󠁿',88,24],
+  ['마르틴 외데고르','MF','아스널','🇳🇴',86,27],
+  ['데클란 라이스','MF','아스널','🏴󠁧󠁢󠁥󠁮󠁧󠁿',87,27],
+  ['윌리엄 살리바','DF','아스널','🇫🇷',88,25],
+  ['가브리에우 마갈량이스','DF','아스널','🇧🇷',86,28],
+  ['다비드 라야','GK','아스널','🇪🇸',86,30],
+  ['빅토르 요케레스','FW','아스널','🇸🇪',85,27],
+  ['마르틴 수비멘디','MF','아스널','🇪🇸',85,27],
+  ['모하메드 살라','FW','리버풀','🇪🇬',88,34],
+  ['버질 반 다이크','DF','리버풀','🇳🇱',87,34],
+  ['알리송 베케르','GK','리버풀','🇧🇷',88,33],
+  ['플로리안 비르츠','MF','리버풀','🇩🇪',87,23],
+  ['알렉시스 맥알리스터','MF','리버풀','🇦🇷',86,27],
+  ['알렉산데르 이사크','FW','리버풀','🇸🇪',87,26],
+  ['도미니크 소보슬라이','MF','리버풀','🇭🇺',84,25],
+  ['위고 에키티케','FW','리버풀','🇫🇷',83,23],
+  ['콜 파머','MF','첼시','🏴󠁧󠁢󠁥󠁮󠁧󠁿',87,24],
+  ['모이세스 카이세도','MF','첼시','🇪🇨',86,24],
+  ['엔소 페르난데스','MF','첼시','🇦🇷',84,25],
+  ['리스 제임스','DF','첼시','🏴󠁧󠁢󠁥󠁮󠁧󠁿',83,26],
+  ['주앙 페드루','FW','첼시','🇧🇷',83,24],
+  ['로베르트 산체스','GK','첼시','🇪🇸',80,28],
+  ['브루누 페르난드스','MF','맨체스터 유나이티드','🇵🇹',85,31],
+  ['브라이언 음뵈모','FW','맨체스터 유나이티드','🇨🇲',83,26],
+  ['마테우스 쿠냐','FW','맨체스터 유나이티드','🇧🇷',83,27],
+  ['리산드로 마르티네스','DF','맨체스터 유나이티드','🇦🇷',83,28],
+  ['사비 시몬스','MF','토트넘','🇳🇱',84,23],
+  ['크리스티안 로메로','DF','토트넘','🇦🇷',85,28],
+  ['미키 반 더 벤','DF','토트넘','🇳🇱',84,25],
+  ['굴리엘모 비카리오','GK','토트넘','🇮🇹',83,29],
+  ['모하메드 쿠두스','FW','토트넘','🇬🇭',82,25],
+  ['제임스 매디슨','MF','토트넘','🏴󠁧󠁢󠁥󠁮󠁧󠁿',82,29],
+  ['브루누 기마랑이스','MF','뉴캐슬','🇧🇷',86,28],
+  ['산드로 토날리','MF','뉴캐슬','🇮🇹',84,26],
+  ['앤서니 고든','FW','뉴캐슬','🏴󠁧󠁢󠁥󠁮󠁧󠁿',83,25],
+  ['닉 포프','GK','뉴캐슬','🏴󠁧󠁢󠁥󠁮󠁧󠁿',82,34],
+  ['에미 마르티네스','GK','아스톤 빌라','🇦🇷',85,33],
+  ['올리 왓킨스','FW','아스톤 빌라','🏴󠁧󠁢󠁥󠁮󠁧󠁿',83,30],
+  ['유리 틸레만스','MF','아스톤 빌라','🇧🇪',82,29],
+  ['킬리안 음바페','FW','레알 마드리드','🇫🇷',91,27],
+  ['비니시우스 주니오르','FW','레알 마드리드','🇧🇷',89,25],
+  ['주드 벨링엄','MF','레알 마드리드','🏴󠁧󠁢󠁥󠁮󠁧󠁿',89,22],
+  ['페데리코 발베르데','MF','레알 마드리드','🇺🇾',88,27],
+  ['티보 쿠르투아','GK','레알 마드리드','🇧🇪',89,34],
+  ['안토니오 뤼디거','DF','레알 마드리드','🇩🇪',85,33],
+  ['트렌트 알렉산더아널드','DF','레알 마드리드','🏴󠁧󠁢󠁥󠁮󠁧󠁿',85,27],
+  ['아르다 귈레르','MF','레알 마드리드','🇹🇷',83,21],
+  ['딘 하위선','DF','레알 마드리드','🇪🇸',82,21],
+  ['라민 야말','FW','바르셀로나','🇪🇸',90,18],
+  ['하피냐','FW','바르셀로나','🇧🇷',88,29],
+  ['페드리','MF','바르셀로나','🇪🇸',89,23],
+  ['로베르트 레반도프스키','FW','바르셀로나','🇵🇱',85,37],
+  ['프렝키 더 용','MF','바르셀로나','🇳🇱',85,29],
+  ['파우 쿠바르시','DF','바르셀로나','🇪🇸',84,19],
+  ['쥘 쿤데','DF','바르셀로나','🇫🇷',85,27],
+  ['주안 가르시아','GK','바르셀로나','🇪🇸',83,25],
+  ['가비','MF','바르셀로나','🇪🇸',83,21],
+  ['훌리안 알바레스','FW','아틀레티코 마드리드','🇦🇷',87,26],
+  ['앙투안 그리즈만','FW','아틀레티코 마드리드','🇫🇷',84,35],
+  ['얀 오블락','GK','아틀레티코 마드리드','🇸🇮',87,33],
+  ['코케','MF','아틀레티코 마드리드','🇪🇸',82,34],
+  ['니코 윌리엄스','FW','아틀레틱 빌바오','🇪🇸',85,23],
+  ['우나이 시몬','GK','아틀레틱 빌바오','🇪🇸',85,28],
+  ['구보 다케후사','FW','레알 소시에다드','🇯🇵',83,25],
+  ['미켈 오야르사발','FW','레알 소시에다드','🇪🇸',83,29],
+  ['이스코','MF','레알 베티스','🇪🇸',82,34],
+  ['라우타로 마르티네스','FW','인터 밀란','🇦🇷',88,29],
+  ['니콜로 바렐라','MF','인터 밀란','🇮🇹',87,29],
+  ['하칸 찰하놀루','MF','인터 밀란','🇹🇷',85,32],
+  ['알레산드로 바스토니','DF','인터 밀란','🇮🇹',87,27],
+  ['얀 조머','GK','인터 밀란','🇨🇭',85,37],
+  ['마르퀴스 튀람','FW','인터 밀란','🇫🇷',85,28],
+  ['케빈 더 브라위너','MF','나폴리','🇧🇪',86,35],
+  ['스콧 맥토미니','MF','나폴리','🏴󠁧󠁢󠁳󠁣󠁴󠁿',85,29],
+  ['로멜루 루카쿠','FW','나폴리','🇧🇪',83,33],
+  ['알렉스 메레트','GK','나폴리','🇮🇹',82,29],
+  ['케난 일디즈','FW','유벤투스','🇹🇷',84,21],
+  ['두샨 블라호비치','FW','유벤투스','🇷🇸',83,26],
+  ['글레이송 브레메르','DF','유벤투스','🇧🇷',85,29],
+  ['미켈레 디 그레고리오','GK','유벤투스','🇮🇹',82,28],
+  ['하파엘 레앙','FW','AC 밀란','🇵🇹',85,26],
+  ['크리스천 풀리식','FW','AC 밀란','🇺🇸',84,27],
+  ['루카 모드리치','MF','AC 밀란','🇭🇷',83,40],
+  ['마이크 메냥','GK','AC 밀란','🇫🇷',86,30],
+  ['아데몰라 루크먼','FW','아탈란타','🇳🇬',84,28],
+  ['파울로 디발라','FW','AS 로마','🇦🇷',83,32],
+  ['해리 케인','FW','바이에른 뮌헨','🏴󠁧󠁢󠁥󠁮󠁧󠁿',90,32],
+  ['자말 무시알라','MF','바이에른 뮌헨','🇩🇪',88,23],
+  ['요주아 키미히','MF','바이에른 뮌헨','🇩🇪',87,31],
+  ['김민재','DF','바이에른 뮌헨','🇰🇷',84,29],
+  ['마누엘 노이어','GK','바이에른 뮌헨','🇩🇪',85,40],
+  ['마이클 올리세','FW','바이에른 뮌헨','🇫🇷',86,24],
+  ['다요 우파메카노','DF','바이에른 뮌헨','🇫🇷',84,27],
+  ['루이스 디아스','FW','바이에른 뮌헨','🇨🇴',85,29],
+  ['파트리크 시크','FW','레버쿠젠','🇨🇿',82,30],
+  ['알레한드로 그리말도','DF','레버쿠젠','🇪🇸',84,30],
+  ['세루 기라시','FW','도르트문트','🇬🇳',85,30],
+  ['니코 슐로터베크','DF','도르트문트','🇩🇪',84,26],
+  ['그레고어 코벨','GK','도르트문트','🇨🇭',86,28],
+  ['율리안 브란트','MF','도르트문트','🇩🇪',82,30],
+  ['데니스 운다프','FW','슈투트가르트','🇩🇪',81,29],
+  ['후벵 네베스','MF','알 힐랄','🇵🇹',84,29],
+  ['야신 부누','GK','알 힐랄','🇲🇦',84,35],
+  ['칼리두 쿨리발리','DF','알 힐랄','🇸🇳',82,34],
+  ['카림 벤제마','FW','알 이티하드','🇫🇷',84,38],
+  ['은골로 캉테','MF','알 이티하드','🇫🇷',82,35],
+  ['오사코 유야','FW','비셀 고베','🇯🇵',77,36],
+  ['무토 요시노리','FW','비셀 고베','🇯🇵',77,33],
+  ['안데르송 로페스','FW','요코하마 F. 마리노스','🇧🇷',77,32],
+  ['조현우','GK','울산 HD','🇰🇷',80,34],
+  ['이청용','MF','울산 HD','🇰🇷',74,37],
+  ['김영권','DF','울산 HD','🇰🇷',75,36],
+  ['이승우','FW','전북 현대','🇰🇷',76,28],
+  ['송범근','GK','전북 현대','🇰🇷',75,28],
+  ['안드레아 콤파뇨','FW','전북 현대','🇮🇹',77,35],
+  ['박진섭','DF','전북 현대','🇰🇷',75,30],
+  ['제시 린가드','MF','FC서울','🏴󠁧󠁢󠁥󠁮󠁧󠁿',78,33],
+  ['조영욱','FW','FC서울','🇰🇷',74,27],
+  ['기성용','MF','포항 스틸러스','🇰🇷',74,37],
+  ['주민규','FW','대전 하나시티즌','🇰🇷',76,36],
+  ['세징야','MF','대구 FC','🇧🇷',77,36],
+];
+function realStars(used){
+  return REAL_STARS.filter(r => CLUB[r[2]] && !used.has(r[0])).map(([n, p, c, f, o, a]) => { used.add(n); const lg = CLUB[c].lg, local = lg === 'K' || lg === 'J1' || lg === 'B2';
+    return {n, f, p, a, o, c, home: local ? lg : undefined, real:true, pop: clamp(Math.round((o - 70) * 3.2 + 35 + ri(-5, 5)), 15, 99), fm: ri(92, 112), v:0, v0:0}; });
+}
 function genStars(){
-  const used = new Set(), out = [];
-  for (const p of ['FW','MF','DF','GK']) for (let i = 0; i < 25; i++){
+  const used = new Set(), out = REAL_NAMES ? realStars(used) : [];
+  for (const p of ['FW','MF','DF','GK']){ const have = out.filter(x => x.p === p && !x.home).length; for (let i = have; i < 25; i++){
     const a = randAge();
     out.push(newStar(p, Math.round(STAR_TOP[p] - i * .45 + rand(-1.5, 1.5) - (a <= 21 ? ri(3, 7) : 0)), a, used));
-  }
+  } }
   out.forEach(x => { x.v = starV(x); x.v0 = x.v; });
   return fillLeagues(out);
 }
@@ -5610,7 +5843,7 @@ function renderAwards(){
   };
   const nx = $('#awNext');
   if (nx) nx.onclick = () => {
-    if (last){ S.awards = null; if (S.history.length + 1 >= MAX_SEASONS) return retireCareer(); S.phase = 'nego'; save(); return go(); }
+    if (last){ S.awards = null; S.b11 = makeBest11(); S.phase = 'best11'; save(); return go(); }
     A.step++; A.rev = false; save(); renderAwards();
   };
 }
@@ -6577,7 +6810,7 @@ function roundSplash(){
   const f = curFx(); if (!f) return;
   const big = bigMatch(f);
   const el = document.createElement('div'); el.className = 'splash' + (big ? ' big' : f.k !== 'L' ? ' cup' : '');
-  el.innerHTML = `<div class="band">${crest(S.club, 'lg')}<div><b>${big ? esc(big.label) : f.k === 'L' ? `ROUND ${f.lr}` : esc(f.stage)}</b><small>${f.k === 'L' ? '' : esc(f.comp) + ' · '}VS ${esc(f.opp)}</small></div>${crest(f.opp, 'lg')}</div>`;
+  el.innerHTML = `<div class="band">${crest(S.club, 'lg')}<div><b>${big ? esc(big.label) : f.k === 'L' ? `ROUND ${f.lr}` : esc(f.stage)}</b><small>${f.k === 'L' ? '' : esc(f.comp) + ' · '}VS ${esc(f.opp)}</small></div>${crest(f.opp, 'lg')}</div><div class="splash-me" data-cpose="run">${meSvg()}</div>`;
   document.body.appendChild(el); SFX.whistle(); setTimeout(() => el.remove(), 1350);
 }
 
