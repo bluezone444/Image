@@ -44,7 +44,8 @@ button{-webkit-tap-highlight-color:transparent;cursor:pointer}
   background:linear-gradient(100deg,transparent,rgba(255,255,255,.05),transparent);animation:sweep 9s ease-in-out infinite}
 
 .wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 120px}
-.screen{animation:enter .35s cubic-bezier(.2,.8,.2,1) both}
+.screen{animation:enter .32s cubic-bezier(.2,.8,.2,1) both}
+.screen.still{animation:none}
 .panel{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:2px solid var(--edge);border-radius:18px;box-shadow:0 6px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.07)}
 .pad{padding:16px}
 .stack{display:flex;flex-direction:column;gap:14px}
@@ -96,6 +97,11 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .dock button[aria-selected="true"]{color:var(--gold)}
 .dock button[aria-selected="true"] .i{filter:none;transform:translateY(-3px) scale(1.15)}
 .dock button[aria-selected="true"]::after{content:"";position:absolute;top:0;left:30%;right:30%;height:3px;border-radius:0 0 3px 3px;background:var(--gold)}
+.dock button.pop .i{animation:dockPop .34s cubic-bezier(.3,1.5,.5,1) both}
+.dock button.pop::after{animation:dockBar .26s cubic-bezier(.2,.8,.2,1) both}
+.dock button:active .i{transform:scale(.9)}
+@keyframes dockPop{0%{transform:translateY(4px) scale(.8)}60%{transform:translateY(-3px) scale(1.1)}}
+@keyframes dockBar{from{transform:scaleX(0)}}
 
 /* ---------- 엠블럼 ---------- */
 .crest{flex:none;width:30px;height:30px;border-radius:50%;display:inline-grid;place-items:center;font-family:var(--f-display);font-size:14px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.4),0 3px 0 rgba(0,0,0,.35)}
@@ -242,13 +248,21 @@ table.hist th{color:var(--muted);font-weight:700;font-size:12px}
 .feed li.big{color:var(--cyan);font-weight:900}
 .res-card{text-align:center;padding:18px 16px;animation:pop .5s cubic-bezier(.3,1.5,.6,1) both}
 .rating{display:inline-grid;place-items:center;width:96px;height:96px;border-radius:24px;font-family:var(--f-display);font-size:42px;box-shadow:0 6px 0 rgba(0,0,0,.4);margin:6px 0}
-.flashfx{position:fixed;inset:0;z-index:45;display:grid;place-items:center;pointer-events:none}
-.flashfx b{font-family:var(--f-display);font-weight:400;font-size:clamp(60px,18vw,120px);color:#fff;-webkit-text-stroke:3px #6b3f00;text-shadow:0 8px 0 #6b3f00,0 0 40px rgba(255,200,61,.8);animation:goal 1.3s cubic-bezier(.3,1.4,.6,1) both}
+.flashfx{position:fixed;inset:0;z-index:45;display:grid;place-items:center;pointer-events:none;overflow:hidden}
+.flashfx::before,.flashfx::after{content:"";position:absolute;left:50%;top:50%;width:min(92vw,460px);height:min(92vw,460px);margin:calc(min(92vw,460px) / -2) 0 0 calc(min(92vw,460px) / -2);border-radius:50%;pointer-events:none}
+.flashfx::before{background:radial-gradient(closest-side,rgba(255,200,61,.5),rgba(255,200,61,.14) 55%,transparent 72%);animation:flashGlow 1.3s cubic-bezier(.2,.8,.2,1) both}
+.flashfx::after{border:6px solid rgba(255,255,255,.75);animation:flashRing .7s cubic-bezier(.1,.7,.3,1) both}
+.flashfx b{position:relative;z-index:1;white-space:nowrap;will-change:transform,opacity}
+@keyframes flashGlow{0%{opacity:0;transform:scale(.3)}18%{opacity:1;transform:scale(1)}70%{opacity:.8;transform:scale(1.08)}100%{opacity:0;transform:scale(1.3)}}
+@keyframes flashRing{0%{opacity:.9;transform:scale(.25)}100%{opacity:0;transform:scale(1.25)}}
+.flashfx b{font-family:var(--f-display);font-weight:400;font-size:clamp(60px,18vw,120px);color:#fff;-webkit-text-stroke:3px #6b3f00;text-shadow:0 8px 0 #6b3f00,0 0 40px rgba(255,200,61,.8);animation:goal 1.3s linear both}
 
 /* ---------- 모달 ---------- */
 .modal{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:rgba(3,6,16,.72);backdrop-filter:blur(4px);animation:fadeIn .2s ease both;
   padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));overflow-y:auto}
-.modal.out{animation:fadeOut .22s ease both}
+.modal.out{animation:fadeOut .22s ease both;pointer-events:none}
+.modal.out .modal-card{animation:modalOut .22s cubic-bezier(.5,0,.8,.4) both}
+@keyframes modalOut{to{transform:scale(.94) translateY(8px)}}
 .modal-card{width:min(420px,100%);background:linear-gradient(180deg,var(--panel-2),var(--panel));border:3px solid var(--gold);border-radius:22px;padding:20px 18px;text-align:center;
   box-shadow:0 10px 0 rgba(0,0,0,.45),0 0 60px rgba(255,200,61,.2);animation:zoomIn .45s cubic-bezier(.3,1.5,.6,1) both}
 .modal-card .eyebrow{font-family:var(--f-display);color:var(--gold);letter-spacing:.12em;font-size:13px}
@@ -357,7 +371,13 @@ table.hist th{color:var(--muted);font-weight:700;font-size:12px}
 .report-tag.rumor{background:#a03070}
 .splash{position:fixed;inset:0;z-index:50;display:grid;place-items:center;pointer-events:none;overflow:hidden}
 .splash .band{width:140%;justify-self:center;padding:22px 0;background:linear-gradient(90deg,var(--gold),#ff9f1c);transform:skewY(-6deg);box-shadow:0 10px 0 rgba(0,0,0,.4);
-  display:flex;align-items:center;justify-content:center;gap:16px;animation:band 1.6s cubic-bezier(.7,0,.3,1) both}
+  display:flex;align-items:center;justify-content:center;gap:16px;animation:band 1.4s linear both;will-change:transform}
+.splash::before{content:"";position:absolute;inset:0;background:rgba(3,6,16,.5);animation:splashDim 1.4s ease both}
+.splash .band > .crest{animation:splashCrest .5s cubic-bezier(.3,1.6,.5,1) both .22s}
+.splash .band b{display:block;animation:splashTxt .45s cubic-bezier(.3,1.5,.5,1) both .26s}
+@keyframes splashDim{0%,100%{opacity:0}20%,75%{opacity:1}}
+@keyframes splashCrest{from{opacity:0;transform:scale(.3) rotate(-25deg)}}
+@keyframes splashTxt{from{opacity:0;transform:scale(1.5)}}
 .splash .band b{font-family:var(--f-display);font-weight:400;font-size:clamp(40px,12vw,72px);color:#231700;line-height:1}
 .splash .band small{display:block;font-family:var(--f-display);font-size:16px;color:#5a3a00}
 .mg-bar{position:relative;height:36px;border-radius:12px;background:#0b1128;border:2px solid var(--edge);overflow:hidden;margin:10px 0 14px}
@@ -376,7 +396,7 @@ table.hist th{color:var(--muted);font-weight:700;font-size:12px}
 .noiv{font-family:var(--f-fun);color:var(--muted);font-size:14px}
 @keyframes twinkle{50%{opacity:.45;background-position:3px 2px,14px 9px}}
 @keyframes shake{20%{transform:translate(-7px,3px)}40%{transform:translate(6px,-4px)}60%{transform:translate(-4px,3px)}80%{transform:translate(3px,-2px)}}
-@keyframes band{0%{transform:skewY(-6deg) translateX(-110%)}22%,78%{transform:skewY(-6deg) translateX(0)}100%{transform:skewY(-6deg) translateX(110%)}}
+@keyframes band{0%{transform:skewY(-6deg) translateX(-110%);animation-timing-function:cubic-bezier(.1,.8,.2,1)}22%{transform:skewY(-6deg) translateX(1.5%);animation-timing-function:ease-in-out}30%,76%{transform:skewY(-6deg) translateX(0);animation-timing-function:cubic-bezier(.7,0,.9,.4)}100%{transform:skewY(-6deg) translateX(112%)}}
 
 /* ---------- 리그 · 대회 · 스탯 ---------- */
 .hud-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
@@ -657,10 +677,10 @@ table.standings{min-width:0}
 @keyframes cardIn{from{opacity:0;transform:rotateY(80deg) scale(.7)}}
 @keyframes growX{from{transform:scaleX(0)}}
 @keyframes logoIn{from{opacity:0;transform:scale(2.2) rotate(-6deg)}}
-@keyframes goal{0%{opacity:0;transform:scale(.3) rotate(-8deg)}30%{opacity:1;transform:scale(1.1)}75%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.5)}}
+@keyframes goal{0%{opacity:0;transform:scale(.25) rotate(-10deg);animation-timing-function:cubic-bezier(.2,.9,.3,1)}16%{opacity:1;transform:scale(1.16) rotate(2deg);animation-timing-function:cubic-bezier(.4,0,.4,1)}27%{opacity:1;transform:scale(.96) rotate(-1deg);animation-timing-function:ease-out}36%{opacity:1;transform:scale(1.02) rotate(0)}44%,76%{opacity:1;transform:scale(1);animation-timing-function:cubic-bezier(.5,0,.9,.5)}100%{opacity:0;transform:scale(1.35)}}
 @keyframes fadeIn{from{opacity:0}}
 @keyframes fadeOut{to{opacity:0}}
-@keyframes zoomIn{from{opacity:0;transform:scale(.5) rotate(-4deg)}}
+@keyframes zoomIn{0%{opacity:0;transform:scale(.72) translateY(14px) rotate(-2deg)}55%{opacity:1}}
 @keyframes stamp{from{opacity:0;transform:scale(2.6) rotate(-20deg)}}
 @keyframes paperIn{from{opacity:0;transform:rotate(-10deg) scale(.6)}}
 @keyframes blink{50%{opacity:0}}
@@ -758,6 +778,11 @@ table.standings{min-width:0}
 .nom.me{border-color:rgba(255,200,61,.6)}
 .nom.win{border-color:var(--gold);background:linear-gradient(90deg,rgba(255,200,61,.3),rgba(255,200,61,.06));transform:scale(1.02);box-shadow:0 0 22px rgba(255,200,61,.35)}
 .nom.lose{opacity:.5}
+.aw-card.rev{animation:none} .aw-card.rev .nom{animation:none}
+.aw-card.rev .nom.win{animation:nomWin .6s cubic-bezier(.3,1.4,.5,1) both} .aw-card.rev .nom.lose{animation:nomLose .45s ease both}
+.aw-card.rev .aw-me{animation:floatUp .4s ease both .35s}
+@keyframes nomWin{0%{transform:scale(.97)}45%{transform:scale(1.07)}100%{transform:scale(1.02)}}
+@keyframes nomLose{from{opacity:1}}
 .nom .crown{flex:none;color:var(--gold);animation:stamp .5s both} .nom .crown .ico{width:24px;height:24px}
 .nom .pct{flex:none;font-family:var(--f-display);font-size:15px;color:var(--cyan)}
 .vbar{display:block;height:6px;border-radius:9px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:3px}
@@ -824,38 +849,73 @@ table.standings{min-width:0}
 .viewer.sm .chibi-host{padding:12px 12px 8px}
 .viewer.hero .chibi-host{padding:10px 0 4px}
 .chibi{width:100%;height:100%;max-width:300px;overflow:visible;filter:drop-shadow(0 8px 14px rgba(0,0,0,.35))}
-.chibi .whole{transform-box:view-box;transform-origin:100px 246px;animation:cbBreath 2.8s ease-in-out infinite}
+.chibi .whole{transform-box:view-box;transform-origin:100px 246px;animation:cbBreath 3s ease-in-out infinite}
 .chibi .head{transform-box:fill-box;transform-origin:50% 92%;animation:cbHead 3.4s ease-in-out infinite}
-.chibi .eyes{transform-box:fill-box;transform-origin:50% 60%;animation:cbBlink 4.6s infinite}
+.chibi .eyes{transform-box:fill-box;transform-origin:50% 60%;animation:cbBlink 5.6s infinite}
 .chibi .armL,.chibi .armR,.chibi .legL,.chibi .legR{transform-box:fill-box;transform-origin:50% 4%}
 .chibi .armL{transform:rotate(12deg)} .chibi .armR{transform:rotate(-12deg)}
 .chibi .ball-r{transform-box:fill-box;transform-origin:center}
 .chibi .shadow{transform-box:fill-box;transform-origin:center}
-@keyframes cbBreath{50%{transform:translateY(-1.5px) scale(1.012,.99)}}
+.b11-pic .fsh,.mate-face .fsh,.pf .fsh,.si-prev .fsh,.hof-face .fsh,.iso .fsh{display:none}
+/* 기본: 숨쉬기 · 고개 까딱 · 눈 깜빡임(가끔 두 번) · 팔 흔들림 */
+.chibi .armL{animation:cbArmIdleL 3s ease-in-out infinite} .chibi .armR{animation:cbArmIdleR 3s ease-in-out infinite}
+@keyframes cbBreath{0%,100%{transform:scale(1,1)}50%{transform:scale(.992,1.016)}}
 @keyframes cbHead{0%,100%{transform:rotate(-2.5deg)}50%{transform:rotate(2.5deg)}}
-@keyframes cbBlink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
-[data-cpose=run] .whole{animation:cbRun .46s ease-in-out infinite}
-[data-cpose=run] .legL{animation:cbLeg .46s ease-in-out infinite}
-[data-cpose=run] .legR{animation:cbLeg .46s ease-in-out infinite reverse}
-[data-cpose=run] .armL{animation:cbArm .46s ease-in-out infinite}
-[data-cpose=run] .armR{animation:cbArm .46s ease-in-out infinite reverse}
+@keyframes cbBlink{0%,38%,42%,84%,88%,92%,100%{transform:scaleY(1)}40%,86%,90%{transform:scaleY(.08)}}
+@keyframes cbArmIdleL{0%,100%{transform:rotate(12deg)}50%{transform:rotate(8deg)}}
+@keyframes cbArmIdleR{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(-8deg)}}
+/* 달리기: 한 걸음마다 착지(눌림) → 도약(늘어남) */
+[data-cpose=run] .whole{animation:cbRun .5s linear infinite}
+[data-cpose=run] .head{animation:cbHeadRun .5s ease-in-out infinite}
+[data-cpose=run] .legL{animation:cbLegL .5s ease-in-out infinite}
+[data-cpose=run] .legR{animation:cbLegR .5s ease-in-out infinite}
+[data-cpose=run] .armL{animation:cbArm .5s ease-in-out infinite}
+[data-cpose=run] .armR{animation:cbArm .5s ease-in-out infinite}
 [data-cpose=run] .ball-r{animation:cbRoll .6s linear infinite}
-@keyframes cbRun{0%,100%{transform:translateY(0) rotate(4deg)}50%{transform:translateY(-7px) rotate(4deg)}}
-@keyframes cbLeg{0%,100%{transform:rotate(28deg)}50%{transform:rotate(-28deg)}}
-@keyframes cbArm{0%,100%{transform:rotate(-38deg)}50%{transform:rotate(38deg)}}
+[data-cpose=run] .shadow{animation:cbShadowRun .25s ease-in-out infinite}
+@keyframes cbRun{0%,50%,100%{transform:translateY(0) rotate(5deg) scale(1.035,.965);animation-timing-function:cubic-bezier(.2,.7,.4,1)}25%,75%{transform:translateY(-7px) rotate(5deg) scale(.985,1.02);animation-timing-function:cubic-bezier(.6,0,.8,.3)}}
+@keyframes cbHeadRun{0%,50%,100%{transform:rotate(-1deg) translateY(1.5px)}25%,75%{transform:rotate(1.5deg) translateY(-1px)}}
+@keyframes cbLegL{0%,100%{transform:translateY(0) rotate(9deg)}50%{transform:translateY(-12px) rotate(-12deg)}}
+@keyframes cbLegR{0%,100%{transform:translateY(-12px) rotate(12deg)}50%{transform:translateY(0) rotate(-9deg)}}
+@keyframes cbArm{0%,100%{transform:rotate(-36deg)}50%{transform:rotate(36deg)}}
 @keyframes cbRoll{to{transform:rotate(360deg)}}
-[data-cpose=clap] .armL{animation:cbClapL .32s ease-in-out infinite alternate}
-[data-cpose=clap] .armR{animation:cbClapR .32s ease-in-out infinite alternate}
-[data-cpose=clap] .whole{animation:cbHop .64s ease-in-out infinite}
-@keyframes cbClapL{from{transform:rotate(-28deg)}to{transform:rotate(-58deg)}}
-@keyframes cbClapR{from{transform:rotate(28deg)}to{transform:rotate(58deg)}}
-@keyframes cbHop{50%{transform:translateY(-4px)}}
-[data-cpose=jump] .whole{animation:cbJump .95s cubic-bezier(.3,.7,.4,1) infinite}
+@keyframes cbShadowRun{0%,100%{transform:scale(1);opacity:.28}50%{transform:scale(.82);opacity:.18}}
+/* 박수: 빠르게 모았다가 튕겨 나온다 */
+[data-cpose=clap] .armL{animation:cbClapL .4s infinite}
+[data-cpose=clap] .armR{animation:cbClapR .4s infinite}
+[data-cpose=clap] .whole{animation:cbHop .8s infinite}
+[data-cpose=clap] .head{animation:cbHeadClap 1.6s ease-in-out infinite}
+[data-cpose=clap] .shadow{animation:cbShadowHop .8s infinite}
+@keyframes cbClapL{0%,100%{transform:rotate(-22deg);animation-timing-function:cubic-bezier(.6,0,.9,.4)}42%,54%{transform:rotate(-60deg);animation-timing-function:cubic-bezier(.2,.8,.3,1)}}
+@keyframes cbClapR{0%,100%{transform:rotate(22deg);animation-timing-function:cubic-bezier(.6,0,.9,.4)}42%,54%{transform:rotate(60deg);animation-timing-function:cubic-bezier(.2,.8,.3,1)}}
+@keyframes cbHop{0%,100%{transform:translateY(0) scale(1.03,.97);animation-timing-function:cubic-bezier(.2,.7,.4,1)}50%{transform:translateY(-6px) scale(.985,1.02);animation-timing-function:cubic-bezier(.6,0,.8,.3)}}
+@keyframes cbHeadClap{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes cbShadowHop{0%,100%{transform:scale(1.04);opacity:.28}50%{transform:scale(.84);opacity:.18}}
+/* 점프: 웅크림(예비 동작) → 쭉 뻗으며 도약 → 정점 → 착지 눌림 → 반동 */
 [data-cpose=jump] .armL{transform:rotate(150deg)} [data-cpose=jump] .armR{transform:rotate(-150deg)}
-[data-cpose=jump] .shadow{animation:cbShadow .95s cubic-bezier(.3,.7,.4,1) infinite}
-@keyframes cbJump{0%,100%{transform:translateY(0) scale(1.06,.93)}18%{transform:translateY(0) scale(.95,1.05)}50%{transform:translateY(-36px) scale(1)}82%{transform:translateY(0) scale(1)}}
-@keyframes cbShadow{50%{transform:scale(.6);opacity:.12}}
-@media (prefers-reduced-motion: reduce){ .chibi *{animation:none!important} .chibi-host{transition:none} }
+[data-cpose=jump] .whole{animation:cbJump 1.05s infinite}
+[data-cpose=jump] .armL{animation:cbJumpArmL 1.05s infinite} [data-cpose=jump] .armR{animation:cbJumpArmR 1.05s infinite}
+[data-cpose=jump] .legL{animation:cbJumpLegL 1.05s infinite} [data-cpose=jump] .legR{animation:cbJumpLegR 1.05s infinite}
+[data-cpose=jump] .head{animation:cbHeadJump 1.05s infinite}
+[data-cpose=jump] .shadow{animation:cbShadow 1.05s infinite}
+@keyframes cbJump{
+  0%,100%{transform:translateY(0) scale(1,1);animation-timing-function:cubic-bezier(.3,0,.5,1)}
+  15%{transform:translateY(0) scale(1.07,.9);animation-timing-function:cubic-bezier(.5,0,.8,.5)}
+  25%{transform:translateY(-5px) scale(.93,1.09);animation-timing-function:cubic-bezier(.1,.6,.4,1)}
+  50%{transform:translateY(-38px) scale(1,1);animation-timing-function:cubic-bezier(.6,0,.9,.4)}
+  74%{transform:translateY(-4px) scale(.95,1.06);animation-timing-function:linear}
+  81%{transform:translateY(0) scale(1.08,.89);animation-timing-function:cubic-bezier(.2,.8,.4,1)}
+  91%{transform:translateY(0) scale(.98,1.03);animation-timing-function:ease-in-out}}
+@keyframes cbJumpArmL{0%,100%{transform:rotate(18deg)}15%{transform:rotate(38deg);animation-timing-function:cubic-bezier(.5,0,.6,1)}28%{transform:rotate(152deg)}50%{transform:rotate(160deg)}72%{transform:rotate(144deg);animation-timing-function:ease-in}86%{transform:rotate(50deg)}}
+@keyframes cbJumpArmR{0%,100%{transform:rotate(-18deg)}15%{transform:rotate(-38deg);animation-timing-function:cubic-bezier(.5,0,.6,1)}28%{transform:rotate(-152deg)}50%{transform:rotate(-160deg)}72%{transform:rotate(-144deg);animation-timing-function:ease-in}86%{transform:rotate(-50deg)}}
+@keyframes cbJumpLegL{0%,25%,76%,100%{transform:rotate(0)}50%{transform:rotate(16deg)}}
+@keyframes cbJumpLegR{0%,25%,76%,100%{transform:rotate(0)}50%{transform:rotate(-16deg)}}
+@keyframes cbHeadJump{0%,100%{transform:translateY(0) rotate(0)}15%{transform:translateY(3px) rotate(0)}30%{transform:translateY(-1px) rotate(-3deg)}50%{transform:translateY(-1px) rotate(3deg)}81%{transform:translateY(3.5px) rotate(0)}91%{transform:translateY(-.5px) rotate(0)}}
+@keyframes cbShadow{0%,100%{transform:scale(1);opacity:.28}15%{transform:scale(1.1);opacity:.32}50%{transform:scale(.55);opacity:.1}81%{transform:scale(1.14);opacity:.34}91%{transform:scale(1);opacity:.28}}
+/* 톡 건드렸을 때 · 장면 반응: 컨테이너가 살짝 눌렸다 튕긴다 */
+.cb-pop{animation:cbPop .42s cubic-bezier(.3,1.3,.5,1) both;transform-origin:50% 94%}
+@keyframes cbPop{0%{transform:scale(1)}28%{transform:scale(1.13,.84)}58%{transform:scale(.93,1.09)}80%{transform:scale(1.03,.98)}100%{transform:none}}
+@media (prefers-reduced-motion: reduce){ .chibi *{animation:none!important} .chibi-host{transition:none} .cb-pop{animation:none} }
 /* ---------- 한계 돌파 ---------- */
 .lb-modal .modal-card{border-color:var(--hot);box-shadow:0 0 40px rgba(255,77,109,.45)}
 .lb-big{color:var(--gold);animation:pulse 1.2s ease-in-out infinite} .lb-big.fail{color:var(--muted);animation:none}
@@ -1078,7 +1138,7 @@ table.standings{min-width:0}
 .mate-face{flex:none;width:46px;height:46px;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 30%,rgba(255,255,255,.18),rgba(11,17,40,.8));border:2px solid var(--edge)}
 .mate.hi .mate-face{border-color:var(--turf)} .mate.lo .mate-face{border-color:var(--hot)}
 .mate-face svg{width:100%;height:100%;display:block;filter:none !important}
-.mate-face .eyes,.mate-face .head,.mate-face .whole{animation:none !important}
+.mate-face .eyes,.mate-face .head,.mate-face .whole,.mate-face .armL,.mate-face .armR{animation:none !important}
 .hang-b{align-self:flex-start;display:inline-flex;align-items:center;gap:5px;margin-top:2px;padding:5px 11px;border-radius:999px;border:1px solid rgba(255,107,129,.5);background:rgba(255,77,109,.12);color:#ffc2cd;font-size:12px;font-weight:900}
 .hang-b .ico{width:14px;height:14px}
 .hang-b:disabled{opacity:.45} .hang-b.done{opacity:1;border-color:var(--turf);background:rgba(34,197,94,.14);color:var(--up)}
@@ -1360,7 +1420,7 @@ table.standings{min-width:0}
 .look-pane[hidden]{display:none}
 .shop-item.fun .si-prev{width:100%;max-width:96px;aspect-ratio:1/1;border-radius:14px;background:radial-gradient(80% 80% at 50% 40%,rgba(61,214,255,.18),rgba(0,0,0,.15));overflow:hidden;margin:0 auto}
 .shop-item.fun .si-prev .chibi{width:100%;height:100%;max-width:none;filter:none}
-.shop-item.fun .si-prev .chibi .whole,.shop-item.fun .si-prev .chibi .head{animation:none}
+.shop-item.fun .si-prev .chibi .whole,.shop-item.fun .si-prev .chibi .head,.shop-item.fun .si-prev .chibi .armL,.shop-item.fun .si-prev .chibi .armR{animation:none}
 .pred{margin-top:10px;padding:10px 12px;border-radius:14px;background:rgba(0,0,0,.22);border:1px solid rgba(154,165,209,.18);display:flex;flex-direction:column;gap:7px;text-align:left}
 .pred-h{display:flex;align-items:baseline;justify-content:space-between;gap:6px;flex-wrap:wrap} .pred-h b{display:flex;align-items:center;gap:5px;font-size:13px} .pred-h b .ico{width:15px;height:15px;color:var(--cyan)} .pred-h small{font-size:10.5px;color:var(--dim)}
 .pred-bar{display:flex;gap:2px;height:10px;border-radius:5px;overflow:hidden}
@@ -1425,21 +1485,30 @@ table.standings{min-width:0}
 .draft-board{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .draft-board li{display:grid;grid-template-columns:56px 30px 1fr;grid-template-rows:auto auto;column-gap:8px;align-items:center;padding:8px 10px;border-radius:12px;background:var(--panel-2);border:1px solid var(--edge);animation:slideIn .35s cubic-bezier(.2,.8,.2,1) both}
 .draft-board .dn{grid-row:1/3;font-family:var(--f-display);font-size:14px;color:var(--gold)} .draft-board .crest{grid-row:1/3;width:30px;height:30px} .draft-board b{font-size:14px} .draft-board .dp{font-size:12px;color:var(--muted)}
-.draft-board li.me{border:2px solid var(--gold);background:linear-gradient(90deg,rgba(255,200,61,.25),var(--panel-2));transform-origin:center;animation:dpick .7s cubic-bezier(.3,1.6,.6,1) both} .draft-board li.me .dp{color:var(--ink);font-weight:800}
-@keyframes dpick{0%{transform:scale(.6);opacity:0}100%{transform:none;opacity:1}}
+.draft-board li.me{position:relative;overflow:hidden;border:2px solid var(--gold);background:linear-gradient(90deg,rgba(255,200,61,.25),var(--panel-2));transform-origin:center;animation:dpick .7s cubic-bezier(.3,1.6,.6,1) both}
+.draft-board li.me::after{content:"";position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.4),transparent);transform:translateX(-120%);animation:dShine 1s ease-out .45s both;pointer-events:none}
+@keyframes dShine{to{transform:translateX(340%)}} .draft-board li.me .dp{color:var(--ink);font-weight:800}
+@keyframes dpick{0%{transform:scale(.6);opacity:0}45%{opacity:1}100%{transform:none;opacity:1}}
 .sign-room{text-align:center}
 .sign-stage{position:relative;height:370px;border-radius:24px;overflow:hidden;background:radial-gradient(80% 60% at 50% 100%,color-mix(in srgb,var(--cc) 55%,transparent),transparent 70%),linear-gradient(180deg,#0b1128,#151d42);border:2px solid color-mix(in srgb,var(--cc) 60%,var(--edge))}
 .sign-stage .flash{position:absolute;width:60px;height:60px;border-radius:50%;background:radial-gradient(#fff,rgba(255,255,255,0) 70%);opacity:0;animation:flash 3.2s ease-out infinite}
 .sign-crest{position:absolute;left:50%;top:22px;transform:translateX(-50%);animation:signDrop .8s cubic-bezier(.3,1.5,.6,1) both .2s} .sign-crest .crest{width:92px;height:92px}
 .sign-me{position:absolute;left:50%;bottom:6px;width:170px;height:220px;transform:translateX(-50%);animation:signUp .7s cubic-bezier(.3,1.4,.6,1) both .7s} .sign-me .chibi{width:100%;height:100%;max-width:none}
+.sign-crest::before{content:"";position:absolute;left:50%;top:50%;width:150px;height:150px;margin:-75px 0 0 -75px;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--cc) 70%,#fff),transparent 70%);opacity:0;animation:signGlow 2.4s ease-in-out infinite 1s;pointer-events:none}
+.sign-crest .crest{position:relative;animation:signLand .45s cubic-bezier(.3,1.4,.5,1) .82s}
+.sign-shirt > *{animation:signBob 2.2s ease-in-out infinite 2.3s}
+.sign-facts span{animation:pop .4s cubic-bezier(.3,1.4,.5,1) both 1.75s} .sign-facts span:nth-child(2){animation-delay:1.85s} .sign-facts span:nth-child(3){animation-delay:1.95s}
+@keyframes signGlow{0%,100%{opacity:.25;transform:scale(.85)}50%{opacity:.6;transform:scale(1.1)}}
+@keyframes signLand{0%{transform:scale(1.12,.84)}55%{transform:scale(.95,1.06)}100%{transform:none}}
+@keyframes signBob{50%{transform:translateY(-3px)}}
 .sign-shirt{position:absolute;right:14px;bottom:24px;width:78px;height:86px;border-radius:14px 14px 10px 10px;background:var(--cc);display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.45);animation:signFlip .9s cubic-bezier(.3,1.4,.6,1) both 1.3s}
 .sign-shirt b{font-family:var(--f-display);font-size:34px;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.35);line-height:1} .sign-shirt small{font-size:10px;color:#fff;opacity:.9;max-width:70px;overflow:hidden;white-space:nowrap}
-@keyframes signDrop{0%{transform:translate(-50%,-140%) scale(.5)}100%{transform:translate(-50%,0)}}
+@keyframes signDrop{0%{transform:translate(-50%,-160%) scale(.5) rotate(-14deg);opacity:0}30%{opacity:1}100%{transform:translate(-50%,0)}}
 @keyframes signUp{0%{transform:translate(-50%,60%);opacity:0}100%{transform:translate(-50%,0);opacity:1}}
 @keyframes signFlip{0%{transform:rotateY(90deg) scale(.6);opacity:0}100%{transform:none;opacity:1}}
 .sign-title{display:flex;flex-direction:column;gap:2px} .sign-title small{font-size:13px;color:var(--gold);font-weight:800} .sign-title b{font-family:var(--f-display);font-size:30px;animation:pop .5s ease both 1.6s}
 .sign-facts{display:flex;justify-content:center;flex-wrap:wrap;gap:8px} .sign-facts span{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:99px;background:rgba(255,255,255,.07);font-size:13px} .sign-facts .ico{width:15px;height:15px;color:var(--gold)} .sign-facts b{color:var(--gold)}
-@media (prefers-reduced-motion:reduce){.sign-crest,.sign-me,.sign-shirt,.sign-title b,.draft-board li{animation:none}}
+@media (prefers-reduced-motion:reduce){.sign-crest,.sign-me,.sign-shirt,.sign-title b,.draft-board li,.sign-facts span,.sign-crest .crest,.sign-shirt > *{animation:none}}
 .heir-note{display:flex;gap:12px;align-items:center} .heir-note > .ico{width:28px;height:28px;color:var(--gold);flex:none} .heir-note div{display:flex;flex-direction:column;gap:2px} .heir-note b{font-size:15px} .heir-note small{font-size:12px;color:var(--muted)}
 .h-seg.four{grid-template-columns:repeat(4,1fr)}
 .fam-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap} .fam-head small{display:block;font-size:12px;color:var(--muted)} .fam-head b{font-family:var(--f-display);font-size:22px;color:var(--gold)}
@@ -1458,31 +1527,40 @@ table.standings{min-width:0}
 .fam-row{display:flex;align-items:center;gap:10px;padding:10px 12px} .fam-row .crest{width:34px;height:34px;flex:none} .fam-row div{flex:1;display:flex;flex-direction:column;gap:1px;min-width:0} .fam-row b{font-size:14px} .fam-row em{font-style:normal;font-size:11px;color:var(--gold);margin-left:4px} .fam-row small{font-size:11.5px;color:var(--muted)}
 .fam-row.now{border-color:var(--gold)} .fam-hof{color:var(--gold)} .fam-hof .ico{width:20px;height:20px}
 .b11-head{text-align:center;display:flex;flex-direction:column;gap:2px} .b11-head small{font-size:12px;color:var(--gold);font-weight:800} .b11-head b{font-family:var(--f-display);font-size:30px}
-.b11-me{display:flex;flex-direction:column;align-items:center;gap:4px} .b11-cb{width:120px;height:156px;animation:signUp .7s cubic-bezier(.3,1.4,.6,1) both .4s} .b11-cb .chibi{width:100%;height:100%;max-width:none}
+.b11-me{display:flex;flex-direction:column;align-items:center;gap:4px} .b11-cb{width:120px;height:156px;animation:b11Up .7s cubic-bezier(.3,1.4,.6,1) both .4s} .b11-cb .chibi{width:100%;height:100%;max-width:none}
 .b11-badge{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:99px;background:linear-gradient(90deg,var(--gold),#ff9f1c);color:#231700;font-weight:900;font-size:15px;box-shadow:0 0 24px rgba(255,200,61,.55);animation:pop .5s ease both 1.1s} .b11-badge .ico{width:17px;height:17px}
 .b11-pitch{position:relative;display:flex;flex-direction:column;gap:12px;padding:16px 8px;border-radius:20px;background:repeating-linear-gradient(0deg,#1f8a47 0 46px,#1c7f41 46px 92px);border:3px solid rgba(255,255,255,.55);box-shadow:inset 0 0 0 2px rgba(0,0,0,.15)}
 .b11-pitch::before{content:"";position:absolute;left:50%;top:50%;width:90px;height:90px;border:2px solid rgba(255,255,255,.4);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
 .b11-row{position:relative;display:flex;justify-content:center;gap:6px}
-.b11-card{width:78px;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 3px;border-radius:12px;background:rgba(10,15,31,.82);border:1px solid rgba(255,255,255,.18);text-align:center;animation:dpick .5s cubic-bezier(.3,1.5,.6,1) both}
+.b11-card{width:78px;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 3px;border-radius:12px;background:rgba(10,15,31,.82);border:1px solid rgba(255,255,255,.18);text-align:center;animation:b11Card .5s cubic-bezier(.3,1.4,.5,1) both}
 .b11-pic{width:34px;height:34px;display:grid;place-items:center} .b11-pic .crest{width:32px;height:32px} .b11-card.me .b11-pic{width:40px;height:40px;border-radius:50%;overflow:hidden;background:#f6f0dc;border:2px solid var(--gold)} .b11-pic svg.chibi{width:40px;height:40px;max-width:none;overflow:hidden;filter:none}
 .b11-card b{font-size:11px;line-height:1.2;word-break:keep-all;white-space:normal;max-width:100%;min-width:0} .b11-card small{font-size:9px;color:var(--muted);line-height:1.2;max-width:74px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis} .b11-card em{font-style:normal;font-size:11px;font-weight:900;color:var(--gold)}
-.b11-card.me{border:2px solid var(--gold);background:linear-gradient(180deg,rgba(255,200,61,.35),rgba(10,15,31,.9));box-shadow:0 0 18px rgba(255,200,61,.7);animation:dpick .5s cubic-bezier(.3,1.5,.6,1) both,b11glow 1.4s ease-in-out infinite alternate 1s}
-@keyframes b11glow{to{box-shadow:0 0 30px rgba(255,200,61,1)}}
+.b11-card.me{position:relative;z-index:1;border:2px solid var(--gold);background:linear-gradient(180deg,rgba(255,200,61,.35),rgba(10,15,31,.9));box-shadow:0 0 18px rgba(255,200,61,.7)}
+.b11-card.me::after{content:"";position:absolute;inset:-2px;border-radius:12px;box-shadow:0 0 30px 4px rgba(255,200,61,.95);opacity:0;pointer-events:none;animation:b11glow 1.4s ease-in-out infinite alternate 1.2s}
+.b11-card.me.hit{animation:b11Hit .6s cubic-bezier(.3,1.5,.5,1) both}
+@keyframes b11glow{to{opacity:1}}
+@keyframes b11Up{0%{transform:translateY(60%);opacity:0}100%{transform:none;opacity:1}}
+@keyframes b11Card{0%{transform:translateY(-16px) scale(.6);opacity:0}60%{opacity:1}100%{transform:none;opacity:1}}
+@keyframes b11Hit{0%{transform:none}35%{transform:scale(1.14)}100%{transform:none}}
 .me-strip{display:flex;align-items:flex-end;gap:10px;width:100%;padding:0 4px;border:0;background:none;color:var(--ink);cursor:pointer;text-align:left}
-.ms-cb{flex:none;width:64px;height:84px} .ms-cb .chibi{width:100%;height:100%;max-width:none;filter:drop-shadow(0 4px 6px rgba(0,0,0,.35))}
+.ms-cb{flex:none;width:64px;height:84px} .ms-cb .chibi{width:100%;height:100%;max-width:none;filter:none}
 .ms-bub{position:relative;flex:1;margin-bottom:22px;padding:9px 12px;border-radius:14px;background:#fff;color:#1b1f33;font-size:13px;font-weight:700;line-height:1.4}
 .ms-bub::before{content:"";position:absolute;left:-7px;bottom:10px;border:7px solid transparent;border-right-color:#fff;border-left:0}
-.ms-bub.pop{animation:pop .35s ease both}
+.ms-bub{transform-origin:0 85%} .ms-bub.pop{animation:bubPop .36s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes bubPop{0%{opacity:0;transform:scale(.7) translateX(-6px)}60%{opacity:1;transform:scale(1.025)}}
+.me-strip:active .ms-cb{transform:scale(1.06,.92);transform-origin:50% 94%} .ms-cb{transition:transform .12s ease-out}
 .myrole{display:flex;align-items:center;justify-content:center;gap:10px}
 .mr-t{display:flex;flex-direction:column;align-items:center}
-.live-me{position:relative;flex:none;width:52px;height:68px} .live-me .lm-cb{width:100%;height:100%} .live-me .chibi{width:100%;height:100%;max-width:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.4))}
-.live-me.bench{opacity:.55;filter:grayscale(.4)}
+.live-me{position:relative;flex:none;width:52px;height:68px} .live-me .lm-cb{width:100%;height:100%} .live-me .chibi{width:100%;height:100%;max-width:none;filter:none}
+.live-me{transition:opacity .35s ease} .live-me.bench{opacity:.55}
 .lm-bub{position:absolute;left:46px;top:-6px;white-space:nowrap;padding:4px 9px;border-radius:12px;background:#fff;color:#1b1f33;font-size:12px;font-weight:900;font-family:var(--f-body);text-shadow:none;opacity:0;transform:scale(.6);transform-origin:left bottom;pointer-events:none;z-index:2}
-.lm-bub.show{animation:lmBub 1.6s ease both}
-@keyframes lmBub{0%{opacity:0;transform:scale(.6)}12%{opacity:1;transform:scale(1.08)}20%,80%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.9)}}
-.splash-me{position:absolute;bottom:14%;left:-120px;width:90px;height:118px;animation:splashRun 1.35s linear both} .splash-me .chibi{width:100%;height:100%;max-width:none}
-@keyframes splashRun{0%{transform:translateX(0)}100%{transform:translateX(calc(100vw + 240px))}}
-@media (prefers-reduced-motion:reduce){.b11-card,.b11-cb,.b11-badge,.splash-me{animation:none}.splash-me{display:none}}
+.lm-bub.show{animation:lmBub 1.6s linear both}
+@keyframes lmBub{0%{opacity:0;transform:scale(.5) rotate(-6deg);animation-timing-function:cubic-bezier(.2,.9,.3,1)}11%{opacity:1;transform:scale(1.1) rotate(1deg);animation-timing-function:ease-in-out}19%,82%{opacity:1;transform:scale(1) rotate(0);animation-timing-function:ease-in}100%{opacity:0;transform:scale(.85) translateY(-4px)}}
+.splash-me{position:absolute;bottom:14%;left:-120px;width:90px;height:118px;animation:splashRun 1.4s linear both;will-change:transform} .splash-me .chibi{width:100%;height:100%;max-width:none;filter:none}
+.splash-ball{position:absolute;bottom:14%;left:-30px;width:22px;height:22px;animation:splashBall 1.4s linear both;will-change:transform} .splash-ball svg{display:block;width:100%;height:100%;animation:cbRoll .45s linear infinite}
+@keyframes splashRun{0%{transform:translateX(0);animation-timing-function:cubic-bezier(.2,.6,.4,1)}45%{transform:translateX(calc(50vw + 60px));animation-timing-function:cubic-bezier(.5,0,.8,.5)}100%{transform:translateX(calc(100vw + 240px))}}
+@keyframes splashBall{0%{transform:translateX(0);animation-timing-function:cubic-bezier(.2,.6,.4,1)}45%{transform:translateX(calc(50vw + 62px));animation-timing-function:cubic-bezier(.5,0,.8,.5)}100%{transform:translateX(calc(100vw + 260px))}}
+@media (prefers-reduced-motion:reduce){.b11-card,.b11-cb,.b11-badge,.splash-me{animation:none}.splash-me,.splash-ball{display:none}}
 </style>
 </head>
 <body>
@@ -1975,7 +2053,7 @@ function load(slot = curSlot){
     r.season.rank = r.season.rank ? int(r.season.rank, 1, 20, 1) : undefined;
     r.season.cups = (Array.isArray(r.season.cups) ? r.season.cups : []).filter(c => typeof c === 'string').map(c => c.slice(0, 30)).slice(0, 10);
     { const sw = r.season.wonder; r.season.wonder = sw && typeof sw.d === 'string' ? {opp: CLUB[sw.opp] ? sw.opp : '', d: sw.d.slice(0, 40), q: int(sw.q, 0, 100, 70)} : undefined; }
-    r.stars = (r.real1 || !REAL_NAMES) && cleanStars(r.stars) || genStars(); r.real1 = true; r.v0 = int(r.v0, 0, 1e9, 0);
+    r.stars = (r.real1 || !REAL_NAMES) && cleanStars(r.stars) || genStars(); r.real1 = true; r.stars.forEach(x => { x.n = parodyFix(x.n, x.f); }); r.v0 = int(r.v0, 0, 1e9, 0);
     r.honors = (Array.isArray(r.honors) ? r.honors : []).filter(h => h && AWARDS[h.k]).map(h => ({y:int(h.y, 2000, 2100, 2027), k:h.k})).slice(0, 80);
     r.awardHist = cleanHist(r.awardHist); r.awards = cleanAwards(r.awards);
     r.season.nt = cleanNtSeason(r.season.nt); r.season.ntChk = !!r.season.ntChk; r.nt = {caps:int(r.nt && r.nt.caps, 0, 999, 0), goals:int(r.nt && r.nt.goals, 0, 999, 0)};
@@ -2089,12 +2167,12 @@ function hud(){
 function bindHud(){ UI.prev = {...S.stats}; const nb = $('#newsBtn'); if (nb) nb.onclick = () => { UI.tab = UI.tab === 'news' ? 'match' : 'news'; renderHub(); }; const xpb = root.querySelector('.res.xp'); if (xpb && S.phase === 'week') xpb.onclick = () => { UI.tab = 'shop'; renderHub(); }; const b = $('#sfxBtn'); if (b) b.onclick = () => { sfxOn = !sfxOn; lsSet(SFX_KEY, sfxOn ? 'on' : 'off'); b.innerHTML = ic(sfxOn ? 'volume-2' : 'volume-x'); }; }
 function frame(inner, dock){
   disposeViewer();
-  root.innerHTML = hud() + `<main class="wrap"><div class="screen stack">${inner}</div></main>` + (dock ? dockHtml() : '');
-  bindHud(); if (dock) bindDock();
+  root.innerHTML = hud() + `<main class="wrap"><div class="screen stack${UI.keepScroll != null || UI.still ? ' still' : ''}">${inner}</div></main>` + (dock ? dockHtml() : '');
+  bindHud(); if (dock) bindDock(); UI.still = false;
   if (UI.keepScroll != null){ const y = UI.keepScroll; UI.keepScroll = null; requestAnimationFrame(() => window.scrollTo({top:y, behavior:'instant'})); } else window.scrollTo({top:0});
 }
 function dockHtml(){
-  return `<nav class="dock"><div class="dock-in">${[['match','house','홈'],['player','user-round','내 선수'],['home','sofa','우리 집'],['bench','armchair','벤치'],['club','shield','구단'],['world','globe','세계']].map(([k,i,n]) => { const un = k === 'player' ? (S.sp || 0) : k === 'home' ? homeBadge() : 0; return `<button type="button" data-t="${k}" aria-selected="${UI.tab === k || (k === 'player' && (UI.tab === 'shop' || UI.tab === 'skills'))}"><span class="i">${ic(i)}${un > 0 && UI.tab !== k ? `<em class="dock-badge">${un}</em>` : ''}</span>${n}</button>`; }).join('')}</div></nav>`;
+  return `<nav class="dock"><div class="dock-in">${[['match','house','홈'],['player','user-round','내 선수'],['home','sofa','우리 집'],['bench','armchair','벤치'],['club','shield','구단'],['world','globe','세계']].map(([k,i,n]) => { const un = k === 'player' ? (S.sp || 0) : k === 'home' ? homeBadge() : 0; const on = UI.tab === k || (k === 'player' && (UI.tab === 'shop' || UI.tab === 'skills')), pop = on && UI.dockOn !== k; if (on) UI.dockOn = k; return `<button type="button" data-t="${k}" class="${pop ? 'pop' : ''}" aria-selected="${on}"><span class="i">${ic(i)}${un > 0 && UI.tab !== k ? `<em class="dock-badge">${un}</em>` : ''}</span>${n}</button>`; }).join('')}</div></nav>`;
 }
 function bindDock(){ root.querySelectorAll('.dock button').forEach(b => b.onclick = () => { if (b.dataset.t === 'home' && UI.tab !== 'home'){ UI.hSel = null; UI.hPick = null; } UI.tab = b.dataset.t; renderHub(); }); }
 
@@ -2303,6 +2381,7 @@ function makeDraft(){
 const pick_ = a => a[Math.floor(Math.random() * a.length)];
 function renderScoutDay(){
   const H = S.hs; if (!H.offers){ H.offers = hsOffers(); save(); }
+  if (H.draft) return runDraft(); // 드래프트를 이미 시작했다면 새로고침해도 우선 지명으로 갈아탈 수 없다
   const avg = hsAvg(), wins = H.games.filter(g => g.us > g.them).length;
   disposeViewer();
   root.innerHTML = `<main class="wrap"><div class="screen stack hsx">
@@ -2319,21 +2398,27 @@ function renderScoutDay(){
 async function runDraft(){
   const H = S.hs; if (!H.draft){ H.draft = makeDraft(); H.how = 'draft'; save(); } // 순위를 미리 정해 저장
   const D = H.draft;
+  if (!D.order.length || D.names.length < 12){ const f = makeDraft(); if (!D.order.length) D.order = f.order; D.names = D.names.concat(f.names).slice(0, 12); }
+  D.pick = Math.min(D.pick, D.order.length); save();
   disposeViewer();
   root.innerHTML = `<main class="wrap"><div class="screen stack hsx draft-room">
     <div class="hs-top"><span class="hs-badge">${ic('ticket')}</span><div><b>${S.year} K리그 신인 드래프트</b><small>1라운드 지명 중…</small></div></div>
     <ol class="draft-board" id="dBoard"></ol></div></main>`;
   const board = $('#dBoard');
   for (let k = 1; k <= D.pick; k++){
+    if (!board.isConnected) return;
     const club = D.order[k - 1], me = k === D.pick;
     await wait(RM ? 0 : me ? 900 : 520);
     board.insertAdjacentHTML('beforeend', `<li class="${me ? 'me' : ''}"><span class="dn">${k}순위</span>${crest(club)}<b>${esc(club)}</b><span class="dp">${me ? esc(`${S.name} (${H.school})`) : esc(D.names[k - 1])}</span></li>`);
+    board.lastElementChild.scrollIntoView({block:'nearest', behavior: RM ? 'auto' : 'smooth'});
     if (me){ SFX.goal(); confetti([CLUB[club].c, '#ffffff', '#ffc83d']); flash(`${k}순위!`); } else SFX.click();
   }
   await wait(RM ? 0 : 1100);
+  if (!board.isConnected) return;
   const club = D.order[D.pick - 1], bonus = Math.round((7000 - (D.pick - 1) * 520) / 50) * 50, salary = Math.round((3600 + (12 - D.pick) * 120) / 100) * 100;
   board.insertAdjacentHTML('afterend', `<button class="btn turf block" type="button" id="dGo">${ic('pen-line')} ${esc(club)} 입단식으로</button>`);
   $('#dGo').onclick = () => signPro(club, 'draft', D.pick, bonus, salary);
+  $('#dGo').scrollIntoView({block:'nearest', behavior: RM ? 'auto' : 'smooth'});
 }
 function signPro(club, how, pickNo, bonus, salary){
   const keep = {stats:{...S.stats}, look:S.look, name:S.name, pos:S.pos, nat:S.nat, school:S.hs.school, scouts:S.hs.scouts, avg:hsAvg(), games:S.hs.games, gen:S.gen, fam:S.fam, home:S.home, pop:S.pop};
@@ -2363,7 +2448,8 @@ function renderSigning(){
     <div class="sign-facts"><span>${ic('shirt')} 등번호 <b>${G.num}</b></span><span>${ic('coins')} 계약금 <b>${money(G.bonus)}</b></span><span>${ic('wallet')} 연봉 <b>${money(S.salary)}</b></span></div>
     <button class="btn turf block" type="button" id="signGo">${ic('goal')} 프로 데뷔 시즌 시작</button>
   </div></main>`;
-  SFX.whistle(); setTimeout(() => { SFX.goal(); confetti([C.c, '#ffffff', '#ffc83d']); }, RM ? 0 : 1300);
+  const stage = root.querySelector('.sign-stage'), sme = stage.querySelector('.sign-me');
+  SFX.whistle(); setTimeout(() => { if (!stage.isConnected) return; SFX.goal(); confetti([C.c, '#ffffff', '#ffc83d']); sme.dataset.cpose = 'jump'; setTimeout(() => { if (sme.isConnected) sme.dataset.cpose = 'clap'; }, 2100); }, RM ? 0 : 1300);
   $('#signGo').onclick = () => { S.phase = 'week'; S.sign = null; UI.tab = 'match'; UI.splash = true; save(); go(); };
 }
 
@@ -2382,7 +2468,7 @@ function makeBest11(){
 }
 function cleanB11(b){
   if (!b || !Array.isArray(b.list) || !b.list.length) return null;
-  return {y:int(b.y, 2000, 2400, 2027), lg: LEAGUES[b.lg] ? b.lg : 'K', me:!!b.me, list:b.list.filter(x => x && typeof x.n === 'string' && POS[x.p] && CLUB[x.c]).slice(0, 11).map(x => ({n:x.n.slice(0, 20), f:safeFlag(x.f), c:x.c, p:x.p, rt:clamp(Number(x.rt) || 7, 5, 10), me:!!x.me}))};
+  return {y:int(b.y, 2000, 2400, 2027), lg: LEAGUES[b.lg] ? b.lg : 'K', me:!!b.me, list:b.list.filter(x => x && typeof x.n === 'string' && POS[x.p] && CLUB[x.c]).slice(0, 11).map(x => ({n:parodyFix(x.n.slice(0, 20), x.f), f:safeFlag(x.f), c:x.c, p:x.p, rt:clamp(Number(x.rt) || 7, 5, 10), me:!!x.me}))};
 }
 function renderBest11(){
   const B = S.b11, face = meSvg().replace('viewBox="0 0 200 262"', 'viewBox="42 14 116 116"');
@@ -2394,7 +2480,8 @@ function renderBest11(){
     ${B.me ? '' : `<p class="small muted" style="text-align:center;margin:0">이번엔 이름이 없어요. 다음 시즌엔 저 자리에!</p>`}
     <button class="btn turf block" type="button" id="b11Go">${S.history.length + 1 >= MAX_SEASONS ? `${ic('crown')} 은퇴식으로` : `${ic('briefcase')} 연봉 협상실로`}</button>
   </div></main>`;
-  if (B.me){ setTimeout(() => { SFX.goal(); flash('BEST XI'); confetti(['#ffc83d', '#ffffff', CLUB[S.club].c]); setTimeout(() => confetti(['#ffc83d', '#ffffff']), 700); }, RM ? 0 : 1200); } else SFX.whistle();
+  if (B.me){ const scr = root.querySelector('.b11'), here = () => scr.isConnected; // 화면을 이미 떠났으면 연출을 띄우지 않는다
+    setTimeout(() => { if (!here()) return; SFX.goal(); flash('BEST XI'); confetti(['#ffc83d', '#ffffff', CLUB[S.club].c]); const mc = scr.querySelector('.b11-card.me'); if (mc) mc.classList.add('hit'); setTimeout(() => { if (here()) confetti(['#ffc83d', '#ffffff']); }, 700); }, RM ? 0 : 1200); } else SFX.whistle();
   $('#b11Go').onclick = () => { S.b11 = null; if (S.history.length + 1 >= MAX_SEASONS) return retireCareer(); S.phase = 'nego'; save(); go(); };
 }
 
@@ -2415,14 +2502,23 @@ const ME_TAP = ['진짜 나 잘하고 있는 거 맞지?', '배고프다… 경�
 function meStrip(){ const [pose, line] = meLine(); return `<button type="button" class="me-strip" id="meStrip"><span class="ms-cb" data-cpose="${pose}">${meSvg()}</span><span class="ms-bub" id="msBub">${esc(line)}</span></button>`; }
 function bindMeStrip(){
   const b = $('#meStrip'); if (!b) return;
-  b.onclick = () => { const cb = b.querySelector('.ms-cb'), bub = $('#msBub'); cb.dataset.cpose = pick(['jump', 'clap', 'run']); bub.textContent = pick(ME_TAP); bub.classList.remove('pop'); void bub.offsetWidth; bub.classList.add('pop'); SFX.click && SFX.click(); };
+  const cb = b.querySelector('.ms-cb'), base = cb.dataset.cpose;
+  b.onclick = () => {
+    const bub = $('#msBub'), poses = ['jump', 'clap', 'run'].filter(x => x !== cb.dataset.cpose), lines = ME_TAP.filter(x => x !== bub.textContent);
+    cb.dataset.cpose = pick(poses); bub.textContent = pick(lines);
+    for (const [el, c] of [[bub, 'pop'], [cb, 'cb-pop']]){ el.classList.remove(c); void el.offsetWidth; el.classList.add(c); }
+    clearTimeout(bindMeStrip._t); bindMeStrip._t = setTimeout(() => { if (cb.isConnected) cb.dataset.cpose = base; }, 2100); // 한바탕 움직인 뒤 원래 자세로
+  };
 }
 // 경기 중계: 내 캐릭터가 장면마다 반응
-function liveReact(pose, text, ms = 1500){
+function liveReact(pose, text, ms = 1500, hold = false){
   const el = $('#liveMe'); if (!el) return;
-  const cb = el.querySelector('.lm-cb'), bub = el.querySelector('.lm-bub');
-  cb.dataset.cpose = pose; if (text){ bub.textContent = text; bub.classList.remove('show'); void bub.offsetWidth; bub.classList.add('show'); }
-  clearTimeout(liveReact._t); liveReact._t = setTimeout(() => { if (cb.isConnected) cb.dataset.cpose = el.classList.contains('bench') ? 'idle' : 'run'; }, RM ? 0 : ms);
+  const cb = el.querySelector('.lm-cb'), bub = el.querySelector('.lm-bub'); if (!cb || !bub) return;
+  cb.dataset.cpose = pose;
+  if (pose !== 'idle'){ cb.classList.remove('cb-pop'); void cb.offsetWidth; cb.classList.add('cb-pop'); }
+  if (text){ bub.textContent = text; bub.classList.remove('show'); void bub.offsetWidth; bub.classList.add('show'); }
+  clearTimeout(liveReact._t); if (hold) return; // 경기 종료 뒤에는 마지막 자세 그대로
+  liveReact._t = setTimeout(() => { if (cb.isConnected) cb.dataset.cpose = el.classList.contains('bench') ? 'idle' : 'run'; }, RM ? 0 : ms);
 }
 
 // ---------- K리그 다른 구단의 빠른 러브콜 ----------
@@ -3158,7 +3254,7 @@ async function runMatch(){
   applyMatch(r); S.pending = null; S.phase = 'interview'; S.interview = null; save();
   SFX.whistle();
   add(90, 'big', `📣 경기 종료 — ${r.res === 'W' ? '🎉 승리!' : r.res === 'D' ? '🤝 무승부' : '😢 패배'}`);
-  liveReact(r.res === 'W' ? 'jump' : r.res === 'D' ? 'clap' : 'idle', r.res === 'W' ? '이겼다!!' : r.res === 'D' ? '수고했어!' : '다음엔 꼭…', 4000);
+  liveReact(r.res === 'W' ? 'jump' : r.res === 'D' ? 'clap' : 'idle', r.res === 'W' ? '이겼다!!' : r.res === 'D' ? '수고했어!' : '다음엔 꼭…', 4000, true);
   const L = S.last, rc = r.rating == null ? '' : r.rating >= 7.5 ? 'background:linear-gradient(135deg,#4ade80,#0f7a35);color:#03200d' : r.rating < 5.5 ? 'background:linear-gradient(135deg,#ff6b81,#a8203b);color:#fff' : 'background:linear-gradient(135deg,#3dd6ff,#157a99);color:#04202b';
   $('#after').innerHTML = `<div class="panel res-card stack" style="align-items:center">
     <div class="res-cb" data-cpose="${r.role === 'injured' ? 'idle' : r.res === 'W' ? (r.goals ? 'jump' : 'clap') : r.res === 'D' ? 'clap' : 'idle'}">${meSvg()}${r.res === 'W' && r.mins ? '<i class="spark s1"></i><i class="spark s2"></i><i class="spark s3"></i>' : r.res === 'L' ? '<i class="sweat"></i>' : ''}</div>
@@ -4306,7 +4402,7 @@ function chibiSVG(o){
   if (!back && eq.face === 'glasses') acc.push(`<rect x="70" y="80" width="25" height="17" rx="7" fill="#151520"/><rect x="105" y="80" width="25" height="17" rx="7" fill="#151520"/><path d="M95 86 Q100 83 105 86" stroke="#151520" stroke-width="3" fill="none"/><path d="M74 84 L80 84" stroke="#fff" stroke-width="2" opacity=".55" stroke-linecap="round"/><path d="M109 84 L115 84" stroke="#fff" stroke-width="2" opacity=".55" stroke-linecap="round"/>`);
   if (eq.ear === 'earring') acc.push(`<circle cx="${back ? 56 : 144}" cy="98" r="3" fill="#bff3ff" stroke="#fff" stroke-width="1"/>`);
   return `<svg class="chibi" viewBox="0 0 200 262" role="img" aria-label="선수 캐릭터"><defs><radialGradient id="${uid}g" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#3fbf6a"/><stop offset="1" stop-color="#1c7a3e"/></radialGradient></defs>
-    ${o.bare ? '' : `<ellipse cx="100" cy="246" rx="86" ry="15" fill="url(#${uid}g)" stroke="#ffc83d" stroke-width="2.5"/>
+    ${o.bare ? `<ellipse class="shadow fsh" cx="100" cy="247" rx="34" ry="5.5" fill="#000" opacity=".28"/>` : `<ellipse cx="100" cy="246" rx="86" ry="15" fill="url(#${uid}g)" stroke="#ffc83d" stroke-width="2.5"/>
     <ellipse class="shadow" cx="100" cy="246" rx="38" ry="6" fill="#000" opacity=".28"/>`}
     ${back || o.bare ? '' : `<g class="ball" transform="translate(150 236)"><g class="ball-r"><circle r="10" fill="#fff" stroke="#1b1f33" stroke-width="1.4"/><path d="M0 -4 L3.8 -1.2 L2.4 3.2 L-2.4 3.2 L-3.8 -1.2Z" fill="#1b1f33"/><path d="M0 -4 L0 -9.5 M3.8 -1.2 L9 -3 M2.4 3.2 L5.6 8 M-2.4 3.2 L-5.6 8 M-3.8 -1.2 L-9 -3" stroke="#1b1f33" stroke-width="1.2"/></g></g>`}
     <g class="whole">
@@ -5037,7 +5133,7 @@ function bindIsoWrap(){
       if (WALLF[UI.hSel.i] && ws){ const before = combosOf(), s = ws.dataset.ws[0], n = Number(ws.dataset.ws.slice(1)); o.wall = o.wall || []; o.wall.push({i:UI.hSel.i, s, n}); H.inv[UI.hSel.i]--; if (H.inv[UI.hSel.i] <= 0) delete H.inv[UI.hSel.i]; UI.hSel = null; afterChange(before); save(); SFX.good(); return homeRefresh(); }
       return;
     }
-    if (e.target.closest('.iso-me')){ const inner = $('#isoMe .me-in'); if (inner){ inner.dataset.cpose = 'jump'; setTimeout(() => { if (inner.isConnected) inner.dataset.cpose = 'idle'; }, 900); } bubble(pick(['heart', 'smile', 'music', 'sparkles'])); SFX.good(); return; }
+    if (e.target.closest('.iso-me')){ const inner = $('#isoMe .me-in'); if (inner){ inner.dataset.cpose = 'jump'; setTimeout(() => { if (inner.isConnected) inner.dataset.cpose = 'idle'; }, 1050); } bubble(pick(['heart', 'smile', 'music', 'sparkles'])); SFX.good(); return; }
     const fi = e.target.closest('[data-fi]'), wi = e.target.closest('[data-wi]');
     if (fi){ const j = +fi.dataset.fi; UI.hPick = UI.hPick && UI.hPick.t === 'f' && UI.hPick.j === j ? null : {t:'f', j}; return drawRoom(); }
     if (wi){ const j = +wi.dataset.wi; UI.hPick = UI.hPick && UI.hPick.t === 'w' && UI.hPick.j === j ? null : {t:'w', j}; return drawRoom(); }
@@ -5399,138 +5495,144 @@ function fillLeagues(list){
   return list;
 }
 // ---------- 실제 선수 명단 (2025-26 시즌 기준) ----------
-// [이름, 포지션, 소속, 국기, 능력치, 나이]. 이적·은퇴로 바뀌면 이 표만 고치면 된다. REAL_NAMES를 false로 두면 전부 가상 이름.
+// [이름, 포지션, 소속, 국기, 능력치, 나이]. 외국 선수는 실명에서 한 글자를 바꾼 이름(한국 선수는 그대로). 이적·은퇴로 바뀌면 이 표만 고치면 된다. REAL_NAMES를 false로 두면 전부 가상 이름.
+// 예전 저장의 실명 → 한 글자 바꾼 이름(같은 국적·길이에 한 글자만 다른 항목)
+function parodyFix(n, f){
+  if (!REAL_NAMES || typeof n !== 'string' || f === '🇰🇷' || REAL_STARS.some(e => e[0] === n)) return n;
+  const e = REAL_STARS.find(e => e[3] === f && e[0].length === n.length && [...e[0]].filter((ch, i) => ch !== n[i]).length === 1);
+  return e ? e[0] : n;
+}
 const REAL_NAMES = true;
 const REAL_STARS = [
-  ['엘링 홀란','FW','맨체스터 시티','🇳🇴',91,26],
-  ['로드리','MF','맨체스터 시티','🇪🇸',88,30],
-  ['필 포든','MF','맨체스터 시티','🏴󠁧󠁢󠁥󠁮󠁧󠁿',85,26],
-  ['후벵 디아스','DF','맨체스터 시티','🇵🇹',86,29],
-  ['요슈코 그바르디올','DF','맨체스터 시티','🇭🇷',85,24],
-  ['잔루이지 돈나룸마','GK','맨체스터 시티','🇮🇹',88,27],
-  ['오마르 마르무시','FW','맨체스터 시티','🇪🇬',83,27],
-  ['티자니 라인더르스','MF','맨체스터 시티','🇳🇱',83,27],
-  ['부카요 사카','FW','아스널','🏴󠁧󠁢󠁥󠁮󠁧󠁿',88,24],
-  ['마르틴 외데고르','MF','아스널','🇳🇴',86,27],
-  ['데클란 라이스','MF','아스널','🏴󠁧󠁢󠁥󠁮󠁧󠁿',87,27],
-  ['윌리엄 살리바','DF','아스널','🇫🇷',88,25],
-  ['가브리에우 마갈량이스','DF','아스널','🇧🇷',86,28],
-  ['다비드 라야','GK','아스널','🇪🇸',86,30],
-  ['빅토르 요케레스','FW','아스널','🇸🇪',85,27],
-  ['마르틴 수비멘디','MF','아스널','🇪🇸',85,27],
-  ['모하메드 살라','FW','리버풀','🇪🇬',88,34],
-  ['버질 반 다이크','DF','리버풀','🇳🇱',87,34],
-  ['알리송 베케르','GK','리버풀','🇧🇷',88,33],
-  ['플로리안 비르츠','MF','리버풀','🇩🇪',87,23],
-  ['알렉시스 맥알리스터','MF','리버풀','🇦🇷',86,27],
-  ['알렉산데르 이사크','FW','리버풀','🇸🇪',87,26],
-  ['도미니크 소보슬라이','MF','리버풀','🇭🇺',84,25],
-  ['위고 에키티케','FW','리버풀','🇫🇷',83,23],
-  ['콜 파머','MF','첼시','🏴󠁧󠁢󠁥󠁮󠁧󠁿',87,24],
-  ['모이세스 카이세도','MF','첼시','🇪🇨',86,24],
-  ['엔소 페르난데스','MF','첼시','🇦🇷',84,25],
-  ['리스 제임스','DF','첼시','🏴󠁧󠁢󠁥󠁮󠁧󠁿',83,26],
-  ['주앙 페드루','FW','첼시','🇧🇷',83,24],
-  ['로베르트 산체스','GK','첼시','🇪🇸',80,28],
-  ['브루누 페르난드스','MF','맨체스터 유나이티드','🇵🇹',85,31],
-  ['브라이언 음뵈모','FW','맨체스터 유나이티드','🇨🇲',83,26],
-  ['마테우스 쿠냐','FW','맨체스터 유나이티드','🇧🇷',83,27],
-  ['리산드로 마르티네스','DF','맨체스터 유나이티드','🇦🇷',83,28],
-  ['사비 시몬스','MF','토트넘','🇳🇱',84,23],
-  ['크리스티안 로메로','DF','토트넘','🇦🇷',85,28],
-  ['미키 반 더 벤','DF','토트넘','🇳🇱',84,25],
-  ['굴리엘모 비카리오','GK','토트넘','🇮🇹',83,29],
-  ['모하메드 쿠두스','FW','토트넘','🇬🇭',82,25],
-  ['제임스 매디슨','MF','토트넘','🏴󠁧󠁢󠁥󠁮󠁧󠁿',82,29],
-  ['브루누 기마랑이스','MF','뉴캐슬','🇧🇷',86,28],
-  ['산드로 토날리','MF','뉴캐슬','🇮🇹',84,26],
-  ['앤서니 고든','FW','뉴캐슬','🏴󠁧󠁢󠁥󠁮󠁧󠁿',83,25],
-  ['닉 포프','GK','뉴캐슬','🏴󠁧󠁢󠁥󠁮󠁧󠁿',82,34],
-  ['에미 마르티네스','GK','아스톤 빌라','🇦🇷',85,33],
-  ['올리 왓킨스','FW','아스톤 빌라','🏴󠁧󠁢󠁥󠁮󠁧󠁿',83,30],
-  ['유리 틸레만스','MF','아스톤 빌라','🇧🇪',82,29],
-  ['킬리안 음바페','FW','레알 마드리드','🇫🇷',91,27],
-  ['비니시우스 주니오르','FW','레알 마드리드','🇧🇷',89,25],
-  ['주드 벨링엄','MF','레알 마드리드','🏴󠁧󠁢󠁥󠁮󠁧󠁿',89,22],
-  ['페데리코 발베르데','MF','레알 마드리드','🇺🇾',88,27],
-  ['티보 쿠르투아','GK','레알 마드리드','🇧🇪',89,34],
-  ['안토니오 뤼디거','DF','레알 마드리드','🇩🇪',85,33],
-  ['트렌트 알렉산더아널드','DF','레알 마드리드','🏴󠁧󠁢󠁥󠁮󠁧󠁿',85,27],
-  ['아르다 귈레르','MF','레알 마드리드','🇹🇷',83,21],
-  ['딘 하위선','DF','레알 마드리드','🇪🇸',82,21],
-  ['라민 야말','FW','바르셀로나','🇪🇸',90,18],
-  ['하피냐','FW','바르셀로나','🇧🇷',88,29],
-  ['페드리','MF','바르셀로나','🇪🇸',89,23],
-  ['로베르트 레반도프스키','FW','바르셀로나','🇵🇱',85,37],
-  ['프렝키 더 용','MF','바르셀로나','🇳🇱',85,29],
-  ['파우 쿠바르시','DF','바르셀로나','🇪🇸',84,19],
-  ['쥘 쿤데','DF','바르셀로나','🇫🇷',85,27],
-  ['주안 가르시아','GK','바르셀로나','🇪🇸',83,25],
-  ['가비','MF','바르셀로나','🇪🇸',83,21],
-  ['훌리안 알바레스','FW','아틀레티코 마드리드','🇦🇷',87,26],
-  ['앙투안 그리즈만','FW','아틀레티코 마드리드','🇫🇷',84,35],
-  ['얀 오블락','GK','아틀레티코 마드리드','🇸🇮',87,33],
-  ['코케','MF','아틀레티코 마드리드','🇪🇸',82,34],
-  ['니코 윌리엄스','FW','아틀레틱 빌바오','🇪🇸',85,23],
-  ['우나이 시몬','GK','아틀레틱 빌바오','🇪🇸',85,28],
-  ['구보 다케후사','FW','레알 소시에다드','🇯🇵',83,25],
-  ['미켈 오야르사발','FW','레알 소시에다드','🇪🇸',83,29],
-  ['이스코','MF','레알 베티스','🇪🇸',82,34],
-  ['라우타로 마르티네스','FW','인터 밀란','🇦🇷',88,29],
-  ['니콜로 바렐라','MF','인터 밀란','🇮🇹',87,29],
-  ['하칸 찰하놀루','MF','인터 밀란','🇹🇷',85,32],
-  ['알레산드로 바스토니','DF','인터 밀란','🇮🇹',87,27],
-  ['얀 조머','GK','인터 밀란','🇨🇭',85,37],
-  ['마르퀴스 튀람','FW','인터 밀란','🇫🇷',85,28],
-  ['케빈 더 브라위너','MF','나폴리','🇧🇪',86,35],
-  ['스콧 맥토미니','MF','나폴리','🏴󠁧󠁢󠁳󠁣󠁴󠁿',85,29],
-  ['로멜루 루카쿠','FW','나폴리','🇧🇪',83,33],
-  ['알렉스 메레트','GK','나폴리','🇮🇹',82,29],
-  ['케난 일디즈','FW','유벤투스','🇹🇷',84,21],
-  ['두샨 블라호비치','FW','유벤투스','🇷🇸',83,26],
-  ['글레이송 브레메르','DF','유벤투스','🇧🇷',85,29],
-  ['미켈레 디 그레고리오','GK','유벤투스','🇮🇹',82,28],
-  ['하파엘 레앙','FW','AC 밀란','🇵🇹',85,26],
-  ['크리스천 풀리식','FW','AC 밀란','🇺🇸',84,27],
-  ['루카 모드리치','MF','AC 밀란','🇭🇷',83,40],
-  ['마이크 메냥','GK','AC 밀란','🇫🇷',86,30],
-  ['아데몰라 루크먼','FW','아탈란타','🇳🇬',84,28],
-  ['파울로 디발라','FW','AS 로마','🇦🇷',83,32],
-  ['해리 케인','FW','바이에른 뮌헨','🏴󠁧󠁢󠁥󠁮󠁧󠁿',90,32],
-  ['자말 무시알라','MF','바이에른 뮌헨','🇩🇪',88,23],
-  ['요주아 키미히','MF','바이에른 뮌헨','🇩🇪',87,31],
+  ['엘링 홀린','FW','맨체스터 시티','🇳🇴',91,26],
+  ['로드라','MF','맨체스터 시티','🇪🇸',88,30],
+  ['필 푸든','MF','맨체스터 시티','🏴󠁧󠁢󠁥󠁮󠁧󠁿',85,26],
+  ['후벵 디이스','DF','맨체스터 시티','🇵🇹',86,29],
+  ['요슈코 그비르디올','DF','맨체스터 시티','🇭🇷',85,24],
+  ['잔루이지 돈니룸마','GK','맨체스터 시티','🇮🇹',88,27],
+  ['오마르 미르무시','FW','맨체스터 시티','🇪🇬',83,27],
+  ['티자니 리인더르스','MF','맨체스터 시티','🇳🇱',83,27],
+  ['부카요 시카','FW','아스널','🏴󠁧󠁢󠁥󠁮󠁧󠁿',88,24],
+  ['마르틴 외데구르','MF','아스널','🇳🇴',86,27],
+  ['데클란 리이스','MF','아스널','🏴󠁧󠁢󠁥󠁮󠁧󠁿',87,27],
+  ['윌리엄 실리바','DF','아스널','🇫🇷',88,25],
+  ['가브리에우 미갈량이스','DF','아스널','🇧🇷',86,28],
+  ['다비드 리야','GK','아스널','🇪🇸',86,30],
+  ['빅토르 유케레스','FW','아스널','🇸🇪',85,27],
+  ['마르틴 수비멘다','MF','아스널','🇪🇸',85,27],
+  ['모하메드 실라','FW','리버풀','🇪🇬',88,34],
+  ['버질 반 디이크','DF','리버풀','🇳🇱',87,34],
+  ['알리송 비케르','GK','리버풀','🇧🇷',88,33],
+  ['플로리안 바르츠','MF','리버풀','🇩🇪',87,23],
+  ['알렉시스 맥일리스터','MF','리버풀','🇦🇷',86,27],
+  ['알렉산데르 이시크','FW','리버풀','🇸🇪',87,26],
+  ['도미니크 소보슬리이','MF','리버풀','🇭🇺',84,25],
+  ['위고 에키타케','FW','리버풀','🇫🇷',83,23],
+  ['콜 피머','MF','첼시','🏴󠁧󠁢󠁥󠁮󠁧󠁿',87,24],
+  ['모이세스 키이세도','MF','첼시','🇪🇨',86,24],
+  ['엔소 페르닌데스','MF','첼시','🇦🇷',84,25],
+  ['리스 제암스','DF','첼시','🏴󠁧󠁢󠁥󠁮󠁧󠁿',83,26],
+  ['주앙 피드루','FW','첼시','🇧🇷',83,24],
+  ['로베르트 신체스','GK','첼시','🇪🇸',80,28],
+  ['브루누 페르닌드스','MF','맨체스터 유나이티드','🇵🇹',85,31],
+  ['브라이언 음뵈무','FW','맨체스터 유나이티드','🇨🇲',83,26],
+  ['마테우스 코냐','FW','맨체스터 유나이티드','🇧🇷',83,27],
+  ['리산드로 미르티네스','DF','맨체스터 유나이티드','🇦🇷',83,28],
+  ['사비 시문스','MF','토트넘','🇳🇱',84,23],
+  ['크리스티안 로메루','DF','토트넘','🇦🇷',85,28],
+  ['미키 반 더 반','DF','토트넘','🇳🇱',84,25],
+  ['굴리엘모 비키리오','GK','토트넘','🇮🇹',83,29],
+  ['모하메드 쿠도스','FW','토트넘','🇬🇭',82,25],
+  ['제임스 매다슨','MF','토트넘','🏴󠁧󠁢󠁥󠁮󠁧󠁿',82,29],
+  ['브루누 기미랑이스','MF','뉴캐슬','🇧🇷',86,28],
+  ['산드로 토닐리','MF','뉴캐슬','🇮🇹',84,26],
+  ['앤서니 구든','FW','뉴캐슬','🏴󠁧󠁢󠁥󠁮󠁧󠁿',83,25],
+  ['닉 푸프','GK','뉴캐슬','🏴󠁧󠁢󠁥󠁮󠁧󠁿',82,34],
+  ['에미 미르티네스','GK','아스톤 빌라','🇦🇷',85,33],
+  ['올리 왓칸스','FW','아스톤 빌라','🏴󠁧󠁢󠁥󠁮󠁧󠁿',83,30],
+  ['유리 틸레민스','MF','아스톤 빌라','🇧🇪',82,29],
+  ['킬리안 음비페','FW','레알 마드리드','🇫🇷',91,27],
+  ['비니시우스 주니우르','FW','레알 마드리드','🇧🇷',89,25],
+  ['주드 벨링암','MF','레알 마드리드','🏴󠁧󠁢󠁥󠁮󠁧󠁿',89,22],
+  ['페데리코 빌베르데','MF','레알 마드리드','🇺🇾',88,27],
+  ['티보 쿠르투이','GK','레알 마드리드','🇧🇪',89,34],
+  ['안토니오 뤼디가','DF','레알 마드리드','🇩🇪',85,33],
+  ['트렌트 일렉산더아널드','DF','레알 마드리드','🏴󠁧󠁢󠁥󠁮󠁧󠁿',85,27],
+  ['아르다 귈라르','MF','레알 마드리드','🇹🇷',83,21],
+  ['딘 히위선','DF','레알 마드리드','🇪🇸',82,21],
+  ['라민 야밀','FW','바르셀로나','🇪🇸',90,18],
+  ['히피냐','FW','바르셀로나','🇧🇷',88,29],
+  ['페드라','MF','바르셀로나','🇪🇸',89,23],
+  ['로베르트 레빈도프스키','FW','바르셀로나','🇵🇱',85,37],
+  ['프렝키 더 융','MF','바르셀로나','🇳🇱',85,29],
+  ['파우 쿠비르시','DF','바르셀로나','🇪🇸',84,19],
+  ['쥘 콘데','DF','바르셀로나','🇫🇷',85,27],
+  ['주안 기르시아','GK','바르셀로나','🇪🇸',83,25],
+  ['기비','MF','바르셀로나','🇪🇸',83,21],
+  ['훌리안 일바레스','FW','아틀레티코 마드리드','🇦🇷',87,26],
+  ['앙투안 그리즈민','FW','아틀레티코 마드리드','🇫🇷',84,35],
+  ['얀 오블릭','GK','아틀레티코 마드리드','🇸🇮',87,33],
+  ['쿠케','MF','아틀레티코 마드리드','🇪🇸',82,34],
+  ['니코 윌리암스','FW','아틀레틱 빌바오','🇪🇸',85,23],
+  ['우나이 시문','GK','아틀레틱 빌바오','🇪🇸',85,28],
+  ['구보 디케후사','FW','레알 소시에다드','🇯🇵',83,25],
+  ['미켈 오야르시발','FW','레알 소시에다드','🇪🇸',83,29],
+  ['이스쿠','MF','레알 베티스','🇪🇸',82,34],
+  ['라우타로 미르티네스','FW','인터 밀란','🇦🇷',88,29],
+  ['니콜로 비렐라','MF','인터 밀란','🇮🇹',87,29],
+  ['하칸 칠하놀루','MF','인터 밀란','🇹🇷',85,32],
+  ['알레산드로 비스토니','DF','인터 밀란','🇮🇹',87,27],
+  ['얀 조마','GK','인터 밀란','🇨🇭',85,37],
+  ['마르퀴스 튀림','FW','인터 밀란','🇫🇷',85,28],
+  ['케빈 더 브리위너','MF','나폴리','🇧🇪',86,35],
+  ['스콧 맥토미나','MF','나폴리','🏴󠁧󠁢󠁳󠁣󠁴󠁿',85,29],
+  ['로멜루 루키쿠','FW','나폴리','🇧🇪',83,33],
+  ['알렉스 메리트','GK','나폴리','🇮🇹',82,29],
+  ['케난 일다즈','FW','유벤투스','🇹🇷',84,21],
+  ['두샨 블리호비치','FW','유벤투스','🇷🇸',83,26],
+  ['글레이송 브리메르','DF','유벤투스','🇧🇷',85,29],
+  ['미켈레 디 그리고리오','GK','유벤투스','🇮🇹',82,28],
+  ['하파엘 레양','FW','AC 밀란','🇵🇹',85,26],
+  ['크리스천 풀리삭','FW','AC 밀란','🇺🇸',84,27],
+  ['루카 모드리차','MF','AC 밀란','🇭🇷',83,40],
+  ['마이크 마냥','GK','AC 밀란','🇫🇷',86,30],
+  ['아데몰라 루크만','FW','아탈란타','🇳🇬',84,28],
+  ['파울로 디빌라','FW','AS 로마','🇦🇷',83,32],
+  ['해리 카인','FW','바이에른 뮌헨','🏴󠁧󠁢󠁥󠁮󠁧󠁿',90,32],
+  ['자말 무시일라','MF','바이에른 뮌헨','🇩🇪',88,23],
+  ['요주아 키미하','MF','바이에른 뮌헨','🇩🇪',87,31],
   ['김민재','DF','바이에른 뮌헨','🇰🇷',84,29],
-  ['마누엘 노이어','GK','바이에른 뮌헨','🇩🇪',85,40],
-  ['마이클 올리세','FW','바이에른 뮌헨','🇫🇷',86,24],
-  ['다요 우파메카노','DF','바이에른 뮌헨','🇫🇷',84,27],
-  ['루이스 디아스','FW','바이에른 뮌헨','🇨🇴',85,29],
-  ['파트리크 시크','FW','레버쿠젠','🇨🇿',82,30],
-  ['알레한드로 그리말도','DF','레버쿠젠','🇪🇸',84,30],
-  ['세루 기라시','FW','도르트문트','🇬🇳',85,30],
-  ['니코 슐로터베크','DF','도르트문트','🇩🇪',84,26],
-  ['그레고어 코벨','GK','도르트문트','🇨🇭',86,28],
-  ['율리안 브란트','MF','도르트문트','🇩🇪',82,30],
-  ['데니스 운다프','FW','슈투트가르트','🇩🇪',81,29],
-  ['후벵 네베스','MF','알 힐랄','🇵🇹',84,29],
-  ['야신 부누','GK','알 힐랄','🇲🇦',84,35],
-  ['칼리두 쿨리발리','DF','알 힐랄','🇸🇳',82,34],
-  ['카림 벤제마','FW','알 이티하드','🇫🇷',84,38],
-  ['은골로 캉테','MF','알 이티하드','🇫🇷',82,35],
-  ['오사코 유야','FW','비셀 고베','🇯🇵',77,36],
-  ['무토 요시노리','FW','비셀 고베','🇯🇵',77,33],
-  ['안데르송 로페스','FW','요코하마 F. 마리노스','🇧🇷',77,32],
+  ['마누엘 노이아','GK','바이에른 뮌헨','🇩🇪',85,40],
+  ['마이클 올라세','FW','바이에른 뮌헨','🇫🇷',86,24],
+  ['다요 우피메카노','DF','바이에른 뮌헨','🇫🇷',84,27],
+  ['루이스 디이스','FW','바이에른 뮌헨','🇨🇴',85,29],
+  ['파트리크 사크','FW','레버쿠젠','🇨🇿',82,30],
+  ['알레한드로 그리밀도','DF','레버쿠젠','🇪🇸',84,30],
+  ['세루 기리시','FW','도르트문트','🇬🇳',85,30],
+  ['니코 슐로타베크','DF','도르트문트','🇩🇪',84,26],
+  ['그레고어 쿠벨','GK','도르트문트','🇨🇭',86,28],
+  ['율리안 브린트','MF','도르트문트','🇩🇪',82,30],
+  ['데니스 운디프','FW','슈투트가르트','🇩🇪',81,29],
+  ['후벵 네비스','MF','알 힐랄','🇵🇹',84,29],
+  ['야신 보누','GK','알 힐랄','🇲🇦',84,35],
+  ['칼리두 쿨리빌리','DF','알 힐랄','🇸🇳',82,34],
+  ['카림 벤제미','FW','알 이티하드','🇫🇷',84,38],
+  ['은골로 킹테','MF','알 이티하드','🇫🇷',82,35],
+  ['오사코 요야','FW','비셀 고베','🇯🇵',77,36],
+  ['무토 요시노라','FW','비셀 고베','🇯🇵',77,33],
+  ['안데르송 루페스','FW','요코하마 F. 마리노스','🇧🇷',77,32],
   ['조현우','GK','울산 HD','🇰🇷',80,34],
   ['이청용','MF','울산 HD','🇰🇷',74,37],
   ['김영권','DF','울산 HD','🇰🇷',75,36],
   ['이승우','FW','전북 현대','🇰🇷',76,28],
   ['송범근','GK','전북 현대','🇰🇷',75,28],
-  ['안드레아 콤파뇨','FW','전북 현대','🇮🇹',77,35],
+  ['안드레아 콤피뇨','FW','전북 현대','🇮🇹',77,35],
   ['박진섭','DF','전북 현대','🇰🇷',75,30],
-  ['제시 린가드','MF','FC서울','🏴󠁧󠁢󠁥󠁮󠁧󠁿',78,33],
+  ['제시 린기드','MF','FC서울','🏴󠁧󠁢󠁥󠁮󠁧󠁿',78,33],
   ['조영욱','FW','FC서울','🇰🇷',74,27],
   ['기성용','MF','포항 스틸러스','🇰🇷',74,37],
   ['주민규','FW','대전 하나시티즌','🇰🇷',76,36],
-  ['세징야','MF','대구 FC','🇧🇷',77,36],
+  ['세장야','MF','대구 FC','🇧🇷',77,36],
 ];
 function realStars(used){
   return REAL_STARS.filter(r => CLUB[r[2]] && !used.has(r[0])).map(([n, p, c, f, o, a]) => { used.add(n); const lg = CLUB[c].lg, local = lg === 'K' || lg === 'J1' || lg === 'B2';
@@ -5776,7 +5878,7 @@ function makeAwards(){
   if (bal.myR && bal.myR <= 30) addNews(`📜 [발롱도르] 최종 후보 30인 발표… ${S.name} 이름 올렸다`);
   S.awards = {y:Y, list, step:0, rev:false};
 }
-function cleanNom(a){ return (Array.isArray(a) ? a : []).filter(x => x && typeof x.n === 'string').slice(0, 6).map(x => ({n:x.n.slice(0, 20), f:x.f ? safeFlag(x.f) : '', c: CLUB[x.c] ? x.c : '', s:String(x.s || '').slice(0, 60), me:!!x.me})); }
+function cleanNom(a){ return (Array.isArray(a) ? a : []).filter(x => x && typeof x.n === 'string').slice(0, 6).map(x => ({n:parodyFix(x.n.slice(0, 20), x.f), f:x.f ? safeFlag(x.f) : '', c: CLUB[x.c] ? x.c : '', s:String(x.s || '').slice(0, 60), me:!!x.me})); }
 function cleanAwards(A){
   if (!A || !Array.isArray(A.list) || !A.list.length) return null;
   const one = a => { const nom = cleanNom(a.nom); return nom.length ? {k:a.k, nom, win:int(a.win, 0, nom.length - 1, 0), myR: a.myR == null ? null : int(a.myR, 1, 200, 1), of:int(a.of, 1, 200, 3), vote: Array.isArray(a.vote) ? a.vote.slice(0, 6).map(v => int(v, 0, 100, 0)) : undefined, top30:!!a.top30} : null; };
@@ -5836,7 +5938,7 @@ function renderAwards(){
     if (!RM) for (let i = 0; i < 6; i++){ tone(140 + i * 18, .08, 'square', .05, i * .12); }
     await wait(1100);
     A.rev = true; const fx = payAward(A.step); save();
-    renderAwards();
+    UI.still = true; renderAwards();
     const won = (a.k === 'league' ? a.rows : [a]).some(r => r.nom[r.win] && r.nom[r.win].me);
     if (won){ SFX.goal(); confetti(['#ffc83d','#ffffff', CLUB[S.club].c]); } else SFX.good();
     const box = $('#awfx'); if (box && fx.length) box.innerHTML = chipsHtml(fx);
@@ -6810,29 +6912,49 @@ function roundSplash(){
   const f = curFx(); if (!f) return;
   const big = bigMatch(f);
   const el = document.createElement('div'); el.className = 'splash' + (big ? ' big' : f.k !== 'L' ? ' cup' : '');
-  el.innerHTML = `<div class="band">${crest(S.club, 'lg')}<div><b>${big ? esc(big.label) : f.k === 'L' ? `ROUND ${f.lr}` : esc(f.stage)}</b><small>${f.k === 'L' ? '' : esc(f.comp) + ' · '}VS ${esc(f.opp)}</small></div>${crest(f.opp, 'lg')}</div><div class="splash-me" data-cpose="run">${meSvg()}</div>`;
-  document.body.appendChild(el); SFX.whistle(); setTimeout(() => el.remove(), 1350);
+  el.innerHTML = `<div class="band">${crest(S.club, 'lg')}<div><b>${big ? esc(big.label) : f.k === 'L' ? `ROUND ${f.lr}` : esc(f.stage)}</b><small>${f.k === 'L' ? '' : esc(f.comp) + ' · '}VS ${esc(f.opp)}</small></div>${crest(f.opp, 'lg')}</div><div class="splash-me" data-cpose="run">${meSvg()}</div><i class="splash-ball"><svg viewBox="-11 -11 22 22"><circle r="10" fill="#fff" stroke="#1b1f33" stroke-width="1.4"/><path d="M0 -4 L3.8 -1.2 L2.4 3.2 L-2.4 3.2 L-3.8 -1.2Z" fill="#1b1f33"/><path d="M0 -4 L0 -9.5 M3.8 -1.2 L9 -3 M2.4 3.2 L5.6 8 M-2.4 3.2 L-5.6 8 M-3.8 -1.2 L-9 -3" stroke="#1b1f33" stroke-width="1.2"/></svg></i>`;
+  document.querySelectorAll('.splash').forEach(x => x.remove());
+  document.body.appendChild(el); SFX.whistle(); setTimeout(() => el.remove(), 1400);
 }
 
 function flash(text){
   if (RM) return;
+  document.querySelectorAll('.flashfx').forEach(x => x.remove()); // 연달아 터질 때 글자가 겹치지 않게
   const el = document.createElement('div'); el.className = 'flashfx'; el.innerHTML = `<b>${esc(text)}</b>`;
   document.body.appendChild(el); setTimeout(() => el.remove(), 1300);
 }
+// 색종이: 여러 번 터져도 캔버스 하나·루프 하나를 같이 쓴다 (예전엔 두 번째가 첫 번째를 지웠다). 프레임 속도와 무관하게 같은 속도로 떨어진다.
+const CF = {ps:[], on:false, w:0, h:0, last:0};
 function confetti(colors){
   if (RM) return;
-  const cv = $('#confetti'), ctx = cv.getContext('2d'), dpr = Math.min(2, devicePixelRatio || 1);
-  cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const ps = Array.from({length: 130}, () => ({x: innerWidth / 2 + rand(-60, 60), y: innerHeight * .45, vx: rand(-8, 8), vy: rand(-16, -5), g: rand(.35, .5),
-    w: rand(6, 12), h: rand(8, 16), r: rand(0, 6), vr: rand(-.2, .2), c: pick(colors), ball: Math.random() < .07}));
-  const t0 = performance.now();
-  const tick = now => {
-    const t = now - t0; ctx.clearRect(0, 0, innerWidth, innerHeight); ctx.globalAlpha = Math.max(0, 1 - Math.max(0, t - 1600) / 600);
-    for (const p of ps){ p.vy += p.g; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+  const cv = $('#confetti'); if (!cv) return;
+  const ctx = cv.getContext('2d'); if (!ctx) return;
+  const dpr = Math.min(2, devicePixelRatio || 1), W = innerWidth, H = innerHeight;
+  if (CF.w !== W || CF.h !== H || cv.width !== Math.round(W * dpr)){ cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); CF.w = W; CF.h = H; }
+  const now = performance.now(), sp = Math.min(1, W / 420) * .35 + .65; // 좁은 화면에선 살짝 덜 퍼지게
+  if (CF.ps.length > 200) CF.ps.splice(0, CF.ps.length - 200);
+  for (let k = 0; k < 110; k++){
+    const a = rand(-Math.PI * .92, -Math.PI * .08), v = rand(7, 19) * sp;
+    CF.ps.push({x: W / 2 + rand(-50, 50), y: H * .45 + rand(-10, 10), vx: Math.cos(a) * v * .8, vy: Math.sin(a) * v, g: rand(.3, .46), w: rand(6, 12), h: rand(8, 15), r: rand(0, 6), vr: rand(-.22, .22),
+      ph: rand(0, 6), sw: rand(.4, 1.3), c: pick(colors), ball: Math.random() < .06, t0: now, life: rand(1700, 2300)});
+  }
+  if (CF.on) return;
+  CF.on = true; CF.last = now;
+  const tick = t => {
+    const dt = clamp((t - CF.last) / 16.67, 0, 3); CF.last = t;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, CF.w, CF.h);
+    const drag = Math.pow(.985, dt);
+    CF.ps = CF.ps.filter(p => t - p.t0 < p.life && p.y < CF.h + 30);
+    for (const p of CF.ps){
+      const age = t - p.t0;
+      p.vy = Math.min(p.vy + p.g * dt, 9); p.vx *= drag; p.x += (p.vx + Math.sin(age / 190 + p.ph) * p.sw) * dt; p.y += p.vy * dt; p.r += p.vr * dt;
+      ctx.globalAlpha = clamp((p.life - age) / 450, 0, 1);
       ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r);
-      if (p.ball){ ctx.font = '18px sans-serif'; ctx.fillText('⚽', -9, 6); } else { ctx.fillStyle = p.c; ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h * Math.abs(Math.cos(p.r * 2))); }
-      ctx.restore(); }
-    if (t < 2200) requestAnimationFrame(tick); else ctx.clearRect(0, 0, innerWidth, innerHeight);
+      if (p.ball){ ctx.font = '18px sans-serif'; ctx.fillText('⚽', -9, 6); } else { ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h * (.25 + .75 * Math.abs(Math.cos(age / 130 + p.ph)))); }
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+    if (CF.ps.length) requestAnimationFrame(tick); else { CF.on = false; ctx.clearRect(0, 0, CF.w, CF.h); }
   };
   requestAnimationFrame(tick);
 }
