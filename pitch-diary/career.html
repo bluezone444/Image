@@ -1402,6 +1402,44 @@ table.standings{min-width:0}
 .trial-ic{width:84px;height:84px;border-radius:26px;display:grid;place-items:center;background:rgba(255,200,61,.15);color:var(--gold);border:2px solid rgba(255,200,61,.5)} .trial-ic .ico{width:44px;height:44px}
 .trial-end h2{font-family:var(--f-display);font-weight:400;font-size:26px;margin:6px 0 0} .trial-end p{margin:0;color:var(--muted);line-height:1.6}
 .twist.react{border-color:rgba(61,214,255,.5);background:rgba(61,214,255,.08)} .twist.react .ico{width:15px;height:15px;color:var(--cyan);vertical-align:-2px}
+.hs-intro{display:flex;gap:12px;align-items:center} .hs-intro > .ico{width:30px;height:30px;color:var(--gold);flex:none} .hs-intro div{display:flex;flex-direction:column;gap:3px} .hs-intro b{font-size:15px} .hs-intro small{font-size:12px;color:var(--muted);line-height:1.45}
+.hs-top{display:flex;align-items:center;gap:12px} .hs-top > div{display:flex;flex-direction:column;gap:2px;min-width:0} .hs-top b{font-size:17px} .hs-top small{font-size:12px;color:var(--muted)}
+.hs-badge{flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:rgba(61,214,255,.15);color:var(--cyan);border:2px solid rgba(61,214,255,.45)} .hs-badge .ico{width:26px;height:26px}
+.ts-cont-crest .hs-badge{width:48px;height:48px}
+.hs-dots{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.hs-dots i{font-style:normal;text-align:center;padding:7px 0;border-radius:10px;background:rgba(255,255,255,.06);color:var(--dim);font-size:13px;font-weight:800}
+.hs-dots i.now{outline:2px solid var(--gold);color:var(--gold)} .hs-dots i.w{background:rgba(74,222,128,.2);color:var(--up)} .hs-dots i.l{background:rgba(255,107,129,.2);color:var(--down)} .hs-dots i.d{background:rgba(154,165,209,.2);color:var(--ink)}
+.hs-match{padding:16px;display:flex;flex-direction:column;gap:12px;text-align:center}
+.hs-stage{font-size:12px;color:var(--gold);font-weight:800;letter-spacing:.06em}
+.hs-vs{display:flex;align-items:center;justify-content:center;gap:12px} .hs-vs b{font-family:var(--f-display);font-size:20px} .hs-vs span{color:var(--gold);font-family:var(--f-display);font-size:16px}
+.hs-me{height:170px;display:grid;place-items:center} .hs-me .chibi{width:130px;height:170px;max-width:none}
+.hs-scouts{font-size:13px;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap} .hs-scouts .ico{width:15px;height:15px;color:var(--cyan)} .hs-scouts b{color:var(--ink)} .hs-scouts i{width:8px;height:8px;border-radius:50%;background:var(--cyan);display:inline-block;box-shadow:0 0 6px var(--cyan)}
+.hs-ticker{font-family:var(--f-display);font-size:22px;color:var(--gold);padding:14px 0;animation:pulse 1s ease-in-out infinite}
+.hs-moment{display:flex;flex-direction:column;gap:2px;margin-bottom:8px} .hs-moment b{font-size:17px;color:var(--gold);display:flex;align-items:center;justify-content:center;gap:5px} .hs-moment small{color:var(--muted);font-size:12px}
+.hs-opts{display:flex;flex-direction:column;gap:8px} .hs-opts .btn{flex-direction:column;gap:2px} .hs-opts .btn small{font-size:11px;opacity:.75;font-weight:600}
+.hs-res{display:flex;flex-direction:column;gap:6px;margin-bottom:12px} .hs-res > b{font-size:18px} .hs-res.ok > b{color:var(--up)} .hs-res.no > b{color:var(--down)}
+.hs-score{font-family:var(--f-display);font-size:34px} .hs-score small{font-family:var(--f-body);font-size:13px;color:var(--muted);margin-left:6px}
+.hs-rt{font-size:13px;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:4px} .hs-rt b{color:var(--gold);font-size:16px} .hs-rt .ico{width:14px;height:14px}
+.hs-offer{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;text-align:left;color:var(--ink);cursor:pointer} .hs-offer > div{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0} .hs-offer b{font-size:16px} .hs-offer small{font-size:12px;color:var(--muted)} .hs-offer em{font-style:normal;font-size:12px;color:var(--gold)} .hs-offer > .ico:last-child{color:var(--muted);flex:none}
+.hs-offer.draft{border-color:rgba(61,214,255,.5)}
+.draft-board{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.draft-board li{display:grid;grid-template-columns:56px 30px 1fr;grid-template-rows:auto auto;column-gap:8px;align-items:center;padding:8px 10px;border-radius:12px;background:var(--panel-2);border:1px solid var(--edge);animation:slideIn .35s cubic-bezier(.2,.8,.2,1) both}
+.draft-board .dn{grid-row:1/3;font-family:var(--f-display);font-size:14px;color:var(--gold)} .draft-board .crest{grid-row:1/3;width:30px;height:30px} .draft-board b{font-size:14px} .draft-board .dp{font-size:12px;color:var(--muted)}
+.draft-board li.me{border:2px solid var(--gold);background:linear-gradient(90deg,rgba(255,200,61,.25),var(--panel-2));transform-origin:center;animation:dpick .7s cubic-bezier(.3,1.6,.6,1) both} .draft-board li.me .dp{color:var(--ink);font-weight:800}
+@keyframes dpick{0%{transform:scale(.6);opacity:0}100%{transform:none;opacity:1}}
+.sign-room{text-align:center}
+.sign-stage{position:relative;height:370px;border-radius:24px;overflow:hidden;background:radial-gradient(80% 60% at 50% 100%,color-mix(in srgb,var(--cc) 55%,transparent),transparent 70%),linear-gradient(180deg,#0b1128,#151d42);border:2px solid color-mix(in srgb,var(--cc) 60%,var(--edge))}
+.sign-stage .flash{position:absolute;width:60px;height:60px;border-radius:50%;background:radial-gradient(#fff,rgba(255,255,255,0) 70%);opacity:0;animation:flash 3.2s ease-out infinite}
+.sign-crest{position:absolute;left:50%;top:22px;transform:translateX(-50%);animation:signDrop .8s cubic-bezier(.3,1.5,.6,1) both .2s} .sign-crest .crest{width:92px;height:92px}
+.sign-me{position:absolute;left:50%;bottom:6px;width:170px;height:220px;transform:translateX(-50%);animation:signUp .7s cubic-bezier(.3,1.4,.6,1) both .7s} .sign-me .chibi{width:100%;height:100%;max-width:none}
+.sign-shirt{position:absolute;right:14px;bottom:24px;width:78px;height:86px;border-radius:14px 14px 10px 10px;background:var(--cc);display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.45);animation:signFlip .9s cubic-bezier(.3,1.4,.6,1) both 1.3s}
+.sign-shirt b{font-family:var(--f-display);font-size:34px;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.35);line-height:1} .sign-shirt small{font-size:10px;color:#fff;opacity:.9;max-width:70px;overflow:hidden;white-space:nowrap}
+@keyframes signDrop{0%{transform:translate(-50%,-140%) scale(.5)}100%{transform:translate(-50%,0)}}
+@keyframes signUp{0%{transform:translate(-50%,60%);opacity:0}100%{transform:translate(-50%,0);opacity:1}}
+@keyframes signFlip{0%{transform:rotateY(90deg) scale(.6);opacity:0}100%{transform:none;opacity:1}}
+.sign-title{display:flex;flex-direction:column;gap:2px} .sign-title small{font-size:13px;color:var(--gold);font-weight:800} .sign-title b{font-family:var(--f-display);font-size:30px;animation:pop .5s ease both 1.6s}
+.sign-facts{display:flex;justify-content:center;flex-wrap:wrap;gap:8px} .sign-facts span{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:99px;background:rgba(255,255,255,.07);font-size:13px} .sign-facts .ico{width:15px;height:15px;color:var(--gold)} .sign-facts b{color:var(--gold)}
+@media (prefers-reduced-motion:reduce){.sign-crest,.sign-me,.sign-shirt,.sign-title b,.draft-board li{animation:none}}
 </style>
 </head>
 <body>
@@ -1863,11 +1901,14 @@ function load(slot = curSlot){
       const t = {}; for (const [c, v] of Object.entries(r.table.t)) if (CLUB[c] && CLUB[c].lg === r.table.lg && v) t[c] = Object.fromEntries(['p','w','d','l','gf','ga'].map(k => [k, int(v[k], 0, 999, 0)]));
       r.table = {lg: r.table.lg, t};
     } else r.table = null;
-    r.window = r.window && Array.isArray(r.window.offers) ? {kind: r.window.kind === 'agent' ? 'agent' : 'winter', offers: r.window.offers.filter(o => o && CLUB[o.club] && o.club !== r.club).map(o => ({club:o.club, salary:int(o.salary, MIN_SALARY, SAL_MAX, r.salary)})).slice(0, 2)} : null;
+    r.window = r.window && Array.isArray(r.window.offers) ? {kind: ['agent','kcall'].includes(r.window.kind) ? r.window.kind : 'winter', offers: r.window.offers.filter(o => o && CLUB[o.club] && o.club !== r.club).map(o => ({club:o.club, salary:int(o.salary, MIN_SALARY, SAL_MAX, r.salary)})).slice(0, 2)} : null;
     if (r.window && !r.window.offers.length) r.window = null;
     r.news = (Array.isArray(r.news) ? r.news : []).filter(n => n && typeof n.h === 'string').slice(0, 40).map(n => ({h:n.h.slice(0, 160), t:String(n.t || '').slice(0, 30)}));
     r.history = (Array.isArray(r.history) ? r.history : []).filter(h => h && CLUB[h.club]).map(h => ({year:int(h.year,2000,2100,2027), age:int(h.age,16,45,19), club:h.club, apps:int(h.apps,0,99), goals:int(h.goals,0,99), assists:int(h.assists,0,99), cs:int(h.cs,0,99,0), avg:String(h.avg).slice(0,5), salary:int(h.salary,0,SAL_MAX), change:int(h.change,-100,500)}));
-    if (!['week','match','interview','nego','retired','window','tnego','awards'].includes(r.phase)) r.phase = 'week';
+    if (!['week','match','interview','nego','retired','window','tnego','awards','school','scout','signing'].includes(r.phase)) r.phase = 'week';
+    r.hs = cleanHS(r.hs); if (['school','scout'].includes(r.phase) && !r.hs) r.phase = 'week'; if (r.phase === 'signing' && !r.sign) r.phase = 'week';
+    r.sign = r.sign && CLUB[r.sign.club] ? {club:r.sign.club, how: r.sign.how === 'draft' ? 'draft' : 'offer', pick:int(r.sign.pick, 0, 30, 0), bonus:int(r.sign.bonus, 0, 1e6, 0), num:int(r.sign.num, 1, 99, 9), school:String(r.sign.school || '').slice(0, 20)} : null;
+    r.kcall = int(r.kcall, 0, 99, 0); r.kcallAt = int(r.kcallAt, -9, 99, -9); r.ivLast = int(r.ivLast, -99, 99, -99);
     const tn = r.tn;
     r.tn = tn && CLUB[tn.club] && ['nego','window'].includes(tn.back) ? {club:tn.club, back:tn.back, max:int(tn.max, MIN_SALARY, SAL_MAX, MIN_SALARY), cur:int(tn.cur, MIN_SALARY, SAL_MAX, MIN_SALARY), open:int(tn.open, MIN_SALARY, SAL_MAX, MIN_SALARY),
       used:(Array.isArray(tn.used) ? tn.used : []).filter(k => TAPPEALS[k]).slice(0, 4), log:(Array.isArray(tn.log) ? tn.log : []).filter(l => l && typeof l.t === 'string').map(l => ({who: l.who === 'me' ? 'me' : 'dir', t: l.t.slice(0, 200)})).slice(0, 12),
@@ -1974,7 +2015,7 @@ function go(){
   applyMgrs();
   save();
   if (!S) return renderTitle();
-  ({week:renderHub, match:playMatch, interview:renderInterview, nego:renderNego, retired:renderRetired, window:renderWindow, tnego:renderTN, awards:renderAwards})[S.phase]();
+  ({week:renderHub, match:playMatch, interview:renderInterview, nego:renderNego, retired:renderRetired, window:renderWindow, tnego:renderTN, awards:renderAwards, school:renderSchool, scout:renderScoutDay, signing:renderSigning})[S.phase]();
 }
 function hud(){
   const ovr = ovrOf(S.stats, S.pos);
@@ -2012,10 +2053,10 @@ function renderTitle(){
                    : {look:{...DEFAULT_LOOK, hair:'twoblock'}, stats:{...POS.FW.base, phy:66}, club:pick(['FC서울','울산 HD','전북 현대','포항 스틸러스']), equip:{}, pos:'FW', name:''};
   const card = (x, i) => {
     if (!x) return `<button class="ts-new slot-empty ${cnt ? '' : 'primary'}" ${i === firstEmpty ? 'id="newg"' : ''} data-new="${i}" type="button">${ic('user-plus')} ${cnt ? `새 선수 만들기 · 슬롯 ${i + 1}` : '커리어 시작하기'}${cnt ? `<small class="slot-left">남은 슬롯 ${SLOTS - cnt}</small>` : ''}</button>`;
-    const L = LEAGUES[CLUB[x.club].lg], ret = x.phase === 'retired';
+    const L = LEAGUES[CLUB[x.club].lg], ret = x.phase === 'retired', hs = (x.phase === 'school' || x.phase === 'scout') && x.hs;
     return `<div class="slot-row ${i === hero ? 'last' : ''}"><button class="ts-cont" ${i === hero ? 'id="cont"' : ''} data-slot="${i}" type="button">
-        <span class="ts-cont-crest">${crest(x.club, 'lg')}</span>
-        <span class="ts-cont-main"><small>슬롯 ${i + 1}${ret ? ' · 은퇴' : i === hero ? ' · 최근 플레이' : ''}</small><b>${esc(x.name)}</b><em><span class="nw">${L.f} ${esc(x.club)}</span> <span class="nw">· ${x.year} 시즌</span> <span class="nw">· ${x.age}세</span></em></span>
+        <span class="ts-cont-crest">${hs ? `<span class="hs-badge">${ic('school')}</span>` : crest(x.club, 'lg')}</span>
+        <span class="ts-cont-main"><small>슬롯 ${i + 1}${ret ? ' · 은퇴' : i === hero ? ' · 최근 플레이' : ''}</small><b>${esc(x.name)}</b><em>${hs ? `<span class="nw">${esc(x.hs.school)} 3학년</span> <span class="nw">· 고교 ${Math.min(5, x.hs.games.length)}/5경기</span>` : `<span class="nw">${L.f} ${esc(x.club)}</span>`} <span class="nw">· ${x.year} 시즌</span> <span class="nw">· ${x.age}세</span></em></span>
         <span class="ts-cont-ovr"><b>${ovrOf(x.stats, x.pos)}</b><small>${x.pos}</small></span>
         <span class="ts-cont-go">${ic(ret ? 'trophy' : 'fast-forward')}</span>
       </button></div>`;
@@ -2061,7 +2102,6 @@ function renderCreate(){
   let pos = 'FW', club = 'FC서울', nm = '', nat = 'kor';
   const look = {...DEFAULT_LOOK, skin: ri(0, 3), hair: pick(['short','twoblock','buzz','curly'])};
   const draw = () => {
-    const C = CLUB[club], M = MGR[C.t];
     disposeViewer();
     root.innerHTML = `<main class="wrap"><div class="screen stack">
       <div class="label">NEW CAREER</div>
@@ -2074,30 +2114,192 @@ function renderCreate(){
         <small class="muted">${NATS[nat][1]} ${NATS[nat][0]} 대표팀 전력 ${NATS[nat][2]} · 대륙 대회 ${CONF[NATS[nat][3]]} · ${NATS[nat][2] >= 86 ? '강팀이라 대표팀 경쟁이 치열해요' : NATS[nat][2] >= 80 ? '대표팀 문이 적당히 열려 있어요' : '빨리 대표팀에 뽑힐 수 있어요'}</small></div>
       <div class="label">${ic('user-round')} 외모 · 캐릭터를 탭하면 뒷모습</div>
       <div class="panel pad stack"><div class="viewer" id="cv"></div>${lookControls(look)}</div>
-      <div class="label">입단 구단 · 감독 성향을 확인하세요</div>
-      <div class="club-grid">${CLUBS.map(([n]) => `<button type="button" class="club ${n === club ? 'on' : ''}" data-c="${esc(n)}">${crest(n, 'lg')}<span>${esc(n)}</span></button>`).join('')}</div>
-      <div class="panel pad stack">
-        <div class="mgr-card"><div class="mgr-face">${M.i}</div><div><h4>${esc(C.m)} 감독<span class="mtype">${M.n}</span></h4><div class="small muted">${esc(club)} · 전력 ${C.s} · <span class="wealth">${WEALTH[C.w]}</span></div></div></div>
-        <div class="small">${esc(M.d)}</div>
-      </div>
-      <button class="btn turf block" id="startBtn" type="button">✍️ 입단 계약하기</button>
+      <div class="panel pad hs-intro">${ic('school')}<div><b>고3 마지막 시즌부터 시작해요</b><small>고교 5경기에서 스카우트 눈에 띄면 프로 구단의 제안이나 드래프트가 기다려요.</small></div></div>
+      <button class="btn turf block" id="startBtn" type="button">${ic('school')} 고교 무대로</button>
     </div></main>`;
     const base = {...POS[pos].base};
-    const v = mountViewer($('#cv'), {look, stats: base, club, pos, name: nm, equip:{}});
+    const v = mountViewer($('#cv'), {look, stats: base, club: HS_KIT, pos, name: nm, equip:{}});
     bindLook(root, look, l => v && v.rebuild({look:l}));
     if (UI.lookTab){ const t = root.querySelector(`[data-lt="${UI.lookTab}"]`); if (t) t.click(); }
     root.querySelectorAll('[data-lt]').forEach(b => b.addEventListener('click', () => { UI.lookTab = b.dataset.lt; }));
     $('#nm').oninput = e => { nm = e.target.value; if (v) v.rebuild({name: nm}); };
     root.querySelectorAll('.pos').forEach(b => b.onclick = () => { pos = b.dataset.p; draw(); });
-    root.querySelectorAll('.club').forEach(b => b.onclick = () => { club = b.dataset.c; draw(); });
     root.querySelectorAll('[data-nat]').forEach(b => b.onclick = () => { nat = b.dataset.nat; const x = $('#natScroll').scrollLeft; draw(); $('#natScroll').scrollLeft = x; });
     $('#startBtn').onclick = () => {
       const name = $('#nm').value.replace(/[\u0000-\u001F\u007F<>]/g, '').trim().slice(0, 12);
       if (!name){ toast('선수 이름을 입력해 주세요'); $('#nm').focus(); return; }
-      disposeViewer(); newCareer(name, pos, club, cleanLook(look), nat); UI.tab = 'match'; UI.splash = true; SFX.whistle(); go();
+      disposeViewer();
+      if (location.hash === '#skiphs'){ newCareer(name, pos, club, cleanLook(look), nat); UI.tab = 'match'; UI.splash = true; SFX.whistle(); return go(); } // 테스트용: 고교 과정 건너뛰기
+      startProspect(name, pos, cleanLook(look), nat); SFX.whistle(); go();
     };
   };
   draw();
+}
+
+// ================= 고교 프롤로그: 고3 5경기 → 스카우트 제의 · 드래프트 → 입단식 =================
+const HS_KIT = '__hs';
+const HS_NAMES = ['한빛고','새솔고','청운고','동해공고','태백고','은빛고','푸른숲고','해오름고','별빛고','미르고','늘봄고','가온고'];
+const HS_STAGE = ['리그 1차전','리그 2차전','리그 3차전','8강','결승'];
+const HS_PICK = {FW:[['sho','target','강슛'],['dri','wind','개인기 돌파'],['pas','arrow-right-left','침착한 패스']],
+  MF:[['pas','arrow-right-left','킬패스'],['sho','target','중거리 슛'],['dri','wind','탈압박']],
+  DF:[['def','shield-half','슬라이딩 태클'],['phy','dumbbell','몸싸움'],['pas','arrow-up-right','빌드업 패스']],
+  GK:[['def','hand','다이빙'],['phy','dumbbell','전진 방어'],['pas','arrow-up-right','빠른 롱킥']]};
+const HS_WIN = {FW:{sho:'골망이 출렁! 골!', dri:'세 명을 제치고 골!', pas:'완벽한 어시스트!'}, MF:{pas:'킬패스, 그대로 골!', sho:'중거리 대포알 골!', dri:'압박을 벗기고 찬스 연결!'},
+  DF:{def:'완벽한 태클로 실점 위기 차단!', phy:'몸싸움 승리, 공을 따냈다!', pas:'정확한 패스가 역습 골로!'}, GK:{def:'슈퍼세이브!', phy:'1:1 찬스 무산!', pas:'롱킥 한 방이 골로 이어졌다!'}};
+const HS_LOSE = {sho:'골대를 살짝 벗어났다…', dri:'수비에 막혔다…', pas:'패스가 끊겼다…', def:'한발 늦었다… 실점', phy:'밀려 넘어졌다… 실점'};
+function startProspect(name, pos, look, nat){
+  newCareer(name, pos, 'FC서울', look, nat);
+  const school = pick(HS_NAMES), opps = shuffle(HS_NAMES.filter(x => x !== school)).slice(0, 5);
+  S.age = 18; S.news = []; S.newsN = 0; S.newsSeen = 0; S.phase = 'school';
+  S.hs = {school, opps, games:[], scouts:0};
+  save();
+}
+function cleanHS(h){
+  if (!h || typeof h !== 'object' || typeof h.school !== 'string' || !Array.isArray(h.opps)) return null;
+  const games = (Array.isArray(h.games) ? h.games : []).slice(0, 5).map(g => ({k: STAT_KEYS.includes(g && g.k) ? g.k : null, roll:clamp(Number(g && g.roll) || 0, 0, 1), us:int(g && g.us, 0, 9, 0), them:int(g && g.them, 0, 9, 0), noise:clamp(Number(g && g.noise) || 0, -1, 1), ok:g && g.ok == null ? null : !!(g && g.ok), rt:g && g.rt != null ? clamp(Number(g.rt) || 6, 3, 10) : null}));
+  const draft = h.draft && Array.isArray(h.draft.order) ? {order:h.draft.order.filter(c => CLUB[c]).slice(0, 12), pick:int(h.draft.pick, 1, 12, 6), names:(Array.isArray(h.draft.names) ? h.draft.names : []).map(x => String(x).slice(0, 16)).slice(0, 12)} : null;
+  const offers = Array.isArray(h.offers) ? h.offers.filter(o => o && CLUB[o.club]).slice(0, 3).map(o => ({club:o.club, bonus:int(o.bonus, 0, 1e5, 1000), salary:int(o.salary, 1000, 20000, 3000)})) : null;
+  return {school:h.school.slice(0, 20), opps:h.opps.map(x => String(x).slice(0, 20)).slice(0, 5), games, scouts:int(h.scouts, 0, 30, 0), offers, draft, how: h.how === 'draft' ? 'draft' : h.how === 'offer' ? 'offer' : null};
+}
+const hsKitSvg = (cls = '') => chibiSVG({look:S.look, stats:S.stats, club:HS_KIT, equip:S.equip || {}, pos:S.pos, name:S.name, bare:true}).replace('class="chibi"', `class="chibi ${cls}"`);
+const hsAvg = () => { const r = S.hs.games.filter(g => g.rt != null).map(g => g.rt); return r.length ? r.reduce((a, b) => a + b, 0) / r.length : 0; };
+function renderSchool(){
+  const H = S.hs, last = H.games[H.games.length - 1], g = last && last.rt == null ? last : null, i = g ? H.games.length - 1 : H.games.length;
+  if (i >= 5){ S.phase = 'scout'; save(); return renderScoutDay(); }
+  const opp = H.opps[Math.min(i, 4)];
+  disposeViewer();
+  root.innerHTML = `<main class="wrap"><div class="screen stack hsx">
+    <div class="hs-top"><span class="hs-badge">${ic('school')}</span><div><b>${esc(H.school)} 3학년 · ${esc(S.name)}</b><small>${POS[S.pos].name} · 고교 리그 ${Math.min(i + 1, 5)}/5경기</small></div></div>
+    <div class="hs-dots">${[0,1,2,3,4].map(k => { const x = H.games[k]; return `<i class="${x && x.rt != null ? (x.us > x.them ? 'w' : x.us < x.them ? 'l' : 'd') : k === i ? 'now' : ''}">${x && x.rt != null ? x.rt.toFixed(1) : k + 1}</i>`; }).join('')}</div>
+    <div class="panel hs-match">
+      <div class="hs-stage">${HS_STAGE[Math.min(i, 4)]}</div>
+      <div class="hs-vs"><b>${esc(H.school)}</b><span>VS</span><b>${esc(opp)}</b></div>
+      <div class="hs-me">${hsKitSvg()}</div>
+      <div class="hs-scouts">${ic('eye')} 관중석 스카우트 <b>${H.scouts}</b>명${H.scouts ? ` ${'<i></i>'.repeat(Math.min(8, H.scouts))}` : ''}</div>
+      <div id="hsPlay">${g ? hsMoment(g) : `<button class="btn turf block" type="button" id="hsKick">${ic('goal')} 킥오프</button>`}</div>
+    </div></div></main>`;
+  const k = $('#hsKick'); if (k) k.onclick = () => {
+    if (H.games.length !== i) return;
+    H.games.push({k:null, roll:Math.random(), us:poisson(1.3), them:poisson(1.1), noise:rand(-.5, .5), ok:null, rt:null}); save(); // 결과를 미리 굴려 저장
+    SFX.whistle(); $('#hsPlay').innerHTML = `<div class="hs-ticker"><span>전반 0'</span></div>`;
+    let m = 0; const t = setInterval(() => { m += 9; const el = root.querySelector('.hs-ticker span'); if (el) el.textContent = `${m < 45 ? '전반' : '후반'} ${m}'`; if (m >= 63){ clearInterval(t); renderSchool(); } }, RM ? 1 : 90);
+  };
+  bindHsMoment(g);
+}
+function hsMoment(g){
+  return `<div class="hs-moment"><b>${ic('zap')} 결정적 순간!</b><small>어떻게 할까?</small></div>
+    <div class="hs-opts">${HS_PICK[S.pos].map(([k, i, n]) => { const p = Math.round(clamp(.35 + (S.stats[k] - 50) / 70, .2, .85) * 100); return `<button type="button" class="btn dark" data-hk="${k}">${ic(i)} ${n}<small>${statName(k, S.pos)} ${S.stats[k]} · 성공 ${p}%</small></button>`; }).join('')}</div>`;
+}
+function bindHsMoment(g){
+  if (!g) return;
+  root.querySelectorAll('[data-hk]').forEach(b => b.onclick = async () => {
+    if (g.k) return;
+    const k = b.dataset.hk, ok = g.roll < clamp(.35 + (S.stats[k] - 50) / 70, .2, .85);
+    g.k = k; g.ok = ok;
+    // 결과 반영: 공격수·미드필더 성공 = 득점, 수비수·골키퍼 성공 = 실점 막음
+    if (ok){ if (S.pos === 'GK' || S.pos === 'DF') g.them = Math.max(0, g.them - 1); if (S.pos !== 'GK' && !(S.pos === 'DF' && k !== 'pas')) g.us++; }
+    else if (S.pos === 'GK' || S.pos === 'DF') g.them++;
+    const res = g.us > g.them ? 1 : g.us < g.them ? -1 : 0, ovr = ovrOf(S.stats, S.pos);
+    g.rt = Math.round(clamp(6.1 + (ovr - 52) * .05 + (ok ? 1.1 : -.4) + res * .35 + g.noise, 4.5, 9.8) * 10) / 10;
+    const before = S.hs.scouts; S.hs.scouts = clamp(S.hs.scouts + (g.rt >= 7.6 ? 2 : g.rt >= 6.8 ? 1 : 0), 0, 30);
+    if (ok) addStat(k, 1);
+    save();
+    if (ok){ SFX.goal(); flash(S.pos === 'GK' ? 'SAVE!' : S.pos === 'DF' && k !== 'pas' ? 'BLOCK!' : 'GOAL!'); confetti(['#3dd6ff', '#ffffff', '#ffc83d']); } else SFX.bad();
+    $('#hsPlay').innerHTML = `<div class="hs-res ${ok ? 'ok' : 'no'}"><b>${ok ? HS_WIN[S.pos][k] : HS_LOSE[k]}</b>
+      <div class="hs-score">${g.us} : ${g.them} <small>${res > 0 ? '승리' : res < 0 ? '패배' : '무승부'}</small></div>
+      <div class="hs-rt">평점 <b>${g.rt.toFixed(1)}</b>${S.hs.scouts > before ? ` · ${ic('eye')} 스카우트 +${S.hs.scouts - before}` : ''}</div></div>
+      <button class="btn block" type="button" id="hsNext">${S.hs.games.length >= 5 ? `${ic('mail')} 스카우트 결과 보기` : '다음 경기 ▶'}</button>`;
+    $('#hsNext').onclick = () => renderSchool();
+  });
+}
+// 스카우트의 날: 우선 지명 제안 또는 드래프트
+function hsOffers(){
+  const avg = hsAvg(), n = avg >= 7.6 ? 3 : avg >= 7.0 ? 2 : avg >= 6.4 ? 1 : 0;
+  const ks = CLUBS.map(c => c[0]), w = c => Math.pow(clamp((CLUB[c].s - 62) / 15, .1, 1.4), avg >= 7.2 ? 2 : .3);
+  const out = []; for (let k = 0; k < n; k++){ const c = wpick(ks.filter(x => !out.some(o => o.club === x)).map(x => [w(x), x]))[1]; out.push({club:c, bonus: Math.round((800 + (avg - 6) * 900 + (CLUB[c].w === 'rich' ? 600 : 0) + ri(0, 400)) / 50) * 50, salary: Math.round((2800 + (avg - 6) * 500 + (CLUB[c].w === 'rich' ? 300 : 0)) / 100) * 100}); }
+  return out;
+}
+function makeDraft(){
+  const avg = hsAvg(), order = CLUBS.map(c => c[0]).map(c => [CLUB[c].s + rand(-6, 6), c]).sort((a, b) => a[0] - b[0]).map(x => x[1]); // 약팀이 먼저 뽑는다
+  const pick = clamp(Math.round(12 - (avg - 6) * 5.5 + rand(-2.5, 2.5) - S.hs.scouts * .25), 1, 12);
+  const fam = ['김','이','박','최','정','강','조','윤','장','임','한','오','서','신','권','황'], giv = ['민준','서준','도윤','하준','지호','건우','우진','현우','선우','연우','유준','준서','태윤','시우','은찬','지환'];
+  const names = Array.from({length:12}, () => `${pick_(fam)}${pick_(giv)} (${pick_(HS_NAMES.filter(x => x !== S.hs.school))})`);
+  return {order, pick, names};
+}
+const pick_ = a => a[Math.floor(Math.random() * a.length)];
+function renderScoutDay(){
+  const H = S.hs; if (!H.offers){ H.offers = hsOffers(); save(); }
+  const avg = hsAvg(), wins = H.games.filter(g => g.us > g.them).length;
+  disposeViewer();
+  root.innerHTML = `<main class="wrap"><div class="screen stack hsx">
+    <div class="hs-top"><span class="hs-badge">${ic('mail')}</span><div><b>스카우트의 날</b><small>${esc(H.school)} · 고교 5경기 ${wins}승 · 평균 평점 ${avg.toFixed(2)} · 스카우트 ${H.scouts}명</small></div></div>
+    ${H.offers.length ? `<div class="label">${ic('handshake')} 우선 지명 제안 · 바로 입단</div>
+      <div class="stack">${H.offers.map((o, i) => `<button type="button" class="panel hs-offer" data-ho="${i}">${crest(o.club, 'lg')}<div><b>${esc(o.club)}</b><small>전력 ${CLUB[o.club].s} · ${MGR[CLUB[o.club].t].n} 감독</small><em>계약금 ${money(o.bonus)} · 연봉 ${money(o.salary)}</em></div>${ic('chevron-right')}</button>`).join('')}</div>`
+      : `<div class="panel pad small muted">우선 지명 제안은 오지 않았어요. 드래프트에서 기회를 잡아요!</div>`}
+    <div class="label">${ic('dice-5')} 신인 드래프트</div>
+    <button type="button" class="panel hs-offer draft" id="hsDraft"><span class="hs-badge">${ic('ticket')}</span><div><b>드래프트 참가</b><small>몇 순위에 어느 팀이 뽑을지 몰라요</small><em>1순위 계약금 7,000만원 · 순위가 늦을수록 줄어요</em></div>${ic('chevron-right')}</button>
+  </div></main>`;
+  root.querySelectorAll('[data-ho]').forEach(b => b.onclick = () => { const o = H.offers[+b.dataset.ho]; if (o) signPro(o.club, 'offer', 0, o.bonus, o.salary); });
+  $('#hsDraft').onclick = () => runDraft();
+}
+async function runDraft(){
+  const H = S.hs; if (!H.draft){ H.draft = makeDraft(); H.how = 'draft'; save(); } // 순위를 미리 정해 저장
+  const D = H.draft;
+  disposeViewer();
+  root.innerHTML = `<main class="wrap"><div class="screen stack hsx draft-room">
+    <div class="hs-top"><span class="hs-badge">${ic('ticket')}</span><div><b>${S.year} K리그 신인 드래프트</b><small>1라운드 지명 중…</small></div></div>
+    <ol class="draft-board" id="dBoard"></ol></div></main>`;
+  const board = $('#dBoard');
+  for (let k = 1; k <= D.pick; k++){
+    const club = D.order[k - 1], me = k === D.pick;
+    await wait(RM ? 0 : me ? 900 : 520);
+    board.insertAdjacentHTML('beforeend', `<li class="${me ? 'me' : ''}"><span class="dn">${k}순위</span>${crest(club)}<b>${esc(club)}</b><span class="dp">${me ? esc(`${S.name} (${H.school})`) : esc(D.names[k - 1])}</span></li>`);
+    if (me){ SFX.goal(); confetti([CLUB[club].c, '#ffffff', '#ffc83d']); flash(`${k}순위!`); } else SFX.click();
+  }
+  await wait(RM ? 0 : 1100);
+  const club = D.order[D.pick - 1], bonus = Math.round((7000 - (D.pick - 1) * 520) / 50) * 50, salary = Math.round((3600 + (12 - D.pick) * 120) / 100) * 100;
+  board.insertAdjacentHTML('afterend', `<button class="btn turf block" type="button" id="dGo">${ic('pen-line')} ${esc(club)} 입단식으로</button>`);
+  $('#dGo').onclick = () => signPro(club, 'draft', D.pick, bonus, salary);
+}
+function signPro(club, how, pickNo, bonus, salary){
+  const keep = {stats:{...S.stats}, look:S.look, name:S.name, pos:S.pos, nat:S.nat, school:S.hs.school, scouts:S.hs.scouts, avg:hsAvg(), games:S.hs.games};
+  newCareer(keep.name, keep.pos, club, keep.look, keep.nat);
+  S.stats = keep.stats; S.salary = salary; S.best.salary = salary; S.earn = bonus; S.inc = bonus; S.wl = []; wlPush();
+  S.pop = clamp(6 + keep.scouts + (pickNo && pickNo <= 3 ? 6 : 0), 0, 40);
+  const num = ({FW:[9,11,19,18], MF:[8,10,14,17], DF:[4,5,15,23], GK:[1,21,31]}[S.pos])[ri(0, 2)];
+  S.sign = {club, how, pick:pickNo, bonus, num, school:keep.school};
+  S.news = []; S.newsN = 0; S.newsSeen = 0;
+  addNews(how === 'draft' ? `[드래프트] ${club}, ${pickNo}순위로 ${keep.school} ${S.name} 지명! 계약금 ${money(bonus)}` : `[오피셜] ${club}, ${keep.school} ${S.name} 우선 지명… 계약금 ${money(bonus)}`);
+  addNews(`${keep.school} 시절 5경기 평균 평점 ${keep.avg.toFixed(2)} · 스카우트 ${keep.scouts}명이 지켜본 유망주`);
+  S.phase = 'signing'; save(); go();
+}
+function renderSigning(){
+  const G = S.sign, C = CLUB[G.club];
+  disposeViewer();
+  root.innerHTML = `<main class="wrap"><div class="screen stack sign-room" style="--cc:${C.c}">
+    <div class="sign-stage">
+      ${[[10,18,0],[78,12,.5],[30,62,1.1],[86,58,1.6],[54,8,2.1],[16,48,2.6]].map(([x, y, d]) => `<span class="flash" style="left:${x}%;top:${y}%;animation-delay:${d}s"></span>`).join('')}
+      <div class="sign-crest">${crest(G.club, 'xl')}</div>
+      <div class="sign-me" data-cpose="clap">${meSvg()}</div>
+      <div class="sign-shirt"><b>${G.num}</b><small>${esc(S.name)}</small></div>
+    </div>
+    <div class="sign-title"><small>${G.how === 'draft' ? `신인 드래프트 ${G.pick}순위` : '우선 지명'} · ${esc(G.school)} 출신</small><b>${esc(G.club)} 입단!</b></div>
+    <div class="sign-facts"><span>${ic('shirt')} 등번호 <b>${G.num}</b></span><span>${ic('coins')} 계약금 <b>${money(G.bonus)}</b></span><span>${ic('wallet')} 연봉 <b>${money(S.salary)}</b></span></div>
+    <button class="btn turf block" type="button" id="signGo">${ic('goal')} 프로 데뷔 시즌 시작</button>
+  </div></main>`;
+  SFX.whistle(); setTimeout(() => { SFX.goal(); confetti([C.c, '#ffffff', '#ffc83d']); }, RM ? 0 : 1300);
+  $('#signGo').onclick = () => { S.phase = 'week'; S.sign = null; UI.tab = 'match'; UI.splash = true; save(); go(); };
+}
+
+// ---------- K리그 다른 구단의 빠른 러브콜 ----------
+function kCall(){
+  if (CLUB[S.club].lg !== 'K' || S.round < 2 || (S.kcall || 0) >= 2 || S.round - (S.kcallAt ?? -9) < 4) return null;
+  const P = S.prev; if (!P || !P.mins || (P.rating < 7.1 && !P.goals) || Math.random() > .3) return null;
+  const ovr = ovrOf(S.stats, S.pos), mine = CLUB[S.club].s;
+  const cand = CLUBS.map(c => c[0]).filter(c => c !== S.club && (CLUB[c].s >= mine - 3 || CLUB[c].w === 'rich'));
+  if (!cand.length) return null;
+  const picks = shuffle(cand).slice(0, Math.random() < .4 ? 2 : 1);
+  return picks.map(c => ({club:c, salary: Math.max(MIN_SALARY, Math.round(S.salary * rand(1.15, 1.6) * (CLUB[c].w === 'rich' ? 1.1 : 1) / 100) * 100)}));
 }
 
 // ---------- 주간 생성 ----------
@@ -2106,9 +2308,9 @@ function makeWeek(){
   const roll = Math.random(); // 한 주에 돌발 이벤트 또는 미니게임 중 최대 하나만
   const ntw = !S.injury && ntPending(); // 국가대표 경기가 있는 주
   const lb = S.injury || ntw ? null : makeLB(); // 한계 돌파 시험(능력치 99 이상일 때만)
-  const event = !S.injury && !ntw && !lb && roll < .26 ? pick(EVENTS).id : null;
-  const mini = !S.injury && !ntw && !lb && !event && roll < .42 ? pick(Object.keys(MINIS)) : null;
-  const psy = !S.injury && !ntw && !lb && !event && !mini && roll < .55 ? makePsy() : null; // 감독·동료와의 심리전
+  const event = !S.injury && !ntw && !lb && roll < .15 ? pick(EVENTS).id : null;
+  const mini = !S.injury && !ntw && !lb && !event && roll < .27 ? pick(Object.keys(MINIS)) : null;
+  const psy = !S.injury && !ntw && !lb && !event && !mini && roll < .36 ? makePsy() : null; // 감독·동료와의 심리전
   const mOpts = S.injury ? null : makeMissions();
   const wx = WEATHER.indexOf(wpick(WEATHER)), ref = REFS.indexOf(wpick(REFS));
   let needs, text, rumor = false;
@@ -2810,9 +3012,11 @@ async function runMatch(){
   }
   // 인터뷰는 주요 경기에만 열린다 (빅매치 · 컵 대회 · 시즌 최종전 · 멀티골 · 인생 경기 · 최악의 경기 · 역전승)
   const lastL = S.schedule.map(x => x.k).lastIndexOf('L') === S.round;
-  const why = r.role === 'injured' ? '' : r.big ? '빅매치' : r.fx.k === 'X' ? '대륙 대회' : r.fx.k === 'C' ? (r.fx.stage === '결승' ? '컵 결승' : '컵 대회') : lastL ? '시즌 최종전'
-    : r.role === 'bench' ? '' : r.goals >= 2 ? '멀티골' : r.rating >= 8.3 ? '인생 경기' : r.rating != null && r.rating < 5.3 ? '최악의 경기' : r.comeback ? '역전승' : '';
-  r.iv = !!why; r.ivWhy = why;
+  // 인터뷰는 정말 큰 경기에만, 그리고 최소 5주 간격으로 (컵 결승·시즌 최종전은 예외)
+  const must = r.role !== 'injured' && ((r.fx.k === 'C' && r.fx.stage === '결승') || lastL);
+  const why = r.role === 'injured' || r.role === 'bench' ? '' : r.fx.k === 'C' && r.fx.stage === '결승' ? '컵 결승' : lastL ? '시즌 최종전' : r.goals >= 3 ? '해트트릭'
+    : r.rating >= 8.8 ? '인생 경기' : r.big && Math.random() < .5 ? '빅매치' : r.fx.k === 'X' && r.res === 'W' && Math.random() < .5 ? '대륙 대회' : r.rating != null && r.rating < 4.8 ? '최악의 경기' : '';
+  r.iv = !!why && (must || S.round - (S.ivLast ?? -99) >= 5); r.ivWhy = why; if (r.iv) S.ivLast = S.round;
   applyMatch(r); S.pending = null; S.phase = 'interview'; S.interview = null; save();
   SFX.whistle();
   add(90, 'big', `📣 경기 종료 — ${r.res === 'W' ? '🎉 승리!' : r.res === 'D' ? '🤝 무승부' : '😢 패배'}`);
@@ -3147,7 +3351,9 @@ function nextRound(){
     const offers = makeOffers(S.salary, true);
     if (offers.length){ S.window = {offers, kind:'winter'}; S.phase = 'window'; addNews(`❄️ 겨울 이적시장 개장… ${S.name}에게 제안 도착설`); return go(); }
   }
-  if (!S.season.agentCall && (S.season.hot || 0) >= 2 && S.round < S.schedule.length - 2 && Math.random() < .35){
+  { const kc = S.round < S.schedule.length - 2 ? kCall() : null;
+    if (kc && kc.length){ S.kcall = (S.kcall || 0) + 1; S.kcallAt = S.round; S.window = {offers:kc, kind:'kcall'}; S.phase = 'window'; addNews(`📞 ${kc[0].club} 단장, ${S.name}에게 직접 러브콜`); return go(); } }
+  if (!S.season.agentCall && (S.season.hot || 0) >= (CLUB[S.club].lg === 'K' ? 1 : 2) && S.round < S.schedule.length - 2 && Math.random() < .35){
     S.season.agentCall = true;
     const offers = makeOffers(S.salary, true);
     if (offers.length){ S.window = {offers, kind:'agent'}; S.phase = 'window'; addNews(`📞 ${S.name} 측에 이적 제안 접수… 스카우트 관심 폭발`); return go(); }
@@ -3316,6 +3522,7 @@ function signContract(salary, pct, newClub){
   S.age++; S.year++;
   starsSeason();
   S.sp = (S.sp || 0) + 3; // 새 시즌 기술 포인트
+  S.kcall = 0; S.kcallAt = -9;
   const msgs = [];
   if (S.age <= 23){ const k = pick(STAT_KEYS.filter(k => POS[S.pos].w[k] > .1)); const g = addStat(k, ri(1, 3)); if (g) msgs.push(`${statName(k, S.pos)} +${g} 자연 성장`); }
   if (S.age >= 30){ STAT_KEYS.forEach(k => { addStat(k, -ri(0, Math.max(1, S.age - 29))); }); msgs.push('노쇠화로 능력치 하락'); }
@@ -3642,10 +3849,10 @@ const offerCard = (o, i) => { const n = interestOf(o); return `<div class="offer
 function renderWindow(){
   const w = S.window;
   frame(`
-    <div class="label">${ic(w.kind === 'agent' ? 'phone' : 'snowflake')} ${w.kind === 'agent' ? '에이전트 긴급 연락' : '겨울 이적시장'}</div>
-    <div class="speech">${ic('briefcase')} 에이전트: "${w.kind === 'agent' ? '스카우트들이 네 경기를 계속 보고 있었어. 제안이 왔다!' : '시즌 중이지만 제안이 들어왔어. 잘 생각해 봐.'}"</div>
+    <div class="label">${ic(w.kind === 'winter' ? 'snowflake' : 'phone')} ${w.kind === 'kcall' ? 'K리그 러브콜' : w.kind === 'agent' ? '에이전트 긴급 연락' : '겨울 이적시장'}</div>
+    <div class="speech">${ic('briefcase')} ${w.kind === 'kcall' ? '"지난 경기 봤어요. 우리 팀으로 와요!"' : w.kind === 'agent' ? '에이전트: "제안이 왔다!"' : '에이전트: "시즌 중이지만 제안이 들어왔어."'}</div>
     <div class="panel pad stack">${w.offers.map(offerCard).join('')}
-      <p class="small muted" style="margin:0">구단을 고르면 그 구단 디렉터와 연봉 협상을 시작해요. 이적하면 남은 리그 경기를 새 팀에서 뛰고, 이번 시즌 컵 대회는 더 이상 나가지 못해요.</p>
+      <p class="small muted" style="margin:0">이적하면 남은 경기는 새 팀에서 뛰어요 (이번 시즌 컵 대회는 끝).</p>
       <button class="btn dark block" id="stay" type="button">${ic('house')} 잔류한다 (감독 신뢰 +3)</button></div>`, false);
   $('#stay').onclick = () => { S.trust = clamp(S.trust + 3, 0, 100); addNews(`${S.name}, 이적설 일축… "${S.club}에서 끝까지"`); S.window = null; S.phase = 'week'; UI.splash = true; go(); };
   root.querySelectorAll('.offer button').forEach(b => b.onclick = () => startTN(w.offers[Number(b.dataset.o)], 'window'));
