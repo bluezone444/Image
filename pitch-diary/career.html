@@ -1573,15 +1573,23 @@ const POS = {
   FW:{name:'공격수', base:{sho:58,pas:48,dri:55,def:30,phy:52}, w:{sho:.4,dri:.25,pas:.15,phy:.15,def:.05}, goalP:.27, astP:.2, av:'target'},
   MF:{name:'미드필더', base:{sho:48,pas:58,dri:53,def:45,phy:50}, w:{pas:.35,dri:.2,sho:.15,def:.15,phy:.15}, goalP:.13, astP:.3, av:'brain'},
   DF:{name:'수비수', base:{sho:30,pas:47,dri:40,def:58,phy:57}, w:{def:.45,phy:.25,pas:.15,sho:.1,dri:.05}, goalP:.07, astP:.08, av:'shield-half'},
-  GK:{name:'골키퍼', base:{sho:15,pas:42,dri:25,def:60,phy:55}, w:{def:.6,phy:.25,pas:.15,sho:0,dri:0}, goalP:0, astP:.02, av:'hand'},
+  GK:{name:'골키퍼', base:{sho:42,pas:44,dri:52,def:60,phy:55}, w:{def:.4,dri:.25,phy:.15,pas:.12,sho:.08}, goalP:0, astP:.02, av:'hand'},
 };
 const STAT_KEYS = ['sho','pas','dri','def','phy'];
-const statName = (k, pos) => ({sho:'슈팅',pas:'패스',dri:'드리블',def: pos === 'GK' ? '선방' : '수비',phy:'피지컬'})[k];
+// 골키퍼는 같은 능력치 칸을 골키퍼 능력으로 쓴다: 슈팅→킥력 · 패스→빌드업 · 드리블→반사신경 · 수비→선방
+const GK_STAT = {sho:'킥력', pas:'빌드업', dri:'반사신경', def:'선방', phy:'피지컬'};
+const statName = (k, pos) => pos === 'GK' ? GK_STAT[k] : ({sho:'슈팅',pas:'패스',dri:'드리블',def:'수비',phy:'피지컬'})[k];
+const STAT_IC = {sho:'target', pas:'arrow-right-left', dri:'wind', def:'shield-half', phy:'dumbbell', rest:'bed', fan:'users', talk:'message-circle'};
+const GK_IC = {sho:'arrow-up-right', pas:'arrow-right-left', dri:'zap', def:'hand', phy:'dumbbell'};
+const statIc = (k, pos = S && S.pos) => (pos === 'GK' && GK_IC[k]) || STAT_IC[k];
+const actName = (id, n) => STAT_KEYS.includes(id) ? `${statName(id, S.pos)} 훈련` : n;
 const mainStat = () => STAT_KEYS.reduce((a, k) => (POS[S.pos].w[k] || 0) > (POS[S.pos].w[a] || 0) ? k : a, 'sho');
 // 아직 99 미만인 능력치 중 포지션에서 가장 중요한 것 (주 능력치가 한계면 다음 능력치로)
 const growStat = () => [...STAT_KEYS].sort((a, b) => (POS[S.pos].w[b] || 0) - (POS[S.pos].w[a] || 0)).find(k => S.stats[k] < 99) || null;
 const ACTS = [['sho','🎯','슈팅 훈련'],['pas','🔁','패스 훈련'],['dri','💨','드리블 훈련'],['def','🛡️','수비 훈련'],['phy','🏋️','피지컬 훈련'],['rest','🛌','휴식'],['fan','🤳','팬 미팅'],['talk','🗣️','감독 면담']];
 const ACT_IDS = ACTS.map(a => a[0]);
+const TRAITS_GK = {sho:{i:'🚀', n:'캐논 킥', d:'역습 찬스 증가'}, pas:{i:'📦', n:'후방 플레이메이커', d:'팀 찬스·도움 증가'}, dri:{i:'⚡', n:'고양이 반사신경', d:'빅찬스 선방률 증가'}, def:{i:'🧱', n:'거미손', d:'선방률 증가'}};
+const trait = t => (S && S.pos === 'GK' && TRAITS_GK[t]) || TRAITS[t];
 const TRAITS = {
   sho:{i:'🎯', n:'중거리 슈터', d:'골 확률 증가'}, pas:{i:'📦', n:'택배 패스', d:'도움 확률 증가'}, dri:{i:'💨', n:'탈압박 장인', d:'경기 평점 +0.2'},
   def:{i:'🧱', n:'철벽', d:'출전 시 실점 감소'}, phy:{i:'🔋', n:'강철 체력', d:'경기 후 컨디션 소모 절반'}, fan:{i:'🤳', n:'팬서비스 장인', d:'팬 미팅 인기도 +3'},
@@ -1846,7 +1854,7 @@ function newCareer(name, pos, club, look, nat){
   const st = {}; STAT_KEYS.forEach(k => st[k] = clamp(POS[pos].base[k] + ri(-3, 3), 1, 99));
   S = {v:2, name, pos, club, nat: NATS[nat] ? nat : 'kor', captain:false, age:19, year:new Date().getFullYear() + 1, round:0, stats:st, pop:8, trust:45, cond:100, salary:3000, earn:500, injury:0, fast:false,
     schedule:makeSeason(club), out:{}, trophies:[], scout:{}, window:null, season:freshSeason(), history:[], news:[], phase:'week', last:null, interview:null, nego:null, pending:null,
-    best:{rating:0, salary:3000}, traits:[], buff:0, streak:{t:'', n:0}, media:0, toneHist:[], week:null, prev:null, rival:pick(RIVALS), mood:0, look: look || {...DEFAULT_LOOK}, lookSet:true, look2:true, xp:50, items:[], equip:{}, ach:[], rec:{}, mgrs:{}, sp:1, skills:{}, stars:genStars(), honors:[], awardHist:[], v0:0};
+    best:{rating:0, salary:3000}, traits:[], buff:0, streak:{t:'', n:0}, media:0, toneHist:[], week:null, prev:null, rival:pick(RIVALS), mood:0, look: look || {...DEFAULT_LOOK}, lookSet:true, look2:true, gk2:true, xp:50, items:[], equip:{}, ach:[], rec:{}, mgrs:{}, sp:1, skills:{}, stars:genStars(), honors:[], awardHist:[], v0:0};
   S.season.obj = makeObjectives();
   S.home = cleanHome(null); S.inc = 500; S.wl = []; wlPush();
   addNews(`[오피셜] ${club}, 19세 유망주 ${name} 영입… 연봉 ${money(3000)} · 계약금 ${money(500)}`);
@@ -1891,6 +1899,8 @@ function load(slot = curSlot){
     if (!r.captain && Array.isArray(r.items) && r.items.includes('captain')){ r.items = r.items.filter(i => i !== 'captain'); r.xp = (Number(r.xp) || 0) + 5000; } // 예전에 산 주장 완장은 환불 (이제 주장 선임 시 지급)
     r.equip = Object.fromEntries(Object.entries(r.equip && typeof r.equip === 'object' ? r.equip : {}).filter(([slot, id]) => r.items.includes(id) && SHOP.find(x => x.id === id).slot === slot));
     r.stats = r.stats || {}; STAT_KEYS.forEach(k => r.stats[k] = int(r.stats[k], 1, 120, 50)); r.lbCd = int(r.lbCd, 0, 10, 0);
+    if (r.pos === 'GK' && !r.gk2){ r.stats.sho = Math.max(r.stats.sho, Math.min(99, Math.round(r.stats.def * .7))); r.stats.dri = Math.max(r.stats.dri, Math.min(99, Math.round(r.stats.def * .85))); }
+    r.gk2 = true;
     ['pop','trust','cond'].forEach(k => r[k] = int(r[k], 0, 100, 50));
     r.age = int(r.age, 16, 45, 19); r.year = int(r.year, 2000, 2100, 2027); r.round = int(r.round, 0, 40, 0);
     r.salary = int(r.salary, MIN_SALARY, SAL_MAX, 3000);
@@ -2164,10 +2174,10 @@ const HS_STAGE = ['리그 1차전','리그 2차전','리그 3차전','8강','결
 const HS_PICK = {FW:[['sho','target','강슛'],['dri','wind','개인기 돌파'],['pas','arrow-right-left','침착한 패스']],
   MF:[['pas','arrow-right-left','킬패스'],['sho','target','중거리 슛'],['dri','wind','탈압박']],
   DF:[['def','shield-half','슬라이딩 태클'],['phy','dumbbell','몸싸움'],['pas','arrow-up-right','빌드업 패스']],
-  GK:[['def','hand','다이빙'],['phy','dumbbell','전진 방어'],['pas','arrow-up-right','빠른 롱킥']]};
+  GK:[['def','hand','다이빙'],['dri','zap','반사 선방'],['sho','arrow-up-right','빠른 롱킥']]};
 const HS_WIN = {FW:{sho:'골망이 출렁! 골!', dri:'세 명을 제치고 골!', pas:'완벽한 어시스트!'}, MF:{pas:'킬패스, 그대로 골!', sho:'중거리 대포알 골!', dri:'압박을 벗기고 찬스 연결!'},
-  DF:{def:'완벽한 태클로 실점 위기 차단!', phy:'몸싸움 승리, 공을 따냈다!', pas:'정확한 패스가 역습 골로!'}, GK:{def:'슈퍼세이브!', phy:'1:1 찬스 무산!', pas:'롱킥 한 방이 골로 이어졌다!'}};
-const HS_LOSE = {sho:'골대를 살짝 벗어났다…', dri:'수비에 막혔다…', pas:'패스가 끊겼다…', def:'한발 늦었다… 실점', phy:'밀려 넘어졌다… 실점'};
+  DF:{def:'완벽한 태클로 실점 위기 차단!', phy:'몸싸움 승리, 공을 따냈다!', pas:'정확한 패스가 역습 골로!'}, GK:{def:'슈퍼세이브!', dri:'눈부신 반사 선방!', sho:'롱킥 한 방이 골로 이어졌다!'}};
+const HS_LOSE = {kick:'롱킥이 끊겼다…', sho:'골대를 살짝 벗어났다…', dri:'수비에 막혔다…', pas:'패스가 끊겼다…', def:'한발 늦었다… 실점', phy:'밀려 넘어졌다… 실점'};
 const GEN_N = g => g <= 1 ? '본인' : g === 2 ? '아들' : g === 3 ? '손자' : g === 4 ? '증손자' : g === 5 ? '고손자' : `${g}대손`;
 const ELDER_N = d => d === 1 ? '아버지' : d === 2 ? '할아버지' : d === 3 ? '증조할아버지' : d === 4 ? '고조할아버지' : `${d}대 조상`;
 function startHeir(P, name, pos, look){
@@ -2233,15 +2243,16 @@ function bindHsMoment(g){
     const k = b.dataset.hk, ok = g.roll < clamp(.35 + (S.stats[k] - 50) / 70, .2, .85);
     g.k = k; g.ok = ok;
     // 결과 반영: 공격수·미드필더 성공 = 득점, 수비수·골키퍼 성공 = 실점 막음
-    if (ok){ if (S.pos === 'GK' || S.pos === 'DF') g.them = Math.max(0, g.them - 1); if (S.pos !== 'GK' && !(S.pos === 'DF' && k !== 'pas')) g.us++; }
-    else if (S.pos === 'GK' || S.pos === 'DF') g.them++;
+    const atk = S.pos === 'FW' || S.pos === 'MF' || (S.pos === 'DF' && k === 'pas') || (S.pos === 'GK' && k === 'sho');
+    if (ok){ if (atk) g.us++; else g.them = Math.max(0, g.them - 1); }
+    else if (!atk) g.them++;
     const res = g.us > g.them ? 1 : g.us < g.them ? -1 : 0, ovr = ovrOf(S.stats, S.pos);
     g.rt = Math.round(clamp(6.1 + (ovr - 52) * .05 + (ok ? 1.1 : -.4) + res * .35 + g.noise, 4.5, 9.8) * 10) / 10;
     const before = S.hs.scouts; S.hs.scouts = clamp(S.hs.scouts + (g.rt >= 7.6 ? 2 : g.rt >= 6.8 ? 1 : 0), 0, 30);
     if (ok) addStat(k, 1);
     save();
-    if (ok){ SFX.goal(); flash(S.pos === 'GK' ? 'SAVE!' : S.pos === 'DF' && k !== 'pas' ? 'BLOCK!' : 'GOAL!'); confetti(['#3dd6ff', '#ffffff', '#ffc83d']); } else SFX.bad();
-    $('#hsPlay').innerHTML = `<div class="hs-res ${ok ? 'ok' : 'no'}"><b>${ok ? HS_WIN[S.pos][k] : HS_LOSE[k]}</b>
+    if (ok){ SFX.goal(); flash(S.pos === 'GK' ? (k === 'sho' ? 'ASSIST!' : 'SAVE!') : S.pos === 'DF' && k !== 'pas' ? 'BLOCK!' : 'GOAL!'); confetti(['#3dd6ff', '#ffffff', '#ffc83d']); } else SFX.bad();
+    $('#hsPlay').innerHTML = `<div class="hs-res ${ok ? 'ok' : 'no'}"><b>${ok ? HS_WIN[S.pos][k] : S.pos === 'GK' ? (k === 'sho' ? HS_LOSE.kick : '손끝을 스쳤다… 실점') : HS_LOSE[k]}</b>
       <div class="hs-score">${g.us} : ${g.them} <small>${res > 0 ? '승리' : res < 0 ? '패배' : '무승부'}</small></div>
       <div class="hs-rt">평점 <b>${g.rt.toFixed(1)}</b>${S.hs.scouts > before ? ` · ${ic('eye')} 스카우트 +${S.hs.scouts - before}` : ''}</div></div>
       <button class="btn block" type="button" id="hsNext">${S.hs.games.length >= 5 ? `${ic('mail')} 스카우트 결과 보기` : '다음 경기 ▶'}</button>`;
@@ -2450,7 +2461,7 @@ function matchTab(){
     ${st('goal', '훈련 고르고 경기 시작', S.injury ? '부상 중이라 휴식을 추천해요 · 고르면 바로 경기가 진행돼요' : '코치 리포트를 보고 맞는 훈련을 고르면 보너스 · 누르면 바로 경기 시작')}
     ${S.injury ? `<div class="injury">🤕 부상 중 (${S.injury}주 남음) · 출전할 수 없어요</div>` : ''}
     <div class="coach-line">${ic('clipboard-list')}<span><em class="${W.rumor ? 'rumor' : ''}">${W.rumor ? '확인 안 된 소문' : '코치 리포트'}</em>${esc(W.text)}</span></div>
-    <div class="acts">${ACTS.map(([id,i,n], k) => `<button class="act t-${id} ${STAT_KEYS.includes(id) && S.stats[id] >= 99 ? 'capped' : ''}" type="button" data-a="${id}" ${STAT_KEYS.includes(id) && S.stats[id] >= 99 ? 'disabled' : ''} style="animation-delay:${k*45}ms"><span class="i">${ic({sho:'target',pas:'arrow-right-left',dri:'wind',def:'shield-half',phy:'dumbbell',rest:'bed',fan:'users',talk:'message-circle'}[id])}</span><span class="n">${n.replace(' 훈련','')}</span><span class="d">${actDesc(id)}</span></button>`).join('')}</div>
+    <div class="acts">${ACTS.map(([id,i,n], k) => `<button class="act t-${id} ${STAT_KEYS.includes(id) && S.stats[id] >= 99 ? 'capped' : ''}" type="button" data-a="${id}" ${STAT_KEYS.includes(id) && S.stats[id] >= 99 ? 'disabled' : ''} style="animation-delay:${k*45}ms"><span class="i">${ic(statIc(id))}</span><span class="n">${actName(id, n).replace(' 훈련','')}</span><span class="d">${actDesc(id)}</span></button>`).join('')}</div>
     <div class="toggle"><span>${ic('fast-forward')} 빠른 중계 (페널티킥은 직접 차요)</span><label class="switch"><input type="checkbox" id="fast" ${S.fast ? 'checked' : ''} aria-label="빠른 중계"><span></span></label></div>`; })()}
     <div class="label">${ic('calendar-days')} 시즌 현황 · 커리어 ${S.history.length + 1}/${MAX_SEASONS}시즌</div>
     ${S.history.length + 1 >= MAX_SEASONS ? `<div class="last-season">${ic('crown')} 마지막 시즌! 시즌이 끝나면 은퇴해요 · 명예의 전당 점수 ${hofScore()} / ${HOF_NEED}</div>` : ''}
@@ -2509,14 +2520,14 @@ function playerTab(){
       return `<div class="label">${ic('crosshair')} ${POS[S.pos].name} 핵심 지표 · 리그 평균 상대(전력 ${avg}) 홈 선발 기준</div>
       <div class="panel pad keystat">${keyStats(M).map(([i, n, v]) => `<div><span>${ic(i)} ${n}</span><b>${v}%</b><div class="rel-bar"><i style="width:${v}%"></i></div></div>`).join('')}
         <p class="small muted" style="margin:0">${{FW:'찬스의 슈터가 될 확률과 결정력(슈팅·드리블·피지컬)이 골을 정해요.', MF:'킬패스로 찬스를 한 단계 키우고(일반→빅찬스) 동료가 넣으면 도움이에요. 패스·드리블이 핵심.', DF:'골이 될 슈팅을 몸으로 막는 결정적 차단이 핵심이에요. 수비·피지컬이 높을수록 자주 막아요.', GK:'골이 될 슈팅을 막아내는 슈퍼세이브가 핵심이에요. 수비(반사신경)·피지컬이 선방률을 정해요.'}[S.pos]} 이번 시즌 ${S.pos === 'GK' ? `슈퍼세이브 ${se.sv || 0}회` : S.pos === 'DF' ? `결정적 차단 ${se.blk || 0}회` : S.pos === 'MF' ? `킬패스 ${se.kp || 0}회` : `${se.goals}골`}.</p></div>`; })()}
-    <div class="panel impact">${[['sho','target', S.pos === 'FW' ? '골 확률 · 결정력 · PK' : S.pos === 'GK' ? '거의 영향 없음' : '중거리·세트피스 골'],['pas','arrow-right-left', S.pos === 'MF' ? '킬패스 확률 · 찬스를 빅찬스로 키움 · 도움' : '도움 확률 · 킬패스'],['dri','wind','골·도움 보조 · 돌파 성공률'],['def', 'shield-half', S.pos === 'GK' ? '슈퍼세이브 확률 · 실점 감소 · 평점' : S.pos === 'DF' ? '결정적 차단 확률 · 실점 감소 · 경고 줄이기' : S.pos === 'MF' ? '가끔 슈팅 차단 · 경고 줄이기' : '경고 줄이기'],['phy','dumbbell','체력 소모↓ · 회복↑ · 부상 위험↓' + (S.pos === 'DF' ? ' · 헤딩골' : '')],['cond','heart-pulse','선발 · 평점 · 골/도움 · 부상 위험 (매주 피지컬만큼 자연 회복)']].map(([k, i, t]) => `<div><span>${ic(i)} ${k === 'cond' ? '컨디션' : statName(k, S.pos)}</span><small>${t}</small></div>`).join('')}</div>
+    <div class="panel impact">${((S.pos === 'GK' ? [['sho','arrow-up-right','롱킥 · 역습 시작 · 우리 팀 찬스↑'],['pas','arrow-right-left','빌드업 · 우리 팀 찬스↑ · 가끔 도움'],['dri','zap','반사신경 · 빅찬스 슈퍼세이브 · PK 선방'],['def','hand','선방률 · 실점 감소 · 평점'],['phy','dumbbell','공중볼(상대 결정력↓) · 체력 · 부상 위험↓'],['cond','heart-pulse','선발 · 평점 · 부상 위험 (매주 피지컬만큼 자연 회복)']] : null) || [['sho','target', S.pos === 'FW' ? '골 확률 · 결정력 · PK' : '중거리·세트피스 골'],['pas','arrow-right-left', S.pos === 'MF' ? '킬패스 확률 · 찬스를 빅찬스로 키움 · 도움' : '도움 확률 · 킬패스'],['dri','wind','골·도움 보조 · 돌파 성공률'],['def', 'shield-half', S.pos === 'GK' ? '슈퍼세이브 확률 · 실점 감소 · 평점' : S.pos === 'DF' ? '결정적 차단 확률 · 실점 감소 · 경고 줄이기' : S.pos === 'MF' ? '가끔 슈팅 차단 · 경고 줄이기' : '경고 줄이기'],['phy','dumbbell','체력 소모↓ · 회복↑ · 부상 위험↓' + (S.pos === 'DF' ? ' · 헤딩골' : '')],['cond','heart-pulse','선발 · 평점 · 골/도움 · 부상 위험 (매주 피지컬만큼 자연 회복)']]).map(([k, i, t]) => `<div><span>${ic(i)} ${k === 'cond' ? '컨디션' : statName(k, S.pos)}</span><small>${t}</small></div>`).join('')}</div>
     <p class="lb-note">훈련으로는 99까지 · 100부터는 <b>한계 돌파 시험</b>을 통과해야 올라요 (최대 ${STAT_MAX})</p>
     ${skCard()}
     <div class="label">${ic('sparkles')} 특성 · 상태</div>
     <div class="panel pad" style="display:flex;flex-wrap:wrap;gap:8px">
       <span class="trait">⭐ ${popTier(S.pop)}</span>
       ${S.buff ? `<span class="chip ${S.buff > 0 ? 'up' : 'down'}">${S.buff > 0 ? '🔥 자신감' : '😰 부담감'} ${S.buff > 0 ? '+' : ''}${S.buff.toFixed(2)}</span>` : ''}
-      ${S.traits.map(t => `<span class="trait" title="${esc(TRAITS[t].d)}">${TRAITS[t].i} ${esc(TRAITS[t].n)}</span>`).join('') || '<span class="small muted">상황에 맞는 훈련을 하면 낮은 확률로 특성을 얻어요.</span>'}
+      ${S.traits.map(t => `<span class="trait" title="${esc(trait(t).d)}">${trait(t).i} ${esc(trait(t).n)}</span>`).join('') || '<span class="small muted">상황에 맞는 훈련을 하면 낮은 확률로 특성을 얻어요.</span>'}
     </div>
     ${ntHtml()}
     <div class="label">${ic('trophy')} 트로피 · 수상</div>
@@ -2768,7 +2779,7 @@ async function doAction(id){
 }
 function pickSpecial(id){
   const opts = [];
-  if (TRAITS[id] && !hasT(id)) opts.push([3, {i:TRAITS[id].i, t:`특성 획득: ${TRAITS[id].n}`, d:TRAITS[id].d, go(){ S.traits.push(id); addNews(`${S.name}, 새 무기 장착… '${TRAITS[id].n}' 면모 과시`); }}]);
+  if (TRAITS[id] && !hasT(id)) opts.push([3, {i:trait(id).i, t:`특성 획득: ${trait(id).n}`, d:trait(id).d, go(){ S.traits.push(id); addNews(`${S.name}, 새 무기 장착… '${TRAITS[id].n}' 면모 과시`); }}]);
   if (STAT_KEYS.includes(id)) opts.push([2, {i:'⚡', t:'각성!', d:`${statName(id, S.pos)} +3 추가`, go(){ addStat(id, 3); }}]);
   opts.push([1, {i:'👀', t:'감독이 훈련을 지켜봤다', d:'감독 신뢰 +6', go(){ S.trust = clamp(S.trust + 6, 0, 100); }}]);
   opts.push([1, {i:'📱', t:'훈련 영상 바이럴', d:'인기도 +5', go(){ S.pop = clamp(S.pop + 5, 0, 100); addNews(`${S.name} 훈련 영상, SNS서 화제`); }}]);
@@ -2806,32 +2817,34 @@ function startChance(ovr){
 // 모든 굴림은 킥오프 전에 끝내 저장한다 → 새로고침으로 결과를 바꿀 수 없다
 const ENG_Q = [['big', .15, .30], ['mid', .50, .12], ['half', .35, .05]];
 const ENG_NEXT = {half:'mid', mid:'big', big:'big'};
-const ENG_ROLE = {FW:{shot:.30, kp:.10}, MF:{shot:.12, kp:.22}, DF:{shot:.06, kp:.05}, GK:{shot:0, kp:.01}};
+const ENG_ROLE = {FW:{shot:.30, kp:.10}, MF:{shot:.12, kp:.22}, DF:{shot:.06, kp:.05}, GK:{shot:0, kp:.025}};
 const ENG_AVGQ = ENG_Q.reduce((a, q) => a + q[1] * q[2], 0);
 const ENG_KEEP = .12; // 평균 골키퍼가 골이 될 슈팅을 막는 비율
 function matchModel(o){ // o: {os 상대 전력, home, mins}
   const mins = o.mins ?? 90, on = mins > 0, ovr = ovrOf(S.stats, S.pos), Wk = S.week || {}, WXe = WEATHER[Wk.wx ?? 0][4], PF = Wk.psyFx || {}, RX = relFx(), St = S.stats, cf = .75 + S.cond / 400, R = ENG_ROLE[S.pos];
   const myImpact = on ? (ovr - 62) * .25 * (mins / 90) * (S.cond / 100 + .3) : 0;
   const ts = CLUB[S.club].s + myImpact + (o.home ? 2 : -2), os = o.os, r = ts / os, wg = WXe.goal || 1;
-  const cUs = 12.5 * Math.pow(r, 1.4) * (PF.team || 1) * RX.team * (on ? 1 + skm('team') + (S.captain ? .02 : 0) : 1) * wg;
+  const gkBuild = on && S.pos === 'GK' ? clamp(((St.pas + St.sho) / 2 - 50) / 500, -.04, .1) + (hasT('sho') || hasT('pas') ? .02 : 0) : 0; // 골키퍼 빌드업·롱킥 → 우리 팀 찬스
+  const cUs = 12.5 * Math.pow(r, 1.4) * (PF.team || 1) * RX.team * (on ? 1 + skm('team') + (S.captain ? .02 : 0) + gkBuild : 1) * wg;
   const cThem = 12.5 * Math.pow(1 / r, 1.4) * wg;
-  const convUs = r, convThem = (1 / r) * (on ? (1 - clamp(skm('conc'), 0, .5)) * (hasT('def') ? .9 : 1) : 1);
+  const convUs = r, convThem = (1 / r) * (on ? (1 - clamp(skm('conc'), 0, .5)) * (hasT('def') && S.pos !== 'GK' ? .9 : 1) * (S.pos === 'GK' ? clamp(1 - (St.phy - 55) / 600, .9, 1.05) : 1) : 1);
   const dfp = S.pos === 'DF';
   const fin = clamp((dfp ? St.phy * .5 + St.sho * .3 + St.dri * .2 : St.sho * .65 + St.dri * .2 + St.phy * .15) / 65, .5, 1.8) * cf;  // 결정력
-  const vis = clamp((dfp ? St.pas * .8 + St.dri * .2 : S.pos === 'GK' ? St.pas : St.pas * .65 + St.dri * .35) / 65, .5, 1.8) * cf; // 시야
+  const vis = clamp((dfp ? St.pas * .8 + St.dri * .2 : S.pos === 'GK' ? St.pas * .6 + St.sho * .4 : St.pas * .65 + St.dri * .35) / 65, .5, 1.8) * cf; // 시야 (골키퍼: 빌드업·롱킥)
   const shotP = on ? R.shot * clamp(.7 + (fin - 1) * .6, .4, 1.5) * (1 + skm('shot')) : 0;                                                   // 이 찬스의 슈터가 나일 확률
   const finM = fin * (hasT('sho') ? 1.25 : 1) * (PF.goal || 1) * (1 + skm('goal'));                                       // 내 슈팅의 득점 배수
   const kpP = on ? R.kp * clamp(.7 + (vis - 1) * .7, .4, 1.6) * (hasT('pas') ? 1.3 : 1) * (PF.ast || 1) * RX.ast * (1 + skm('ast') + skm('kp')) : 0; // 내 킬패스로 만든 찬스일 확률
   const kpUp = clamp(.35 + (vis - 1) * .5 + skm('kpq'), .2, .9);                                                                      // 킬패스가 찬스를 한 단계 키울 확률
-  const dSk = St.def * .7 + St.phy * .3, gSk = St.def * .85 + St.phy * .15;
+  const dSk = St.def * .7 + St.phy * .3, gSk = St.def * .6 + St.dri * .3 + St.phy * .1; // 골키퍼 선방 = 선방 + 반사신경 + 피지컬
   const blkP = on && dfp ? clamp(.06 + (dSk - 55) / 160 + skm('block'), .02, .4) : on && S.pos === 'MF' ? clamp(.02 + (St.def - 50) / 500 + skm('block'), 0, .15) : 0; // 골이 될 슈팅을 몸으로 막을 확률
-  const svP = on && S.pos === 'GK' ? clamp(ENG_KEEP + (gSk - 60) / 100 + skm('save'), .03, .6) : ENG_KEEP;                             // 골이 될 슈팅을 막을 확률
+  const svP = on && S.pos === 'GK' ? clamp(ENG_KEEP + (gSk - 57) / 100 + skm('save') + (hasT('def') ? .03 : 0), .03, .6) : ENG_KEEP;
+  const svBig = on && S.pos === 'GK' ? clamp((St.dri - 55) / 250 + (hasT('dri') ? .04 : 0), -.05, .2) : 0; // 반사신경: 빅찬스 선방 보너스                             // 골이 될 슈팅을 막을 확률
   const qKp = ENG_Q.reduce((a, [t, w, q]) => a + w * (kpUp * ENG_Q.find(x => x[0] === ENG_NEXT[t])[2] + (1 - kpUp) * q), 0);
   const share = mins / 90, base = cUs * convUs * (1 - ENG_KEEP);
   const gUs = base * (ENG_AVGQ * (1 - shotP - kpP) + ENG_AVGQ * finM * shotP + qKp * kpP * (1 - shotP)) * (on ? 1 : 1);
   const tq = cThem * convThem * ENG_AVGQ;
   const gThem = tq * (1 - blkP) * (1 - svP);
-  return {r, ts, os, cUs, cThem, convUs, convThem, shotP, finM, kpP, kpUp, blkP, svP, gUs, gThem,
+  return {r, ts, os, cUs, cThem, convUs, convThem, shotP, finM, kpP, kpUp, blkP, svP, svBig, gUs, gThem,
     myG: base * ENG_AVGQ * finM * shotP * share, myA: base * qKp * kpP * share, myKp: base * qKp * kpP * share + cUs * kpP * share * (ENG_Q[0][1] + ENG_Q[1][1] * kpUp) * (1 - ENG_Q[0][2] * convUs * (1 - ENG_KEEP)) * .6, myBlk: tq * blkP * share, mySv: S.pos === 'GK' && on ? tq * (1 - blkP) * svP * share : 0, mySuper: S.pos === 'GK' && on ? cThem * convThem * ENG_Q[0][1] * ENG_Q[0][2] * svP * share : 0};
 }
 const pois = (l, k) => { let f = 1; for (let i = 2; i <= k; i++) f *= i; return Math.exp(-l) * Math.pow(l, k) / f; };
@@ -2872,7 +2885,7 @@ function simulate(){
     const m = ri(1, 90), on = mins > 0 && m >= from, q = qType();
     if (Math.random() >= clamp(q[2] * M.convThem, .01, .9)) continue; // 빗나간 슈팅
     if (on && Math.random() < M.blkP){ ev.push({m, side:'block', big: q[0] === 'big'}); continue; }
-    const sv = S.pos === 'GK' && on ? M.svP : ENG_KEEP;
+    const sv = S.pos === 'GK' && on ? clamp(M.svP + (q[0] === 'big' ? M.svBig : 0), .03, .7) : ENG_KEEP;
     if (Math.random() < sv){ if (S.pos === 'GK' && on) ev.push({m, side:'save', big: q[0] === 'big'}); continue; }
     ev.push({m, side:'them'});
   }
@@ -3095,7 +3108,7 @@ function pkGame(e, onDecide){
         ok = !miss && (shotDir !== keepDir || e.roll > 1 - skm('pk') * .3); txt = ok ? 'GOAL!!' : miss ? 'MISS… 하늘로' : 'SAVED…';
         pb.style.left = X[shotDir]; pb.style.top = miss ? '-30%' : '40%';
       } else {
-        ok = shotDir === keepDir && e.roll < .8 + (S.stats.def - 60) / 200; txt = ok ? 'SAVED!!' : 'GOAL…';
+        ok = shotDir === keepDir && e.roll < .8 + ((S.stats.def + S.stats.dri) / 2 - 60) / 200; txt = ok ? 'SAVED!!' : 'GOAL…';
         pb.style.left = X[shotDir]; pb.style.top = '40%';
       }
       if (onDecide) onDecide(ok); // 애니메이션 전에 저장: 새로고침으로 다시 차기 방지
@@ -5890,7 +5903,7 @@ const TRAIN_POSE = {sho:'run', pas:'clap', dri:'run', def:'jump', phy:'jump', re
 async function trainCut(id, msgs, hit){
   const A = ACTS.find(a => a[0] === id), el = document.createElement('div');
   el.className = 'train-cut';
-  el.innerHTML = `<div class="tc-card ${hit ? 'hit' : ''}"><div class="tc-title">${ic({sho:'target',pas:'arrow-right-left',dri:'wind',def:'shield-half',phy:'dumbbell',rest:'bed',fan:'users',talk:'message-circle'}[id])} ${A ? A[2] : ''}</div>
+  el.innerHTML = `<div class="tc-card ${hit ? 'hit' : ''}"><div class="tc-title">${ic(statIc(id))} ${A ? actName(id, A[2]) : ''}</div>
     <div class="tc-cb ${id}" data-cpose="${TRAIN_POSE[id] || 'idle'}">${meSvg()}${id === 'rest' ? '<b class="zz">Z<i>z</i><i>z</i></b>' : ''}${id === 'sho' ? '<i class="tc-ball"></i>' : ''}</div>
     <div class="tc-msgs">${msgs.map((m, i) => `<span style="animation-delay:${.35 + i * .25}s">${esc(m)}</span>`).join('')}</div><small>경기장으로 이동 중…</small></div>`;
   document.body.appendChild(el);
