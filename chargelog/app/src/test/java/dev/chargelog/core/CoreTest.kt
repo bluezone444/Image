@@ -400,7 +400,7 @@ class CoreTest {
         // Started at 85 % with only a trickle measured: not conclusive.
         r = ChargeSpec.classify(listOf(chg(0.0, 700_000), chg(10.0, 600_000)), 85, p45)!!
         assertEquals(ChargeSpec.Tier.NORMAL, r.tier); assertTrue(!r.confident)
-        assertEquals("일반 충전 이상일 수 있음", r.label()); assertEquals("normal_10w_min", r.code())
+        assertEquals("일반 충전", r.label()); assertEquals("normal_10w_min", r.code())
         assertEquals(15, ChargeSpec.nearest(12.6, listOf(10, 15, 25))); assertEquals(10, ChargeSpec.nearest(12.5, listOf(10, 15, 25)))
     }
 

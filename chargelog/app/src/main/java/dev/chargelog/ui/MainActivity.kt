@@ -906,7 +906,6 @@ class MainActivity : Activity() {
         if (s.type == SessionType.CHARGE) {
             val spec = chargeSpec(s, now)
             parts.add(spec?.label() ?: Plug.labelKo(s.plug))
-            spec?.peakInputW?.takeIf { !spec.pending }?.let { parts.add(String.format(Locale.US, "배터리 입력 최고 %.1fW", it)) }
             val settled = (endTs ?: now) - s.peakTs > 20 * 60_000L
             if (settled && s.maxSoc > s.startSoc) parts.add("${s.maxSoc}% 도달 ${Format.time(s.peakTs, zone)}")
         }

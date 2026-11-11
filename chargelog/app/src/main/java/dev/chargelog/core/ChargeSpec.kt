@@ -93,7 +93,7 @@ object ChargeSpec {
         fun label(): String {
             if (pending) return if (short) "판정 보류 (짧은 충전)" else "판정 보류 (충전 전류 없음)"
             val base = (if (wireless) "무선 ${watts}W" else tier.label) + if (limitedByPhone) " (최대 지원)" else ""
-            return if (confident) base else "$base 이상일 수 있음"
+            return base
         }
 
         /** Stable code for exports. */
