@@ -62,9 +62,9 @@ object Format {
 
     const val SESSION_HEADER =
         "id,type,start_ms,start,start_soc,end_ms,end,end_soc,delta_soc,duration_min,rate_pct_per_hour,charger," +
-            "peak_soc_time,min_soc,max_soc,max_temp_c,estimated"
+            "peak_soc_time,min_soc,max_soc,max_temp_c,estimated,peak_input_w,charger_reported_w,charge_tier"
 
-    fun sessionCsv(s: Session, zone: ZoneId): String {
+    fun sessionCsv(s: Session, zone: ZoneId, spec: ChargeSpec.Result? = null): String {
         val end = s.endTs
         return listOf(
             s.id, s.type.name.lowercase(), s.startTs, iso(s.startTs, zone), s.startSoc,
@@ -73,6 +73,9 @@ object Format {
             end?.let { s.ratePerHour(it)?.let { r -> String.format(Locale.US, "%.2f", r) } } ?: "",
             if (s.type == SessionType.CHARGE) Plug.label(s.plug) else "",
             iso(s.peakTs, zone), s.minSoc, s.maxSoc, tenths(s.maxTemp), if (s.est) 1 else 0,
+            spec?.peakInputW?.let { String.format(Locale.US, "%.1f", it) } ?: "",
+            spec?.reportedW?.let { String.format(Locale.US, "%.1f", it) } ?: "",
+            spec?.let { if (it.wireless) "wireless" else "${it.tier.name.lowercase()}_${it.tier.watts}w" + if (it.confident) "" else "_min" } ?: "",
         ).joinToString(",")
     }
 

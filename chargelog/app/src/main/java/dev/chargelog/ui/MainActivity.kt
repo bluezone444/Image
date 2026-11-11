@@ -37,6 +37,7 @@ import dev.chargelog.data.Db
 import dev.chargelog.data.ExportKind
 import dev.chargelog.data.Exporter
 import dev.chargelog.data.Recorder
+import dev.chargelog.core.ChargeSpec
 import dev.chargelog.core.Drain
 import dev.chargelog.core.Ocv
 import dev.chargelog.core.Volt
@@ -216,66 +217,112 @@ class MainActivity : Activity() {
         sessionList = null
         pageTab = -1
 
-        val page = column().apply {
+        val version = try {
+            @Suppress("DEPRECATION")
+            packageManager.getPackageInfo(packageName, 0).versionName
+        } catch (e: Exception) { null }
+
+        // Header: soft brand gradient with icon, name and tagline.
+        val header = column().apply {
             gravity = Gravity.CENTER_HORIZONTAL
-            val pad = dpi(20f)
-            setPadding(pad, dpi(48f), pad, pad)
+            background = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf((p.soc and 0x00FFFFFF) or 0x33000000, p.bg))
+            setPadding(dpi(24f), dpi(56f), dpi(24f), dpi(28f))
+            addView(ImageView(context).apply { setImageResource(R.drawable.ic_launcher) }, lp(dpi(76f), dpi(76f)))
+            addView(label("충전 로그", 30f, p.ink, bold = true), lp(WRAP, WRAP, top = dpi(18f)))
+            addView(label("배터리 충전·방전을 기록하고 분석합니다", 15f, p.ink2), lp(WRAP, WRAP, top = dpi(6f)))
+            if (version != null) addView(label("v$version", 12f, p.muted), lp(WRAP, WRAP, top = dpi(6f)))
+        }
 
-            addView(ImageView(context).apply { setImageResource(R.drawable.ic_launcher) }, lp(dpi(88f), dpi(88f)))
-            addView(label("충전 로그", 30f, p.ink, bold = true), lp(WRAP, WRAP, top = dpi(16f)))
-            addView(label("배터리 충전·방전 모니터링", 16f, p.ink2), lp(WRAP, WRAP, top = dpi(4f)))
-            val version = try {
-                @Suppress("DEPRECATION")
-                packageManager.getPackageInfo(packageName, 0).versionName
-            } catch (e: Exception) { null }
-            if (version != null) addView(label("버전 $version", 12f, p.muted), lp(WRAP, WRAP, top = dpi(4f)))
-
-            addView(card(p).apply {
-                addView(title("이 앱은 충전 모니터링 전용입니다"))
-                addView(label(
-                    "• 충전 시작·종료 시각과 그때의 배터리 잔량(SOC)을 기록합니다\n" +
-                        "• 하루 사용량, 충전–방전 세션별 사용량, 최저·최고 SOC를 보여줍니다\n" +
-                        "• 충전 방식, 배터리 온도·전압을 함께 기록합니다\n" +
-                        "• 기록은 이 휴대폰 안에만 저장되며 인터넷으로 전송하지 않습니다\n" +
-                        "• 정확한 기록을 위해 상시 알림을 띄우고 백그라운드에서 동작합니다",
-                    14f, p.ink2).apply { setLineSpacing(dp(4f), 1f) }, lp(MATCH, WRAP, top = dpi(8f)))
-            }, lp(MATCH, WRAP, top = dpi(28f)))
-
+        fun feature(color: Int, title: String, body: String) = row().apply {
+            gravity = Gravity.TOP
+            addView(View(context).apply { background = roundRect(color, 5f) }, lp(dpi(10f), dpi(10f), top = dpi(5f)))
             addView(column().apply {
-                background = GradientDrawable().apply {
-                    setColor(p.card)
-                    cornerRadius = dp(22f)
-                    setStroke(dpi(2f), p.danger)
-                }
-                val cp = dpi(18f)
-                setPadding(cp, cp, cp, cp)
-                addView(label("⚠ 주의", 17f, p.danger, bold = true))
-                addView(label(
-                    "이 앱은 개인 충전 모니터링 목적으로 제작되었습니다.\n\n" +
-                        "제작자의 허락 없이 이 앱(APK)과 소스 코드를 임의로 복제·수정·배포하거나 " +
-                        "다른 사람에게 전달하지 마세요.\n\n" +
-                        "표시되는 값은 휴대폰이 보고하는 측정값으로, 정확성을 보장하지 않습니다.",
-                    14f, p.ink).apply { setLineSpacing(dp(3f), 1f) }, lp(MATCH, WRAP, top = dpi(8f)))
+                addView(label(title, 15f, p.ink, bold = true))
+                addView(label(body, 13f, p.ink2).apply { setLineSpacing(dp(2f), 1f) }, lp(MATCH, WRAP, top = dpi(3f)))
+            }, lp(0, WRAP, 1f, left = dpi(12f)))
+        }
+
+        val body = column().apply {
+            setPadding(dpi(20f), 0, dpi(20f), dpi(28f))
+
+            addView(card(p, 18f).apply {
+                addView(caption("이 앱은 충전 모니터링 전용입니다", p))
+                addView(feature(p.soc, "충전 시작·종료 기록", "충전기를 꽂고 뺀 시각과 그때의 잔량(SOC), 충전 방식과 충전 속도 등급"),
+                    lp(MATCH, WRAP, top = dpi(14f)))
+                addView(feature(p.ink2, "사용량 분석", "하루 사용량, 충전–방전 세션별 사용량, 최저·최고 SOC와 평소 대비"),
+                    lp(MATCH, WRAP, top = dpi(14f)))
+                addView(feature(p.temp, "배터리 상태", "온도, 방전 전류를 일정한 주기로 기록하고 그래프로 표시"),
+                    lp(MATCH, WRAP, top = dpi(14f)))
+                addView(View(context).apply { setBackgroundColor(p.line) }, lp(MATCH, Math.max(1, dpi(1f)), top = dpi(16f)))
+                addView(label("기록은 이 휴대폰 안에만 저장되며 인터넷으로 전송하지 않습니다. 정확한 기록을 위해 " +
+                    "상시 알림을 띄우고 백그라운드에서 동작합니다.", 12f, p.muted).apply { setLineSpacing(dp(2f), 1f) },
+                    lp(MATCH, WRAP, top = dpi(12f)))
+            })
+
+            // Warning: hairline card with a red accent bar.
+            addView(row().apply {
+                gravity = Gravity.TOP
+                background = roundRect(p.card, 18f, p.line)
+                setPadding(0, dpi(16f), dpi(16f), dpi(16f))
+                addView(View(context).apply { background = roundRect(p.danger, 2f) },
+                    lp(dpi(4f), MATCH).apply { leftMargin = dpi(14f) })
+                addView(column().apply {
+                    addView(label("주의", 15f, p.danger, bold = true))
+                    addView(label(
+                        "이 앱은 개인 충전 모니터링 목적으로 제작되었습니다. 제작자의 허락 없이 이 앱(APK)과 소스 코드를 " +
+                            "임의로 복제·수정·배포하거나 다른 사람에게 전달하지 마세요.", 14f, p.ink
+                    ).apply { setLineSpacing(dp(3f), 1f) }, lp(MATCH, WRAP, top = dpi(6f)))
+                    addView(label("표시되는 값은 휴대폰이 보고하는 측정값과 그로부터 계산한 추정값으로, 정확성을 보장하지 않습니다.",
+                        12f, p.ink2).apply { setLineSpacing(dp(2f), 1f) }, lp(MATCH, WRAP, top = dpi(8f)))
+                }, lp(0, WRAP, 1f, left = dpi(12f)))
             }, lp(MATCH, WRAP, top = dpi(12f)))
 
             if (firstRun) {
-                addView(label("동의하고 시작", 16f, p.card, bold = true).apply {
+                var agreed = false
+                val start = label("동의하고 시작", 16f, p.muted, bold = true).apply {
                     gravity = Gravity.CENTER
-                    background = roundRect(p.ink, 16f)
+                    background = roundRect(p.line, 16f)
                     setPadding(dpi(12f), dpi(16f), dpi(12f), dpi(16f))
+                    isEnabled = false
                     setOnClickListener {
+                        if (!agreed) return@setOnClickListener
                         getSharedPreferences("ui", MODE_PRIVATE).edit().putBoolean(COVER_KEY, true).apply()
                         startMonitoring()
                     }
-                }, lp(MATCH, WRAP, top = dpi(24f)))
-                addView(label("동의하지 않으면 앱을 닫아주세요. 동의 전에는 아무것도 기록하지 않습니다.",
-                    12f, p.muted).apply { gravity = Gravity.CENTER }, lp(MATCH, WRAP, top = dpi(10f)))
+                }
+                val box = View(context)
+                fun paintBox() {
+                    box.background = if (agreed) roundRect(p.soc, 6f) else roundRect(p.card, 6f, p.muted)
+                }
+                paintBox()
+                addView(row().apply {
+                    setPadding(dpi(4f), dpi(14f), dpi(4f), dpi(14f))
+                    addView(box, lp(dpi(22f), dpi(22f)))
+                    addView(label("위 내용을 확인했으며 개인 용도로만 사용합니다", 14f, p.ink), lp(0, WRAP, 1f, left = dpi(12f)))
+                    setOnClickListener {
+                        agreed = !agreed
+                        paintBox()
+                        start.isEnabled = agreed
+                        start.setTextColor(if (agreed) p.card else p.muted)
+                        start.background = roundRect(if (agreed) p.ink else p.line, 16f)
+                    }
+                }, lp(MATCH, WRAP, top = dpi(10f)))
+                addView(start, lp(MATCH, WRAP, top = dpi(4f)))
+                addView(label("동의 전에는 아무것도 기록하지 않습니다", 12f, p.muted).apply { gravity = Gravity.CENTER },
+                    lp(MATCH, WRAP, top = dpi(10f)))
             } else {
-                addView(button("닫기") { tabBar.visibility = View.VISIBLE; render() }, lp(MATCH, WRAP, top = dpi(24f)))
+                addView(button("닫기") { tabBar.visibility = View.VISIBLE; render() }, lp(MATCH, WRAP, top = dpi(20f)))
             }
         }
+
         content.removeAllViews()
-        content.addView(ScrollView(this).apply { addView(page) })
+        content.addView(ScrollView(this).apply {
+            addView(column().apply {
+                addView(header, lp(MATCH, WRAP))
+                addView(body, lp(MATCH, WRAP))
+            })
+        })
     }
 
     // ------------------------------------------------------------------ shell
@@ -408,7 +455,9 @@ class MainActivity : Activity() {
                 val (state, dot) = when {
                     s == null -> "측정 대기" to p.muted
                     s.charging && s.status == 5 -> "충전 완료 · ${Plug.labelKo(s.plugged)}" to p.soc
-                    s.charging -> "충전 중 · ${Plug.labelKo(s.plugged)}" to p.soc
+                    s.charging -> "충전 중 · " + (open?.let { chargeSpec(it, now) }?.let {
+                        if (it.wireless) "무선" else it.tier.label
+                    } ?: Plug.labelKo(s.plugged)) to p.soc
                     else -> "사용 중" to p.muted
                 }
                 addView(chip(p, state, dot), lp(WRAP, WRAP))
@@ -530,7 +579,7 @@ class MainActivity : Activity() {
         val defaultDay = days.lastOrNull { it.day != today && it.minSoc != null }?.day ?: today
         val day = statsDay?.takeIf { d -> days.any { it.day == d } } ?: defaultDay
         page.addView(card(p).apply {
-            addView(sectionTitle(p, "일일 사용량", "탭: 그날 상세 · 두 손가락: 확대"))
+            addView(sectionTitle(p, "일일 사용량", "탭: 그날 상세 · 핀치: 가로·세로 확대"))
             addView(row().apply {
                 addView(legend(p, "사용량", p.soc))
                 addView(legend(p, "평균 ${pct(sum.avgUsage)}", p.ink2, dashed = true), lp(WRAP, WRAP, left = dpi(12f)))
@@ -547,7 +596,7 @@ class MainActivity : Activity() {
 
         // SOC range per day.
         page.addView(card(p).apply {
-            addView(sectionTitle(p, "일일 SOC 범위", "두 손가락: 확대"))
+            addView(sectionTitle(p, "일일 SOC 범위", "핀치: 가로·세로 확대"))
             addView(row().apply {
                 addView(legend(p, "최저–최고", p.soc))
                 addView(legend(p, "평균 최저·최고", p.ink2, dashed = true), lp(WRAP, WRAP, left = dpi(12f)))
@@ -607,7 +656,7 @@ class MainActivity : Activity() {
         val charges = sessions.count { it.type == SessionType.CHARGE && it.startTs >= start }
 
         addView(sectionTitle(p, dateTitle(day) + relativeDay(day), "세션 ${sessions.size} · 충전 ${charges}회"))
-        addView(label("그래프는 두 손가락으로 벌리면 확대, 두 번 탭하면 원래대로", 11f, p.muted), lp(WRAP, WRAP, top = dpi(3f)))
+        addView(label("그래프: 두 손가락을 가로로 벌리면 시간축, 세로로 벌리면 값 축 확대 · 두 번 탭하면 원래대로", 11f, p.muted), lp(WRAP, WRAP, top = dpi(3f)))
         addView(tileRow(p, listOf(
             tile(p, "사용량", "${stat.usage}%", size = 18f),
             tile(p, "충전량", "${stat.charged}%", size = 18f),
@@ -683,6 +732,18 @@ class MainActivity : Activity() {
         return "$kind  ${s.startSoc}% → ${s.endSoc}%  (${Format.signed(s.delta)}%)$est"
     }
 
+    private val phoneMaxW: Int? by lazy { ChargeSpec.phoneMaxWatts(Build.MODEL) }
+    private val specCache = HashMap<Long, ChargeSpec.Result?>()
+
+    /** Charging tier of a charge session; closed sessions are cached. */
+    private fun chargeSpec(s: Session, now: Long): ChargeSpec.Result? {
+        if (s.type != SessionType.CHARGE) return null
+        if (!s.open && specCache.containsKey(s.id)) return specCache[s.id]
+        val r = ChargeSpec.classify(db.samples(s.startTs, (s.endTs ?: now) + 1), s.startSoc, phoneMaxW)
+        if (!s.open) specCache[s.id] = r
+        return r
+    }
+
     private fun sessionLine2(s: Session, now: Long): String {
         val endTs = s.endTs
         val span = Format.dateTime(s.startTs, zone) + " → " +
@@ -690,7 +751,9 @@ class MainActivity : Activity() {
         val parts = arrayListOf(span, Format.duration(s.durationMs(now)))
         s.ratePerHour(now)?.let { parts.add(String.format(Locale.US, "%.1f%%/시간", it)) }
         if (s.type == SessionType.CHARGE) {
-            parts.add(Plug.labelKo(s.plug))
+            val spec = chargeSpec(s, now)
+            parts.add(spec?.label() ?: Plug.labelKo(s.plug))
+            spec?.peakInputW?.takeIf { spec.wireless.not() }?.let { parts.add(String.format(Locale.US, "최고 %.1fW", it)) }
             val settled = (endTs ?: now) - s.peakTs > 20 * 60_000L
             if (settled && s.maxSoc > s.startSoc) parts.add("${s.maxSoc}% 도달 ${Format.time(s.peakTs, zone)}")
         }
@@ -810,6 +873,11 @@ class MainActivity : Activity() {
                     "그래프에서는 점선, 세션에서는 '추정'으로 표시되며 내보내기 파일의 estimated 열이 1입니다. " +
                     "온도·전압 차트에는 추정값을 쓰지 않습니다.", 12f, p.ink2), lp(MATCH, WRAP, top = dpi(2f)).apply { bottomMargin = dpi(6f) })
             db.lastSample()?.let { addView(kv(p, "마지막 기록", Format.dateTime(it.ts, zone))) }
+            addView(kv(p, "이 휴대폰 최대 유선 충전", phoneMaxW?.let { "${ChargeSpec.Tier.forWatts(it).label}" } ?: "목록에 없는 기종"))
+            addView(label("모델 ${Build.MODEL}. 충전 세션마다 충전기 보고 최대 전력과 실제 배터리 입력 최고값으로 " +
+                "일반·고속 15W·초고속 25W·초고속 2.0 45W·초고속 3.0 60W 중 하나로 판정하고, 휴대폰 최대치를 넘지 않게 표시합니다. " +
+                "잔량 70% 이상에서 시작한 충전은 속도가 제한돼 실제보다 낮게 나올 수 있습니다.", 12f, p.muted),
+                lp(MATCH, WRAP).apply { bottomMargin = dpi(4f) })
             val cur = current
             addView(kv(p, "전압(참조값, 저장만)", cur?.let { "${Volt.reference(it)} mV" } ?: "-"))
             addView(label(Recorder.describeVoltage(this@MainActivity, cur), 12f, p.ink2), lp(MATCH, WRAP))

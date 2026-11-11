@@ -28,26 +28,44 @@ import java.util.Locale
 private const val GAP = dev.chargelog.core.Drain.BREAK
 
 /**
- * Horizontal zoom for a chart: a two-finger pinch scales the x axis around the fingers and
- * follows them (pan); double tap, or tapping the zoom pill, resets. The viewport is kept per
- * [key] so it survives the screen being rebuilt for a new battery reading.
+ * Two-axis zoom for a chart. A two-finger pinch scales the x axis by the horizontal finger
+ * spread and the value axis by the vertical spread (a diagonal pinch does both), anchored on
+ * the fingers and following them (pan). Double tap, or tapping the zoom pill, resets. The
+ * viewport is kept per [key] so it survives the screen being rebuilt for a new reading.
  */
 class XZoom(private val view: View, private val minSpan: Double) {
+    // x (time or day index)
     var lo = 0.0; private set
     var hi = 1.0; private set
     var v0 = 0.0; private set
     var v1 = 1.0; private set
+    // y (value)
+    var yLo = 0.0; private set
+    var yHi = 1.0; private set
+    var w0 = 0.0; private set
+    var w1 = 1.0; private set
+    private var yMinSpan = 1.0
+    private var yInit = false
+
     var key: String? = null
-    /** Plot width in px, set by the chart on every draw. */
+    /** Plot geometry in px, set by the chart on every draw. */
     var plotW = 1f
+    var plotTop = 0f
+    var plotBottom = 1f
 
     val span get() = v1 - v0
-    val zoomed get() = span < (hi - lo) * 0.995
+    val ySpan get() = w1 - w0
+    val xZoomed get() = span < (hi - lo) * 0.995
+    val yZoomed get() = ySpan < (yHi - yLo) * 0.995
+    val zoomed get() = xZoomed || yZoomed
     val factor get() = (hi - lo) / span
+    val yFactor get() = (yHi - yLo) / ySpan
 
     /** True from the first second finger until every finger is lifted. */
     var pinching = false; private set
     private var prevFocus = 0f
+    private var prevFocusY = 0f
+    private val axisMinSpread = view.context.dp(48f)
 
     fun setDomain(lo: Double, hi: Double) {
         this.lo = lo
@@ -56,28 +74,54 @@ class XZoom(private val view: View, private val minSpan: Double) {
         if (s != null && s[0] == lo && s[1] == this.hi) { v0 = s[2]; v1 = s[3] } else { v0 = lo; v1 = this.hi }
     }
 
+    /** Value-axis range; keeps the current (or saved) vertical zoom while the range is unchanged. */
+    fun yDomain(lo: Double, hi: Double, minSpan: Double) {
+        val h = maxOf(hi, lo + 1e-6)
+        if (yInit && lo == yLo && h == yHi) return
+        yLo = lo; yHi = h; yMinSpan = minSpan; yInit = true
+        val s = key?.let { saved[it] }
+        if (s != null && s.size >= 8 && s[4] == lo && s[5] == h) { w0 = s[6]; w1 = s[7] } else { w0 = lo; w1 = h }
+    }
+
     fun x(v: Double): Float = ((v - v0) / span * plotW).toFloat()
     fun value(x: Float): Double = v0 + x / plotW * span
+    fun y(v: Double): Float = plotBottom - ((v - w0) / ySpan * (plotBottom - plotTop)).toFloat()
+    private fun yValue(py: Float): Double = w0 + (plotBottom - py) / (plotBottom - plotTop) * ySpan
 
     fun reset() {
-        v0 = lo; v1 = hi
+        v0 = lo; v1 = hi; w0 = yLo; w1 = yHi
         save()
         view.invalidate()
     }
 
-    private fun save() { key?.let { saved[it] = doubleArrayOf(lo, hi, v0, v1) } }
+    private fun save() { key?.let { saved[it] = doubleArrayOf(lo, hi, v0, v1, yLo, yHi, w0, w1) } }
 
     private val scale = ScaleGestureDetector(view.context, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
-        override fun onScaleBegin(d: ScaleGestureDetector): Boolean { prevFocus = d.focusX; return true }
+        override fun onScaleBegin(d: ScaleGestureDetector): Boolean {
+            prevFocus = d.focusX; prevFocusY = d.focusY; return true
+        }
         override fun onScale(d: ScaleGestureDetector): Boolean {
-            // Horizontal finger distance drives the x axis only.
-            val f = if (d.previousSpanX > 8f && d.currentSpanX > 8f) d.currentSpanX / d.previousSpanX else d.scaleFactor
+            // Each axis follows the finger spread along it, once the fingers are clearly apart
+            // on that axis; otherwise it only pans.
+            val fx = if (d.previousSpanX > axisMinSpread && d.currentSpanX > axisMinSpread) d.currentSpanX / d.previousSpanX else 1f
+            val fy = if (d.previousSpanY > axisMinSpread && d.currentSpanY > axisMinSpread) d.currentSpanY / d.previousSpanY else 1f
+
             val full = hi - lo
-            val newSpan = (span / f).coerceIn(minOf(minSpan, full), full)
+            val newSpan = (span / fx).coerceIn(minOf(minSpan, full), full)
             val anchor = value(prevFocus.coerceIn(0f, plotW))
             val start = (anchor - d.focusX.coerceIn(0f, plotW) / plotW * newSpan).coerceIn(lo, hi - newSpan)
             v0 = start; v1 = start + newSpan
-            prevFocus = d.focusX
+
+            if (yInit && plotBottom > plotTop) {
+                val fullY = yHi - yLo
+                val newYSpan = (ySpan / fy).coerceIn(minOf(yMinSpan, fullY), fullY)
+                val h = plotBottom - plotTop
+                val anchorY = yValue(prevFocusY.coerceIn(plotTop, plotBottom))
+                val startY = (anchorY - (plotBottom - d.focusY.coerceIn(plotTop, plotBottom)) / h * newYSpan)
+                    .coerceIn(yLo, yHi - newYSpan)
+                w0 = startY; w1 = startY + newYSpan
+            }
+            prevFocus = d.focusX; prevFocusY = d.focusY
             save()
             view.invalidate()
             return true
@@ -107,6 +151,23 @@ class XZoom(private val view: View, private val minSpan: Double) {
     companion object {
         private val saved = HashMap<String, DoubleArray>()
     }
+}
+
+/** Axis label for a tick: whole numbers without decimals. */
+private fun tickText(v: Double): String =
+    if (Math.abs(v - Math.round(v)) < 1e-6) Math.round(v).toString() else String.format(Locale.US, "%.1f", v)
+
+/** Round tick values covering [lo, hi] with about [target] intervals. */
+fun niceTicks(lo: Double, hi: Double, target: Int = 4): List<Double> {
+    if (hi <= lo) return listOf(lo)
+    val raw = (hi - lo) / target
+    val mag = Math.pow(10.0, Math.floor(Math.log10(raw)))
+    val n = raw / mag
+    val step = (if (n < 1.5) 1.0 else if (n < 3.0) 2.0 else if (n < 7.0) 5.0 else 10.0) * mag
+    val out = ArrayList<Double>()
+    var t = Math.ceil(lo / step - 1e-9) * step
+    while (t <= hi + step * 1e-6) { out.add(t); t += step }
+    return out
 }
 
 /** Paints and small drawing helpers shared by every chart. */
@@ -153,7 +214,10 @@ class ChartInk(private val context: Context, private val p: Palette) {
     /** "×2.3 원래대로" pill at the top left while zoomed; returns its rect for tap handling. */
     fun zoomPill(c: Canvas, zoom: XZoom): RectF? {
         if (!zoom.zoomed) return null
-        val t = String.format(Locale.US, "×%.1f  원래대로", zoom.factor)
+        val parts = ArrayList<String>()
+        if (zoom.xZoomed) parts.add(String.format(Locale.US, "가로 ×%.1f", zoom.factor))
+        if (zoom.yZoomed) parts.add(String.format(Locale.US, "세로 ×%.1f", zoom.yFactor))
+        val t = parts.joinToString(" · ") + "  원래대로"
         val w = small.measureText(t) + dp(16f)
         return bubble(c, t, w / 2, dp(1f), zoom.plotW, small)
     }
@@ -259,13 +323,16 @@ class SocChartView(context: Context, private val p: Palette) : View(context) {
         val top = ink.dp(30f)
         val bottom = height - ink.dp(20f)
         val last = minOf(now, end)
+        zoom.plotTop = top; zoom.plotBottom = bottom
+        zoom.yDomain(0.0, 100.0, 10.0)
         fun x(ts: Long) = zoom.x(ts.toDouble())
-        fun y(level: Int) = bottom - (bottom - top) * level / 100f
+        fun y(level: Int) = zoom.y(level.toDouble())
 
-        // Guides and the value axis.
-        for (v in intArrayOf(0, 25, 50, 75, 100)) ink.guide(c, y(v), 0f, plotW, v == 0)
+        // Guides and the value axis follow the vertical zoom.
+        val yTicks = niceTicks(zoom.w0, zoom.w1, 4)
+        for (v in yTicks) ink.guide(c, zoom.y(v), 0f, plotW, v == 0.0)
         ink.axis.textAlign = Paint.Align.LEFT
-        for (v in intArrayOf(0, 50, 100)) c.drawText("$v", plotW + ink.dp(6f), y(v) + ink.axis.textSize / 3, ink.axis)
+        for (v in yTicks) c.drawText(tickText(v), plotW + ink.dp(6f), zoom.y(v) + ink.axis.textSize / 3, ink.axis)
 
         c.save()
         c.clipRect(0f, 0f, plotW, height.toFloat())
@@ -292,6 +359,11 @@ class SocChartView(context: Context, private val p: Palette) : View(context) {
             lastLabelRight = px + w / 2
         }
 
+        // Series stay inside the plot area when zoomed vertically.
+        c.save()
+        c.clipRect(0f, top - ink.dp(2f), plotW, bottom + ink.dp(1f))
+        var marker: Pair<Float, Float>? = null
+        var markerLevel = 0
         if (points.isNotEmpty() && last > start) {
             line.reset(); estLine.reset(); area.reset()
             val firstX = x(maxOf(points[0].ts, start))
@@ -327,11 +399,13 @@ class SocChartView(context: Context, private val p: Palette) : View(context) {
             // Latest value, while the day is still running.
             if (now in start until end && scrub.x < 0f) {
                 val lx = x(last); val ly = y(tail.level)
-                if (lx in 0f..plotW) {
-                    ink.dot(c, lx, ly, p.soc)
-                    ink.bubble(c, "${tail.level}%", lx - ink.dp(18f), maxOf(0f, ly - ink.dp(34f)), plotW)
-                }
+                if (lx in 0f..plotW && ly in top..bottom) { marker = lx to ly; markerLevel = tail.level }
             }
+        }
+        c.restore()
+        marker?.let { (lx, ly) ->
+            ink.dot(c, lx, ly, p.soc)
+            ink.bubble(c, "$markerLevel%", lx - ink.dp(18f), maxOf(0f, ly - ink.dp(34f)), plotW)
         }
         c.restore()
 
@@ -344,7 +418,7 @@ class SocChartView(context: Context, private val p: Palette) : View(context) {
             ink.stroke.color = p.ink2; ink.stroke.strokeWidth = ink.dp(1f); ink.stroke.pathEffect = ink.dash
             c.drawLine(px, top, px, bottom, ink.stroke)
             ink.stroke.pathEffect = null
-            ink.dot(c, px, y(level), p.soc)
+            if (y(level) in top..bottom) ink.dot(c, px, y(level), p.soc)
             ink.bubble(c, "${Format.time(ts, zone)}  $level%", px, ink.dp(1f), width.toFloat())
         }
     }
@@ -408,6 +482,8 @@ abstract class DailyChart(context: Context, protected val p: Palette) : View(con
     protected val plotW get() = width - ink.dp(32f)
     protected val col get() = plotW / zoom.span.toFloat()
     protected fun cx(i: Int) = zoom.x(i + 0.5)
+    /** Pixel y of a value under the current vertical zoom. */
+    protected fun yOf(v: Double) = zoom.y(v)
 
     abstract fun maxValue(): Int
     abstract fun drawColumn(c: Canvas, i: Int, d: DayStat, y: (Int) -> Float, highlight: Boolean)
@@ -423,12 +499,15 @@ abstract class DailyChart(context: Context, protected val p: Palette) : View(con
     override fun onDraw(c: Canvas) {
         if (days.isEmpty()) return
         zoom.plotW = plotW
+        zoom.plotTop = top; zoom.plotBottom = bottom
         val max = maxValue()
-        val y = { v: Int -> bottom - (bottom - top) * v / max.toFloat() }
+        zoom.yDomain(0.0, max.toDouble(), max / 10.0)
+        val y = { v: Int -> zoom.y(v.toDouble()) }
 
-        for (v in intArrayOf(0, max / 2, max)) ink.guide(c, y(v), 0f, plotW, v == 0)
+        val yTicks = niceTicks(zoom.w0, zoom.w1, 4)
+        for (v in yTicks) ink.guide(c, zoom.y(v), 0f, plotW, v == 0.0)
         ink.axis.textAlign = Paint.Align.LEFT
-        for (v in intArrayOf(0, max / 2, max)) c.drawText("$v", plotW + ink.dp(6f), y(v) + ink.axis.textSize / 3, ink.axis)
+        for (v in yTicks) c.drawText(tickText(v), plotW + ink.dp(6f), zoom.y(v) + ink.axis.textSize / 3, ink.axis)
 
         c.save()
         c.clipRect(0f, 0f, plotW, height.toFloat())
@@ -446,8 +525,11 @@ abstract class DailyChart(context: Context, protected val p: Palette) : View(con
             c.drawText(label, cx(i).coerceIn(half, plotW - half), bottom + ink.dp(15f), ink.axis)
         }
         val touched = if (scrub.x >= 0f) indexAt(scrub.x) else -1
+        c.save()
+        c.clipRect(0f, top - ink.dp(2f), plotW, bottom)
         for (i in first..lastIdx) drawColumn(c, i, days[i], y, i == touched || i == selected)
         drawOverlay(c, y)
+        c.restore()
         c.restore()
 
         pill = if (scrub.x < 0f) ink.zoomPill(c, zoom) else null
@@ -510,19 +592,20 @@ class UsageChartView(context: Context, p: Palette) : DailyChart(context, p) {
 
     override fun drawColumn(c: Canvas, i: Int, d: DayStat, y: (Int) -> Float, highlight: Boolean) {
         if (d.usage <= 0) return
-        val t = minOf(y(d.usage), bottom - ink.dp(2f))
+        val base = y(0)
+        val t = minOf(y(d.usage), base - ink.dp(2f))
         // Today is still running: drawn lighter so it does not read as a full day.
         val color = when {
             highlight -> p.ink
             d.day == today -> p.accentDim
             else -> p.soc
         }
-        bar(c, cx(i), t, bottom, color)
+        bar(c, cx(i), t, base, color)
     }
 
     override fun drawOverlay(c: Canvas, y: (Int) -> Float) {
         val a = average ?: return
-        reference(c, bottom - (bottom - top) * (a / maxValue()).toFloat(), "평균 ${Math.round(a)}%")
+        reference(c, yOf(a), "평균 ${Math.round(a)}%")
     }
 
     override fun tooltip(d: DayStat): String? =
@@ -546,8 +629,8 @@ class RangeChartView(context: Context, p: Palette) : DailyChart(context, p) {
     }
 
     override fun drawOverlay(c: Canvas, y: (Int) -> Float) {
-        avgMax?.let { reference(c, bottom - (bottom - top) * (it / 100.0).toFloat(), "평균 최고 ${Math.round(it)}%") }
-        avgMin?.let { reference(c, bottom - (bottom - top) * (it / 100.0).toFloat(), "평균 최저 ${Math.round(it)}%") }
+        avgMax?.let { reference(c, yOf(it), "평균 최고 ${Math.round(it)}%") }
+        avgMin?.let { reference(c, yOf(it), "평균 최저 ${Math.round(it)}%") }
     }
 
     override fun tooltip(d: DayStat): String? =
@@ -615,15 +698,18 @@ class MiniLineChart(
             if (fromZero) hi = lo + minSpan
             else { val mid = (hi + lo) / 2; lo = mid - minSpan / 2; hi = lo + minSpan }
         }
+        zoom.plotTop = top; zoom.plotBottom = bottom
+        zoom.yDomain(lo.toDouble(), hi.toDouble(), maxOf(1.0, (hi - lo) / 10.0))
         fun x(ts: Long) = zoom.x(ts.toDouble())
-        fun y(v: Int) = bottom - (bottom - top) * (v - lo) / (hi - lo).toFloat()
+        fun y(v: Int) = zoom.y(v.toDouble())
         val last = minOf(now, end)
 
-        ink.guide(c, y(lo), 0f, plotW, true)
-        ink.guide(c, y(hi), 0f, plotW, false)
+        val yTicks = niceTicks(zoom.w0, zoom.w1, 2)
         ink.axis.textAlign = Paint.Align.LEFT
-        c.drawText(format(hi), plotW + ink.dp(6f), y(hi) + ink.axis.textSize / 3, ink.axis)
-        c.drawText(format(lo), plotW + ink.dp(6f), y(lo) + ink.axis.textSize / 3, ink.axis)
+        yTicks.forEachIndexed { i, v ->
+            ink.guide(c, zoom.y(v), 0f, plotW, i == 0 && v <= zoom.w0 + 1e-9)
+            c.drawText(format(Math.round(v).toInt()), plotW + ink.dp(6f), zoom.y(v) + ink.axis.textSize / 3, ink.axis)
+        }
 
         c.save()
         c.clipRect(0f, 0f, plotW, height.toFloat())
@@ -639,6 +725,8 @@ class MiniLineChart(
             lastRight = px + w / 2
         }
 
+        c.save()
+        c.clipRect(0f, top - ink.dp(2f), plotW, bottom + ink.dp(1f))
         line.reset(); area.reset()
         // Each run between gaps is its own stroke and filled area.
         var open = false
@@ -667,6 +755,7 @@ class MiniLineChart(
         ink.stroke.color = color; ink.stroke.strokeWidth = ink.dp(2f); ink.stroke.pathEffect = null
         c.drawPath(line, ink.stroke)
         c.restore()
+        c.restore()
 
         pill = if (scrub.x < 0f) ink.zoomPill(c, zoom) else null
         if (scrub.x >= 0f) {
@@ -680,7 +769,7 @@ class MiniLineChart(
             if (v == GAP) {
                 ink.bubble(c, "${Format.time(ts, zone)}  $gapLabel", px, ink.dp(1f), width.toFloat())
             } else {
-                ink.dot(c, px, y(v), color, ink.dp(3.5f))
+                if (y(v) in top..bottom) ink.dot(c, px, y(v), color, ink.dp(3.5f))
                 ink.bubble(c, "${Format.time(ts, zone)}  ${format(v)}", px, ink.dp(1f), width.toFloat())
             }
         }

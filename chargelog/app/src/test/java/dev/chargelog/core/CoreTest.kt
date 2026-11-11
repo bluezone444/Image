@@ -364,6 +364,32 @@ class CoreTest {
         assertEquals(5 * 60 + 19 * 12, Cadence.STANDARD.rowsPerDay())
     }
 
+    @Test fun chargeTierClassification() {
+        fun chg(ua: Int, mv: Int = 4000, plug: Int = Plug.AC, maxUa: Int = 0, maxUv: Int = 0) =
+            Sample(0, 40, plug, 2, 300, mv, currentUa = ua, maxChargeUa = maxUa, maxChargeUv = maxUv)
+        assertEquals(45, ChargeSpec.phoneMaxWatts("SM-S938N"))
+        assertEquals(60, ChargeSpec.phoneMaxWatts("sm-s948u"))
+        assertNull(ChargeSpec.phoneMaxWatts("Pixel 9"))
+
+        // ~22 W into the battery → 25 W super fast.
+        var r = ChargeSpec.classify(listOf(chg(1_000_000), chg(5_500_000)), 30, 45)!!
+        assertEquals(ChargeSpec.Tier.SUPER, r.tier); assertEquals(22.0, r.peakInputW!!, 1e-9); assertTrue(r.confident)
+        // ~36 W measured → 45 W (2.0).
+        r = ChargeSpec.classify(listOf(chg(9_000_000)), 20, 45)!!
+        assertEquals(ChargeSpec.Tier.SUPER2, r.tier)
+        // 45 W-capable charger on a 25 W phone → capped and flagged.
+        r = ChargeSpec.classify(listOf(chg(2_000_000, maxUa = 4_500_000, maxUv = 10_000_000)), 50, 25)!!
+        assertEquals(ChargeSpec.Tier.SUPER, r.tier); assertTrue(r.limitedByPhone)
+        // Reported 9 V × 1.67 A ≈ 15 W → fast charging.
+        r = ChargeSpec.classify(listOf(chg(500_000, maxUa = 1_670_000, maxUv = 9_000_000)), 50, null)!!
+        assertEquals(ChargeSpec.Tier.FAST, r.tier)
+        // Started at 85 % with only a trickle measured: not conclusive.
+        r = ChargeSpec.classify(listOf(chg(700_000)), 85, 45)!!
+        assertEquals(ChargeSpec.Tier.NORMAL, r.tier); assertTrue(!r.confident)
+        // Wireless is labelled as such.
+        assertTrue(ChargeSpec.classify(listOf(chg(2_000_000, plug = Plug.WIRELESS)), 30, 45)!!.wireless)
+    }
+
     @Test fun dailyWithNoDataIsEmpty() {
         val day = LocalDate.of(2026, 11, 10)
         val out = Stats.daily(emptyList(), null, zone, day, day)
