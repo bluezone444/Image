@@ -2233,9 +2233,9 @@ function bindDock(){ root.querySelectorAll('.dock button').forEach(b => b.onclic
 // 첫 화면 기본 캐릭터: 탈과 악세사리를 갖춘 귀여운 마스코트 (들어올 때마다 하나씩 바뀐다)
 const TS_MASCOTS = [
   {look:{skin:6, hairColor:2, eyeS:'big', eyes:'brown', brow:'soft', mouth:'cat', mark:'blush', face:'round'}, equip:{head:'hBear', neck:'chain', boots:'bootPink', wrist:'wrist'}},
-  {look:{skin:0, hairColor:3, eyeS:'star', eyes:'blue', brow:'arch', mouth:'grin', mark:'blush', face:'round'}, equip:{head:'hRabbit', face:'fHeart', back:'bWings', boots:'bootPink'}},
+  {look:{skin:0, hairColor:3, eyeS:'star', eyes:'blue', brow:'soft', mouth:'grin', mark:'blush', face:'round'}, equip:{head:'hRabbit', face:'fHeart', back:'bWings', boots:'bootPink'}},
   {look:{skin:1, hairColor:0, eyeS:'round', eyes:'green', brow:'soft', mouth:'fang', mark:'blush', face:'chubby'}, equip:{head:'hDino', back:'bTail', wrist:'wrist', boots:'bootBlack'}},
-  {look:{skin:6, hairColor:8, eyeS:'cat', eyes:'hazel', brow:'short', mouth:'cat', mark:'blush', face:'round'}, equip:{head:'hCat', ear:'earring', back:'bCape', boots:'bootGold'}},
+  {look:{skin:6, hairColor:8, eyeS:'big', eyes:'hazel', brow:'soft', mouth:'cat', mark:'blush', face:'round'}, equip:{head:'hCat', ear:'earring', back:'bCape', boots:'bootGold'}},
   {look:{skin:0, hairColor:0, eyeS:'smile', eyes:'brown', brow:'soft', mouth:'laugh', mark:'blush', face:'chubby'}, equip:{head:'hPanda', neck:'chain', hands:'gloves', boots:'bootPink'}},
   {look:{skin:2, hairColor:3, eyeS:'big', eyes:'brown', brow:'soft', mouth:'teeth', mark:'blush', face:'round'}, equip:{head:'hLion', back:'bCape', wrist:'wrist', boots:'bootGold'}}
 ];
@@ -2258,9 +2258,9 @@ function titleLife(tv, demo, has){
   const dice = $('#tsDice');
   if (dice) dice.onclick = () => {
     const m = nextMascot(), L = rollLook({...m.look}, ['skin','eyeS','eyes','brow','mouth','face']); demo.equip = m.equip;
-    if (['frown','pout','wavy','flat','o'].includes(L.mouth)) L.mouth = pick(['smile','grin','teeth','laugh','tiny']); // 첫 화면은 밝은 표정으로
-    if (['worried','angry'].includes(L.brow)) L.brow = 'soft';
-    if (!['round','big','smile','star','cat','lash','wink','dot'].includes(L.eyeS)) L.eyeS = pick(['big','star','round','smile']);
+    if (!['smile','grin','cat','tiny','laugh','teeth'].includes(L.mouth)) L.mouth = pick(['smile','grin','cat','tiny','laugh']); // 첫 화면은 밝고 가벼운 표정만
+    if (!['soft','thin','short'].includes(L.brow)) L.brow = pick(['soft','thin','short']);
+    if (!['round','big','smile','star'].includes(L.eyeS)) L.eyeS = pick(['big','star','round','smile']); // 치켜 올라간 눈은 빼고 동글동글하게
     demo.look = L; UI.preLook = L;
     tv.rebuild({look:L, equip:m.equip}); dice.classList.remove('roll'); void dice.offsetWidth; dice.classList.add('roll'); cheer('jump', 1000);
   };
