@@ -522,7 +522,7 @@ class CoreTest {
         )
         val d = Stats.daily(samples, null, zone, day, day).single()
         assertEquals(40 + 1 + 40 + 90, d.usage)      // 171 %: every drop accumulates, above 100 is fine
-        assertEquals(80, d.charged)                   // the unplugged +1 tick is not charging
+        assertEquals(1 + 80, d.charged)               // every rise accumulates, the +1 tick included
         assertEquals(10, d.minSoc); assertEquals(100, d.maxSoc)
     }
 

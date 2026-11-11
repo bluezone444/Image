@@ -76,7 +76,6 @@ class DailyBuilder(
     }
     private var prevLevel: Int? = baselineLevel
     private var prevDay: LocalDate? = null
-    private var prevCharging = false
 
 
     // Readings arrive in order, so the local day is looked up once per day, not per reading.
@@ -108,15 +107,13 @@ class DailyBuilder(
             if (p != null) {
                 val diff = level - p
                 // Every drop is discharge and accumulates, small gauge bounces included.
-                // A rise counts as charged, except a lone +1 % gauge tick while unplugged on both
-                // sides, which is not charging.
+                // Every rise accumulates as charged, 1 % gauge ticks included.
                 if (diff < 0) acc.usage -= diff
-                else if (diff > 1 || (diff == 1 && (charging || prevCharging))) acc.charged += diff
+                else if (diff > 0) acc.charged += diff
             }
         }
         prevLevel = level
         prevDay = day
-        prevCharging = charging
     }
 
     fun build(): List<DayStat> {
