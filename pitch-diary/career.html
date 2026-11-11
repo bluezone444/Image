@@ -44,7 +44,20 @@ button{-webkit-tap-highlight-color:transparent;cursor:pointer}
   background:linear-gradient(100deg,transparent,rgba(255,255,255,.05),transparent);animation:sweep 9s ease-in-out infinite}
 
 .wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 120px}
-.screen{animation:enter .32s cubic-bezier(.2,.8,.2,1) both}
+.screen{animation:fadeIn .2s ease both}
+/* 화면 들어올 때: 패널이 아래에서 차례로 올라온다 (자기 애니메이션이 있는 요소는 그대로) */
+:where(.screen:not(.still)) > :where(*){animation:rise .4s cubic-bezier(.2,.8,.2,1) backwards}
+:where(.screen:not(.still)) > :where(:nth-child(2)){animation-delay:.045s}
+:where(.screen:not(.still)) > :where(:nth-child(3)){animation-delay:.09s}
+:where(.screen:not(.still)) > :where(:nth-child(4)){animation-delay:.135s}
+:where(.screen:not(.still)) > :where(:nth-child(5)){animation-delay:.18s}
+:where(.screen:not(.still)) > :where(:nth-child(6)){animation-delay:.22s}
+:where(.screen:not(.still)) > :where(:nth-child(7)){animation-delay:.255s}
+:where(.screen:not(.still)) > :where(:nth-child(n+8)){animation-delay:.285s}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}}
+/* 누르는 느낌: 살짝 눌렸다가 튕겨 돌아온다 */
+:where(button){transition:transform .16s cubic-bezier(.3,1.5,.5,1)}
+:where(button:not(:disabled):active){transform:scale(.955);transition-duration:.07s}
 .screen.still{animation:none}
 .panel{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:2px solid var(--edge);border-radius:18px;box-shadow:0 6px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.07)}
 .pad{padding:16px}
@@ -638,6 +651,23 @@ p,small,.talk .line,.fans li,.feed li,.dlg p,.news li,.twist,.memo{text-wrap:pre
 .mopt .lucky .ico{width:12px;height:12px}
 .mopt b{font-family:var(--f-display);font-weight:400;font-size:14px;line-height:1.2;text-wrap:balance}
 .mopt small{font-size:10px;color:var(--muted);line-height:1.3}
+/* 타이틀 경기장 배경 */
+.ts-bg{position:absolute;left:0;right:0;top:-30px;bottom:-70px;z-index:0;pointer-events:none;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 12%,#000 82%,transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 12%,#000 82%,transparent 100%);animation:fadeIn .9s ease both}
+.ts-bg svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.ts-bg .l-light{animation:tsLight 6.5s ease-in-out infinite}
+.ts-bg .l-crowd{animation:tsCrowd 2.8s ease-in-out infinite}
+@keyframes tsLight{0%,100%{opacity:.72}50%{opacity:1}}
+@keyframes tsCrowd{0%,100%{opacity:.05}50%{opacity:.6}}
+.ts-stage .viewer.hero{position:relative;z-index:1;-webkit-mask-image:none;mask-image:none}
+.ts-stage .ts-floor{display:none}
+.ts-floor,.ts-tapme,.ts-dice{z-index:2}
+/* 은은한 움직임: 엠블럼이 떠 있고, 시작 버튼에 빛이 지나간다 */
+.vs .side .crest{animation:floatY 3.6s ease-in-out infinite}
+.vs .side:last-child .crest{animation-delay:-1.8s}
+@keyframes floatY{0%,100%{transform:none}50%{transform:translateY(-4px)}}
+.ts-new.primary{position:relative;overflow:hidden}
+.ts-new.primary::after{content:"";position:absolute;top:-20%;bottom:-20%;left:0;width:34%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:translateX(-140%) skewX(-18deg);animation:ctaSheen 4.2s ease-in-out 1.2s infinite;pointer-events:none}
+@keyframes ctaSheen{0%,62%{transform:translateX(-140%) skewX(-18deg)}100%{transform:translateX(440%) skewX(-18deg)}}
 /* 타이틀: 롤링 문구 · 탭 안내 · 랜덤 얼굴 */
 .ts-hook{display:inline-block;transition:opacity .26s ease,transform .26s ease}
 .ts-hook.out{opacity:0;transform:translateY(6px)}
@@ -2241,6 +2271,24 @@ const TS_MASCOTS = [
 ];
 let tsMascot = -1;
 const nextMascot = () => { tsMascot = (tsMascot < 0 ? ri(0, TS_MASCOTS.length - 1) : tsMascot + 1) % TS_MASCOTS.length; const m = TS_MASCOTS[tsMascot]; return {look: cleanLook({...DEFAULT_LOOK, hair:'short', ...m.look}), equip: {...m.equip}}; };
+// 밤 경기장 배경: 조명탑 · 2층 관중석 · 잔디. 고정 그림 / 조명 / 관중 반짝임 세 겹으로 나눠 겹마다 통째로 opacity만 움직인다
+const STADIUM_VB = 'viewBox="0 0 360 420" preserveAspectRatio="xMidYMax slice"';
+const STADIUM_TIERS = '<clipPath id="ID_up"><path d="M-10 172Q180 214 370 172V232Q180 262-10 232Z"/></clipPath><clipPath id="ID_lo"><path d="M-10 246Q180 276 370 246V322Q180 334-10 322Z"/></clipPath>';
+const stadiumBase = id => `<defs><linearGradient id="${id}_st" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#17246e"/><stop offset="1" stop-color="#0b133d"/></linearGradient><linearGradient id="${id}_pt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#23924c"/><stop offset="1" stop-color="#125a2e"/></linearGradient><radialGradient id="${id}_vg" cx="50%" cy="55%" r="50%"><stop offset="0" stop-color="#070b22" stop-opacity=".88"/><stop offset=".55" stop-color="#070b22" stop-opacity=".5"/><stop offset="1" stop-color="#070b22" stop-opacity="0"/></radialGradient><pattern id="${id}_cr" width="9" height="8" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r=".85" fill="#ffd36a"/><circle cx="6.5" cy="6" r=".85" fill="#aebcff"/></pattern><clipPath id="${id}_pc"><rect y="330" width="360" height="90"/></clipPath>${STADIUM_TIERS.replace(/ID/g, id)}<g id="${id}_tw"><path d="M50 332 55 88M68 332 63 88M52 300 67 268M66 300 53 268M53 236 66 204M65 236 54 204M54 172 65 140M64 172 55 140M55 116 64 92" stroke="#2a3da8" stroke-width="2" fill="none"/><rect x="40" y="44" width="38" height="32" rx="5" fill="#141d52" stroke="#2a3da8" stroke-width="2"/>${[0,1,2].map(r => [0,1,2,3].map(c => `<circle cx="${46.5 + c * 8.4}" cy="${51 + r * 9}" r="3" fill="#fff3c4"/>`).join('')).join('')}</g></defs>
+<use href="#${id}_tw"/><use href="#${id}_tw" transform="translate(360) scale(-1 1)"/>
+<path d="M-10 172Q180 214 370 172V232Q180 262-10 232Z" fill="url(#${id}_st)"/><rect x="-10" y="172" width="380" height="90" fill="url(#${id}_cr)" clip-path="url(#${id}_up)" opacity=".5"/>
+<path d="M-10 172Q180 214 370 172" stroke="#3a50d0" stroke-width="5" fill="none"/>${[[36,184],[92,191],[258,191],[314,184]].map(([x, y]) => `<rect x="${x}" y="${y}" width="10" height="4" rx="1" fill="#ffd36a"/>`).join('')}
+<path d="M-10 232Q180 262 370 232V246Q180 276-10 246Z" fill="#1d2d92"/>
+<path d="M-10 246Q180 276 370 246V322Q180 334-10 322Z" fill="url(#${id}_st)"/><rect x="-10" y="246" width="380" height="90" fill="url(#${id}_cr)" clip-path="url(#${id}_lo)" opacity=".55"/>
+<path d="M-10 322Q180 334 370 322V334H-10Z" fill="#0a1238"/><path d="M-10 322Q180 334 370 322" stroke="#ffc83d" stroke-opacity=".55" stroke-width="1.5" fill="none"/>
+<rect y="330" width="360" height="90" fill="url(#${id}_pt)"/><g clip-path="url(#${id}_pc)" fill="#fff" opacity=".07">${[-6,-4,-2,0,2,4].map(k => `<path d="M180 250 ${180 + k * 80} 420h80Z"/>`).join('')}</g>
+<g stroke="#fff" stroke-opacity=".6" stroke-width="2" fill="none"><ellipse cx="180" cy="356" rx="118" ry="17"/><path d="M0 356h360"/></g>
+<ellipse cx="180" cy="235" rx="165" ry="150" fill="url(#${id}_vg)"/>`;
+const stadiumLights = id => `<defs><linearGradient id="${id}_bm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1c4" stop-opacity=".42"/><stop offset="1" stop-color="#fff1c4" stop-opacity="0"/></linearGradient><radialGradient id="${id}_gl"><stop offset="0" stop-color="#fff6d8" stop-opacity=".95"/><stop offset=".35" stop-color="#ffd36a" stop-opacity=".4"/><stop offset="1" stop-color="#ffc83d" stop-opacity="0"/></radialGradient></defs>
+<path d="M59 60 250 345H70Z" fill="url(#${id}_bm)"/><path d="M301 60 110 345H290Z" fill="url(#${id}_bm)"/><circle cx="59" cy="60" r="44" fill="url(#${id}_gl)"/><circle cx="301" cy="60" r="44" fill="url(#${id}_gl)"/>`;
+const stadiumCrowd = id => `<defs><pattern id="${id}_c2" width="13" height="8" patternUnits="userSpaceOnUse"><circle cx="9.5" cy="2.5" r=".9" fill="#fff"/><circle cx="3" cy="6" r=".85" fill="#ffb347"/></pattern>${STADIUM_TIERS.replace(/ID/g, id)}</defs>
+<rect x="-10" y="172" width="380" height="90" fill="url(#${id}_c2)" clip-path="url(#${id}_up)"/><rect x="-10" y="246" width="380" height="90" fill="url(#${id}_c2)" clip-path="url(#${id}_lo)"/>`;
+const stadiumHtml = () => `<div class="ts-bg" aria-hidden="true"><svg ${STADIUM_VB}>${stadiumBase('sb')}</svg><svg class="l-light" ${STADIUM_VB}>${stadiumLights('sl')}</svg><svg class="l-crowd" ${STADIUM_VB}>${stadiumCrowd('sc')}</svg></div>`;
 const TS_HOOKS = ['K리그에서 유럽 무대까지, 나만의 축구 인생', '고3 유망주에서 발롱도르까지', '감독의 황당한 질문, 센스 있게 받아쳐라', '시즌 베스트 11에 내 이름을 올려라', '은퇴하면 아들이 내 뒤를 잇는다'];
 // 타이틀: 문구가 바뀌고, 캐릭터가 가끔 세리머니하고, 탭하면 점프한다
 function titleLife(tv, demo, has){
@@ -2283,12 +2331,11 @@ function renderTitle(){
       </button></div>`;
   };
   root.innerHTML = `<div class="ts">
-    <div class="ts-beams" aria-hidden="true"><i></i><i></i><i></i></div>
     <header class="ts-top">
       <div class="ts-brand"><span class="ts-mark">${ic('goal')}</span><span>PITCH CAREER</span></div>
       <span class="ts-chip">${TRIAL_END ? `체험판 · ${trialDate()}까지` : `${new Date().getFullYear() + 1} SEASON`}</span>
     </header>
-    <div class="ts-stage"><div class="viewer hero" id="tv"></div><div class="ts-floor" aria-hidden="true"></div><i class="ts-tapme" aria-hidden="true">${has ? '탭!' : '탭해서 세리머니'}</i>${has ? '' : `<button type="button" class="ts-dice" id="tsDice">${ic('dice-5')} 다른 친구</button>`}</div>
+    <div class="ts-stage">${stadiumHtml()}<div class="viewer hero" id="tv"></div><div class="ts-floor" aria-hidden="true"></div><i class="ts-tapme" aria-hidden="true">${has ? '탭!' : '탭해서 세리머니'}</i>${has ? '' : `<button type="button" class="ts-dice" id="tsDice">${ic('dice-5')} 다른 친구</button>`}</div>
     <section class="ts-body">
       <h1 class="ts-title"><span>PITCH</span><span>CAREER</span></h1>
       <p class="ts-sub" aria-live="polite"><span class="ts-hook">${TS_HOOKS[0]}</span></p>
@@ -6453,8 +6500,7 @@ async function makeCard(kind){
   // 배경: 밤 경기장 + 조명 + 잔디
   let g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#0a1030'); g.addColorStop(.62, '#121c4a'); g.addColorStop(1, '#0b3a22'); c.fillStyle = g; c.fillRect(0, 0, W, H);
   g = c.createRadialGradient(W / 2, 330, 40, W / 2, 330, 620); g.addColorStop(0, D.gold ? 'rgba(255,200,61,.35)' : 'rgba(61,214,255,.28)'); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.fillRect(0, 0, W, H);
-  c.save(); c.globalAlpha = .07; c.fillStyle = '#fff'; for (let i = 0; i < 6; i++){ c.beginPath(); c.moveTo(W / 2 + (i - 2.5) * 70, -20); c.lineTo(W / 2 + (i - 2.5) * 300, 900); c.lineTo(W / 2 + (i - 2.5) * 300 + 90, 900); c.closePath(); c.fill(); } c.restore();
-  c.save(); c.globalAlpha = .18; c.fillStyle = '#fff'; for (let i = 0; i < 90; i++){ const x = (i * 137) % W, y = 120 + ((i * 89) % 420); c.fillRect(x, y, 3, 3); } c.restore();
+  try { const bg = await svgImage(`<svg viewBox="0 0 360 420">${stadiumBase('cb')}${stadiumLights('cl')}${stadiumCrowd('cc')}</svg>`, 1260, 1470); c.save(); c.globalAlpha = .9; c.drawImage(bg, -90, -305, 1260, 1470); c.restore(); } catch {}
   if (D.gold){ c.save(); const cols = ['#ffc83d', '#ffffff', kit, '#b98bff']; for (let i = 0; i < 46; i++){ c.fillStyle = cols[i % 4]; c.globalAlpha = .75; c.translate(0, 0); const x = (i * 211) % W, y = 90 + ((i * 131) % 700); c.save(); c.translate(x, y); c.rotate(i); c.fillRect(-7, -3, 14, 6); c.restore(); } c.restore(); }
   // 상단 브랜드
   c.fillStyle = acc; rr(64, 64, 56, 56, 16); c.fill();
