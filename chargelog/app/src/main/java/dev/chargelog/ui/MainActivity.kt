@@ -897,18 +897,31 @@ class MainActivity : Activity() {
         return r
     }
 
+    /** Time line: start → end to the second (end date only when it differs) and duration. */
+    private fun sessionTimeLine(s: Session, now: Long): String {
+        val endTs = s.endTs
+        val sameDay = endTs != null && java.time.Instant.ofEpochMilli(endTs).atZone(zone).toLocalDate() ==
+            java.time.Instant.ofEpochMilli(s.startTs).atZone(zone).toLocalDate()
+        val end = when {
+            endTs == null -> "진행 중"
+            sameDay -> Format.timeSec(endTs, zone)
+            else -> Format.dateTimeSec(endTs, zone)
+        }
+        return "${Format.dateTimeSec(s.startTs, zone)} → $end  (${Format.durationSec(s.durationMs(now))})"
+    }
+
+    /** Value line: rate, and for charging the tier and when the top SOC was reached. */
     private fun sessionLine2(s: Session, now: Long): String {
         val endTs = s.endTs
-        val span = Format.dateTime(s.startTs, zone) + " → " +
-            (if (endTs == null) "진행 중" else Format.dateTime(endTs, zone))
-        val parts = arrayListOf(span, Format.duration(s.durationMs(now)))
+        val parts = arrayListOf<String>()
         s.ratePerHour(now)?.let { parts.add(String.format(Locale.US, "%.1f%%/시간", it)) }
         if (s.type == SessionType.CHARGE) {
             val spec = chargeSpec(s, now)
             parts.add(spec?.label() ?: Plug.labelKo(s.plug))
             val settled = (endTs ?: now) - s.peakTs > 20 * 60_000L
-            if (settled && s.maxSoc > s.startSoc) parts.add("${s.maxSoc}% 도달 ${Format.time(s.peakTs, zone)}")
+            if (settled && s.maxSoc > s.startSoc) parts.add("${s.maxSoc}% 도달 ${Format.timeSec(s.peakTs, zone)}")
         }
+        if (parts.isEmpty()) parts.add(if (s.open) "측정 중" else "-")
         return parts.joinToString(" · ")
     }
 
@@ -921,7 +934,9 @@ class MainActivity : Activity() {
         }, lp(dpi(40f), dpi(40f)))
         addView(column().apply {
             addView(label(sessionLine1(s), 15f, p.ink, bold = true))
-            addView(label(sessionLine2(s, now), 13f, p.ink2), lp(WRAP, WRAP, top = dpi(4f)))
+            addView(number(sessionTimeLine(s, now), 13f, p.ink2), lp(WRAP, WRAP, top = dpi(5f)))
+            addView(label(sessionLine2(s, now), 14f, p.ink, bold = true).apply { alpha = 0.85f },
+                lp(WRAP, WRAP, top = dpi(4f)))
         }, lp(0, WRAP, 1f, left = dpi(10f)))
     }
 

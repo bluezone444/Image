@@ -17,6 +17,26 @@ object Format {
 
     fun dateTime(ts: Long, zone: ZoneId): String = mdhm.format(Instant.ofEpochMilli(ts).atZone(zone))
 
+    private val mdhms = DateTimeFormatter.ofPattern("M/d HH:mm:ss")
+    private val hms = DateTimeFormatter.ofPattern("HH:mm:ss")
+
+    /** "11/11 20:50:12". */
+    fun dateTimeSec(ts: Long, zone: ZoneId): String = mdhms.format(Instant.ofEpochMilli(ts).atZone(zone))
+
+    /** "20:50:12". */
+    fun timeSec(ts: Long, zone: ZoneId): String = hms.format(Instant.ofEpochMilli(ts).atZone(zone))
+
+    /** "1시간 39분 12초", "22분 5초", "48초". */
+    fun durationSec(ms: Long): String {
+        val total = (ms / 1000L).coerceAtLeast(0)
+        val h = total / 3600; val m = (total % 3600) / 60; val sec = total % 60
+        return listOfNotNull(
+            if (h > 0) "${h}시간" else null,
+            if (m > 0 || h > 0) "${m}분" else null,
+            "${sec}초",
+        ).joinToString(" ")
+    }
+
     fun duration(ms: Long): String {
         val min = (ms / 60_000L).coerceAtLeast(0)
         val h = min / 60
