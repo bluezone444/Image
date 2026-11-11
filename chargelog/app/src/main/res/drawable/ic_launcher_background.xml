@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Teal-to-deep-green diagonal gradient, the app's SOC hue. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient
+        android:angle="315"
+        android:startColor="#22C58B"
+        android:centerColor="#16A374"
+        android:endColor="#0B6E5A"
+        android:type="linear" />
+</shape>

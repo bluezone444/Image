@@ -519,10 +519,10 @@ class MainActivity : Activity() {
         val pad = if (compact) 12f else 14f
 
         val root = column().apply { setPadding(dpi(16f), dpi(if (compact) 10f else 14f), dpi(16f), dpi(if (compact) 8f else 12f)) }
-        root.addView(row().apply {
-            addView(label("충전 로그", if (compact) 20f else 22f, p.ink, bold = true), lp(0, WRAP, 1f))
-            addView(label(dateTitle(today), 14f, p.ink2))
-            setPadding(dpi(2f), 0, 0, 0)
+        root.addView(column().apply {
+            addView(label(dateTitle(today), 13f, p.muted), lp(WRAP, WRAP))
+            addView(label("오늘", if (compact) 22f else 26f, p.ink, bold = true), lp(WRAP, WRAP, top = dpi(2f)))
+            setPadding(dpi(4f), 0, 0, 0)
         })
         if (!exempt) root.addView(keepAliveBanner(compact), lp(MATCH, WRAP, top = gap))
         root.addView(statusCard(now, compact), lp(MATCH, WRAP, top = gap))
@@ -552,55 +552,58 @@ class MainActivity : Activity() {
         content.addView(root)
     }
 
-    private fun statusCard(now: Long, compact: Boolean = false): View = card(p, if (compact) 12f else 14f).apply {
+    /**
+     * The battery right now: SOC ring and the running session, on the same tint as the session
+     * cards (light red while charging, light blue in use).
+     */
+    private fun statusCard(now: Long, compact: Boolean = false): View = column().apply {
         val s = current
-        val recent = db.latestSessions(3)
-        val open = recent.firstOrNull { it.open }
+        val open = db.latestSessions(1).firstOrNull { it.open }
+        val charging = s?.charging == true
+        background = roundRect(if (charging) p.chargeBg else p.useBg, 20f, if (charging) p.chargeLine else p.useLine)
+        val pad = dpi(if (compact) 12f else 16f)
+        setPadding(pad, pad, pad, pad)
         addView(row().apply {
             addView(RingGauge(context, p).apply {
                 level = s?.level ?: 0
                 caption = "배터리"
-            }, (if (compact) dpi(88f) else dpi(112f)).let { lp(it, it) })
+            }, (if (compact) dpi(92f) else dpi(116f)).let { lp(it, it) })
             addView(column().apply {
-                val (state, dot) = when {
-                    s == null -> "측정 대기" to p.muted
-                    s.charging && s.status == 5 -> "충전 완료 · ${Plug.labelKo(s.plugged)}" to p.soc
-                    s.charging -> "충전 중 · " + (open?.let { chargeSpec(it, now) }?.takeIf { !it.pending }?.let {
-                        if (it.wireless) "무선 ${it.watts}W" else it.tier.label
-                    } ?: Plug.labelKo(s.plugged)) to p.soc
-                    else -> "사용 중" to p.muted
+                val state = when {
+                    s == null -> "측정 대기"
+                    s.charging && s.status == 5 -> "⚡ 완충 · 연결됨"
+                    s.charging -> "⚡ 충전 중 · " + (open?.let { chargeSpec(it, now) }?.takeIf { !it.pending }?.let {
+                        if (it.wireless) "무선 ${it.watts}W" else "${it.watts}W"
+                    } ?: Plug.labelKo(s.plugged))
+                    else -> "📱 사용 중"
                 }
-                addView(chip(p, state, dot), lp(WRAP, WRAP))
+                addView(label(state, 16f, p.ink, bold = true), lp(WRAP, WRAP))
                 if (open != null) {
-                    val charge = open.type == SessionType.CHARGE
-                    addView(caption((if (charge) "이번 충전" else "충전 후 사용") + if (open.est) " · 추정 포함" else "", p),
-                        lp(WRAP, WRAP, top = dpi(if (compact) 6f else 10f)))
                     addView(row().apply {
                         gravity = Gravity.BOTTOM
-                        addView(number("${Format.signed(open.delta)}%", 26f, p.ink))
+                        addView(number("${Format.signed(open.delta)}%", if (compact) 26f else 30f, p.ink))
                         addView(label("  ${open.startSoc}% → ${open.endSoc}%", 14f, p.ink2),
-                            lp(WRAP, WRAP).apply { bottomMargin = dpi(2f) })
-                    }, lp(WRAP, WRAP, top = dpi(4f)))
-                    val parts = arrayListOf("${Format.time(open.startTs, zone)} 시작", Format.duration(open.durationMs(now)))
-                    open.ratePerHour(now)?.let { parts.add(String.format(Locale.US, "%.1f%%/시간", it)) }
-                    addView(label(parts.joinToString(" · "), 13f, p.ink2), lp(WRAP, WRAP, top = dpi(5f)))
-                }
-                if (!compact) recent.firstOrNull { !it.open }?.let { prev ->
-                    val kind = if (prev.type == SessionType.CHARGE) "직전 충전" else "직전 사용"
-                    addView(label("$kind ${prev.startSoc}→${prev.endSoc}% · ${Format.duration(prev.durationMs(now))}",
-                        12f, p.muted), lp(WRAP, WRAP, top = dpi(4f)))
+                            lp(WRAP, WRAP).apply { bottomMargin = dpi(3f) })
+                    }, lp(WRAP, WRAP, top = dpi(if (compact) 4f else 8f)))
+                    val parts = arrayListOf("${Format.time(open.startTs, zone)}부터", Format.duration(open.durationMs(now)))
+                    open.ratePerHour(now)?.let { parts.add(String.format(Locale.US, "%.1f%%/h", it)) }
+                    addView(label(parts.joinToString(" · ") + if (open.est) " · 추정 포함" else "", 13f, p.ink2),
+                        lp(WRAP, WRAP, top = dpi(4f)))
+                    if (open.type == SessionType.CHARGE) chargeEvents(open, now).fullTs?.let {
+                        addView(label("100% 도달 ${Format.timeSec(it, zone)}", 13f, p.ink2), lp(WRAP, WRAP, top = dpi(2f)))
+                    }
                 }
             }, lp(0, WRAP, 1f, left = dpi(16f)))
         })
     }
 
     private fun todayCard(t: DayStat, usual: dev.chargelog.core.Summary?, pad: Float = 14f): View = card(p, pad).apply {
-        addView(sectionTitle(p, "오늘", if (usual != null) "평소 = 최근 ${usual.days.size}일 평균" else "평소 비교는 하루 전체 기록 후"))
+        addView(sectionTitle(p, "오늘 요약", if (usual != null) "평소: 최근 ${usual.days.size}일" else "평소 비교는 하루 기록 후"))
         fun note(v: Double?) = if (usual == null) null else "평소 ${pct(v)}"
         addView(tileRow(p, listOf(
             tile(p, "사용량", "${t.usage}%", note(usual?.avgUsage)),
             tile(p, "충전량", "${t.charged}%", if (usual == null) null else
-                "충전 ${usual.chargesPerDay?.let { String.format(Locale.US, "%.1f", it) } ?: "-"}회/일"),
+                "평소 ${usual.chargesPerDay?.let { String.format(Locale.US, "%.1f", it) } ?: "-"}회"),
             tile(p, "최저", pct(t.minSoc), note(usual?.avgMin)),
             tile(p, "최고", pct(t.maxSoc), note(usual?.avgMax)),
         )), lp(MATCH, WRAP, top = dpi(if (pad < 14f) 7f else 10f)))
@@ -632,14 +635,15 @@ class MainActivity : Activity() {
                 })
                 addView(Sparkline(context, p, color, fromZero).apply { set(pts, start, maxOf(now, start + 1), span) },
                     lp(MATCH, dpi(if (compact) 28f else 40f), top = dpi(if (compact) 4f else 6f)))
-                addView(label(rangeText ?: if (pts.isEmpty()) "기록 없음" else "오늘 ${fmt(pts.minOf { it.second })} – ${fmt(pts.maxOf { it.second })}",
-                    11f, p.muted), lp(WRAP, WRAP, top = dpi(4f)))
+                val real = pts.filter { it.second != Drain.BREAK }
+                addView(label(rangeText ?: if (real.isEmpty()) "기록 없음" else "${fmt(real.minOf { it.second })} – ${fmt(real.maxOf { it.second })}",
+                    12f, p.muted), lp(WRAP, WRAP, top = dpi(4f)))
                 if (source != null) addView(label(source, 12f, p.muted), lp(WRAP, WRAP, top = dpi(2f)))
             }
         addView(tileRow(p, listOf(
             half("배터리 온도", s?.let { c1(it.temp) } ?: "-", dev.chargelog.core.Smooth.movingAverage(temps, 5 * 60_000L), c1, 20, p.temp),
             half("방전 전류", drainNow, dev.chargelog.core.Smooth.movingAverage(drain, 10 * 60_000L), ma, 300, p.volt,
-                rangeText = drainSum?.let { "오늘 평균 ${it.first}mA · 최대 ${it.second}mA" } ?: "오늘 방전 기록 없음",
+                rangeText = drainSum?.let { "평균 ${it.first} · 최대 ${it.second}mA" } ?: "방전 기록 없음",
                 fromZero = true),
         )))
     }

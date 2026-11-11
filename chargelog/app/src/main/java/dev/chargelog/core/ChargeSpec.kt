@@ -138,14 +138,6 @@ object ChargeSpec {
         val wireless = obs.any { it.plugged == Plug.WIRELESS }
         val charging = obs.filter { it.status == 2 }
 
-        // Too little charging seen (just plugged in, or a few seconds on the charger): the
-        // current is still ramping up, so any figure would be meaningless.
-        val observedMs = if (charging.isEmpty()) 0L else charging.last().ts - charging.first().ts
-        if (observedMs < MIN_OBSERVED_MS) {
-            val short = obs.last().ts - obs.first().ts < MIN_OBSERVED_MS
-            return Result(Tier.NORMAL, 0, null, null, false, false, wireless, pending = true, short = short)
-        }
-
         val maxW = if (wireless) phone?.wirelessW else phone?.wiredW
         val allowed = (if (wireless) WIRELESS_TIERS else Tier.values().map { it.watts })
             .let { all -> if (maxW == null) all else all.filter { it <= maxW }.ifEmpty { listOf(all.first()) } }
@@ -155,6 +147,19 @@ object ChargeSpec {
         val reported = obs.filter { it.maxChargeUa > 0 && it.maxChargeUv > 0 }
             .map { it.maxChargeUa.toDouble() * it.maxChargeUv / 1e12 }
             .filter { it <= REPORTED_MAX_W }.maxOrNull()
+
+        // A short session is still classified when the evidence is strong: the charger reported
+        // its maximum, or at least two real charging readings agree. A lone ramp-up reading is
+        // not enough, so that case stays on hold.
+        val observedMs = if (charging.isEmpty()) 0L else charging.last().ts - charging.first().ts
+        if (observedMs < MIN_OBSERVED_MS) {
+            val measured = charging.mapNotNull { inputWatts(it) }.filter { it >= SHORT_MIN_W && it <= ceiling }
+            val consistent = measured.size >= 2 && measured.max() <= measured.min() * SHORT_AGREE
+            if (reported == null && !consistent) {
+                val short = obs.last().ts - obs.first().ts < MIN_OBSERVED_MS
+                return Result(Tier.NORMAL, 0, null, null, false, false, wireless, pending = true, short = short)
+            }
+        }
 
         // Charger-side estimate: what the charger says it offers, or what went in plus losses.
         val estimate = maxOf(reported ?: 0.0, (peak ?: 0.0) / EFFICIENCY)
@@ -167,6 +172,11 @@ object ChargeSpec {
         val tier = if (wireless) Tier.NORMAL else Tier.values().first { it.watts == watts }
         return Result(tier, watts, shownPeak, reported, limited, confident, wireless)
     }
+
+    /** Short sessions: readings below this are ramp-up noise, not a charging speed. */
+    private const val SHORT_MIN_W = 3.0
+    /** Short sessions: two readings within this ratio count as agreeing. */
+    private const val SHORT_AGREE = 1.3
 
     /** Above any phone charger; larger "reported" values are not watts from a real charger. */
     private const val REPORTED_MAX_W = 150.0

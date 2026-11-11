@@ -453,6 +453,13 @@ class CoreTest {
         // A single reading, even a strong one.
         r = ChargeSpec.classify(listOf(chg(0.0, 9_000_000)), 20, fold)!!
         assertTrue(r.pending)
+        // Short but strong evidence: two agreeing ~20 W readings → classified, not held.
+        r = ChargeSpec.classify(listOf(chg(0.0, 4_800_000), chg(1.0, 5_200_000)), 30, fold)!!
+        assertTrue(!r.pending); assertEquals(25, r.watts)
+        // Short but the charger reported 9 V × 2.77 A ≈ 25 W → classified.
+        r = ChargeSpec.classify(listOf(Sample(0, 30, Plug.AC, 2, 300, 4000, currentUa = 300_000,
+            maxChargeUa = 2_770_000, maxChargeUv = 9_000_000)), 30, fold)!!
+        assertTrue(!r.pending); assertEquals(25, r.watts)
         // Three minutes of charging is enough.
         r = ChargeSpec.classify(listOf(chg(0.0, 250_000), chg(3.0, 5_500_000), chg(3.5, 5_400_000)), 40, fold)!!
         assertTrue(!r.pending); assertEquals(25, r.watts)

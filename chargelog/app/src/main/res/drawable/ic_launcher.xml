@@ -1,9 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
-        <shape android:shape="oval">
-            <solid android:color="#1BAF7A" />
+        <shape android:shape="rectangle">
+            <corners android:radius="22dp" />
+            <gradient
+                android:angle="315"
+                android:startColor="#22C58B"
+                android:centerColor="#16A374"
+                android:endColor="#0B6E5A"
+                android:type="linear" />
         </shape>
     </item>
-    <item android:drawable="@drawable/ic_stat"
-        android:left="11dp" android:top="11dp" android:right="11dp" android:bottom="11dp" />
+    <item android:drawable="@drawable/ic_launcher_foreground" />
 </layer-list>
