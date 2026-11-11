@@ -912,16 +912,26 @@ class MainActivity : Activity() {
         return parts.joinToString(" · ")
     }
 
+    /** Session row: ⚡ badge for charging, 📱 for use; the card tint is applied by [sessionCard]. */
     private fun sessionRow(s: Session, now: Long): View = row().apply {
-        // Shape + label carry the type; color only reinforces it.
         val charge = s.type == SessionType.CHARGE
-        addView(View(context).apply {
-            background = roundRect(if (charge) p.accent else p.muted, 2f)
-        }, lp(dpi(4f), dpi(34f)))
+        addView(label(if (charge) "⚡" else "📱", 18f, p.ink).apply {
+            gravity = Gravity.CENTER
+            background = roundRect(if (charge) p.chargeBadge else p.useBadge, 20f)
+        }, lp(dpi(40f), dpi(40f)))
         addView(column().apply {
             addView(label(sessionLine1(s), 15f, p.ink, bold = true))
             addView(label(sessionLine2(s, now), 13f, p.ink2), lp(WRAP, WRAP, top = dpi(4f)))
         }, lp(0, WRAP, 1f, left = dpi(10f)))
+    }
+
+    /** Tinted card: light red while charging, light blue while in use. */
+    private fun sessionCard(s: Session, now: Long): View = column().apply {
+        val charge = s.type == SessionType.CHARGE
+        background = roundRect(if (charge) p.chargeBg else p.useBg, 18f, if (charge) p.chargeLine else p.useLine)
+        val pad = dpi(14f)
+        setPadding(pad, pad, pad, pad)
+        addView(sessionRow(s, now))
     }
 
     private sealed class Row {
@@ -972,7 +982,7 @@ class MainActivity : Activity() {
                         is Row.Day -> dayHeader(row.stat, row.charges)
                         is Row.Item -> FrameLayout(context).apply {
                             setPadding(0, dpi(4f), 0, dpi(4f))
-                            addView(card(p, 14f).apply { addView(sessionRow(row.session, now)) })
+                            addView(sessionCard(row.session, now))
                         }
                     }
             }

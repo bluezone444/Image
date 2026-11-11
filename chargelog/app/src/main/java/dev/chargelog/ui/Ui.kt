@@ -61,6 +61,14 @@ class Palette(context: Context) {
 
     // Status
     val danger = if (dark) 0xFFF97066.toInt() else 0xFFD92D20.toInt()
+
+    // Session cards: charging = light red, in use = light blue (tinted surfaces, ink text on top).
+    val chargeBg = if (dark) 0xFF3A2225.toInt() else 0xFFFDEDED.toInt()
+    val chargeLine = if (dark) 0xFF5C3338.toInt() else 0xFFF5CACA.toInt()
+    val chargeBadge = if (dark) 0xFF5C3338.toInt() else 0xFFF9D7D7.toInt()
+    val useBg = if (dark) 0xFF1B2838.toInt() else 0xFFEBF3FD.toInt()
+    val useLine = if (dark) 0xFF2D4560.toInt() else 0xFFC9DCF6.toInt()
+    val useBadge = if (dark) 0xFF2D4560.toInt() else 0xFFD5E5FA.toInt()
     val warnBg = if (dark) 0xFF2B2113.toInt() else 0xFFFFF6E5.toInt()
     val warnLine = if (dark) 0xFF5C4317.toInt() else 0xFFF5D9A3.toInt()
 }
