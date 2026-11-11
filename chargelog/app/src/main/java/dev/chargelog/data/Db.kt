@@ -84,11 +84,12 @@ class Db private constructor(context: Context) :
     }
 
     /** Only (time, SOC) of each sample with from <= ts < to, ascending; for long-range aggregates. */
-    fun forEachLevel(from: Long, to: Long, block: (Long, Int) -> Unit) {
+    /** (time, SOC, plugged in) for each reading in [from, to), ascending. */
+    fun forEachLevel(from: Long, to: Long, block: (Long, Int, Boolean) -> Unit) {
         readableDatabase.rawQuery(
-            "SELECT ts, level FROM samples WHERE ts >= ? AND ts < ? ORDER BY ts",
+            "SELECT ts, level, plugged FROM samples WHERE ts >= ? AND ts < ? ORDER BY ts",
             arrayOf(from.toString(), to.toString())
-        ).use { c -> while (c.moveToNext()) block(c.getLong(0), c.getInt(1)) }
+        ).use { c -> while (c.moveToNext()) block(c.getLong(0), c.getInt(1), c.getInt(2) != 0) }
     }
 
     fun firstSampleTs(): Long? =

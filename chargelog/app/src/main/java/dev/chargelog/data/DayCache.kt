@@ -62,7 +62,7 @@ class DayCache(private val db: Db) {
         val start = Stats.dayStart(from, zone)
         val end = Stats.dayStart(to.plusDays(1), zone)
         val b = DailyBuilder(zone, from, to, db.sampleBefore(start)?.level)
-        db.forEachLevel(start, end) { ts, level -> b.add(ts, level) }
+        db.forEachLevel(start, end) { ts, level, plugged -> b.add(ts, level, plugged) }
         return b.build()
     }
 }
