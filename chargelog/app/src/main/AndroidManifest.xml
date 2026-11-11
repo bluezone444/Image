@@ -23,6 +23,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.ChargerActivity"
+            android:exported="false"
+            android:label="충전기 진단" />
+
         <service
             android:name=".service.MonitorService"
             android:exported="false"

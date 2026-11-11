@@ -638,6 +638,15 @@ class MainActivity : Activity() {
         })
 
         page.addView(card(p).apply {
+            addView(title("충전기 진단"))
+            addView(label("연결된 충전기에 대해 휴대폰이 보고하는 값(최대 전류·전압, 실제 입력 전력)을 실시간으로 봅니다.",
+                13f, p.ink2), lp(MATCH, WRAP, top = dpi(4f)))
+            addView(button("충전기 진단 열기") {
+                startActivity(Intent(context, ChargerActivity::class.java))
+            }, lp(MATCH, WRAP, top = dpi(10f)))
+        }, lp(MATCH, WRAP, top = dpi(12f)))
+
+        page.addView(card(p).apply {
             addView(title("내보내기"))
             addView(label("저장할 위치를 고르면 파일로 저장됩니다. 시각은 ISO 8601 형식입니다.", 13f, p.ink2),
                 lp(MATCH, WRAP, top = dpi(4f)))
