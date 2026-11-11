@@ -8,12 +8,14 @@ import android.content.Intent
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
-            Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED ->
+            Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED -> {
+                Watchdog.schedule(context)
                 try {
                     MonitorService.start(context)
                 } catch (e: RuntimeException) {
-                    // Background start refused by the OS; recording resumes when the app is opened.
+                    // Background start refused by the OS; the watchdog keeps retrying.
                 }
+            }
         }
     }
 }

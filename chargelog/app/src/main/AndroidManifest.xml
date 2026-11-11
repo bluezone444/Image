@@ -33,6 +33,10 @@
         </service>
 
         <receiver
+            android:name=".service.WatchdogReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".service.BootReceiver"
             android:exported="true">
             <intent-filter>

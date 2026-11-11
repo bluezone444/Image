@@ -267,3 +267,178 @@ class SocChartView(context: Context, private val p: Palette) : View(context) {
 
     override fun performClick(): Boolean = super.performClick()
 }
+
+/**
+ * Shared frame for the dashboard's per-day charts: one column per day, a value axis on the
+ * right, a few date labels along the bottom, and a touch tooltip for the column under the finger.
+ */
+abstract class DailyChart(context: Context, protected val p: Palette) : View(context) {
+    var days: List<DayStat> = emptyList()
+        set(v) { field = v; touched = -1; invalidate() }
+
+    protected val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    protected val text = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = context.sp(12f) }
+    protected val dash = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = context.dp(1f)
+        pathEffect = DashPathEffect(floatArrayOf(context.dp(4f), context.dp(4f)), 0f)
+    }
+    protected val path = Path()
+    protected val rect = RectF()
+    private var touched = -1
+    private var downX = 0f
+    private var downY = 0f
+    private var scrubbing = false
+
+    protected val top get() = context.dp(28f)
+    protected val bottom get() = height - context.dp(26f)
+    protected val plotW get() = width - context.dp(38f)
+    protected val col get() = plotW / maxOf(days.size, 1)
+    protected fun cx(i: Int) = col * i + col / 2
+
+    abstract fun maxValue(): Int
+    abstract fun drawColumn(c: Canvas, i: Int, d: DayStat, y: (Int) -> Float, highlight: Boolean)
+    abstract fun tooltip(d: DayStat): String?
+    open fun drawOverlay(c: Canvas, y: (Int) -> Float) {}
+
+    override fun onMeasure(w: Int, h: Int) {
+        setMeasuredDimension(MeasureSpec.getSize(w), context.dpi(200f))
+    }
+
+    override fun onDraw(c: Canvas) {
+        if (days.isEmpty()) return
+        val max = maxValue()
+        val y = { v: Int -> bottom - (bottom - top) * v / max.toFloat() }
+
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = context.dp(1f)
+        text.typeface = Typeface.DEFAULT
+        text.color = p.muted
+        text.textAlign = Paint.Align.LEFT
+        for (v in intArrayOf(0, max / 2, max)) {
+            paint.color = if (v == 0) p.muted else p.grid
+            c.drawLine(0f, y(v), plotW, y(v), paint)
+            c.drawText(v.toString(), plotW + context.dp(8f), y(v) + text.textSize / 3, text)
+        }
+
+        // About five date labels regardless of the period length.
+        val step = maxOf(1, Math.round(days.size / 5f))
+        val fmt = java.time.format.DateTimeFormatter.ofPattern("M/d")
+        text.textAlign = Paint.Align.CENTER
+        var i = days.size - 1
+        while (i >= 0) {
+            val label = fmt.format(days[i].day)
+            val half = text.measureText(label) / 2
+            c.drawText(label, cx(i).coerceIn(half, plotW - half), bottom + context.dp(18f), text)
+            i -= step
+        }
+
+        paint.style = Paint.Style.FILL
+        days.forEachIndexed { idx, d -> drawColumn(c, idx, d, y, idx == touched) }
+        drawOverlay(c, y)
+
+        if (touched in days.indices) {
+            val tip = tooltip(days[touched]) ?: return
+            text.color = p.ink
+            text.typeface = Typeface.DEFAULT_BOLD
+            text.textAlign = Paint.Align.CENTER
+            val half = text.measureText(tip) / 2
+            c.drawText(tip, cx(touched).coerceIn(half, maxOf(half, width - half)), top - context.dp(12f), text)
+        }
+    }
+
+    /** Rounded-top bar from [bottomY] up to [topY]. */
+    protected fun bar(c: Canvas, x: Float, topY: Float, bottomY: Float, color: Int, roundBottom: Boolean = false) {
+        val w = maxOf(context.dp(1f), minOf(context.dp(14f), col * 0.6f))
+        val r = minOf(context.dp(4f), w / 2)
+        rect.set(x - w / 2, topY, x + w / 2, bottomY)
+        path.reset()
+        val b = if (roundBottom) r else 0f
+        path.addRoundRect(rect, floatArrayOf(r, r, r, r, b, b, b, b), Path.Direction.CW)
+        paint.color = color
+        c.drawPath(path, paint)
+    }
+
+    override fun onTouchEvent(e: MotionEvent): Boolean {
+        if (days.isEmpty()) return false
+        fun pick() {
+            touched = (e.x / col).toInt().coerceIn(0, days.size - 1)
+            invalidate()
+        }
+        when (e.actionMasked) {
+            MotionEvent.ACTION_DOWN -> { downX = e.x; downY = e.y; scrubbing = false; pick() }
+            MotionEvent.ACTION_MOVE -> {
+                val dx = Math.abs(e.x - downX); val dy = Math.abs(e.y - downY)
+                if (!scrubbing && dx > context.dp(8f) && dx > dy) {
+                    scrubbing = true
+                    parent?.requestDisallowInterceptTouchEvent(true)
+                }
+                if (scrubbing) pick()
+            }
+            MotionEvent.ACTION_UP -> performClick()
+        }
+        return true
+    }
+
+    override fun performClick(): Boolean = super.performClick()
+
+    protected fun dateLabel(d: DayStat): String =
+        java.time.format.DateTimeFormatter.ofPattern("M/d (E)", Locale.KOREAN).format(d.day)
+}
+
+/** Daily SOC used, with the period's typical (average) day as a dashed line. */
+class UsageChartView(context: Context, p: Palette) : DailyChart(context, p) {
+    var average: Double? = null
+        set(v) { field = v; invalidate() }
+
+    override fun maxValue(): Int {
+        val top = maxOf(days.maxOfOrNull { it.usage } ?: 0, average?.toInt() ?: 0, 100)
+        return (top + 49) / 50 * 50
+    }
+
+    override fun drawColumn(c: Canvas, i: Int, d: DayStat, y: (Int) -> Float, highlight: Boolean) {
+        if (d.usage <= 0) return
+        val t = minOf(y(d.usage), bottom - context.dp(2f))
+        bar(c, cx(i), t, bottom, if (highlight) p.ink else p.accent)
+    }
+
+    override fun drawOverlay(c: Canvas, y: (Int) -> Float) {
+        val a = average ?: return
+        val ay = bottom - (bottom - top) * (a / maxValue()).toFloat()
+        dash.color = p.ink2
+        path.reset(); path.moveTo(0f, ay); path.lineTo(plotW, ay)
+        c.drawPath(path, dash)
+    }
+
+    override fun tooltip(d: DayStat): String? =
+        if (d.minSoc == null) "${dateLabel(d)} · 기록 없음" else "${dateLabel(d)} · 사용 ${d.usage}%"
+}
+
+/** Each day's SOC range as a floating bar from that day's minimum to its maximum. */
+class RangeChartView(context: Context, p: Palette) : DailyChart(context, p) {
+    var avgMin: Double? = null
+    var avgMax: Double? = null
+
+    override fun maxValue() = 100
+
+    override fun drawColumn(c: Canvas, i: Int, d: DayStat, y: (Int) -> Float, highlight: Boolean) {
+        val mn = d.minSoc ?: return
+        val mx = d.maxSoc ?: return
+        // Keep a visible stub when min == max.
+        val t = minOf(y(mx), y(mn) - context.dp(3f))
+        bar(c, cx(i), t, y(mn), if (highlight) p.ink else p.accent, roundBottom = true)
+    }
+
+    override fun drawOverlay(c: Canvas, y: (Int) -> Float) {
+        dash.color = p.ink2
+        for (v in listOfNotNull(avgMin, avgMax)) {
+            val ly = bottom - (bottom - top) * (v / 100.0).toFloat()
+            path.reset(); path.moveTo(0f, ly); path.lineTo(plotW, ly)
+            c.drawPath(path, dash)
+        }
+    }
+
+    override fun tooltip(d: DayStat): String? =
+        if (d.minSoc == null) "${dateLabel(d)} · 기록 없음"
+        else "${dateLabel(d)} · 최저 ${d.minSoc}% · 최고 ${d.maxSoc}%"
+}

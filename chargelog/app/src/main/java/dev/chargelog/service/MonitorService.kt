@@ -43,17 +43,33 @@ class MonitorService : Service() {
                 setShowBadge(false)
             }
         )
-        val n = build("배터리 기록 중")
+        goForeground()
+        // Sticky broadcast: returns the current battery state immediately.
+        registerReceiver(receiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))?.let { handle(it) }
+        Watchdog.schedule(this)
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Every startForegroundService() call must be answered with startForeground(),
+        // including calls that reach an already running service.
+        goForeground()
+        return START_STICKY
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        // Swiping the app away from recents must not end recording.
+        Watchdog.schedule(this)
+        super.onTaskRemoved(rootIntent)
+    }
+
+    private fun goForeground() {
+        val n = build(lastText ?: "배터리 기록 중")
         if (Build.VERSION.SDK_INT >= 34) {
             startForeground(NOTIF_ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
         } else {
             startForeground(NOTIF_ID, n)
         }
-        // Sticky broadcast: returns the current battery state immediately.
-        registerReceiver(receiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))?.let { handle(it) }
     }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
 
     override fun onDestroy() {
         unregisterReceiver(receiver)

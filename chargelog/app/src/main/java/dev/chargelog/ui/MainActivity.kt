@@ -29,11 +29,13 @@ import dev.chargelog.core.Sample
 import dev.chargelog.core.Session
 import dev.chargelog.core.SessionType
 import dev.chargelog.core.Stats
+import dev.chargelog.core.Summaries
 import dev.chargelog.data.Db
 import dev.chargelog.data.ExportKind
 import dev.chargelog.data.Exporter
 import dev.chargelog.data.Recorder
 import dev.chargelog.service.MonitorService
+import dev.chargelog.service.Watchdog
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -50,6 +52,8 @@ class MainActivity : Activity() {
 
     private var tab = 0
     private var weekOffset = 0
+    private var statsDays = 30
+    private var pageTab = -1
     private var selectedDay: LocalDate? = null
     private var current: Sample? = null
 
@@ -104,7 +108,58 @@ class MainActivity : Activity() {
         // Sticky: delivers the current state right away, then every change while visible.
         val sticky = registerReceiver(receiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         if (sticky != null) current = Recorder.record(this, sticky) ?: current
+        Watchdog.schedule(this)
         render()
+        askExemptionOnce()
+    }
+
+    // ------------------------------------------------------ keep-alive setup
+
+    private fun isExempt(): Boolean =
+        (getSystemService(Context.POWER_SERVICE) as PowerManager).isIgnoringBatteryOptimizations(packageName)
+
+    /** System dialog; on Samsung, allowing it sets the app's battery usage to "제한 없음". */
+    private fun requestExemption() {
+        try {
+            startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                Uri.parse("package:$packageName")))
+        } catch (e: RuntimeException) {
+            openAppSettings()
+        }
+    }
+
+    private fun openAppSettings() {
+        try {
+            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
+        } catch (e: RuntimeException) {
+            Toast.makeText(this, "설정 화면을 열 수 없습니다", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun askExemptionOnce() {
+        if (isExempt()) return
+        val prefs = getSharedPreferences("ui", MODE_PRIVATE)
+        if (prefs.getBoolean("asked_exemption", false)) return
+        prefs.edit().putBoolean("asked_exemption", true).apply()
+        AlertDialog.Builder(this)
+            .setTitle("계속 기록하려면")
+            .setMessage("휴대폰이 이 앱을 절전 상태로 보내면 충전·방전 기록이 끊깁니다.\n\n" +
+                "다음 화면에서 '허용'을 누르면 배터리 최적화에서 제외되어(삼성: 배터리 '제한 없음') " +
+                "앱을 닫아도 계속 기록합니다. 추가 배터리 소모는 거의 없습니다.")
+            .setNegativeButton("나중에", null)
+            .setPositiveButton("설정") { _, _ -> requestExemption() }
+            .show()
+    }
+
+    /** Shown on top of Home while recording can still be stopped by the system. */
+    private fun keepAliveBanner(): View = card(p).apply {
+        addView(label("⚠ 기록이 끊길 수 있습니다", 15f, p.ink, bold = true))
+        addView(label("배터리 최적화에서 제외되지 않아 휴대폰이 이 앱을 절전 상태로 보낼 수 있습니다.",
+            13f, p.ink2), lp(MATCH, WRAP, top = dpi(4f)))
+        addView(row().apply {
+            addView(button("제외 허용") { requestExemption() }, lp(0, WRAP, 1f))
+            addView(button("앱 배터리 설정") { openAppSettings() }, lp(0, WRAP, 1f, left = dpi(8f)))
+        }, lp(MATCH, WRAP, top = dpi(10f)))
     }
 
     override fun onStop() {
@@ -118,14 +173,15 @@ class MainActivity : Activity() {
         renderTabs()
         when (tab) {
             0 -> renderHome()
-            1 -> renderSessions()
+            1 -> renderStats()
+            2 -> renderSessions()
             else -> renderData()
         }
     }
 
     private fun renderTabs() {
         tabBar.removeAllViews()
-        listOf("홈", "세션", "데이터").forEachIndexed { i, name ->
+        listOf("홈", "통계", "세션", "데이터").forEachIndexed { i, name ->
             val on = i == tab
             tabBar.addView(label(name, 15f, if (on) p.ink else p.muted, bold = on).apply {
                 gravity = Gravity.CENTER
@@ -162,6 +218,7 @@ class MainActivity : Activity() {
         val todayStat = if (weekOffset == 0) week.last() else dayStat(today)
 
         val page = page()
+        if (!isExempt()) page.addView(keepAliveBanner(), lp(MATCH, WRAP).apply { bottomMargin = dpi(12f) })
         page.addView(hero(todayStat, now))
         page.addView(sessionCard(now), lp(MATCH, WRAP, top = dpi(12f)))
         page.addView(weekCard(week, average, week.indexOfFirst { it.day == day }, today),
@@ -300,6 +357,143 @@ class MainActivity : Activity() {
         for (s in sessions.asReversed()) addView(sessionRow(s, now), lp(MATCH, WRAP, top = dpi(10f)))
     }
 
+    // ----------------------------------------------------------------- stats
+
+    private fun pct(v: Double?): String = v?.let { "${Math.round(it)}%" } ?: "-"
+
+    private fun renderStats() {
+        val today = LocalDate.now(zone)
+        val fromDay = today.minusDays(statsDays - 1L)
+        val from = Stats.dayStart(fromDay, zone)
+        val to = Stats.dayStart(today.plusDays(1), zone)
+        val days = Stats.daily(db.samples(from, to), db.sampleBefore(from), zone, fromDay, today)
+        val sessions = db.sessionsOverlapping(from, to)
+        val sum = Summaries.of(days, sessions, db.firstSampleTs(), today, zone)
+        val todayStat = days.last()
+        val md = DateTimeFormatter.ofPattern("M/d")
+
+        val page = page()
+
+        // Period selector.
+        page.addView(row().apply {
+            addView(title("통계"), lp(0, WRAP, 1f))
+            for (n in intArrayOf(7, 30, 90)) {
+                val on = n == statsDays
+                addView(label("${n}일", 14f, if (on) p.card else p.ink2, bold = on).apply {
+                    gravity = Gravity.CENTER
+                    background = roundRect(if (on) p.ink else p.card, 16f)
+                    setPadding(dpi(14f), dpi(7f), dpi(14f), dpi(7f))
+                    setOnClickListener { if (statsDays != n) { statsDays = n; render() } }
+                }, lp(WRAP, WRAP, left = dpi(6f)))
+            }
+        }, lp(MATCH, WRAP).apply { leftMargin = dpi(6f) })
+
+        if (sum.days.isEmpty()) {
+            page.addView(card(p).apply {
+                addView(label("아직 통계를 낼 기록이 없습니다. 하루 이상 기록되면 평소 사용 패턴이 표시됩니다.",
+                    14f, p.ink2))
+            }, lp(MATCH, WRAP, top = dpi(12f)))
+            setPage(page)
+            return
+        }
+
+        // Typical day.
+        page.addView(card(p).apply {
+            addView(title("평소 하루"))
+            addView(row().apply {
+                addView(tile(p, "평균 사용량", pct(sum.avgUsage)), lp(0, WRAP, 1f))
+                addView(tile(p, "평균 최저", pct(sum.avgMin)), lp(0, WRAP, 1f))
+                addView(tile(p, "평균 최고", pct(sum.avgMax)), lp(0, WRAP, 1f))
+                addView(tile(p, "충전", sum.chargesPerDay?.let { String.format(Locale.US, "%.1f회", it) } ?: "-"),
+                    lp(0, WRAP, 1f))
+            }, lp(MATCH, WRAP, top = dpi(12f)))
+            val basis = if (sum.completeDaysOnly) "하루 전체가 기록된 ${sum.days.size}일 기준 (설치일·오늘 제외)"
+                else "아직 하루 전체가 기록된 날이 없어 기록된 구간 기준입니다"
+            addView(label(basis + " · 사용량 중앙값 ${sum.medianUsage}%", 12f, p.muted), lp(MATCH, WRAP, top = dpi(10f)))
+        }, lp(MATCH, WRAP, top = dpi(12f)))
+
+        // Today against the typical day.
+        page.addView(card(p).apply {
+            addView(title("오늘 vs 평소"))
+            addView(kv(p, "사용량", "${todayStat.usage}%  /  평소 ${pct(sum.avgUsage)}"), lp(MATCH, WRAP, top = dpi(8f)))
+            sum.avgUsage?.takeIf { it > 0 }?.let { avg ->
+                addView(LevelBar(context, p).apply {
+                    level = Math.round(todayStat.usage * 100 / avg).toInt().coerceIn(0, 100)
+                }, lp(MATCH, WRAP, top = dpi(2f)).apply { bottomMargin = dpi(6f) })
+            }
+            addView(kv(p, "최저 SOC", "${todayStat.minSoc?.let { "$it%" } ?: "-"}  /  평소 ${pct(sum.avgMin)}"))
+            addView(kv(p, "최고 SOC", "${todayStat.maxSoc?.let { "$it%" } ?: "-"}  /  평소 ${pct(sum.avgMax)}"))
+            addView(kv(p, "충전량", "${todayStat.charged}%"))
+        }, lp(MATCH, WRAP, top = dpi(12f)))
+
+        // Daily usage.
+        page.addView(card(p).apply {
+            addView(title("일일 사용량"))
+            addView(UsageChartView(context, p).apply { this.days = days; average = sum.avgUsage },
+                lp(MATCH, WRAP, top = dpi(8f)))
+            addView(label("막대: 하루 SOC 사용 합계 · 점선: 평균 ${pct(sum.avgUsage)} · 누르면 날짜별 값",
+                12f, p.muted))
+        }, lp(MATCH, WRAP, top = dpi(12f)))
+
+        // Daily SOC range.
+        page.addView(card(p).apply {
+            addView(title("일일 SOC 범위 (최저–최고)"))
+            addView(RangeChartView(context, p).apply {
+                avgMin = sum.avgMin; avgMax = sum.avgMax; this.days = days
+            }, lp(MATCH, WRAP, top = dpi(8f)))
+            addView(label("막대: 그날 최저~최고 · 점선: 평균 최저 ${pct(sum.avgMin)} / 평균 최고 ${pct(sum.avgMax)}",
+                12f, p.muted))
+            sum.lowest?.let { addView(kv(p, "기간 최저", "${it.minSoc}% (${md.format(it.day)})"), lp(MATCH, WRAP, top = dpi(8f))) }
+            sum.highest?.let { addView(kv(p, "기간 최고", "${it.maxSoc}% (${md.format(it.day)})")) }
+        }, lp(MATCH, WRAP, top = dpi(12f)))
+
+        // Charging habits.
+        page.addView(card(p).apply {
+            addView(title("충전 습관"))
+            addView(kv(p, "완료된 충전", "${sum.chargeCount}회"), lp(MATCH, WRAP, top = dpi(8f)))
+            addView(kv(p, "평균 충전 시작 SOC", pct(sum.avgChargeStart)))
+            addView(kv(p, "평균 충전 종료 SOC", pct(sum.avgChargeEnd)))
+            addView(kv(p, "평균 충전 시간", sum.avgChargeMinutes?.let { Format.duration((it * 60_000).toLong()) } ?: "-"))
+        }, lp(MATCH, WRAP, top = dpi(12f)))
+
+        // Day-by-day table.
+        page.addView(card(p).apply {
+            addView(title("일별 기록"))
+            fun cells(vararg v: String, head: Boolean = false) = row().apply {
+                v.forEachIndexed { i, t ->
+                    addView(label(t, if (head) 12f else 14f, if (head) p.ink2 else p.ink, bold = !head && i == 1).apply {
+                        gravity = if (i == 0) Gravity.START else Gravity.END
+                    }, lp(0, WRAP, if (i == 0) 1.4f else 1f))
+                }
+                setPadding(0, dpi(6f), 0, dpi(6f))
+            }
+            addView(cells("날짜", "사용", "충전", "최저", "최고", head = true), lp(MATCH, WRAP, top = dpi(8f)))
+            val dfmt = DateTimeFormatter.ofPattern("M/d (E)", Locale.KOREAN)
+            for (d in days.asReversed()) {
+                if (d.minSoc == null) continue
+                addView(View(context).apply { setBackgroundColor(p.grid) }, lp(MATCH, dpi(1f)))
+                addView(cells(dfmt.format(d.day), "${d.usage}%", "${d.charged}%", "${d.minSoc}%", "${d.maxSoc}%"))
+            }
+        }, lp(MATCH, WRAP, top = dpi(12f)))
+
+        setPage(page)
+    }
+
+    /** Shows a scrolling page that is rebuilt from scratch (not Home or Sessions). */
+    private fun setPage(page: View) {
+        // Rebuilt after a battery update: stay where the user was scrolled to.
+        val old = content.getChildAt(0) as? ScrollView
+        val keepY = if (old != null && old !== homeScroll && pageTab == tab) old.scrollY else 0
+        pageTab = tab
+        homeScroll = null
+        sessionList = null
+        content.removeAllViews()
+        content.addView(ScrollView(this).apply {
+            addView(page)
+            if (keepY > 0) post { scrollTo(0, keepY) }
+        })
+    }
+
     // -------------------------------------------------------------- sessions
 
     private fun sessionLine1(s: Session): String {
@@ -431,20 +625,16 @@ class MainActivity : Activity() {
             addView(kv(p, "기록 시작", first?.let { Format.dateTime(it, zone) } ?: "-"), lp(MATCH, WRAP, top = dpi(8f)))
             addView(kv(p, "SOC 기록 수", db.sampleCount().toString()))
             addView(kv(p, "세션 수", db.sessionCount().toString()))
-            val pm = (getSystemService(Context.POWER_SERVICE) as PowerManager)
-            val exempt = pm.isIgnoringBatteryOptimizations(packageName)
+            db.lastSample()?.let { addView(kv(p, "마지막 기록", Format.dateTime(it.ts, zone))) }
+            val exempt = isExempt()
             addView(kv(p, "배터리 최적화 제외", if (exempt) "설정됨" else "미설정"))
-            if (!exempt) {
-                addView(label("제외하지 않으면 시스템이 기록을 중단시켜 구간이 비어 보일 수 있습니다.", 12f, p.ink2))
-                addView(button("배터리 최적화에서 제외") {
-                    try {
-                        startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                            Uri.parse("package:$packageName")))
-                    } catch (e: RuntimeException) {
-                        startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
-                    }
-                }, lp(MATCH, WRAP, top = dpi(10f)))
-            }
+            addView(label(
+                (if (exempt) "" else "제외하지 않으면 휴대폰이 앱을 절전 상태로 보내 기록이 끊길 수 있습니다.\n") +
+                    "삼성: 앱 정보 → 배터리 → '제한 없음'이면 됩니다. 15분마다 기록 상태를 점검해 " +
+                    "중단되었으면 다시 시작합니다.",
+                12f, p.ink2), lp(MATCH, WRAP, top = dpi(4f)))
+            if (!exempt) addView(button("배터리 최적화에서 제외") { requestExemption() }, lp(MATCH, WRAP, top = dpi(10f)))
+            addView(button("앱 배터리 설정 열기") { openAppSettings() }, lp(MATCH, WRAP, top = dpi(10f)))
         })
 
         page.addView(card(p).apply {
@@ -473,10 +663,7 @@ class MainActivity : Activity() {
             }, lp(MATCH, WRAP, top = dpi(10f)))
         }, lp(MATCH, WRAP, top = dpi(12f)))
 
-        homeScroll = null
-        sessionList = null
-        content.removeAllViews()
-        content.addView(ScrollView(this).apply { addView(page) })
+        setPage(page)
     }
 
     private fun button(text: String, danger: Boolean = false, action: () -> Unit): TextView =

@@ -142,6 +142,47 @@ class CoreTest {
         assertEquals(listOf(2L, 1L), g[2].second.map { it.id })
     }
 
+    @Test fun summaryUsesOnlyFullyRecordedDays() {
+        val d = LocalDate.of(2026, 11, 1)
+        fun day(i: Long, usage: Int, mn: Int?, mx: Int?) = DayStat(d.plusDays(i), usage, 0, mn, mx)
+        val period = listOf(
+            day(0, 0, null, null),     // before install
+            day(1, 20, 60, 80),        // install day (partial)
+            day(2, 120, 15, 100),
+            day(3, 80, 30, 95),
+            day(4, 100, 25, 100),
+            day(5, 10, 90, 100),       // today (partial)
+        )
+        val installTs = Stats.dayStart(d.plusDays(1), zone) + 15 * 60 * min
+        fun charge(dayIdx: Long, startSoc: Int, endSoc: Int, minutes: Long): Session {
+            val t = Stats.dayStart(d.plusDays(dayIdx), zone) + 22 * 60 * min
+            return Session(0, SessionType.CHARGE, t, startSoc, t + minutes * min, endSoc, 1, t, startSoc, endSoc, 300)
+        }
+        val sessions = listOf(charge(2, 20, 100, 120), charge(3, 30, 80, 60), charge(3, 40, 60, 30))
+        val sum = Summaries.of(period, sessions, installTs, d.plusDays(5), zone)
+        assertTrue(sum.completeDaysOnly)
+        assertEquals(listOf(d.plusDays(2), d.plusDays(3), d.plusDays(4)), sum.days.map { it.day })
+        assertEquals(100.0, sum.avgUsage!!, 1e-9)
+        assertEquals(100, sum.medianUsage)
+        assertEquals((15 + 30 + 25) / 3.0, sum.avgMin!!, 1e-9)
+        assertEquals((100 + 95 + 100) / 3.0, sum.avgMax!!, 1e-9)
+        assertEquals(15, sum.lowest!!.minSoc); assertEquals(d.plusDays(2), sum.lowest!!.day)
+        assertEquals(1.0, sum.chargesPerDay!!, 1e-9)
+        assertEquals(3, sum.chargeCount)
+        assertEquals(30.0, sum.avgChargeStart!!, 1e-9)
+        assertEquals(80.0, sum.avgChargeEnd!!, 1e-9)
+        assertEquals(70.0, sum.avgChargeMinutes!!, 1e-9)
+    }
+
+    @Test fun summaryFallsBackToPartialDays() {
+        val d = LocalDate.of(2026, 11, 11)
+        val sum = Summaries.of(listOf(DayStat(d, 12, 0, 48, 61)), emptyList(),
+            Stats.dayStart(d, zone) + 60 * min, d, zone)
+        assertTrue(!sum.completeDaysOnly)
+        assertEquals(12.0, sum.avgUsage!!, 1e-9)
+        assertNull(sum.avgChargeStart)
+    }
+
     @Test fun dailyWithNoDataIsEmpty() {
         val day = LocalDate.of(2026, 11, 10)
         val out = Stats.daily(emptyList(), null, zone, day, day)
