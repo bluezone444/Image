@@ -1,6 +1,7 @@
 package dev.chargelog.ui
 
 import android.app.Activity
+import android.graphics.drawable.GradientDrawable
 import android.app.AlertDialog
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -22,6 +23,8 @@ import android.widget.ListView
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.ImageView
+import dev.chargelog.R
 import dev.chargelog.core.DayStat
 import dev.chargelog.core.Format
 import dev.chargelog.core.Plug
@@ -54,6 +57,8 @@ class MainActivity : Activity() {
     private var weekOffset = 0
     private var statsDays = 30
     private var pageTab = -1
+    private var receiverOn = false
+    private var askedNotif = false
     private var selectedDay: LocalDate? = null
     private var current: Sample? = null
 
@@ -86,11 +91,6 @@ class MainActivity : Activity() {
             addView(tabBar, lp(MATCH, dpi(56f)))
         })
 
-        if (Build.VERSION.SDK_INT >= 33 &&
-            checkSelfPermission(NOTIF_PERMISSION) != PackageManager.PERMISSION_GRANTED
-        ) {
-            requestPermissions(arrayOf(NOTIF_PERMISSION), 1)
-        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -100,6 +100,18 @@ class MainActivity : Activity() {
 
     override fun onStart() {
         super.onStart()
+        // Nothing is recorded until the cover notice has been accepted once.
+        if (!coverAccepted()) showCover(firstRun = true) else startMonitoring()
+    }
+
+    private fun startMonitoring() {
+        tabBar.visibility = View.VISIBLE
+        if (Build.VERSION.SDK_INT >= 33 && !askedNotif &&
+            checkSelfPermission(NOTIF_PERMISSION) != PackageManager.PERMISSION_GRANTED
+        ) {
+            askedNotif = true
+            requestPermissions(arrayOf(NOTIF_PERMISSION), 1)
+        }
         try {
             MonitorService.start(this)
         } catch (e: RuntimeException) {
@@ -107,6 +119,7 @@ class MainActivity : Activity() {
         }
         // Sticky: delivers the current state right away, then every change while visible.
         val sticky = registerReceiver(receiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        receiverOn = true
         if (sticky != null) current = Recorder.record(this, sticky) ?: current
         Watchdog.schedule(this)
         render()
@@ -163,8 +176,88 @@ class MainActivity : Activity() {
     }
 
     override fun onStop() {
-        unregisterReceiver(receiver)
+        if (receiverOn) {
+            unregisterReceiver(receiver)
+            receiverOn = false
+        }
         super.onStop()
+    }
+
+    // ------------------------------------------------------------------ cover
+
+    private fun coverAccepted(): Boolean =
+        getSharedPreferences("ui", MODE_PRIVATE).getBoolean(COVER_KEY, false)
+
+    /**
+     * Full-screen cover: what the app is for and the no-redistribution notice.
+     * [firstRun] requires agreement before recording starts; otherwise it is just shown again.
+     */
+    private fun showCover(firstRun: Boolean) {
+        tabBar.visibility = View.GONE
+        homeScroll = null
+        sessionList = null
+        pageTab = -1
+
+        val page = column().apply {
+            gravity = Gravity.CENTER_HORIZONTAL
+            val pad = dpi(20f)
+            setPadding(pad, dpi(48f), pad, pad)
+
+            addView(ImageView(context).apply { setImageResource(R.drawable.ic_launcher) }, lp(dpi(88f), dpi(88f)))
+            addView(label("충전 로그", 30f, p.ink, bold = true), lp(WRAP, WRAP, top = dpi(16f)))
+            addView(label("배터리 충전·방전 모니터링", 16f, p.ink2), lp(WRAP, WRAP, top = dpi(4f)))
+            val version = try {
+                @Suppress("DEPRECATION")
+                packageManager.getPackageInfo(packageName, 0).versionName
+            } catch (e: Exception) { null }
+            if (version != null) addView(label("버전 $version", 12f, p.muted), lp(WRAP, WRAP, top = dpi(4f)))
+
+            addView(card(p).apply {
+                addView(title("이 앱은 충전 모니터링 전용입니다"))
+                addView(label(
+                    "• 충전 시작·종료 시각과 그때의 배터리 잔량(SOC)을 기록합니다\n" +
+                        "• 하루 사용량, 충전–방전 세션별 사용량, 최저·최고 SOC를 보여줍니다\n" +
+                        "• 충전 방식, 배터리 온도·전압을 함께 기록합니다\n" +
+                        "• 기록은 이 휴대폰 안에만 저장되며 인터넷으로 전송하지 않습니다\n" +
+                        "• 정확한 기록을 위해 상시 알림을 띄우고 백그라운드에서 동작합니다",
+                    14f, p.ink2).apply { setLineSpacing(dp(4f), 1f) }, lp(MATCH, WRAP, top = dpi(8f)))
+            }, lp(MATCH, WRAP, top = dpi(28f)))
+
+            addView(column().apply {
+                background = GradientDrawable().apply {
+                    setColor(p.card)
+                    cornerRadius = dp(22f)
+                    setStroke(dpi(2f), p.danger)
+                }
+                val cp = dpi(18f)
+                setPadding(cp, cp, cp, cp)
+                addView(label("⚠ 주의", 17f, p.danger, bold = true))
+                addView(label(
+                    "이 앱은 개인 충전 모니터링 목적으로 제작되었습니다.\n\n" +
+                        "제작자의 허락 없이 이 앱(APK)과 소스 코드를 임의로 복제·수정·배포하거나 " +
+                        "다른 사람에게 전달하지 마세요.\n\n" +
+                        "표시되는 값은 휴대폰이 보고하는 측정값으로, 정확성을 보장하지 않습니다.",
+                    14f, p.ink).apply { setLineSpacing(dp(3f), 1f) }, lp(MATCH, WRAP, top = dpi(8f)))
+            }, lp(MATCH, WRAP, top = dpi(12f)))
+
+            if (firstRun) {
+                addView(label("동의하고 시작", 16f, p.card, bold = true).apply {
+                    gravity = Gravity.CENTER
+                    background = roundRect(p.ink, 16f)
+                    setPadding(dpi(12f), dpi(16f), dpi(12f), dpi(16f))
+                    setOnClickListener {
+                        getSharedPreferences("ui", MODE_PRIVATE).edit().putBoolean(COVER_KEY, true).apply()
+                        startMonitoring()
+                    }
+                }, lp(MATCH, WRAP, top = dpi(24f)))
+                addView(label("동의하지 않으면 앱을 닫아주세요. 동의 전에는 아무것도 기록하지 않습니다.",
+                    12f, p.muted).apply { gravity = Gravity.CENTER }, lp(MATCH, WRAP, top = dpi(10f)))
+            } else {
+                addView(button("닫기") { tabBar.visibility = View.VISIBLE; render() }, lp(MATCH, WRAP, top = dpi(24f)))
+            }
+        }
+        content.removeAllViews()
+        content.addView(ScrollView(this).apply { addView(page) })
     }
 
     // ------------------------------------------------------------------ shell
@@ -638,6 +731,13 @@ class MainActivity : Activity() {
         })
 
         page.addView(card(p).apply {
+            addView(title("앱 안내"))
+            addView(label("충전 모니터링 전용 앱입니다. 임의로 배포하지 마세요.", 13f, p.ink2),
+                lp(MATCH, WRAP, top = dpi(4f)))
+            addView(button("안내 화면 다시 보기") { showCover(firstRun = false) }, lp(MATCH, WRAP, top = dpi(10f)))
+        }, lp(MATCH, WRAP, top = dpi(12f)))
+
+        page.addView(card(p).apply {
             addView(title("충전기 진단"))
             addView(label("연결된 충전기에 대해 휴대폰이 보고하는 값(최대 전류·전압, 실제 입력 전력)을 실시간으로 봅니다.",
                 13f, p.ink2), lp(MATCH, WRAP, top = dpi(4f)))
@@ -715,6 +815,7 @@ class MainActivity : Activity() {
 
     companion object {
         private const val REQ_EXPORT = 100
+        private const val COVER_KEY = "cover_accepted_v1"
         /** Roughly a year of typical use; older sessions remain in the DB and in exports. */
         private const val SESSION_HISTORY_LIMIT = 3000
         private const val NOTIF_PERMISSION = "android.permission.POST_NOTIFICATIONS"
