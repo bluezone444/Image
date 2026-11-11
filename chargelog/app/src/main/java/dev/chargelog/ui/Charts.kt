@@ -15,118 +15,7 @@ import dev.chargelog.core.Sample
 import dev.chargelog.core.Session
 import dev.chargelog.core.SessionType
 import java.time.ZoneId
-import java.time.format.TextStyle
 import java.util.Locale
-
-/** Daily usage bars for one week with the previous week's average as a dashed line. */
-class BarChartView(context: Context, private val p: Palette) : View(context) {
-    var days: List<DayStat> = emptyList()
-    var average: Int? = null
-    var selected: Int = -1
-    var onSelect: ((Int) -> Unit)? = null
-
-    private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = context.sp(12f) }
-    private val dash = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeWidth = context.dp(1f)
-        pathEffect = DashPathEffect(floatArrayOf(context.dp(4f), context.dp(4f)), 0f)
-    }
-    private val path = Path()
-    private val rect = RectF()
-
-    fun set(days: List<DayStat>, average: Int?, selected: Int) {
-        this.days = days; this.average = average; this.selected = selected
-        invalidate()
-    }
-
-    override fun onMeasure(w: Int, h: Int) {
-        setMeasuredDimension(MeasureSpec.getSize(w), context.dpi(220f))
-    }
-
-    private fun yMax(): Int {
-        val top = maxOf(days.maxOfOrNull { it.usage } ?: 0, average ?: 0, 100)
-        return (top + 49) / 50 * 50
-    }
-
-    override fun onDraw(c: Canvas) {
-        if (days.isEmpty()) return
-        val axisW = context.dp(38f)
-        val top = context.dp(22f)
-        val bottom = height - context.dp(40f)
-        val plotW = width - axisW
-        val max = yMax()
-        fun y(v: Int) = bottom - (bottom - top) * v / max.toFloat()
-
-        // Recessive grid: top, middle, baseline.
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = context.dp(1f)
-        text.color = p.muted
-        text.textAlign = Paint.Align.LEFT
-        text.typeface = Typeface.DEFAULT
-        for (v in intArrayOf(0, max / 2, max)) {
-            paint.color = if (v == 0) p.muted else p.grid
-            c.drawLine(0f, y(v), plotW, y(v), paint)
-            c.drawText(v.toString(), plotW + context.dp(8f), y(v) + text.textSize / 3, text)
-        }
-
-        val col = plotW / days.size
-        val barW = minOf(context.dp(16f), col * 0.5f)
-        val r = context.dp(4f)
-        paint.style = Paint.Style.FILL
-        days.forEachIndexed { i, d ->
-            val cx = col * i + col / 2
-            if (d.usage > 0) {
-                val t = minOf(y(d.usage), bottom - context.dp(2f))
-                rect.set(cx - barW / 2, t, cx + barW / 2, bottom)
-                path.reset()
-                path.addRoundRect(rect, floatArrayOf(r, r, r, r, 0f, 0f, 0f, 0f), Path.Direction.CW)
-                paint.color = if (i == selected || selected < 0) p.accent else p.accentDim
-                c.drawPath(path, paint)
-                if (i == selected) {
-                    text.color = p.ink
-                    text.textAlign = Paint.Align.CENTER
-                    text.typeface = Typeface.DEFAULT_BOLD
-                    c.drawText("${d.usage}%", cx, t - context.dp(6f), text)
-                }
-            }
-            // Weekday label; the selected day sits on a filled chip.
-            val ly = bottom + context.dp(24f)
-            val name = d.day.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale.KOREAN)
-            text.textAlign = Paint.Align.CENTER
-            if (i == selected) {
-                paint.color = p.ink
-                c.drawCircle(cx, ly - text.textSize / 3, context.dp(13f), paint)
-                text.color = p.card
-                text.typeface = Typeface.DEFAULT_BOLD
-            } else {
-                text.color = p.ink2
-                text.typeface = Typeface.DEFAULT
-            }
-            c.drawText(name, cx, ly, text)
-        }
-
-        average?.let { a ->
-            dash.color = p.ink2
-            path.reset()
-            path.moveTo(0f, y(a)); path.lineTo(plotW, y(a))
-            c.drawPath(path, dash)
-        }
-    }
-
-    override fun onTouchEvent(e: MotionEvent): Boolean {
-        if (days.isEmpty()) return false
-        if (e.action == MotionEvent.ACTION_UP) {
-            val col = (width - context.dp(38f)) / days.size
-            val i = (e.x / col).toInt().coerceIn(0, days.size - 1)
-            performClick()
-            onSelect?.invoke(i)
-        }
-        return true
-    }
-
-    override fun performClick(): Boolean = super.performClick()
-}
 
 /** SOC over one day (0–24h). Charging periods are shaded; touch shows the value at that time. */
 class SocChartView(context: Context, private val p: Palette) : View(context) {
@@ -151,15 +40,17 @@ class SocChartView(context: Context, private val p: Palette) : View(context) {
     }
 
     override fun onMeasure(w: Int, h: Int) {
-        setMeasuredDimension(MeasureSpec.getSize(w), context.dpi(200f))
+        // Fills the height it is given (Home stretches it); otherwise a fixed default.
+        val height = if (MeasureSpec.getMode(h) == MeasureSpec.EXACTLY) MeasureSpec.getSize(h) else context.dpi(170f)
+        setMeasuredDimension(MeasureSpec.getSize(w), height)
     }
 
     private fun plotW() = width - context.dp(38f)
     private fun x(ts: Long) = plotW() * (ts - start).coerceIn(0, end - start) / (end - start).toFloat()
 
     override fun onDraw(c: Canvas) {
-        val top = context.dp(24f)
-        val bottom = height - context.dp(24f)
+        val top = context.dp(22f)
+        val bottom = height - context.dp(22f)
         val plotW = plotW()
         val last = minOf(now, end)
         fun y(level: Int) = bottom - (bottom - top) * level / 100f
@@ -275,6 +166,10 @@ class SocChartView(context: Context, private val p: Palette) : View(context) {
 abstract class DailyChart(context: Context, protected val p: Palette) : View(context) {
     var days: List<DayStat> = emptyList()
         set(v) { field = v; touched = -1; invalidate() }
+    /** Persistently selected column (drawn highlighted); -1 for none. */
+    var selected = -1
+        set(v) { field = v; invalidate() }
+    var onSelect: ((Int) -> Unit)? = null
 
     protected val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     protected val text = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = context.sp(12f) }
@@ -302,7 +197,7 @@ abstract class DailyChart(context: Context, protected val p: Palette) : View(con
     open fun drawOverlay(c: Canvas, y: (Int) -> Float) {}
 
     override fun onMeasure(w: Int, h: Int) {
-        setMeasuredDimension(MeasureSpec.getSize(w), context.dpi(200f))
+        setMeasuredDimension(MeasureSpec.getSize(w), context.dpi(170f))
     }
 
     override fun onDraw(c: Canvas) {
@@ -334,7 +229,7 @@ abstract class DailyChart(context: Context, protected val p: Palette) : View(con
         }
 
         paint.style = Paint.Style.FILL
-        days.forEachIndexed { idx, d -> drawColumn(c, idx, d, y, idx == touched) }
+        days.forEachIndexed { idx, d -> drawColumn(c, idx, d, y, idx == touched || idx == selected) }
         drawOverlay(c, y)
 
         if (touched in days.indices) {
@@ -375,7 +270,10 @@ abstract class DailyChart(context: Context, protected val p: Palette) : View(con
                 }
                 if (scrubbing) pick()
             }
-            MotionEvent.ACTION_UP -> performClick()
+            MotionEvent.ACTION_UP -> {
+                if (touched in days.indices) onSelect?.invoke(touched)
+                performClick()
+            }
         }
         return true
     }
@@ -450,6 +348,7 @@ class RangeChartView(context: Context, p: Palette) : DailyChart(context, p) {
 class MiniLineChart(
     context: Context,
     private val p: Palette,
+    private val color: Int,
     private val format: (Int) -> String,
     /** Smallest visible span of the value axis, so flat data does not look noisy. */
     private val minSpan: Int,
@@ -475,7 +374,7 @@ class MiniLineChart(
     }
 
     override fun onMeasure(w: Int, h: Int) {
-        setMeasuredDimension(MeasureSpec.getSize(w), context.dpi(96f))
+        setMeasuredDimension(MeasureSpec.getSize(w), context.dpi(84f))
     }
 
     private fun plotW() = width - context.dp(52f)
@@ -506,7 +405,7 @@ class MiniLineChart(
         path.reset()
         pts.forEachIndexed { i, (ts, v) -> if (i == 0) path.moveTo(x(ts), y(v)) else path.lineTo(x(ts), y(v)) }
         if (last > pts.last().first) path.lineTo(x(last), y(pts.last().second))
-        paint.color = p.accent
+        paint.color = color
         paint.strokeWidth = context.dp(2f)
         paint.strokeJoin = Paint.Join.ROUND
         c.drawPath(path, paint)
@@ -521,7 +420,7 @@ class MiniLineChart(
             paint.style = Paint.Style.FILL
             paint.color = p.card
             c.drawCircle(px, y(v), context.dp(5f), paint)
-            paint.color = p.accent
+            paint.color = color
             c.drawCircle(px, y(v), context.dp(3.5f), paint)
             text.color = p.ink
             text.typeface = Typeface.DEFAULT_BOLD

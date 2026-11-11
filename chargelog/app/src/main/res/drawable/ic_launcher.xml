@@ -1,7 +1,7 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <shape android:shape="oval">
-            <solid android:color="#12B76A" />
+            <solid android:color="#1BAF7A" />
         </shape>
     </item>
     <item android:drawable="@drawable/ic_stat"

@@ -50,16 +50,15 @@ class MainActivity : Activity() {
     private lateinit var db: Db
     private lateinit var content: FrameLayout
     private lateinit var tabBar: LinearLayout
-    private var homeScroll: ScrollView? = null
     private var sessionList: ListView? = null
 
     private var tab = 0
-    private var weekOffset = 0
     private var statsDays = 30
     private var pageTab = -1
     private var receiverOn = false
     private var askedNotif = false
-    private var selectedDay: LocalDate? = null
+    /** Day shown in the Stats tab's day detail; null picks a sensible default. */
+    private var statsDay: LocalDate? = null
     private var current: Sample? = null
 
     private val zone: ZoneId get() = ZoneId.systemDefault()
@@ -88,7 +87,8 @@ class MainActivity : Activity() {
         setContentView(column().apply {
             setBackgroundColor(p.bg)
             addView(content, lp(MATCH, 0, 1f))
-            addView(tabBar, lp(MATCH, dpi(56f)))
+            addView(View(context).apply { setBackgroundColor(p.line) }, lp(MATCH, Math.max(1, dpi(1f))))
+            addView(tabBar, lp(MATCH, dpi(58f)))
         })
 
     }
@@ -164,15 +164,19 @@ class MainActivity : Activity() {
             .show()
     }
 
-    /** Shown on top of Home while recording can still be stopped by the system. */
-    private fun keepAliveBanner(): View = card(p).apply {
-        addView(label("⚠ 기록이 끊길 수 있습니다", 15f, p.ink, bold = true))
-        addView(label("배터리 최적화에서 제외되지 않아 휴대폰이 이 앱을 절전 상태로 보낼 수 있습니다.",
-            13f, p.ink2), lp(MATCH, WRAP, top = dpi(4f)))
-        addView(row().apply {
-            addView(button("제외 허용") { requestExemption() }, lp(0, WRAP, 1f))
-            addView(button("앱 배터리 설정") { openAppSettings() }, lp(0, WRAP, 1f, left = dpi(8f)))
-        }, lp(MATCH, WRAP, top = dpi(10f)))
+    /** Slim warning on Home while recording can still be stopped by the system. */
+    private fun keepAliveBanner(): View = row().apply {
+        background = roundRect(p.warnBg, 14f, p.warnLine)
+        setPadding(dpi(12f), dpi(9f), dpi(8f), dpi(9f))
+        addView(column().apply {
+            addView(label("기록이 끊길 수 있습니다", 13f, p.ink, bold = true))
+            addView(label("배터리 최적화 제외가 필요합니다", 12f, p.ink2), lp(WRAP, WRAP, top = dpi(3f)))
+        }, lp(0, WRAP, 1f))
+        addView(label("설정", 13f, p.ink, bold = true).apply {
+            background = roundRect(p.card, 10f, p.line)
+            setPadding(dpi(14f), dpi(7f), dpi(14f), dpi(7f))
+            setOnClickListener { requestExemption() }
+        })
     }
 
     override fun onStop() {
@@ -194,7 +198,6 @@ class MainActivity : Activity() {
      */
     private fun showCover(firstRun: Boolean) {
         tabBar.visibility = View.GONE
-        homeScroll = null
         sessionList = null
         pageTab = -1
 
@@ -276,320 +279,324 @@ class MainActivity : Activity() {
         tabBar.removeAllViews()
         listOf("홈", "통계", "세션", "데이터").forEachIndexed { i, name ->
             val on = i == tab
-            tabBar.addView(label(name, 15f, if (on) p.ink else p.muted, bold = on).apply {
+            tabBar.addView(column().apply {
                 gravity = Gravity.CENTER
+                addView(label(name, 14f, if (on) p.ink else p.muted, bold = on))
+                addView(View(context).apply {
+                    background = roundRect(if (on) p.ink else android.graphics.Color.TRANSPARENT, 2f)
+                }, lp(dpi(18f), dpi(3f), top = dpi(6f)))
                 setOnClickListener { if (tab != i) { tab = i; sessionList = null; render() } }
             }, lp(0, MATCH, 1f))
         }
     }
 
     private fun page(): LinearLayout = column().apply {
-        val pad = dpi(16f)
-        setPadding(pad, pad, pad, pad)
+        setPadding(dpi(16f), dpi(14f), dpi(16f), dpi(20f))
     }
 
-    private fun title(text: String): TextView = label(text, 17f, p.ink, bold = true)
+    private fun title(text: String): TextView = label(text, 15f, p.ink, bold = true)
+
+    /** Page heading: large title with an optional control on the right. */
+    private fun pageHeader(text: String, trailing: View? = null): LinearLayout = row().apply {
+        addView(label(text, 22f, p.ink, bold = true), lp(0, WRAP, 1f))
+        if (trailing != null) addView(trailing)
+        setPadding(dpi(2f), 0, 0, 0)
+    }
+
+    private fun gap(): Int = dpi(10f)
+
+    private fun dateTitle(day: LocalDate): String =
+        DateTimeFormatter.ofPattern("M월 d일 (E)", Locale.KOREAN).format(day)
+
+    private fun relativeDay(day: LocalDate): String {
+        val today = LocalDate.now(zone)
+        return when (day) { today -> " · 오늘"; today.minusDays(1) -> " · 어제"; else -> "" }
+    }
+
+    /** Readings for [start, end), starting with the SOC carried in from before [start]. */
+    private fun dayPoints(start: Long, end: Long): List<Sample> {
+        val pts = ArrayList<Sample>()
+        db.sampleBefore(start)?.let { pts.add(it.copy(ts = start)) }
+        pts.addAll(db.samples(start, end))
+        return pts
+    }
+
+    private fun pct(v: Double?): String = v?.let { "${Math.round(it)}%" } ?: "-"
+    private fun pct(v: Int?): String = v?.let { "$it%" } ?: "-"
+    private val v2 = { mv: Int -> String.format(Locale.US, "%.2fV", mv / 1000.0) }
+    private val c1 = { t: Int -> "${Format.tenths(t)}°C" }
 
     // ------------------------------------------------------------------ home
 
+    /** One screen, no scrolling: the battery now, today against a usual day, and today's curves. */
     private fun renderHome() {
         val today = LocalDate.now(zone)
         val now = System.currentTimeMillis()
-        val weekEnd = today.minusDays(7L * weekOffset)
-        val weekStart = weekEnd.minusDays(6)
-        val day = selectedDay?.takeIf { !it.isBefore(weekStart) && !it.isAfter(weekEnd) } ?: weekEnd
-        selectedDay = day
+        val start = Stats.dayStart(today, zone)
+        val end = Stats.dayStart(today.plusDays(1), zone)
+        val points = dayPoints(start, end)
 
-        // Two weeks in one pass: the earlier week only feeds the comparison average.
-        val rangeStart = weekStart.minusDays(7)
-        val from = Stats.dayStart(rangeStart, zone)
-        val to = Stats.dayStart(weekEnd.plusDays(1), zone)
-        val all = Stats.daily(db.samples(from, to), db.sampleBefore(from), zone, rangeStart, weekEnd)
-        val prevWeek = all.take(7).filter { it.minSoc != null }
-        val average = if (prevWeek.isEmpty()) null else prevWeek.sumOf { it.usage } / prevWeek.size
-        val week = all.drop(7)
-        val todayStat = if (weekOffset == 0) week.last() else dayStat(today)
+        // Usual day = last 30 days, fully recorded days only.
+        val from = today.minusDays(29)
+        val fromTs = Stats.dayStart(from, zone)
+        val days = Stats.daily(db.samples(fromTs, end), db.sampleBefore(fromTs), zone, from, today)
+        val usual = Summaries.of(days, db.sessionsOverlapping(fromTs, end), db.firstSampleTs(), today, zone)
+            .takeIf { it.completeDaysOnly }
+        val todayStat = days.last()
 
-        val page = page()
-        if (!isExempt()) page.addView(keepAliveBanner(), lp(MATCH, WRAP).apply { bottomMargin = dpi(12f) })
-        page.addView(hero(todayStat, now))
-        page.addView(sessionCard(now), lp(MATCH, WRAP, top = dpi(12f)))
-        page.addView(weekCard(week, average, week.indexOfFirst { it.day == day }, today),
-            lp(MATCH, WRAP, top = dpi(12f)))
-        page.addView(dayCard(week.first { it.day == day }, now), lp(MATCH, WRAP, top = dpi(12f)))
+        val root = column().apply { setPadding(dpi(16f), dpi(14f), dpi(16f), dpi(12f)) }
+        root.addView(row().apply {
+            addView(label("충전 로그", 22f, p.ink, bold = true), lp(0, WRAP, 1f))
+            addView(label(dateTitle(today), 13f, p.ink2))
+            setPadding(dpi(2f), 0, 0, 0)
+        })
+        if (!isExempt()) root.addView(keepAliveBanner(), lp(MATCH, WRAP, top = gap()))
+        root.addView(statusCard(now), lp(MATCH, WRAP, top = gap()))
+        root.addView(todayCard(todayStat, usual), lp(MATCH, WRAP, top = gap()))
+        root.addView(card(p, 14f).apply {
+            addView(row().apply {
+                addView(title("오늘 SOC"), lp(0, WRAP, 1f))
+                addView(legend(p, "충전 구간", p.accentDim))
+            })
+            if (points.isEmpty()) {
+                addView(label("아직 오늘 기록이 없습니다.", 13f, p.ink2), lp(MATCH, WRAP, top = dpi(10f)))
+            } else {
+                val sessions = db.sessionsOverlapping(start, end)
+                addView(SocChartView(context, p).apply { set(points, sessions, start, end, now, zone) },
+                    lp(MATCH, 0, 1f, top = dpi(4f)))
+            }
+        }, lp(MATCH, 0, 1f, top = gap()))
+        root.addView(sensorCard(points, start, now), lp(MATCH, WRAP, top = gap()))
 
         sessionList = null
-        val scroll = homeScroll ?: ScrollView(this).also { homeScroll = it }
-        scroll.removeAllViews()
-        scroll.addView(page)
-        if (scroll.parent == null) {
-            content.removeAllViews()
-            content.addView(scroll)
-        }
+        pageTab = tab
+        content.removeAllViews()
+        content.addView(root)
     }
 
-    private fun dayStat(day: LocalDate): DayStat {
-        val from = Stats.dayStart(day, zone)
-        val to = Stats.dayStart(day.plusDays(1), zone)
-        return Stats.daily(db.samples(from, to), db.sampleBefore(from), zone, day, day).first()
-    }
-
-    private fun hero(today: DayStat, now: Long): View = column().apply {
+    private fun statusCard(now: Long): View = card(p, 14f).apply {
         val s = current
-        setPadding(dpi(6f), dpi(8f), dpi(6f), dpi(4f))
-        addView(row().apply {
-            addView(label(if (s == null) "--%" else "${s.level}%", 52f, p.ink, bold = true), lp(0, WRAP, 1f))
-            val state = when {
-                s == null -> "측정 대기"
-                s.charging && s.status == 5 -> "충전 완료 · ${Plug.labelKo(s.plugged)}"
-                s.charging -> "충전 중 · ${Plug.labelKo(s.plugged)}"
-                else -> "사용 중"
-            }
-            addView(label(state, 15f, p.ink2))
-        })
-        addView(LevelBar(context, p).apply { level = s?.level ?: 0 }, lp(MATCH, WRAP, top = dpi(6f)))
-        addView(row().apply {
-            addView(tile(p, "오늘 사용량", "${today.usage}%"), lp(0, WRAP, 1f))
-            addView(tile(p, "오늘 충전량", "${today.charged}%"), lp(0, WRAP, 1f))
-            addView(tile(p, "최저", today.minSoc?.let { "$it%" } ?: "-"), lp(0, WRAP, 1f))
-            addView(tile(p, "최고", today.maxSoc?.let { "$it%" } ?: "-"), lp(0, WRAP, 1f))
-        }, lp(MATCH, WRAP, top = dpi(16f)))
-        if (s != null) {
-            addView(label("배터리 온도 ${Format.tenths(s.temp)}°C · 전압 ${s.voltage}mV", 12f, p.muted),
-                lp(MATCH, WRAP, top = dpi(10f)))
-        }
-    }
-
-    private fun sessionCard(now: Long): View = card(p).apply {
         val recent = db.latestSessions(3)
         val open = recent.firstOrNull { it.open }
-        if (open == null) {
-            addView(title("현재 세션"))
-            addView(label("아직 기록이 없습니다.", 14f, p.ink2), lp(MATCH, WRAP, top = dpi(6f)))
-            return@apply
-        }
-        val charge = open.type == SessionType.CHARGE
-        addView(title(if (charge) "현재 세션 · 충전 (${Plug.labelKo(open.plug)})" else "현재 세션 · 사용"))
-        addView(kv(p, "시작", "${Format.dateTime(open.startTs, zone)} · ${open.startSoc}%"),
-            lp(MATCH, WRAP, top = dpi(8f)))
-        addView(kv(p, "현재", "${open.endSoc}% (${Format.signed(open.delta)}%)"))
-        addView(kv(p, "경과", Format.duration(open.durationMs(now))))
-        open.ratePerHour(now)?.let {
-            addView(kv(p, if (charge) "평균 충전 속도" else "평균 소모 속도", String.format(Locale.US, "%.1f%%/시간", it)))
-        }
-        if (charge && open.maxSoc > open.startSoc && now - open.peakTs > 20 * 60_000L) {
-            addView(kv(p, "최고 SOC 도달", "${Format.time(open.peakTs, zone)} · ${open.maxSoc}%"))
-        }
-        recent.firstOrNull { !it.open }?.let { prev ->
-            addView(View(context).apply { setBackgroundColor(p.grid) }, lp(MATCH, dpi(1f), top = dpi(10f)))
-            addView(label(if (prev.type == SessionType.CHARGE) "직전 충전" else "직전 사용", 12f, p.ink2),
-                lp(MATCH, WRAP, top = dpi(10f)))
-            addView(label(sessionLine1(prev), 14f, p.ink, bold = true), lp(MATCH, WRAP, top = dpi(2f)))
-            addView(label(sessionLine2(prev, now), 13f, p.ink2))
-        }
+        addView(row().apply {
+            addView(RingGauge(context, p).apply {
+                level = s?.level ?: 0
+                caption = "배터리"
+            }, lp(dpi(104f), dpi(104f)))
+            addView(column().apply {
+                val (state, dot) = when {
+                    s == null -> "측정 대기" to p.muted
+                    s.charging && s.status == 5 -> "충전 완료 · ${Plug.labelKo(s.plugged)}" to p.soc
+                    s.charging -> "충전 중 · ${Plug.labelKo(s.plugged)}" to p.soc
+                    else -> "사용 중" to p.muted
+                }
+                addView(chip(p, state, dot), lp(WRAP, WRAP))
+                if (open != null) {
+                    val charge = open.type == SessionType.CHARGE
+                    addView(caption(if (charge) "이번 충전" else "충전 후 사용", p), lp(WRAP, WRAP, top = dpi(10f)))
+                    addView(row().apply {
+                        gravity = Gravity.BOTTOM
+                        addView(number("${Format.signed(open.delta)}%", 24f, p.ink))
+                        addView(label("  ${open.startSoc}% → ${open.endSoc}%", 13f, p.ink2),
+                            lp(WRAP, WRAP).apply { bottomMargin = dpi(2f) })
+                    }, lp(WRAP, WRAP, top = dpi(4f)))
+                    val parts = arrayListOf("${Format.time(open.startTs, zone)} 시작", Format.duration(open.durationMs(now)))
+                    open.ratePerHour(now)?.let { parts.add(String.format(Locale.US, "%.1f%%/시간", it)) }
+                    addView(label(parts.joinToString(" · "), 12f, p.ink2), lp(WRAP, WRAP, top = dpi(5f)))
+                }
+                recent.firstOrNull { !it.open }?.let { prev ->
+                    val kind = if (prev.type == SessionType.CHARGE) "직전 충전" else "직전 사용"
+                    addView(label("$kind ${prev.startSoc}→${prev.endSoc}% · ${Format.duration(prev.durationMs(now))}",
+                        12f, p.muted), lp(WRAP, WRAP, top = dpi(4f)))
+                }
+            }, lp(0, WRAP, 1f, left = dpi(16f)))
+        })
     }
 
-    private fun weekCard(week: List<DayStat>, average: Int?, selected: Int, today: LocalDate): View =
-        card(p).apply {
-            val fmt = DateTimeFormatter.ofPattern("M/d")
-            addView(row().apply {
-                addView(title("일일 사용량"), lp(0, WRAP, 1f))
-                addView(navButton("‹") { weekOffset++; selectedDay = null; render() })
-                addView(label("${fmt.format(week.first().day)} – ${fmt.format(week.last().day)}", 13f, p.ink2)
-                    .apply { setPadding(dpi(4f), 0, dpi(4f), 0) })
-                addView(navButton("›", enabled = weekOffset > 0) { weekOffset--; selectedDay = null; render() })
-            })
-            addView(BarChartView(context, p).apply {
-                set(week, average, selected)
-                onSelect = { i ->
-                    if (!week[i].day.isAfter(today)) { selectedDay = week[i].day; render() }
-                }
-            }, lp(MATCH, WRAP, top = dpi(8f)))
-            val total = week.sumOf { it.usage }
-            addView(label(
-                "이번 주 합계 ${total}%" + (average?.let { " · 지난주 하루 평균 ${it}% (점선)" } ?: ""),
-                13f, p.ink2
-            ), lp(MATCH, WRAP, top = dpi(4f)))
-        }
+    private fun todayCard(t: DayStat, usual: dev.chargelog.core.Summary?): View = card(p, 14f).apply {
+        addView(sectionTitle(p, "오늘", if (usual != null) "평소 = 최근 ${usual.days.size}일 평균" else "평소 비교는 하루 전체 기록 후"))
+        fun note(v: Double?) = if (usual == null) null else "평소 ${pct(v)}"
+        addView(tileRow(p, listOf(
+            tile(p, "사용량", "${t.usage}%", note(usual?.avgUsage)),
+            tile(p, "충전량", "${t.charged}%", if (usual == null) null else
+                "충전 ${usual.chargesPerDay?.let { String.format(Locale.US, "%.1f", it) } ?: "-"}회/일"),
+            tile(p, "최저", pct(t.minSoc), note(usual?.avgMin)),
+            tile(p, "최고", pct(t.maxSoc), note(usual?.avgMax)),
+        )), lp(MATCH, WRAP, top = dpi(10f)))
+    }
 
-    private fun navButton(text: String, enabled: Boolean = true, action: () -> Unit): TextView =
-        label(text, 22f, if (enabled) p.ink else p.grid, bold = true).apply {
-            gravity = Gravity.CENTER
-            minimumWidth = dpi(40f)
-            minimumHeight = dpi(40f)
-            if (enabled) setOnClickListener { action() }
-        }
-
-    private fun dayCard(stat: DayStat, now: Long): View = card(p).apply {
-        val day = stat.day
-        val start = Stats.dayStart(day, zone)
-        val end = Stats.dayStart(day.plusDays(1), zone)
-        val sessions = db.sessionsOverlapping(start, end)
-        val points = ArrayList<Sample>()
-        db.sampleBefore(start)?.let { points.add(it.copy(ts = start)) }
-        points.addAll(db.samples(start, end))
-
-        addView(title(DateTimeFormatter.ofPattern("M월 d일 (E)", Locale.KOREAN).format(day)))
-        addView(row().apply {
-            addView(tile(p, "사용량", "${stat.usage}%"), lp(0, WRAP, 1f))
-            addView(tile(p, "충전량", "${stat.charged}%"), lp(0, WRAP, 1f))
-            addView(tile(p, "최저 SOC", stat.minSoc?.let { "$it%" } ?: "-"), lp(0, WRAP, 1f))
-            addView(tile(p, "최고 SOC", stat.maxSoc?.let { "$it%" } ?: "-"), lp(0, WRAP, 1f))
-        }, lp(MATCH, WRAP, top = dpi(10f)))
-
-        if (points.isEmpty()) {
-            addView(label("이 날의 기록이 없습니다.", 14f, p.ink2), lp(MATCH, WRAP, top = dpi(12f)))
-            return@apply
-        }
-        addView(SocChartView(context, p).apply { set(points, sessions, start, end, now, zone) },
-            lp(MATCH, WRAP, top = dpi(8f)))
-        addView(label("SOC(%) · 음영은 충전 구간 · 그래프를 누르면 시각별 값", 12f, p.muted))
-
-        // Small information charts: battery temperature and voltage over the same day.
-        val temps = points.filter { it.temp > 0 }.map { it.ts to it.temp }
-        val volts = points.filter { it.voltage > 0 }.map { it.ts to it.voltage }
-        val v2 = { mv: Int -> String.format(Locale.US, "%.2fV", mv / 1000.0) }
-        miniChart("배터리 온도", temps, { "${Format.tenths(it)}°C" }, 20, start, end, now)?.let {
-            addView(it, lp(MATCH, WRAP, top = dpi(14f)))
-        }
-        miniChart("배터리 전압", volts, v2, 100, start, end, now)?.let {
-            addView(it, lp(MATCH, WRAP, top = dpi(10f)))
-        }
-
-        val charges = sessions.count { it.type == SessionType.CHARGE }
-        addView(label("세션 ${sessions.size}개 (충전 ${charges}회)", 13f, p.ink2), lp(MATCH, WRAP, top = dpi(14f)))
-        for (s in sessions.asReversed()) addView(sessionRow(s, now), lp(MATCH, WRAP, top = dpi(10f)))
+    /** Temperature and voltage as small sparklines side by side. */
+    private fun sensorCard(points: List<Sample>, start: Long, now: Long): View = card(p, 14f).apply {
+        val s = current
+        val temps = points.filter { it.temp > 0 }.map { it.ts to it.temp } +
+            listOfNotNull(s?.takeIf { it.temp > 0 }?.let { now to it.temp })
+        val volts = points.filter { it.voltage > 0 }.map { it.ts to it.voltage } +
+            listOfNotNull(s?.takeIf { it.voltage > 0 }?.let { now to it.voltage })
+        fun half(name: String, now0: String, pts: List<Pair<Long, Int>>, fmt: (Int) -> String, span: Int, color: Int) =
+            column().apply {
+                addView(row().apply {
+                    addView(caption(name, p), lp(0, WRAP, 1f))
+                    addView(number(now0, 15f, p.ink))
+                })
+                addView(Sparkline(context, p, color).apply { set(pts, start, maxOf(now, start + 1), span) },
+                    lp(MATCH, dpi(34f), top = dpi(6f)))
+                addView(label(if (pts.isEmpty()) "기록 없음" else "오늘 ${fmt(pts.minOf { it.second })} – ${fmt(pts.maxOf { it.second })}",
+                    11f, p.muted), lp(WRAP, WRAP, top = dpi(4f)))
+            }
+        addView(tileRow(p, listOf(
+            half("배터리 온도", s?.let { c1(it.temp) } ?: "-", temps, c1, 20, p.temp),
+            half("배터리 전압", s?.let { v2(it.voltage) } ?: "-", volts, v2, 100, p.volt),
+        )))
     }
 
     // ----------------------------------------------------------------- stats
 
-    private fun pct(v: Double?): String = v?.let { "${Math.round(it)}%" } ?: "-"
-
     private fun renderStats() {
         val today = LocalDate.now(zone)
+        val now = System.currentTimeMillis()
         val fromDay = today.minusDays(statsDays - 1L)
         val from = Stats.dayStart(fromDay, zone)
         val to = Stats.dayStart(today.plusDays(1), zone)
         val days = Stats.daily(db.samples(from, to), db.sampleBefore(from), zone, fromDay, today)
         val sessions = db.sessionsOverlapping(from, to)
         val sum = Summaries.of(days, sessions, db.firstSampleTs(), today, zone)
-        val todayStat = days.last()
         val md = DateTimeFormatter.ofPattern("M/d")
+        val periods = listOf(7, 30, 90)
 
         val page = page()
-
-        // Period selector.
-        page.addView(row().apply {
-            addView(title("통계"), lp(0, WRAP, 1f))
-            for (n in intArrayOf(7, 30, 90)) {
-                val on = n == statsDays
-                addView(label("${n}일", 14f, if (on) p.card else p.ink2, bold = on).apply {
-                    gravity = Gravity.CENTER
-                    background = roundRect(if (on) p.ink else p.card, 16f)
-                    setPadding(dpi(14f), dpi(7f), dpi(14f), dpi(7f))
-                    setOnClickListener { if (statsDays != n) { statsDays = n; render() } }
-                }, lp(WRAP, WRAP, left = dpi(6f)))
-            }
-        }, lp(MATCH, WRAP).apply { leftMargin = dpi(6f) })
+        page.addView(pageHeader("통계", segmented(p, periods.map { "${it}일" }, periods.indexOf(statsDays)) {
+            statsDays = periods[it]; render()
+        }))
 
         if (sum.days.isEmpty()) {
             page.addView(card(p).apply {
-                addView(label("아직 통계를 낼 기록이 없습니다. 하루 이상 기록되면 평소 사용 패턴이 표시됩니다.",
-                    14f, p.ink2))
-            }, lp(MATCH, WRAP, top = dpi(12f)))
+                addView(label("아직 통계를 낼 기록이 없습니다. 하루 이상 기록되면 평소 사용 패턴이 표시됩니다.", 14f, p.ink2))
+            }, lp(MATCH, WRAP, top = dpi(14f)))
             setPage(page)
             return
         }
 
-        // Typical day.
+        // Usual day.
         page.addView(card(p).apply {
-            addView(title("평소 하루"))
+            addView(sectionTitle(p, "평소 하루",
+                if (sum.completeDaysOnly) "완전 기록 ${sum.days.size}일 기준" else "부분 기록 기준"))
+            addView(tileRow(p, listOf(
+                tile(p, "사용량", pct(sum.avgUsage), "중앙값 ${pct(sum.medianUsage)}"),
+                tile(p, "최저 SOC", pct(sum.avgMin)),
+                tile(p, "최고 SOC", pct(sum.avgMax)),
+                tile(p, "충전", sum.chargesPerDay?.let { String.format(Locale.US, "%.1f회", it) } ?: "-", "하루 평균"),
+            )), lp(MATCH, WRAP, top = dpi(12f)))
+            if (!sum.completeDaysOnly) addView(label("하루 전체가 기록된 날이 생기면 그 날들만으로 계산합니다.",
+                11f, p.muted), lp(MATCH, WRAP, top = dpi(10f)))
+        }, lp(MATCH, WRAP, top = dpi(14f)))
+
+        // Daily usage, tap a day for its detail.
+        val defaultDay = days.lastOrNull { it.day != today && it.minSoc != null }?.day ?: today
+        val day = statsDay?.takeIf { d -> days.any { it.day == d } } ?: defaultDay
+        page.addView(card(p).apply {
+            addView(sectionTitle(p, "일일 사용량", "막대를 누르면 그날 상세"))
             addView(row().apply {
-                addView(tile(p, "평균 사용량", pct(sum.avgUsage)), lp(0, WRAP, 1f))
-                addView(tile(p, "평균 최저", pct(sum.avgMin)), lp(0, WRAP, 1f))
-                addView(tile(p, "평균 최고", pct(sum.avgMax)), lp(0, WRAP, 1f))
-                addView(tile(p, "충전", sum.chargesPerDay?.let { String.format(Locale.US, "%.1f회", it) } ?: "-"),
-                    lp(0, WRAP, 1f))
-            }, lp(MATCH, WRAP, top = dpi(12f)))
-            val basis = if (sum.completeDaysOnly) "하루 전체가 기록된 ${sum.days.size}일 기준 (설치일·오늘 제외)"
-                else "아직 하루 전체가 기록된 날이 없어 기록된 구간 기준입니다"
-            addView(label(basis + " · 사용량 중앙값 ${sum.medianUsage}%", 12f, p.muted), lp(MATCH, WRAP, top = dpi(10f)))
-        }, lp(MATCH, WRAP, top = dpi(12f)))
+                addView(legend(p, "사용량", p.soc))
+                addView(legend(p, "평균 ${pct(sum.avgUsage)}", p.ink2, dashed = true), lp(WRAP, WRAP, left = dpi(12f)))
+            }, lp(WRAP, WRAP, top = dpi(6f)))
+            addView(UsageChartView(context, p).apply {
+                this.days = days; average = sum.avgUsage
+                selected = days.indexOfFirst { it.day == day }
+                onSelect = { i -> statsDay = days[i].day; render() }
+            }, lp(MATCH, WRAP, top = dpi(4f)))
+        }, lp(MATCH, WRAP, top = gap()))
 
-        // Today against the typical day.
-        page.addView(card(p).apply {
-            addView(title("오늘 vs 평소"))
-            addView(kv(p, "사용량", "${todayStat.usage}%  /  평소 ${pct(sum.avgUsage)}"), lp(MATCH, WRAP, top = dpi(8f)))
-            sum.avgUsage?.takeIf { it > 0 }?.let { avg ->
-                addView(LevelBar(context, p).apply {
-                    level = Math.round(todayStat.usage * 100 / avg).toInt().coerceIn(0, 100)
-                }, lp(MATCH, WRAP, top = dpi(2f)).apply { bottomMargin = dpi(6f) })
-            }
-            addView(kv(p, "최저 SOC", "${todayStat.minSoc?.let { "$it%" } ?: "-"}  /  평소 ${pct(sum.avgMin)}"))
-            addView(kv(p, "최고 SOC", "${todayStat.maxSoc?.let { "$it%" } ?: "-"}  /  평소 ${pct(sum.avgMax)}"))
-            addView(kv(p, "충전량", "${todayStat.charged}%"))
-        }, lp(MATCH, WRAP, top = dpi(12f)))
+        page.addView(dayDetail(days.first { it.day == day }, now), lp(MATCH, WRAP, top = gap()))
 
-        // Daily usage.
+        // SOC range per day.
         page.addView(card(p).apply {
-            addView(title("일일 사용량"))
-            addView(UsageChartView(context, p).apply { this.days = days; average = sum.avgUsage },
-                lp(MATCH, WRAP, top = dpi(8f)))
-            addView(label("막대: 하루 SOC 사용 합계 · 점선: 평균 ${pct(sum.avgUsage)} · 누르면 날짜별 값",
-                12f, p.muted))
-        }, lp(MATCH, WRAP, top = dpi(12f)))
-
-        // Daily SOC range.
-        page.addView(card(p).apply {
-            addView(title("일일 SOC 범위 (최저–최고)"))
+            addView(sectionTitle(p, "일일 SOC 범위"))
+            addView(row().apply {
+                addView(legend(p, "최저–최고", p.soc))
+                addView(legend(p, "평균 최저·최고", p.ink2, dashed = true), lp(WRAP, WRAP, left = dpi(12f)))
+            }, lp(WRAP, WRAP, top = dpi(6f)))
             addView(RangeChartView(context, p).apply {
                 avgMin = sum.avgMin; avgMax = sum.avgMax; this.days = days
-            }, lp(MATCH, WRAP, top = dpi(8f)))
-            addView(label("막대: 그날 최저~최고 · 점선: 평균 최저 ${pct(sum.avgMin)} / 평균 최고 ${pct(sum.avgMax)}",
-                12f, p.muted))
-            sum.lowest?.let { addView(kv(p, "기간 최저", "${it.minSoc}% (${md.format(it.day)})"), lp(MATCH, WRAP, top = dpi(8f))) }
-            sum.highest?.let { addView(kv(p, "기간 최고", "${it.maxSoc}% (${md.format(it.day)})")) }
-        }, lp(MATCH, WRAP, top = dpi(12f)))
+            }, lp(MATCH, WRAP, top = dpi(4f)))
+            addView(tileRow(p, listOf(
+                tile(p, "기간 최저", pct(sum.lowest?.minSoc), sum.lowest?.let { md.format(it.day) }, 18f),
+                tile(p, "기간 최고", pct(sum.highest?.maxSoc), sum.highest?.let { md.format(it.day) }, 18f),
+            )), lp(MATCH, WRAP, top = dpi(10f)))
+        }, lp(MATCH, WRAP, top = gap()))
 
         // Charging habits.
         page.addView(card(p).apply {
-            addView(title("충전 습관"))
-            addView(kv(p, "완료된 충전", "${sum.chargeCount}회"), lp(MATCH, WRAP, top = dpi(8f)))
-            addView(kv(p, "평균 충전 시작 SOC", pct(sum.avgChargeStart)))
-            addView(kv(p, "평균 충전 종료 SOC", pct(sum.avgChargeEnd)))
-            addView(kv(p, "평균 충전 시간", sum.avgChargeMinutes?.let { Format.duration((it * 60_000).toLong()) } ?: "-"))
-        }, lp(MATCH, WRAP, top = dpi(12f)))
+            addView(sectionTitle(p, "충전 습관", "완료된 충전 ${sum.chargeCount}회"))
+            addView(tileRow(p, listOf(
+                tile(p, "시작 SOC", pct(sum.avgChargeStart), "평균", 18f),
+                tile(p, "종료 SOC", pct(sum.avgChargeEnd), "평균", 18f),
+                tile(p, "충전 시간", sum.avgChargeMinutes?.let { Format.duration((it * 60_000).toLong()) } ?: "-", "평균", 18f),
+            )), lp(MATCH, WRAP, top = dpi(12f)))
+        }, lp(MATCH, WRAP, top = gap()))
 
         // Day-by-day table.
         page.addView(card(p).apply {
-            addView(title("일별 기록"))
-            fun cells(vararg v: String, head: Boolean = false) = row().apply {
+            addView(sectionTitle(p, "일별 기록"))
+            fun cells(vararg v: String, head: Boolean = false, bold: Boolean = false) = row().apply {
                 v.forEachIndexed { i, t ->
-                    addView(label(t, if (head) 12f else 14f, if (head) p.ink2 else p.ink, bold = !head && i == 1).apply {
-                        gravity = if (i == 0) Gravity.START else Gravity.END
-                    }, lp(0, WRAP, if (i == 0) 1.4f else 1f))
+                    val tv = if (head) caption(t, p) else if (i == 0) label(t, 13f, if (bold) p.ink else p.ink2, bold = bold)
+                        else number(t, 13f, p.ink)
+                    tv.gravity = if (i == 0) Gravity.START else Gravity.END
+                    addView(tv, lp(0, WRAP, if (i == 0) 1.5f else 1f))
                 }
-                setPadding(0, dpi(6f), 0, dpi(6f))
+                setPadding(0, dpi(8f), 0, dpi(8f))
             }
-            addView(cells("날짜", "사용", "충전", "최저", "최고", head = true), lp(MATCH, WRAP, top = dpi(8f)))
+            addView(cells("날짜", "사용", "충전", "최저", "최고", head = true), lp(MATCH, WRAP, top = dpi(6f)))
             val dfmt = DateTimeFormatter.ofPattern("M/d (E)", Locale.KOREAN)
             for (d in days.asReversed()) {
                 if (d.minSoc == null) continue
-                addView(View(context).apply { setBackgroundColor(p.grid) }, lp(MATCH, dpi(1f)))
-                addView(cells(dfmt.format(d.day), "${d.usage}%", "${d.charged}%", "${d.minSoc}%", "${d.maxSoc}%"))
+                addView(View(context).apply { setBackgroundColor(p.grid) }, lp(MATCH, Math.max(1, dpi(1f))))
+                addView(cells(dfmt.format(d.day), "${d.usage}%", "${d.charged}%", "${d.minSoc}%", "${d.maxSoc}%",
+                    bold = d.day == day))
             }
-        }, lp(MATCH, WRAP, top = dpi(12f)))
+        }, lp(MATCH, WRAP, top = gap()))
 
         setPage(page)
     }
 
-    /** Shows a scrolling page that is rebuilt from scratch (not Home or Sessions). */
+    /** One day in detail: totals, SOC curve, temperature and voltage. */
+    private fun dayDetail(stat: DayStat, now: Long): View = card(p).apply {
+        val day = stat.day
+        val start = Stats.dayStart(day, zone)
+        val end = Stats.dayStart(day.plusDays(1), zone)
+        val sessions = db.sessionsOverlapping(start, end)
+        val points = dayPoints(start, end)
+        val charges = sessions.count { it.type == SessionType.CHARGE && it.startTs >= start }
+
+        addView(sectionTitle(p, dateTitle(day) + relativeDay(day), "세션 ${sessions.size} · 충전 ${charges}회"))
+        addView(tileRow(p, listOf(
+            tile(p, "사용량", "${stat.usage}%", size = 18f),
+            tile(p, "충전량", "${stat.charged}%", size = 18f),
+            tile(p, "최저", pct(stat.minSoc), size = 18f),
+            tile(p, "최고", pct(stat.maxSoc), size = 18f),
+        )), lp(MATCH, WRAP, top = dpi(12f)))
+        if (points.isEmpty()) {
+            addView(label("이 날의 기록이 없습니다.", 13f, p.ink2), lp(MATCH, WRAP, top = dpi(12f)))
+            return@apply
+        }
+        addView(row().apply {
+            addView(legend(p, "SOC", p.soc))
+            addView(legend(p, "충전 구간", p.accentDim), lp(WRAP, WRAP, left = dpi(12f)))
+        }, lp(WRAP, WRAP, top = dpi(14f)))
+        addView(SocChartView(context, p).apply { set(points, sessions, start, end, now, zone) },
+            lp(MATCH, WRAP, top = dpi(2f)))
+        val temps = points.filter { it.temp > 0 }.map { it.ts to it.temp }
+        val volts = points.filter { it.voltage > 0 }.map { it.ts to it.voltage }
+        miniChart("배터리 온도", temps, c1, 20, p.temp, start, end, now)?.let { addView(it, lp(MATCH, WRAP, top = dpi(12f))) }
+        miniChart("배터리 전압", volts, v2, 100, p.volt, start, end, now)?.let { addView(it, lp(MATCH, WRAP, top = dpi(8f))) }
+    }
+
+    /** Shows a scrolling page that is rebuilt from scratch (Stats, Data). */
     private fun setPage(page: View) {
-        // Rebuilt after a battery update: stay where the user was scrolled to.
+        // Rebuilt after a battery update or a selection: stay where the user was scrolled to.
         val old = content.getChildAt(0) as? ScrollView
-        val keepY = if (old != null && old !== homeScroll && pageTab == tab) old.scrollY else 0
+        val keepY = if (old != null && pageTab == tab) old.scrollY else 0
         pageTab = tab
-        homeScroll = null
         sessionList = null
         content.removeAllViews()
         content.addView(ScrollView(this).apply {
@@ -600,17 +607,17 @@ class MainActivity : Activity() {
 
     /** Title row with the day's range, above a compact line chart. Null when there is no data. */
     private fun miniChart(
-        name: String, pts: List<Pair<Long, Int>>, fmt: (Int) -> String, minSpan: Int,
+        name: String, pts: List<Pair<Long, Int>>, fmt: (Int) -> String, minSpan: Int, color: Int,
         start: Long, end: Long, now: Long,
     ): View? {
         if (pts.isEmpty()) return null
         return column().apply {
             addView(row().apply {
-                addView(label(name, 13f, p.ink, bold = true), lp(0, WRAP, 1f))
-                addView(label("최저 ${fmt(pts.minOf { it.second })} · 최고 ${fmt(pts.maxOf { it.second })}",
-                    12f, p.ink2))
+                addView(View(context).apply { background = roundRect(color, 2f) }, lp(dpi(10f), dpi(3f)))
+                addView(label(name, 13f, p.ink, bold = true), lp(0, WRAP, 1f, left = dpi(6f)))
+                addView(label("${fmt(pts.minOf { it.second })} – ${fmt(pts.maxOf { it.second })}", 12f, p.ink2))
             })
-            addView(MiniLineChart(context, p, fmt, minSpan).apply { set(pts, start, end, now, zone) },
+            addView(MiniLineChart(context, p, color, fmt, minSpan).apply { set(pts, start, end, now, zone) },
                 lp(MATCH, WRAP, top = dpi(2f)))
         }
     }
@@ -644,7 +651,7 @@ class MainActivity : Activity() {
         }, lp(dpi(4f), dpi(34f)))
         addView(column().apply {
             addView(label(sessionLine1(s), 14f, p.ink, bold = true))
-            addView(label(sessionLine2(s, now), 12f, p.ink2))
+            addView(label(sessionLine2(s, now), 12f, p.ink2), lp(WRAP, WRAP, top = dpi(4f)))
         }, lp(0, WRAP, 1f, left = dpi(10f)))
     }
 
@@ -697,17 +704,13 @@ class MainActivity : Activity() {
                         is Row.Day -> dayHeader(row.stat, row.charges)
                         is Row.Item -> FrameLayout(context).apply {
                             setPadding(0, dpi(4f), 0, dpi(4f))
-                            addView(card(p).apply {
-                                val pad = dpi(14f)
-                                setPadding(pad, pad, pad, pad)
-                                addView(sessionRow(row.session, now))
-                            })
+                            addView(card(p, 14f).apply { addView(sessionRow(row.session, now)) })
                         }
                     }
             }
         }
         val page = column().apply {
-            addView(title("충전·사용 세션").apply { setPadding(dpi(22f), dpi(20f), dpi(22f), dpi(4f)) })
+            addView(pageHeader("세션").apply { setPadding(dpi(18f), dpi(14f), dpi(16f), dpi(2f)) })
             if (rows.isEmpty()) {
                 addView(label("아직 기록된 세션이 없습니다.", 14f, p.ink2).apply {
                     setPadding(dpi(22f), dpi(8f), dpi(22f), 0)
@@ -718,7 +721,6 @@ class MainActivity : Activity() {
         }
         if (oldList != null && rows.isNotEmpty()) list.setSelectionFromTop(keepPos, keepTop)
         sessionList = list
-        homeScroll = null
         content.removeAllViews()
         content.addView(page)
     }
@@ -729,16 +731,17 @@ class MainActivity : Activity() {
         val today = LocalDate.now(zone)
         val name = DateTimeFormatter.ofPattern("M월 d일 (E)", Locale.KOREAN).format(stat.day) +
             when (stat.day) { today -> " · 오늘"; today.minusDays(1) -> " · 어제"; else -> "" }
-        addView(label(name, 15f, p.ink, bold = true))
+        addView(label(name, 14f, p.ink, bold = true))
         val parts = arrayListOf("사용 ${stat.usage}%", "충전 ${stat.charged}%", "충전 ${charges}회")
         if (stat.minSoc != null && stat.maxSoc != null) parts.add("SOC ${stat.minSoc}–${stat.maxSoc}%")
-        addView(label(parts.joinToString(" · "), 13f, p.ink2), lp(MATCH, WRAP, top = dpi(2f)))
+        addView(label(parts.joinToString(" · "), 12f, p.ink2), lp(MATCH, WRAP, top = dpi(4f)))
     }
 
     // ------------------------------------------------------------------ data
 
     private fun renderData() {
         val page = page()
+        page.addView(pageHeader("데이터"))
 
         page.addView(card(p).apply {
             addView(title("기록 상태"))
@@ -756,7 +759,7 @@ class MainActivity : Activity() {
                 12f, p.ink2), lp(MATCH, WRAP, top = dpi(4f)))
             if (!exempt) addView(button("배터리 최적화에서 제외") { requestExemption() }, lp(MATCH, WRAP, top = dpi(10f)))
             addView(button("앱 배터리 설정 열기") { openAppSettings() }, lp(MATCH, WRAP, top = dpi(10f)))
-        })
+        }, lp(MATCH, WRAP, top = dpi(14f)))
 
         page.addView(card(p).apply {
             addView(title("앱 안내"))
@@ -804,9 +807,9 @@ class MainActivity : Activity() {
     }
 
     private fun button(text: String, danger: Boolean = false, action: () -> Unit): TextView =
-        label(text, 15f, if (danger) p.danger else p.ink, bold = true).apply {
+        label(text, 14f, if (danger) p.danger else p.ink, bold = true).apply {
             gravity = Gravity.CENTER
-            background = roundRect(p.bg, 14f)
+            background = roundRect(p.bg, 12f, p.line)
             setPadding(dpi(12f), dpi(13f), dpi(12f), dpi(13f))
             setOnClickListener { action() }
         }
