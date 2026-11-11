@@ -11,7 +11,10 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
+import android.os.PowerManager
 import dev.chargelog.R
 import dev.chargelog.core.Format
 import dev.chargelog.core.Plug
@@ -35,6 +38,35 @@ class MonitorService : Service() {
         override fun onReceive(context: Context, intent: Intent) = handle(intent)
     }
 
+    private val handler = Handler(Looper.getMainLooper())
+
+    /** Screen-on ticker: one stored reading per cadence interval while the phone is in use. */
+    private val tick = object : Runnable {
+        override fun run() {
+            val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+            // Screen off: stop here; the alarm takes over and ACTION_SCREEN_ON restarts the ticker.
+            if (!pm.isInteractive) return
+            recordNow()
+            handler.postDelayed(this, Recorder.cadence(this@MonitorService).awakeMs)
+        }
+    }
+
+    /** Screen on/off: record right away and switch between the awake and asleep cadence. */
+    private val screen = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            recordNow()
+            handler.removeCallbacks(tick)
+            if (intent.action == Intent.ACTION_SCREEN_ON) {
+                handler.postDelayed(tick, Recorder.cadence(this@MonitorService).awakeMs)
+            }
+            Watchdog.schedule(this@MonitorService)
+        }
+    }
+
+    private fun recordNow() {
+        registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))?.let { handle(it, periodic = true) }
+    }
+
     override fun onCreate() {
         super.onCreate()
         val nm = (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
@@ -46,6 +78,10 @@ class MonitorService : Service() {
         goForeground()
         // Sticky broadcast: returns the current battery state immediately.
         registerReceiver(receiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))?.let { handle(it) }
+        registerReceiver(screen, IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_ON); addAction(Intent.ACTION_SCREEN_OFF)
+        })
+        handler.postDelayed(tick, Recorder.cadence(this).awakeMs)
         Watchdog.schedule(this)
     }
 
@@ -72,14 +108,16 @@ class MonitorService : Service() {
     }
 
     override fun onDestroy() {
+        handler.removeCallbacks(tick)
+        unregisterReceiver(screen)
         unregisterReceiver(receiver)
         super.onDestroy()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    private fun handle(intent: Intent) {
-        val s = Recorder.record(this, intent) ?: return
+    private fun handle(intent: Intent, periodic: Boolean = false) {
+        val s = Recorder.record(this, intent, periodic) ?: return
         val text = describe(s)
         if (text != lastText) {
             lastText = text

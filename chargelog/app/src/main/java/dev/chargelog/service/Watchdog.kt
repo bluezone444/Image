@@ -6,17 +6,17 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.SystemClock
 import dev.chargelog.data.Recorder
 
 /**
- * Backstop for when the system or a vendor battery manager kills the recorder: every ~15
- * minutes (also during Doze) record the current battery state directly and restart the
- * foreground service. Starting it from the background is allowed while the app is exempt
- * from battery optimization.
+ * Screen-off ticker and backstop. Every [dev.chargelog.core.Cadence.sleepMs] (5 min by default),
+ * also during Doze, store a reading and make sure the recorder service is running. An exact
+ * allow-while-idle alarm keeps the interval regular; in deep Doze the system may still stretch
+ * it. Each wake-up only reads the battery and writes one row.
  */
 object Watchdog {
-    private const val INTERVAL_MS = 15 * 60_000L
 
     fun schedule(context: Context) {
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -24,10 +24,11 @@ object Watchdog {
             context, 0, Intent(context, WatchdogReceiver::class.java),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
+        val at = SystemClock.elapsedRealtime() + Recorder.cadence(context).sleepMs
         // Same PendingIntent replaces any pending alarm, so calling this often is harmless.
-        am.setAndAllowWhileIdle(
-            AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + INTERVAL_MS, pi
-        )
+        val exactAllowed = Build.VERSION.SDK_INT < 31 || am.canScheduleExactAlarms()
+        if (exactAllowed) am.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, at, pi)
+        else am.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, at, pi)
     }
 }
 
@@ -36,7 +37,7 @@ class WatchdogReceiver : BroadcastReceiver() {
         val app = context.applicationContext
         // Null receiver: just reads the current sticky battery state.
         app.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-            ?.let { Recorder.record(app, it) }
+            ?.let { Recorder.record(app, it, periodic = true) }
         try {
             MonitorService.start(app)
         } catch (e: RuntimeException) {

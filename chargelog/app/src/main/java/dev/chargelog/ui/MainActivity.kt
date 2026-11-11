@@ -831,6 +831,25 @@ class MainActivity : Activity() {
             addView(button("앱 배터리 설정 열기") { openAppSettings() }, lp(MATCH, WRAP, top = dpi(10f)))
         }, lp(MATCH, WRAP, top = dpi(14f)))
 
+        // Recording cadence.
+        page.addView(card(p).apply {
+            val cur = Recorder.cadence(this@MainActivity)
+            addView(sectionTitle(p, "기록 주기", cur.describe()))
+            val all = dev.chargelog.core.Cadence.values().toList()
+            addView(segmented(p, all.map { it.label }, all.indexOf(cur)) { i ->
+                Recorder.setCadence(this@MainActivity, all[i])
+                Watchdog.schedule(this@MainActivity)
+                render()
+            }, lp(WRAP, WRAP, top = dpi(10f)))
+            addView(label(all.joinToString("\n") { "${it.label}: ${it.describe()} · 하루 약 ${it.rowsPerDay()}줄" },
+                12f, p.ink2).apply { setLineSpacing(dp(3f), 1f) }, lp(MATCH, WRAP, top = dpi(10f)))
+            addView(label(
+                "값이 바뀌지 않아도 이 주기마다 잔량·온도·전류를 한 줄씩 저장합니다. 화면이 켜져 있을 때는 휴대폰이 " +
+                    "이미 깨어 있어 추가 배터리 소모가 거의 없고, 꺼져 있을 때는 정확한 알람으로 잠깐 깨워 한 줄만 " +
+                    "저장합니다(깊은 대기 상태에서는 시스템이 간격을 늘릴 수 있음). 잔량 1%·충전기 연결·온도 1°C " +
+                    "변화는 주기와 상관없이 바로 기록됩니다.", 12f, p.muted), lp(MATCH, WRAP, top = dpi(8f)))
+        }, lp(MATCH, WRAP, top = dpi(12f)))
+
         page.addView(card(p).apply {
             addView(title("앱 안내"))
             addView(label("충전 모니터링 전용 앱입니다. 임의로 배포하지 마세요.", 13f, p.ink2),

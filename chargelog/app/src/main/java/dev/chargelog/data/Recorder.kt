@@ -3,6 +3,7 @@ package dev.chargelog.data
 import android.content.Context
 import android.content.Intent
 import android.os.BatteryManager
+import dev.chargelog.core.Cadence
 import dev.chargelog.core.Ocv
 import dev.chargelog.core.RFit
 import dev.chargelog.core.Sample
@@ -93,11 +94,23 @@ object Recorder {
     private const val REBUILT_KEY = "rebuilt_estimates_v1"
     private const val R_KEY = "r_fit_ohms"
 
-    /** @return the parsed reading, or null if the intent carried no usable level. */
+    /** Stored reading interval chosen in the Data tab. */
+    fun cadence(context: Context): Cadence = Cadence.of(prefs(context).getString(CADENCE_KEY, null))
+
+    fun setCadence(context: Context, c: Cadence) {
+        prefs(context).edit().putString(CADENCE_KEY, c.name).apply()
+    }
+
+    private const val CADENCE_KEY = "cadence"
+
+    /**
+     * @param periodic a scheduled reading, stored even when nothing changed
+     * @return the parsed reading, or null if the intent carried no usable level.
+     */
     @Synchronized
-    fun record(context: Context, intent: Intent): Sample? {
+    fun record(context: Context, intent: Intent, periodic: Boolean = false): Sample? {
         val s = parse(context, intent) ?: return null
-        Tracker(Db.get(context)).onReading(s)
+        Tracker(Db.get(context)).onReading(s, periodic)
         val fit = rFit(context)
         if (fit.count != lastSavedCount) {
             lastSavedCount = fit.count

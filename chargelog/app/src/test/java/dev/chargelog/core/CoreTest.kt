@@ -335,6 +335,35 @@ class CoreTest {
         assertEquals(812, Drain.rate(smp(0, 50, 0), smp(1, 50, 0, cur = -812_000)))
     }
 
+    @Test fun periodicReadingsAreStoredOnSchedule() {
+        val st = FakeStore(); val t = Tracker(st)
+        t.onReading(r(0, 70))
+        assertTrue(!t.onReading(r(1, 70)))                                   // event, nothing changed
+        assertTrue(t.onReading(r(2, 70), periodic = true))                   // scheduled: stored
+        assertTrue(!t.onReading(Sample(2 * min + 10_000, 70, 0, 3, 300, 4000), periodic = true)) // < 20 s apart
+        assertEquals(2, st.samples.size)
+        assertEquals(1, st.sessions.size)
+    }
+
+    @Test fun minuteReadingsUseRollingCounterAverage() {
+        // One reading per minute at 600 mA (10 mAh per minute), instantaneous current noisy.
+        val samples = (0..10).map { m ->
+            Sample(m * min, 60, 0, 3, 300, 3900, chargeUah = 3_000_000 - m * 10_000,
+                currentUa = if (m % 2 == 0) -150_000 else -1_900_000)
+        }
+        val ser = Drain.series(samples, 10 * min, null)
+        val values = ser.map { it.second }.filter { it != Drain.BREAK }
+        // First 3 minutes: no 3-minute window yet → instantaneous; afterwards a steady 600 mA.
+        assertTrue(values.drop(6).all { it == 600 })
+        assertEquals(600, Drain.summary(ser.drop(6))!!.first)
+    }
+
+    @Test fun cadencePresets() {
+        assertEquals(Cadence.STANDARD, Cadence.of(null))
+        assertEquals(Cadence.SAVER, Cadence.of("SAVER"))
+        assertEquals(5 * 60 + 19 * 12, Cadence.STANDARD.rowsPerDay())
+    }
+
     @Test fun dailyWithNoDataIsEmpty() {
         val day = LocalDate.of(2026, 11, 10)
         val out = Stats.daily(emptyList(), null, zone, day, day)

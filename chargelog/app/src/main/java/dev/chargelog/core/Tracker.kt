@@ -21,9 +21,11 @@ class Tracker(private val store: Store) {
      * Records a reading. When it shows that readings were missed since the previous one, the gap
      * is first filled with estimated readings (see [GapFiller]).
      *
-     * @return true when the reading changed stored state (new sample).
+     * @param periodic a scheduled reading: stored even when nothing changed, unless the previous
+     *   stored reading is less than [Cadence.MIN_GAP_MS] old.
+     * @return true when a sample was stored.
      */
-    fun onReading(reading: Sample): Boolean {
+    fun onReading(reading: Sample, periodic: Boolean = false): Boolean {
         val prev = store.lastSample()
         if (prev != null && !reading.est) {
             val r = if (reading.ts < prev.ts) reading.copy(ts = prev.ts) else reading
@@ -33,10 +35,10 @@ class Tracker(private val store: Store) {
                 for (e in estimates) record(e)
             }
         }
-        return record(reading)
+        return record(reading, periodic)
     }
 
-    private fun record(reading: Sample): Boolean {
+    private fun record(reading: Sample, periodic: Boolean = false): Boolean {
         val last = store.lastSample()
         // If the wall clock moved backwards (manual change, network time correction), keep
         // recording at the last known time instead of dropping readings until it catches up.
@@ -44,7 +46,8 @@ class Tracker(private val store: Store) {
         // Temperature moves without SOC changing (heavy use, charging); keep 1 °C steps too.
         val changed = last == null || last.level != r.level ||
             last.plugged != r.plugged || last.status != r.status ||
-            Math.abs(last.temp - r.temp) >= TEMP_STEP
+            Math.abs(last.temp - r.temp) >= TEMP_STEP ||
+            (periodic && r.ts - last.ts >= Cadence.MIN_GAP_MS)
         if (changed) {
             // Primary key is ts: never write two samples on the same millisecond.
             store.insertSample(if (last != null && r.ts <= last.ts) r.copy(ts = last.ts + 1) else r)

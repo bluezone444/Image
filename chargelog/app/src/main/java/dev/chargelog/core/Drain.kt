@@ -26,6 +26,29 @@ object Drain {
     }
 
     /**
+     * Rolling average ending at reading [i]: the charge-counter drop since the latest reading at
+     * least [MIN_COUNTER_MS] earlier, without crossing a charging stretch. Keeps frequent
+     * (periodic) readings smooth instead of falling back to the noisy instantaneous current.
+     */
+    private fun windowRate(obs: List<Sample>, i: Int): Int? {
+        val b = obs[i]
+        if (b.charging || b.chargeUah <= 0) return null
+        var j = i - 1
+        while (j >= 0) {
+            val a = obs[j]
+            if (a.charging || a.chargeUah <= 0) return null
+            val dt = b.ts - a.ts
+            if (dt >= MIN_COUNTER_MS) {
+                val dq = a.chargeUah - b.chargeUah
+                if (dq < 0) return null
+                return Math.round(dq / (dt / 3_600_000.0) / 1000.0).toInt().takeIf { it in 0..MAX_MA }
+            }
+            j--
+        }
+        return null
+    }
+
+    /**
      * Step series over [samples] (ascending), continued to [now] with the [current] reading.
      * Two points per interval (start and end at the same value); [BREAK] where not discharging.
      */
@@ -36,7 +59,7 @@ object Drain {
         fun brk(ts: Long) { if (out.isNotEmpty() && out.last().second != BREAK) out.add(ts to BREAK) }
         for (i in 1 until obs.size) {
             val a = obs[i - 1]; val b = obs[i]
-            val ma = if (a.charging) null else rate(a, b)
+            val ma = if (a.charging) null else windowRate(obs, i) ?: rate(a, b)
             if (ma == null) { brk(a.ts); continue }
             out.add(a.ts to ma); out.add(b.ts to ma)
         }
