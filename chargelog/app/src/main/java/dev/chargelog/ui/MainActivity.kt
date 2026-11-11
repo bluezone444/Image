@@ -379,8 +379,10 @@ class MainActivity : Activity() {
                 addView(label("아직 오늘 기록이 없습니다.", 13f, p.ink2), lp(MATCH, WRAP, top = dpi(10f)))
             } else {
                 val sessions = db.sessionsOverlapping(start, end)
-                addView(SocChartView(context, p).apply { set(points, sessions, start, end, now, zone) },
-                    lp(MATCH, 0, 1f, top = dpi(4f)))
+                addView(SocChartView(context, p).apply {
+                    zoomKey = "home-soc"
+                    set(points, sessions, start, end, now, zone)
+                }, lp(MATCH, 0, 1f, top = dpi(4f)))
             }
         }, lp(MATCH, 0, 1f, top = gap()))
         root.addView(sensorCard(points, start, now), lp(MATCH, WRAP, top = gap()))
@@ -519,12 +521,13 @@ class MainActivity : Activity() {
         val defaultDay = days.lastOrNull { it.day != today && it.minSoc != null }?.day ?: today
         val day = statsDay?.takeIf { d -> days.any { it.day == d } } ?: defaultDay
         page.addView(card(p).apply {
-            addView(sectionTitle(p, "일일 사용량", "막대를 누르면 그날 상세"))
+            addView(sectionTitle(p, "일일 사용량", "탭: 그날 상세 · 두 손가락: 확대"))
             addView(row().apply {
                 addView(legend(p, "사용량", p.soc))
                 addView(legend(p, "평균 ${pct(sum.avgUsage)}", p.ink2, dashed = true), lp(WRAP, WRAP, left = dpi(12f)))
             }, lp(WRAP, WRAP, top = dpi(6f)))
             addView(UsageChartView(context, p).apply {
+                zoomKey = "usage-$statsDays"
                 this.days = days; average = sum.avgUsage
                 selected = days.indexOfFirst { it.day == day }
                 onSelect = { i -> statsDay = days[i].day; render() }
@@ -535,12 +538,13 @@ class MainActivity : Activity() {
 
         // SOC range per day.
         page.addView(card(p).apply {
-            addView(sectionTitle(p, "일일 SOC 범위"))
+            addView(sectionTitle(p, "일일 SOC 범위", "두 손가락: 확대"))
             addView(row().apply {
                 addView(legend(p, "최저–최고", p.soc))
                 addView(legend(p, "평균 최저·최고", p.ink2, dashed = true), lp(WRAP, WRAP, left = dpi(12f)))
             }, lp(WRAP, WRAP, top = dpi(6f)))
             addView(RangeChartView(context, p).apply {
+                zoomKey = "range-$statsDays"
                 avgMin = sum.avgMin; avgMax = sum.avgMax; this.days = days
             }, lp(MATCH, WRAP, top = dpi(4f)))
             addView(tileRow(p, listOf(
@@ -594,6 +598,7 @@ class MainActivity : Activity() {
         val charges = sessions.count { it.type == SessionType.CHARGE && it.startTs >= start }
 
         addView(sectionTitle(p, dateTitle(day) + relativeDay(day), "세션 ${sessions.size} · 충전 ${charges}회"))
+        addView(label("그래프는 두 손가락으로 벌리면 확대, 두 번 탭하면 원래대로", 11f, p.muted), lp(WRAP, WRAP, top = dpi(3f)))
         addView(tileRow(p, listOf(
             tile(p, "사용량", "${stat.usage}%", size = 18f),
             tile(p, "충전량", "${stat.charged}%", size = 18f),
@@ -609,8 +614,10 @@ class MainActivity : Activity() {
             if (points.any { it.est }) addView(legend(p, "추정", p.ink2, dashed = true), lp(WRAP, WRAP, left = dpi(12f)))
             addView(legend(p, "충전 구간", p.accentDim), lp(WRAP, WRAP, left = dpi(12f)))
         }, lp(WRAP, WRAP, top = dpi(14f)))
-        addView(SocChartView(context, p).apply { set(points, sessions, start, end, now, zone) },
-            lp(MATCH, WRAP, top = dpi(2f)))
+        addView(SocChartView(context, p).apply {
+            zoomKey = "detail-soc"
+            set(points, sessions, start, end, now, zone)
+        }, lp(MATCH, WRAP, top = dpi(2f)))
         val observed = points.filter { !it.est }
         val temps = observed.filter { it.temp > 0 }.map { it.ts to it.temp }
         val volts = observed.map { it.ts to Volt.reference(it) }.filter { it.second > 0 }
@@ -648,7 +655,10 @@ class MainActivity : Activity() {
                 addView(label("${fmt(pts.minOf { it.second })} – ${fmt(pts.maxOf { it.second })}", 12f, p.ink2))
             })
             if (note != null) addView(label(note, 10f, p.muted), lp(WRAP, WRAP, top = dpi(3f)))
-            addView(MiniLineChart(context, p, color, fmt, minSpan).apply { set(pts, start, end, now, zone) },
+            addView(MiniLineChart(context, p, color, fmt, minSpan).apply {
+                zoomKey = "detail-$name"
+                set(pts, start, end, now, zone)
+            },
                 lp(MATCH, WRAP, top = dpi(2f)))
         }
     }
