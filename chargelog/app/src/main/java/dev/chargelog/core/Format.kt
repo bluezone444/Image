@@ -26,6 +26,14 @@ object Format {
     /** "20:50:12". */
     fun timeSec(ts: Long, zone: ZoneId): String = hms.format(Instant.ofEpochMilli(ts).atZone(zone))
 
+    /** Stopwatch form for compact lines: "1:38:58", "22:05", "0:48". */
+    fun durationClock(ms: Long): String {
+        val total = (ms / 1000L).coerceAtLeast(0)
+        val h = total / 3600; val m = (total % 3600) / 60; val sec = total % 60
+        return if (h > 0) String.format(Locale.US, "%d:%02d:%02d", h, m, sec)
+        else String.format(Locale.US, "%d:%02d", m, sec)
+    }
+
     /** "1시간 39분 12초", "22분 5초", "48초". */
     fun durationSec(ms: Long): String {
         val total = (ms / 1000L).coerceAtLeast(0)

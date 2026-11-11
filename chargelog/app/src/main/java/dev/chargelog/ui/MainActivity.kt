@@ -86,6 +86,8 @@ class MainActivity : Activity() {
     private var askedNotif = false
     /** Day shown in the Stats tab's day detail; null picks a sensible default. */
     private var statsDay: LocalDate? = null
+    /** Day shown in the Sessions tab; null = today. */
+    private var sessionsDay: LocalDate? = null
     private var current: Sample? = null
     /** Latest battery broadcast, used to name the voltage source. */
     private var batteryIntent: Intent? = null
@@ -145,6 +147,7 @@ class MainActivity : Activity() {
             statsType = DayType.of(st.getString("statsType"))
             statsDay = st.getLong("statsDay", Long.MIN_VALUE).takeIf { it != Long.MIN_VALUE }?.let { LocalDate.ofEpochDay(it) }
             sessionFilter = st.getInt("sessionFilter")
+            st.getLong("sessionsDay", Long.MIN_VALUE).takeIf { it != Long.MIN_VALUE }?.let { sessionsDay = LocalDate.ofEpochDay(it) }
             askedNotif = st.getBoolean("askedNotif")
         }
 
@@ -166,6 +169,7 @@ class MainActivity : Activity() {
         outState.putString("statsType", statsType.name)
         statsDay?.let { outState.putLong("statsDay", it.toEpochDay()) }
         outState.putInt("sessionFilter", sessionFilter)
+        sessionsDay?.let { outState.putLong("sessionsDay", it.toEpochDay()) }
         outState.putBoolean("askedNotif", askedNotif)
     }
 
@@ -898,16 +902,20 @@ class MainActivity : Activity() {
     }
 
     /** Time line: start → end to the second (end date only when it differs) and duration. */
-    private fun sessionTimeLine(s: Session, now: Long): String {
-        val endTs = s.endTs
-        val sameDay = endTs != null && java.time.Instant.ofEpochMilli(endTs).atZone(zone).toLocalDate() ==
-            java.time.Instant.ofEpochMilli(s.startTs).atZone(zone).toLocalDate()
-        val end = when {
-            endTs == null -> "진행 중"
-            sameDay -> Format.timeSec(endTs, zone)
-            else -> Format.dateTimeSec(endTs, zone)
+    /**
+     * One-line times relative to the day being viewed: "18:05:56 → 19:44:54 · ⏱ 1:38:58".
+     * A start on an earlier day or an end on a later day gets "(-1일)" / "(+1일)".
+     */
+    private fun sessionTimeLine(s: Session, now: Long, day: LocalDate = LocalDate.now(zone)): String {
+        fun dayOf(ts: Long) = java.time.Instant.ofEpochMilli(ts).atZone(zone).toLocalDate()
+        fun shift(ts: Long): String {
+            val d = java.time.temporal.ChronoUnit.DAYS.between(day, dayOf(ts))
+            return if (d == 0L) "" else if (d > 0) "(+${d}일)" else "(${d}일)"
         }
-        return "${Format.dateTimeSec(s.startTs, zone)} → $end  (${Format.durationSec(s.durationMs(now))})"
+        val endTs = s.endTs
+        val start = Format.timeSec(s.startTs, zone) + shift(s.startTs)
+        val end = if (endTs == null) "진행 중" else Format.timeSec(endTs, zone) + shift(endTs)
+        return "$start → $end · ⏱ ${Format.durationClock(s.durationMs(now))}"
     }
 
     private val eventsCache = HashMap<Long, dev.chargelog.core.ChargeEvents>()
@@ -954,7 +962,7 @@ class MainActivity : Activity() {
     }
 
     /** Session row: ⚡ badge for charging, 📱 for use; the card tint is applied by [sessionCard]. */
-    private fun sessionRow(s: Session, now: Long): View = row().apply {
+    private fun sessionRow(s: Session, now: Long, day: LocalDate = LocalDate.now(zone)): View = row().apply {
         val charge = s.type == SessionType.CHARGE
         addView(label(if (charge) "⚡" else "📱", 18f, p.ink).apply {
             gravity = Gravity.CENTER
@@ -962,7 +970,7 @@ class MainActivity : Activity() {
         }, lp(dpi(40f), dpi(40f)))
         addView(column().apply {
             addView(label(sessionLine1(s), 15f, p.ink, bold = true))
-            addView(number(sessionTimeLine(s, now), 13f, p.ink2), lp(WRAP, WRAP, top = dpi(5f)))
+            addView(number(sessionTimeLine(s, now, day), 13f, p.ink2).apply { maxLines = 1 }, lp(WRAP, WRAP, top = dpi(5f)))
             addView(label(sessionLine2(s, now), 14f, p.ink, bold = true).apply { alpha = 0.85f },
                 lp(WRAP, WRAP, top = dpi(4f)))
             if (charge) addView(label(chargeEventLine(s, now), 13f, p.ink2), lp(WRAP, WRAP, top = dpi(4f)))
@@ -970,12 +978,12 @@ class MainActivity : Activity() {
     }
 
     /** Tinted card: light red while charging, light blue while in use. */
-    private fun sessionCard(s: Session, now: Long): View = column().apply {
+    private fun sessionCard(s: Session, now: Long, day: LocalDate = LocalDate.now(zone)): View = column().apply {
         val charge = s.type == SessionType.CHARGE
         background = roundRect(if (charge) p.chargeBg else p.useBg, 18f, if (charge) p.chargeLine else p.useLine)
         val pad = dpi(14f)
         setPadding(pad, pad, pad, pad)
-        addView(sessionRow(s, now))
+        addView(sessionRow(s, now, day))
     }
 
     private sealed class Row {
@@ -983,70 +991,72 @@ class MainActivity : Activity() {
         class Item(val session: Session) : Row()
     }
 
+    /**
+     * One day at a time: a "‹ 날짜 ›" bar (tap the date for a calendar), the day's totals, then
+     * every session active that day, newest first. Starts on today; older days stay reachable.
+     */
     private fun renderSessions() {
         val now = System.currentTimeMillis()
-        val sessions = db.latestSessions(SESSION_HISTORY_LIMIT)
-        val groups = Stats.sessionsByDay(sessions, zone, now)
+        val today = LocalDate.now(zone)
+        val firstDay = db.firstSampleTs()?.let { java.time.Instant.ofEpochMilli(it).atZone(zone).toLocalDate() } ?: today
+        val day = (sessionsDay ?: today).coerceIn(firstDay, today)
+        sessionsDay = day
+        val from = Stats.dayStart(day, zone)
+        val to = Stats.dayStart(day.plusDays(1), zone)
+        val sessions = db.sessionsOverlapping(from, to)
+            .sortedWith(compareByDescending<Session> { it.startTs }.thenByDescending { it.id })
+        val stat = db.days.range(day, day, zone).firstOrNull() ?: DayStat(day, 0, 0, null, null)
+        val charges = sessions.count { it.type == SessionType.CHARGE && it.startTs in from until to }
 
-        // Daily totals for every listed day, computed from the SOC samples in one pass.
-        val stats = HashMap<LocalDate, DayStat>()
-        if (groups.isNotEmpty()) {
-            val oldest = groups.last().first
-            val newest = groups.first().first
-            val from = Stats.dayStart(oldest, zone)
-            val to = Stats.dayStart(newest.plusDays(1), zone)
-            db.days.range(oldest, newest, zone).forEach { stats[it.day] = it }
-        }
-        val rows = ArrayList<Row>()
-        for ((day, list) in groups) {
-            val dayFrom = Stats.dayStart(day, zone)
-            val dayTo = Stats.dayStart(day.plusDays(1), zone)
-            val charges = list.count { it.type == SessionType.CHARGE && it.startTs in dayFrom until dayTo }
-            rows.add(Row.Day(stats[day] ?: DayStat(day, 0, 0, null, null), charges))
-            list.forEach { rows.add(Row.Item(it)) }
-        }
+        val page = page()
+        page.addView(pageHeader("세션"))
 
-        // Keep the scroll position when the list is rebuilt for a new reading.
-        val oldList = sessionList
-        val keepPos = oldList?.firstVisiblePosition ?: 0
-        val keepTop = oldList?.getChildAt(0)?.top ?: 0
-        val list = ListView(this).apply {
-            divider = null
-            clipToPadding = false
-            setPadding(dpi(16f), dpi(0f), dpi(16f), dpi(16f))
-            adapter = object : BaseAdapter() {
-                override fun getCount() = rows.size
-                override fun getItem(i: Int) = rows[i]
-                override fun getItemId(i: Int) = i.toLong()
-                override fun getViewTypeCount() = 2
-                override fun getItemViewType(i: Int) = if (rows[i] is Row.Day) 0 else 1
-                override fun isEnabled(i: Int) = false
-                override fun getView(i: Int, convert: View?, parent: ViewGroup): View =
-                    when (val row = rows[i]) {
-                        is Row.Day -> dayHeader(row.stat, row.charges)
-                        is Row.Item -> FrameLayout(context).apply {
-                            setPadding(0, dpi(4f), 0, dpi(4f))
-                            addView(sessionCard(row.session, now))
-                        }
-                    }
-            }
+        // Day navigator.
+        fun arrow(text: String, enabled: Boolean, go: () -> Unit) = label(text, 24f, if (enabled) p.ink else p.line, bold = true).apply {
+            gravity = Gravity.CENTER
+            minimumWidth = dpi(48f); minimumHeight = dpi(48f)
+            if (enabled) setOnClickListener { go() }
         }
-        val page = column().apply {
-            addView(pageHeader("세션").apply { setPadding(dpi(18f), dpi(14f), dpi(16f), dpi(2f)) })
-            if (rows.isEmpty()) {
-                addView(label("아직 기록된 세션이 없습니다.", 15f, p.ink2).apply {
-                    setPadding(dpi(22f), dpi(8f), dpi(22f), 0)
-                })
-            } else {
-                addView(list, lp(MATCH, 0, 1f))
-            }
+        page.addView(row().apply {
+            background = roundRect(p.card, 16f, p.line)
+            setPadding(dpi(4f), dpi(4f), dpi(4f), dpi(4f))
+            addView(arrow("‹", day > firstDay) { sessionsDay = day.minusDays(1); render() })
+            addView(column().apply {
+                gravity = Gravity.CENTER
+                val rel = when (day) { today -> "오늘"; today.minusDays(1) -> "어제"; else -> null }
+                addView(label(DateTimeFormatter.ofPattern("M월 d일 (E)", Locale.KOREAN).format(day), 17f, p.ink, bold = true))
+                addView(label(rel ?: "${java.time.temporal.ChronoUnit.DAYS.between(day, today)}일 전", 12f, p.muted),
+                    lp(WRAP, WRAP, top = dpi(2f)))
+                setOnClickListener {
+                    android.app.DatePickerDialog(this@MainActivity, { _, y, m, d ->
+                        sessionsDay = LocalDate.of(y, m + 1, d); render()
+                    }, day.year, day.monthValue - 1, day.dayOfMonth).apply {
+                        datePicker.minDate = Stats.dayStart(firstDay, zone)
+                        datePicker.maxDate = Stats.dayStart(today, zone)
+                    }.show()
+                }
+            }, lp(0, WRAP, 1f))
+            addView(arrow("›", day < today) { sessionsDay = day.plusDays(1); render() })
+        }, lp(MATCH, WRAP, top = dpi(12f)))
+        if (day != today) page.addView(label("오늘로", 13f, p.soc, bold = true).apply {
+            gravity = Gravity.CENTER
+            setPadding(0, dpi(8f), 0, 0)
+            setOnClickListener { sessionsDay = today; render() }
+        }, lp(MATCH, WRAP))
+
+        // Day totals.
+        val parts = arrayListOf("사용 ${stat.usage}%", "충전 ${stat.charged}%", "충전 ${charges}회")
+        if (stat.minSoc != null && stat.maxSoc != null) parts.add("SOC ${stat.minSoc}–${stat.maxSoc}%")
+        page.addView(label(parts.joinToString(" · "), 14f, p.ink2).apply { gravity = Gravity.CENTER },
+            lp(MATCH, WRAP, top = dpi(10f)))
+
+        if (sessions.isEmpty()) {
+            page.addView(label("이 날의 세션이 없습니다.", 15f, p.ink2).apply { gravity = Gravity.CENTER },
+                lp(MATCH, WRAP, top = dpi(24f)))
+        } else {
+            for (s in sessions) page.addView(sessionCard(s, now, day), lp(MATCH, WRAP, top = dpi(10f)))
         }
-        if (oldList != null && rows.isNotEmpty()) list.setSelectionFromTop(keepPos, keepTop)
-        sessionList = list
-        pageScroll = null
-        pageTab = tab
-        content.removeAllViews()
-        content.addView(page)
+        setPage(page)
     }
 
     /** Date heading with that day's totals, above the day's session cards. */
