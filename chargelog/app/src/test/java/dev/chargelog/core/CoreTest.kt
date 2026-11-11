@@ -497,6 +497,13 @@ class CoreTest {
         assertEquals(0L, e.fullTs); assertNull(e.stopTs)
     }
 
+    @Test fun movingAverageKeepsGaps() {
+        val m = 60_000L
+        val pts = listOf(0L to 10, m to 20, 2 * m to 30, 3 * m to Drain.BREAK, 4 * m to 100, 5 * m to 100)
+        val out = Smooth.movingAverage(pts, 2 * m)
+        assertEquals(listOf(0L to 15, m to 20, 2 * m to 25, 3 * m to Drain.BREAK, 4 * m to 100, 5 * m to 100), out)
+    }
+
     @Test fun dailyWithNoDataIsEmpty() {
         val day = LocalDate.of(2026, 11, 10)
         val out = Stats.daily(emptyList(), null, zone, day, day)

@@ -637,8 +637,8 @@ class MainActivity : Activity() {
                 if (source != null) addView(label(source, 12f, p.muted), lp(WRAP, WRAP, top = dpi(2f)))
             }
         addView(tileRow(p, listOf(
-            half("배터리 온도", s?.let { c1(it.temp) } ?: "-", temps, c1, 20, p.temp),
-            half("방전 전류", drainNow, drain, ma, 300, p.volt,
+            half("배터리 온도", s?.let { c1(it.temp) } ?: "-", dev.chargelog.core.Smooth.movingAverage(temps, 5 * 60_000L), c1, 20, p.temp),
+            half("방전 전류", drainNow, dev.chargelog.core.Smooth.movingAverage(drain, 10 * 60_000L), ma, 300, p.volt,
                 rangeText = drainSum?.let { "오늘 평균 ${it.first}mA · 최대 ${it.second}mA" } ?: "오늘 방전 기록 없음",
                 fromZero = true),
         )))
@@ -832,9 +832,11 @@ class MainActivity : Activity() {
         val temps = observed.filter { it.temp > 0 }.map { it.ts to it.temp }
         val drain = Drain.series(points, minOf(now, end), if (now in start until end) current else null)
         val drainSum = Drain.summary(drain)
-        miniChart("배터리 온도", temps, c1, 20, p.temp, start, end, now)?.let { addView(it, lp(MATCH, WRAP, top = dpi(12f))) }
+        miniChart("배터리 온도", temps, c1, 20, p.temp, start, end, now, note = "5분 이동 평균 곡선",
+            smoothMs = 5 * 60_000L)?.let { addView(it, lp(MATCH, WRAP, top = dpi(12f))) }
         miniChart("방전 전류", drain, ma, 300, p.volt, start, end, now,
-            note = "충전 중 구간 제외 · 측정 간격의 평균 (전하량 감소 ÷ 시간)",
+            note = "충전 중 구간 제외 · 10분 이동 평균 곡선 (평균·최대는 원래 값)",
+            smoothMs = 10 * 60_000L,
             range = drainSum?.let { "평균 ${it.first}mA · 최대 ${it.second}mA" },
             fromZero = true, gapLabel = "방전 아님")?.let { addView(it, lp(MATCH, WRAP, top = dpi(8f))) }
     }
@@ -862,7 +864,7 @@ class MainActivity : Activity() {
     private fun miniChart(
         name: String, pts: List<Pair<Long, Int>>, fmt: (Int) -> String, minSpan: Int, color: Int,
         start: Long, end: Long, now: Long, note: String? = null, range: String? = null,
-        fromZero: Boolean = false, gapLabel: String = "-",
+        fromZero: Boolean = false, gapLabel: String = "-", smoothMs: Long = 0L,
     ): View? {
         val values = pts.filter { it.second != Drain.BREAK }
         if (values.isEmpty()) return null
@@ -873,7 +875,7 @@ class MainActivity : Activity() {
                 addView(label(range ?: "${fmt(values.minOf { it.second })} – ${fmt(values.maxOf { it.second })}", 13f, p.ink2))
             })
             if (note != null) addView(label(note, 12f, p.muted), lp(WRAP, WRAP, top = dpi(3f)))
-            addView(MiniLineChart(context, p, color, fmt, minSpan, fromZero, gapLabel).apply {
+            addView(MiniLineChart(context, p, color, fmt, minSpan, fromZero, gapLabel, smoothMs).apply {
                 zoomKey = "detail-$name"
                 set(pts, start, end, now, zone)
             },
@@ -1024,7 +1026,9 @@ class MainActivity : Activity() {
             addView(column().apply {
                 gravity = Gravity.CENTER
                 val rel = when (day) { today -> "오늘"; today.minusDays(1) -> "어제"; else -> null }
-                addView(label(DateTimeFormatter.ofPattern("M월 d일 (E)", Locale.KOREAN).format(day), 17f, p.ink, bold = true))
+                // WRAP so each line is centered by the column (default would stretch and left-align).
+                addView(label(DateTimeFormatter.ofPattern("M월 d일 (E)", Locale.KOREAN).format(day), 17f, p.ink, bold = true),
+                    lp(WRAP, WRAP))
                 addView(label(rel ?: "${java.time.temporal.ChronoUnit.DAYS.between(day, today)}일 전", 12f, p.muted),
                     lp(WRAP, WRAP, top = dpi(2f)))
                 setOnClickListener {

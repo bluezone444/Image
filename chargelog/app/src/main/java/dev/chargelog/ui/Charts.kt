@@ -54,10 +54,10 @@ class XZoom(private val view: View, private val minSpan: Double) {
 
     val span get() = v1 - v0
     val ySpan get() = w1 - w0
-    val xZoomed get() = span < (hi - lo) * 0.995
+    val xZoomed get() = Math.abs(v0 - b0) > (b1 - b0) * 0.005 || Math.abs(v1 - b1) > (b1 - b0) * 0.005
     val yZoomed get() = ySpan < (yHi - yLo) * 0.995
     val zoomed get() = xZoomed || yZoomed
-    val factor get() = (hi - lo) / span
+    val factor get() = (b1 - b0) / span
     val yFactor get() = (yHi - yLo) / ySpan
 
     /** True from the first second finger until every finger is lifted. */
@@ -66,11 +66,16 @@ class XZoom(private val view: View, private val minSpan: Double) {
     private var prevFocusY = 0f
     private val axisMinSpread = view.context.dp(48f)
 
-    fun setDomain(lo: Double, hi: Double) {
+    /** Starting viewport ("원래대로" returns here); defaults to the whole domain. */
+    private var b0 = 0.0
+    private var b1 = 1.0
+
+    fun setDomain(lo: Double, hi: Double, base0: Double = lo, base1: Double = hi) {
         this.lo = lo
         this.hi = maxOf(hi, lo + 1e-6)
+        b0 = base0.coerceIn(this.lo, this.hi); b1 = base1.coerceIn(b0 + 1e-6, this.hi)
         val s = key?.let { saved[it] }
-        if (s != null && s[0] == lo && s[1] == this.hi) { v0 = s[2]; v1 = s[3] } else { v0 = lo; v1 = this.hi }
+        if (s != null && s[0] == lo && s[1] == this.hi) { v0 = s[2]; v1 = s[3] } else { v0 = b0; v1 = b1 }
     }
 
     /** Value-axis range; keeps the current (or saved) vertical zoom while the range is unchanged. */
@@ -88,7 +93,7 @@ class XZoom(private val view: View, private val minSpan: Double) {
     private fun yValue(py: Float): Double = w0 + (plotBottom - py) / (plotBottom - plotTop) * ySpan
 
     fun reset() {
-        v0 = lo; v1 = hi; w0 = yLo; w1 = yHi
+        v0 = b0; v1 = b1; w0 = yLo; w1 = yHi
         save()
         view.invalidate()
     }
@@ -174,6 +179,34 @@ class XZoom(private val view: View, private val minSpan: Double) {
         private const val TAP_MS = 300L
         private const val DOUBLE_TAP_MS = 400L
     }
+}
+
+/**
+ * Appends one run as a monotone cubic curve (Fritsch–Carlson: smooth, never overshoots the
+ * data) to [line], and the same outline closed down to [bottom] to [area].
+ */
+internal fun smoothRun(line: Path, area: Path, xs: List<Float>, ys: List<Float>, bottom: Float) {
+    val n = xs.size
+    line.moveTo(xs[0], ys[0]); area.moveTo(xs[0], bottom); area.lineTo(xs[0], ys[0])
+    if (n == 1) { area.lineTo(xs[0], bottom); area.close(); return }
+    val d = FloatArray(n - 1) { (ys[it + 1] - ys[it]) / maxOf(xs[it + 1] - xs[it], 1e-3f) }
+    val m = FloatArray(n)
+    m[0] = d[0]; m[n - 1] = d[n - 2]
+    for (i in 1 until n - 1) m[i] = if (d[i - 1] * d[i] <= 0f) 0f else (d[i - 1] + d[i]) / 2f
+    for (i in 0 until n - 1) {
+        if (d[i] == 0f) { m[i] = 0f; m[i + 1] = 0f; continue }
+        val a = m[i] / d[i]; val b = m[i + 1] / d[i]
+        val h = a * a + b * b
+        if (h > 9f) { val t = 3f / Math.sqrt(h.toDouble()).toFloat(); m[i] = t * a * d[i]; m[i + 1] = t * b * d[i] }
+    }
+    for (i in 0 until n - 1) {
+        val dx = (xs[i + 1] - xs[i]) / 3f
+        val c1x = xs[i] + dx; val c1y = ys[i] + m[i] * dx
+        val c2x = xs[i + 1] - dx; val c2y = ys[i + 1] - m[i + 1] * dx
+        line.cubicTo(c1x, c1y, c2x, c2y, xs[i + 1], ys[i + 1])
+        area.cubicTo(c1x, c1y, c2x, c2y, xs[i + 1], ys[i + 1])
+    }
+    area.lineTo(xs[n - 1], bottom); area.close()
 }
 
 /** Axis label for a tick: whole numbers without decimals. */
@@ -720,6 +753,8 @@ class MiniLineChart(
     private val fromZero: Boolean = false,
     /** Tooltip text where the series has a gap ([dev.chargelog.core.Drain.BREAK]). */
     private val gapLabel: String = "-",
+    /** Display moving-average window; 0 draws the raw values. */
+    private val smoothMs: Long = 0L,
 ) : View(context) {
     private val ink = ChartInk(context, p)
     private val zoom = XZoom(this, 30 * 60_000.0)
@@ -739,14 +774,26 @@ class MiniLineChart(
     private val area = Path()
 
     fun set(points: List<Pair<Long, Int>>, start: Long, end: Long, now: Long, zone: ZoneId) {
-        pts = points; this.start = start; this.end = end; this.now = now; this.zone = zone
-        zoom.setDomain(start.toDouble(), end.toDouble())
+        pts = dev.chargelog.core.Smooth.movingAverage(points, smoothMs)
+        this.start = start; this.end = end; this.now = now; this.zone = zone
+        // Open framed on the hours that have data (whole hours, at least 3 h); pinch out for the day.
+        val real = pts.filter { it.second != GAP }
+        if (real.isEmpty()) zoom.setDomain(start.toDouble(), end.toDouble())
+        else {
+            val h = 3_600_000L
+            val from = start + (real.first().first - start) / h * h
+            val to = minOf(end, start + ((maxOf(real.last().first, minOf(now, end)) - start + h - 1) / h) * h)
+            val b0 = maxOf(start, minOf(from, to - 3 * h))
+            val b1 = maxOf(to, b0 + 3 * h).coerceAtMost(end)
+            if (b1 - b0 >= (end - start) * 0.75) zoom.setDomain(start.toDouble(), end.toDouble())
+            else zoom.setDomain(start.toDouble(), end.toDouble(), b0.toDouble(), b1.toDouble())
+        }
         scrub.clear()
         invalidate()
     }
 
     override fun onMeasure(w: Int, h: Int) {
-        setMeasuredDimension(MeasureSpec.getSize(w), context.dpi(120f))
+        setMeasuredDimension(MeasureSpec.getSize(w), context.dpi(180f))
     }
 
     private fun plotW() = width - ink.dp(60f)
@@ -794,27 +841,24 @@ class MiniLineChart(
         c.save()
         c.clipRect(0f, top - ink.dp(2f), plotW, bottom + ink.dp(1f))
         line.reset(); area.reset()
-        // Each run between gaps is its own stroke and filled area.
-        var open = false
-        var runEndX = 0f
+        // Each run between gaps is its own smooth stroke and filled area.
+        val xs = ArrayList<Float>(); val ys = ArrayList<Float>()
+        fun flush() {
+            if (xs.isNotEmpty()) smoothRun(line, area, xs, ys, bottom)
+            xs.clear(); ys.clear()
+        }
         for ((ts, v) in pts) {
-            if (v == GAP) {
-                if (open) { area.lineTo(runEndX, bottom); area.close(); open = false }
-                continue
-            }
-            val px = x(ts); val py = y(v)
-            if (!open) { line.moveTo(px, py); area.moveTo(px, bottom); area.lineTo(px, py); open = true }
-            else { line.lineTo(px, py); area.lineTo(px, py) }
-            runEndX = px
+            if (v == GAP) { flush(); continue }
+            val px = x(ts)
+            if (xs.isNotEmpty() && px <= xs.last()) { ys[ys.size - 1] = y(v); continue }
+            xs.add(px); ys.add(y(v))
         }
-        if (open) {
-            // A continuous series (no gap markers) is held flat up to now.
-            if (pts.none { it.second == GAP }) {
-                val endX = x(maxOf(last, pts.last().first))
-                line.lineTo(endX, y(pts.last().second)); area.lineTo(endX, y(pts.last().second)); runEndX = endX
-            }
-            area.lineTo(runEndX, bottom); area.close()
+        // A continuous series (no gap markers) is held flat up to now.
+        if (xs.isNotEmpty() && pts.none { it.second == GAP }) {
+            val endX = x(maxOf(last, pts.last().first))
+            if (endX > xs.last()) { xs.add(endX); ys.add(ys.last()) }
         }
+        flush()
         ink.fill.shader = ink.areaShader(color, top, bottom, 0x30)
         c.drawPath(area, ink.fill)
         ink.fill.shader = null
