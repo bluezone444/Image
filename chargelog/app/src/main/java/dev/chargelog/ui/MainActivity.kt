@@ -95,7 +95,7 @@ class MainActivity : Activity() {
             setBackgroundColor(p.bg)
             addView(content, lp(MATCH, 0, 1f))
             addView(View(context).apply { setBackgroundColor(p.line) }, lp(MATCH, Math.max(1, dpi(1f))))
-            addView(tabBar, lp(MATCH, dpi(58f)))
+            addView(tabBar, lp(MATCH, dpi(64f)))
         })
 
     }
@@ -185,10 +185,10 @@ class MainActivity : Activity() {
         background = roundRect(p.warnBg, 14f, p.warnLine)
         setPadding(dpi(12f), dpi(9f), dpi(8f), dpi(9f))
         addView(column().apply {
-            addView(label("기록이 끊길 수 있습니다", 13f, p.ink, bold = true))
-            addView(label("배터리 최적화 제외가 필요합니다", 12f, p.ink2), lp(WRAP, WRAP, top = dpi(3f)))
+            addView(label("기록이 끊길 수 있습니다", 14f, p.ink, bold = true))
+            addView(label("배터리 최적화 제외가 필요합니다", 13f, p.ink2), lp(WRAP, WRAP, top = dpi(3f)))
         }, lp(0, WRAP, 1f))
-        addView(label("설정", 13f, p.ink, bold = true).apply {
+        addView(label("설정", 14f, p.ink, bold = true).apply {
             background = roundRect(p.card, 10f, p.line)
             setPadding(dpi(14f), dpi(7f), dpi(14f), dpi(7f))
             setOnClickListener { requestExemption() }
@@ -231,7 +231,7 @@ class MainActivity : Activity() {
             addView(ImageView(context).apply { setImageResource(R.drawable.ic_launcher) }, lp(dpi(76f), dpi(76f)))
             addView(label("충전 로그", 30f, p.ink, bold = true), lp(WRAP, WRAP, top = dpi(18f)))
             addView(label("배터리 충전·방전을 기록하고 분석합니다", 15f, p.ink2), lp(WRAP, WRAP, top = dpi(6f)))
-            if (version != null) addView(label("v$version", 12f, p.muted), lp(WRAP, WRAP, top = dpi(6f)))
+            if (version != null) addView(label("v$version", 13f, p.muted), lp(WRAP, WRAP, top = dpi(6f)))
         }
 
         fun feature(color: Int, title: String, body: String) = row().apply {
@@ -239,7 +239,7 @@ class MainActivity : Activity() {
             addView(View(context).apply { background = roundRect(color, 5f) }, lp(dpi(10f), dpi(10f), top = dpi(5f)))
             addView(column().apply {
                 addView(label(title, 15f, p.ink, bold = true))
-                addView(label(body, 13f, p.ink2).apply { setLineSpacing(dp(2f), 1f) }, lp(MATCH, WRAP, top = dpi(3f)))
+                addView(label(body, 14f, p.ink2).apply { setLineSpacing(dp(2f), 1f) }, lp(MATCH, WRAP, top = dpi(3f)))
             }, lp(0, WRAP, 1f, left = dpi(12f)))
         }
 
@@ -256,7 +256,7 @@ class MainActivity : Activity() {
                     lp(MATCH, WRAP, top = dpi(14f)))
                 addView(View(context).apply { setBackgroundColor(p.line) }, lp(MATCH, Math.max(1, dpi(1f)), top = dpi(16f)))
                 addView(label("기록은 이 휴대폰 안에만 저장되며 인터넷으로 전송하지 않습니다. 정확한 기록을 위해 " +
-                    "상시 알림을 띄우고 백그라운드에서 동작합니다.", 12f, p.muted).apply { setLineSpacing(dp(2f), 1f) },
+                    "상시 알림을 띄우고 백그라운드에서 동작합니다.", 13f, p.muted).apply { setLineSpacing(dp(2f), 1f) },
                     lp(MATCH, WRAP, top = dpi(12f)))
             })
 
@@ -271,7 +271,7 @@ class MainActivity : Activity() {
                     addView(label("주의", 15f, p.danger, bold = true))
                     addView(label(
                         "이 앱은 개인 충전 모니터링 목적으로 제작되었습니다. 제작자의 허락 없이 이 앱(APK)과 소스 코드를 " +
-                            "임의로 복제·수정·배포하거나 다른 사람에게 전달하지 마세요.", 14f, p.ink
+                            "임의로 복제·수정·배포하거나 다른 사람에게 전달하지 마세요.", 15f, p.ink
                     ).apply { setLineSpacing(dp(3f), 1f) }, lp(MATCH, WRAP, top = dpi(6f)))
                     addView(label("표시되는 값은 휴대폰이 보고하는 측정값과 그로부터 계산한 추정값으로, 정확성을 보장하지 않습니다.",
                         12f, p.ink2).apply { setLineSpacing(dp(2f), 1f) }, lp(MATCH, WRAP, top = dpi(8f)))
@@ -299,7 +299,7 @@ class MainActivity : Activity() {
                 addView(row().apply {
                     setPadding(dpi(4f), dpi(14f), dpi(4f), dpi(14f))
                     addView(box, lp(dpi(22f), dpi(22f)))
-                    addView(label("위 내용을 확인했으며 개인 용도로만 사용합니다", 14f, p.ink), lp(0, WRAP, 1f, left = dpi(12f)))
+                    addView(label("위 내용을 확인했으며 개인 용도로만 사용합니다", 15f, p.ink), lp(0, WRAP, 1f, left = dpi(12f)))
                     setOnClickListener {
                         agreed = !agreed
                         paintBox()
@@ -309,7 +309,7 @@ class MainActivity : Activity() {
                     }
                 }, lp(MATCH, WRAP, top = dpi(10f)))
                 addView(start, lp(MATCH, WRAP, top = dpi(4f)))
-                addView(label("동의 전에는 아무것도 기록하지 않습니다", 12f, p.muted).apply { gravity = Gravity.CENTER },
+                addView(label("동의 전에는 아무것도 기록하지 않습니다", 13f, p.muted).apply { gravity = Gravity.CENTER },
                     lp(MATCH, WRAP, top = dpi(10f)))
             } else {
                 addView(button("닫기") { tabBar.visibility = View.VISIBLE; render() }, lp(MATCH, WRAP, top = dpi(20f)))
@@ -345,10 +345,10 @@ class MainActivity : Activity() {
                 gravity = Gravity.CENTER
                 // WRAP so the label sits centered over the indicator (a vertical
                 // LinearLayout would otherwise stretch it and left-align the text).
-                addView(label(name, 14f, if (on) p.ink else p.muted, bold = on), lp(WRAP, WRAP))
+                addView(label(name, 15f, if (on) p.ink else p.ink2, bold = on), lp(WRAP, WRAP))
                 addView(View(context).apply {
                     background = roundRect(if (on) p.ink else android.graphics.Color.TRANSPARENT, 2f)
-                }, lp(dpi(18f), dpi(3f), top = dpi(6f)))
+                }, lp(dpi(24f), dpi(3f), top = dpi(7f)))
                 setOnClickListener { if (tab != i) { tab = i; sessionList = null; render() } }
             }, lp(0, MATCH, 1f))
         }
@@ -358,11 +358,11 @@ class MainActivity : Activity() {
         setPadding(dpi(16f), dpi(14f), dpi(16f), dpi(20f))
     }
 
-    private fun title(text: String): TextView = label(text, 15f, p.ink, bold = true)
+    private fun title(text: String): TextView = label(text, 16f, p.ink, bold = true)
 
     /** Page heading: large title with an optional control on the right. */
     private fun pageHeader(text: String, trailing: View? = null): LinearLayout = row().apply {
-        addView(label(text, 22f, p.ink, bold = true), lp(0, WRAP, 1f))
+        addView(label(text, 24f, p.ink, bold = true), lp(0, WRAP, 1f))
         if (trailing != null) addView(trailing)
         setPadding(dpi(2f), 0, 0, 0)
     }
@@ -412,7 +412,7 @@ class MainActivity : Activity() {
         val root = column().apply { setPadding(dpi(16f), dpi(14f), dpi(16f), dpi(12f)) }
         root.addView(row().apply {
             addView(label("충전 로그", 22f, p.ink, bold = true), lp(0, WRAP, 1f))
-            addView(label(dateTitle(today), 13f, p.ink2))
+            addView(label(dateTitle(today), 14f, p.ink2))
             setPadding(dpi(2f), 0, 0, 0)
         })
         if (!isExempt()) root.addView(keepAliveBanner(), lp(MATCH, WRAP, top = gap()))
@@ -425,7 +425,7 @@ class MainActivity : Activity() {
                 addView(legend(p, "충전 구간", p.accentDim))
             })
             if (points.isEmpty()) {
-                addView(label("아직 오늘 기록이 없습니다.", 13f, p.ink2), lp(MATCH, WRAP, top = dpi(10f)))
+                addView(label("아직 오늘 기록이 없습니다.", 14f, p.ink2), lp(MATCH, WRAP, top = dpi(10f)))
             } else {
                 val sessions = db.sessionsOverlapping(start, end)
                 addView(SocChartView(context, p).apply {
@@ -450,7 +450,7 @@ class MainActivity : Activity() {
             addView(RingGauge(context, p).apply {
                 level = s?.level ?: 0
                 caption = "배터리"
-            }, lp(dpi(104f), dpi(104f)))
+            }, lp(dpi(112f), dpi(112f)))
             addView(column().apply {
                 val (state, dot) = when {
                     s == null -> "측정 대기" to p.muted
@@ -467,13 +467,13 @@ class MainActivity : Activity() {
                         lp(WRAP, WRAP, top = dpi(10f)))
                     addView(row().apply {
                         gravity = Gravity.BOTTOM
-                        addView(number("${Format.signed(open.delta)}%", 24f, p.ink))
-                        addView(label("  ${open.startSoc}% → ${open.endSoc}%", 13f, p.ink2),
+                        addView(number("${Format.signed(open.delta)}%", 26f, p.ink))
+                        addView(label("  ${open.startSoc}% → ${open.endSoc}%", 14f, p.ink2),
                             lp(WRAP, WRAP).apply { bottomMargin = dpi(2f) })
                     }, lp(WRAP, WRAP, top = dpi(4f)))
                     val parts = arrayListOf("${Format.time(open.startTs, zone)} 시작", Format.duration(open.durationMs(now)))
                     open.ratePerHour(now)?.let { parts.add(String.format(Locale.US, "%.1f%%/시간", it)) }
-                    addView(label(parts.joinToString(" · "), 12f, p.ink2), lp(WRAP, WRAP, top = dpi(5f)))
+                    addView(label(parts.joinToString(" · "), 13f, p.ink2), lp(WRAP, WRAP, top = dpi(5f)))
                 }
                 recent.firstOrNull { !it.open }?.let { prev ->
                     val kind = if (prev.type == SessionType.CHARGE) "직전 충전" else "직전 사용"
@@ -518,13 +518,13 @@ class MainActivity : Activity() {
             column().apply {
                 addView(row().apply {
                     addView(caption(name, p), lp(0, WRAP, 1f))
-                    addView(number(now0, 15f, p.ink))
+                    addView(number(now0, 16f, p.ink))
                 })
                 addView(Sparkline(context, p, color, fromZero).apply { set(pts, start, maxOf(now, start + 1), span) },
-                    lp(MATCH, dpi(34f), top = dpi(6f)))
+                    lp(MATCH, dpi(40f), top = dpi(6f)))
                 addView(label(rangeText ?: if (pts.isEmpty()) "기록 없음" else "오늘 ${fmt(pts.minOf { it.second })} – ${fmt(pts.maxOf { it.second })}",
                     11f, p.muted), lp(WRAP, WRAP, top = dpi(4f)))
-                if (source != null) addView(label(source, 10f, p.muted), lp(WRAP, WRAP, top = dpi(2f)))
+                if (source != null) addView(label(source, 12f, p.muted), lp(WRAP, WRAP, top = dpi(2f)))
             }
         addView(tileRow(p, listOf(
             half("배터리 온도", s?.let { c1(it.temp) } ?: "-", temps, c1, 20, p.temp),
@@ -555,7 +555,7 @@ class MainActivity : Activity() {
 
         if (sum.days.isEmpty()) {
             page.addView(card(p).apply {
-                addView(label("아직 통계를 낼 기록이 없습니다. 하루 이상 기록되면 평소 사용 패턴이 표시됩니다.", 14f, p.ink2))
+                addView(label("아직 통계를 낼 기록이 없습니다. 하루 이상 기록되면 평소 사용 패턴이 표시됩니다.", 15f, p.ink2))
             }, lp(MATCH, WRAP, top = dpi(14f)))
             setPage(page)
             return
@@ -627,7 +627,7 @@ class MainActivity : Activity() {
             fun cells(vararg v: String, head: Boolean = false, bold: Boolean = false) = row().apply {
                 v.forEachIndexed { i, t ->
                     val tv = if (head) caption(t, p) else if (i == 0) label(t, 13f, if (bold) p.ink else p.ink2, bold = bold)
-                        else number(t, 13f, p.ink)
+                        else number(t, 14f, p.ink)
                     tv.gravity = if (i == 0) Gravity.START else Gravity.END
                     addView(tv, lp(0, WRAP, if (i == 0) 1.5f else 1f))
                 }
@@ -656,7 +656,7 @@ class MainActivity : Activity() {
         val charges = sessions.count { it.type == SessionType.CHARGE && it.startTs >= start }
 
         addView(sectionTitle(p, dateTitle(day) + relativeDay(day), "세션 ${sessions.size} · 충전 ${charges}회"))
-        addView(label("그래프: 두 손가락을 가로로 벌리면 시간축, 세로로 벌리면 값 축 확대 · 두 번 탭하면 원래대로", 11f, p.muted), lp(WRAP, WRAP, top = dpi(3f)))
+        addView(label("그래프: 두 손가락을 가로로 벌리면 시간축, 세로로 벌리면 값 축 확대 · 두 번 탭하면 원래대로", 12f, p.muted), lp(WRAP, WRAP, top = dpi(3f)))
         addView(tileRow(p, listOf(
             tile(p, "사용량", "${stat.usage}%", size = 18f),
             tile(p, "충전량", "${stat.charged}%", size = 18f),
@@ -664,7 +664,7 @@ class MainActivity : Activity() {
             tile(p, "최고", pct(stat.maxSoc), size = 18f),
         )), lp(MATCH, WRAP, top = dpi(12f)))
         if (points.isEmpty()) {
-            addView(label("이 날의 기록이 없습니다.", 13f, p.ink2), lp(MATCH, WRAP, top = dpi(12f)))
+            addView(label("이 날의 기록이 없습니다.", 14f, p.ink2), lp(MATCH, WRAP, top = dpi(12f)))
             return@apply
         }
         addView(row().apply {
@@ -712,10 +712,10 @@ class MainActivity : Activity() {
         return column().apply {
             addView(row().apply {
                 addView(View(context).apply { background = roundRect(color, 2f) }, lp(dpi(10f), dpi(3f)))
-                addView(label(name, 13f, p.ink, bold = true), lp(0, WRAP, 1f, left = dpi(6f)))
-                addView(label(range ?: "${fmt(values.minOf { it.second })} – ${fmt(values.maxOf { it.second })}", 12f, p.ink2))
+                addView(label(name, 14f, p.ink, bold = true), lp(0, WRAP, 1f, left = dpi(6f)))
+                addView(label(range ?: "${fmt(values.minOf { it.second })} – ${fmt(values.maxOf { it.second })}", 13f, p.ink2))
             })
-            if (note != null) addView(label(note, 10f, p.muted), lp(WRAP, WRAP, top = dpi(3f)))
+            if (note != null) addView(label(note, 12f, p.muted), lp(WRAP, WRAP, top = dpi(3f)))
             addView(MiniLineChart(context, p, color, fmt, minSpan, fromZero, gapLabel).apply {
                 zoomKey = "detail-$name"
                 set(pts, start, end, now, zone)
@@ -767,8 +767,8 @@ class MainActivity : Activity() {
             background = roundRect(if (charge) p.accent else p.muted, 2f)
         }, lp(dpi(4f), dpi(34f)))
         addView(column().apply {
-            addView(label(sessionLine1(s), 14f, p.ink, bold = true))
-            addView(label(sessionLine2(s, now), 12f, p.ink2), lp(WRAP, WRAP, top = dpi(4f)))
+            addView(label(sessionLine1(s), 15f, p.ink, bold = true))
+            addView(label(sessionLine2(s, now), 13f, p.ink2), lp(WRAP, WRAP, top = dpi(4f)))
         }, lp(0, WRAP, 1f, left = dpi(10f)))
     }
 
@@ -829,7 +829,7 @@ class MainActivity : Activity() {
         val page = column().apply {
             addView(pageHeader("세션").apply { setPadding(dpi(18f), dpi(14f), dpi(16f), dpi(2f)) })
             if (rows.isEmpty()) {
-                addView(label("아직 기록된 세션이 없습니다.", 14f, p.ink2).apply {
+                addView(label("아직 기록된 세션이 없습니다.", 15f, p.ink2).apply {
                     setPadding(dpi(22f), dpi(8f), dpi(22f), 0)
                 })
             } else {
@@ -848,10 +848,10 @@ class MainActivity : Activity() {
         val today = LocalDate.now(zone)
         val name = DateTimeFormatter.ofPattern("M월 d일 (E)", Locale.KOREAN).format(stat.day) +
             when (stat.day) { today -> " · 오늘"; today.minusDays(1) -> " · 어제"; else -> "" }
-        addView(label(name, 14f, p.ink, bold = true))
+        addView(label(name, 15f, p.ink, bold = true))
         val parts = arrayListOf("사용 ${stat.usage}%", "충전 ${stat.charged}%", "충전 ${charges}회")
         if (stat.minSoc != null && stat.maxSoc != null) parts.add("SOC ${stat.minSoc}–${stat.maxSoc}%")
-        addView(label(parts.joinToString(" · "), 12f, p.ink2), lp(MATCH, WRAP, top = dpi(4f)))
+        addView(label(parts.joinToString(" · "), 13f, p.ink2), lp(MATCH, WRAP, top = dpi(4f)))
     }
 
     // ------------------------------------------------------------------ data
@@ -871,18 +871,18 @@ class MainActivity : Activity() {
             addView(label(
                 "기록이 끊겼던 구간(강제 중지, 전원 꺼짐 등)은 앞뒤 잔량과 평소 충전·사용 속도로 추정해 채웁니다. " +
                     "그래프에서는 점선, 세션에서는 '추정'으로 표시되며 내보내기 파일의 estimated 열이 1입니다. " +
-                    "온도·전압 차트에는 추정값을 쓰지 않습니다.", 12f, p.ink2), lp(MATCH, WRAP, top = dpi(2f)).apply { bottomMargin = dpi(6f) })
+                    "온도·전압 차트에는 추정값을 쓰지 않습니다.", 13f, p.ink2), lp(MATCH, WRAP, top = dpi(2f)).apply { bottomMargin = dpi(6f) })
             db.lastSample()?.let { addView(kv(p, "마지막 기록", Format.dateTime(it.ts, zone))) }
             addView(kv(p, "이 휴대폰 최대 유선 충전", phoneMaxW?.let { "${ChargeSpec.Tier.forWatts(it).label}" } ?: "목록에 없는 기종"))
             addView(label("모델 ${Build.MODEL}. 충전 세션마다 충전기 보고 최대 전력과 실제 배터리 입력 최고값으로 " +
                 "일반·고속 15W·초고속 25W·초고속 2.0 45W·초고속 3.0 60W 중 하나로 판정하고, 휴대폰 최대치를 넘지 않게 표시합니다. " +
-                "잔량 70% 이상에서 시작한 충전은 속도가 제한돼 실제보다 낮게 나올 수 있습니다.", 12f, p.muted),
+                "잔량 70% 이상에서 시작한 충전은 속도가 제한돼 실제보다 낮게 나올 수 있습니다.", 13f, p.muted),
                 lp(MATCH, WRAP).apply { bottomMargin = dpi(4f) })
             val cur = current
             addView(kv(p, "전압(참조값, 저장만)", cur?.let { "${Volt.reference(it)} mV" } ?: "-"))
-            addView(label(Recorder.describeVoltage(this@MainActivity, cur), 12f, p.ink2), lp(MATCH, WRAP))
+            addView(label(Recorder.describeVoltage(this@MainActivity, cur), 13f, p.ink2), lp(MATCH, WRAP))
             addView(label("전압은 순간 변동이 커서 대시보드에는 표시하지 않고, 기록마다 저장해 내보내기(samples.csv의 " +
-                "voltage_mv, ocv_mv, ocv_source)에서 활용할 수 있습니다.", 12f, p.muted), lp(MATCH, WRAP, top = dpi(4f)))
+                "voltage_mv, ocv_mv, ocv_source)에서 활용할 수 있습니다.", 13f, p.muted), lp(MATCH, WRAP, top = dpi(4f)))
             if (cur != null && cur.ocvSrc != Ocv.SRC_DIRECT) addView(label(
                 "앱이 읽을 수 있는 연료게이지 OCV(batt_vfocv, voltage_ocv 등)를 찾지 못해, 전류가 50mA 미만일 때는 " +
                     "단자 전압을 OCV 근사로, 그 밖에는 단자 전압 + 전류×내부저항으로 OCV를 추정합니다. " +
@@ -915,12 +915,12 @@ class MainActivity : Activity() {
                 "값이 바뀌지 않아도 이 주기마다 잔량·온도·전류를 한 줄씩 저장합니다. 화면이 켜져 있을 때는 휴대폰이 " +
                     "이미 깨어 있어 추가 배터리 소모가 거의 없고, 꺼져 있을 때는 정확한 알람으로 잠깐 깨워 한 줄만 " +
                     "저장합니다(깊은 대기 상태에서는 시스템이 간격을 늘릴 수 있음). 잔량 1%·충전기 연결·온도 1°C " +
-                    "변화는 주기와 상관없이 바로 기록됩니다.", 12f, p.muted), lp(MATCH, WRAP, top = dpi(8f)))
+                    "변화는 주기와 상관없이 바로 기록됩니다.", 13f, p.muted), lp(MATCH, WRAP, top = dpi(8f)))
         }, lp(MATCH, WRAP, top = dpi(12f)))
 
         page.addView(card(p).apply {
             addView(title("앱 안내"))
-            addView(label("충전 모니터링 전용 앱입니다. 임의로 배포하지 마세요.", 13f, p.ink2),
+            addView(label("충전 모니터링 전용 앱입니다. 임의로 배포하지 마세요.", 14f, p.ink2),
                 lp(MATCH, WRAP, top = dpi(4f)))
             addView(button("안내 화면 다시 보기") { showCover(firstRun = false) }, lp(MATCH, WRAP, top = dpi(10f)))
         }, lp(MATCH, WRAP, top = dpi(12f)))
@@ -936,7 +936,7 @@ class MainActivity : Activity() {
 
         page.addView(card(p).apply {
             addView(title("내보내기"))
-            addView(label("저장할 위치를 고르면 파일로 저장됩니다. 시각은 ISO 8601 형식입니다.", 13f, p.ink2),
+            addView(label("저장할 위치를 고르면 파일로 저장됩니다. 시각은 ISO 8601 형식입니다.", 14f, p.ink2),
                 lp(MATCH, WRAP, top = dpi(4f)))
             for (kind in ExportKind.values()) {
                 addView(button(kind.label) { startExport(kind) }, lp(MATCH, WRAP, top = dpi(10f)))

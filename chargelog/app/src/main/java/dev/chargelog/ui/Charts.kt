@@ -174,9 +174,9 @@ fun niceTicks(lo: Double, hi: Double, target: Int = 4): List<Double> {
 class ChartInk(private val context: Context, private val p: Palette) {
     fun dp(v: Float) = context.dp(v)
 
-    val axis = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = context.sp(10.5f); color = p.muted }
-    val value = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = context.sp(12f); typeface = NUM_FACE; color = p.ink }
-    val small = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = context.sp(10.5f); color = p.ink2 }
+    val axis = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = context.sp(12f); color = p.muted }
+    val value = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = context.sp(13f); typeface = NUM_FACE; color = p.ink }
+    val small = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = context.sp(12f); color = p.ink2 }
     val fill = Paint(Paint.ANTI_ALIAS_FLAG)
     val stroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND; strokeJoin = Paint.Join.ROUND
@@ -311,17 +311,17 @@ class SocChartView(context: Context, private val p: Palette) : View(context) {
     }
 
     override fun onMeasure(w: Int, h: Int) {
-        val height = if (MeasureSpec.getMode(h) == MeasureSpec.EXACTLY) MeasureSpec.getSize(h) else context.dpi(180f)
+        val height = if (MeasureSpec.getMode(h) == MeasureSpec.EXACTLY) MeasureSpec.getSize(h) else context.dpi(210f)
         setMeasuredDimension(MeasureSpec.getSize(w), height)
     }
 
-    private fun plotW() = width - ink.dp(32f)
+    private fun plotW() = width - ink.dp(38f)
 
     override fun onDraw(c: Canvas) {
         val plotW = plotW()
         zoom.plotW = plotW
         val top = ink.dp(30f)
-        val bottom = height - ink.dp(20f)
+        val bottom = height - ink.dp(24f)
         val last = minOf(now, end)
         zoom.plotTop = top; zoom.plotBottom = bottom
         zoom.yDomain(0.0, 100.0, 10.0)
@@ -355,7 +355,7 @@ class SocChartView(context: Context, private val p: Palette) : View(context) {
             val px = x(t).coerceIn(w / 2, plotW - w / 2)
             if (px - w / 2 < lastLabelRight + ink.dp(6f)) continue
             ink.axis.textAlign = Paint.Align.CENTER
-            c.drawText(label, px, bottom + ink.dp(15f), ink.axis)
+            c.drawText(label, px, bottom + ink.dp(17f), ink.axis)
             lastLabelRight = px + w / 2
         }
 
@@ -386,7 +386,7 @@ class SocChartView(context: Context, private val p: Palette) : View(context) {
             c.drawPath(area, ink.fill)
             ink.fill.shader = null
 
-            ink.stroke.strokeWidth = ink.dp(2.25f)
+            ink.stroke.strokeWidth = ink.dp(2.75f)
             ink.stroke.color = p.soc
             ink.stroke.pathEffect = null
             c.drawPath(line, ink.stroke)
@@ -478,8 +478,8 @@ abstract class DailyChart(context: Context, protected val p: Palette) : View(con
     protected val today: LocalDate = LocalDate.now()
 
     protected val top get() = ink.dp(30f)
-    protected val bottom get() = height - ink.dp(22f)
-    protected val plotW get() = width - ink.dp(32f)
+    protected val bottom get() = height - ink.dp(24f)
+    protected val plotW get() = width - ink.dp(38f)
     protected val col get() = plotW / zoom.span.toFloat()
     protected fun cx(i: Int) = zoom.x(i + 0.5)
     /** Pixel y of a value under the current vertical zoom. */
@@ -491,7 +491,7 @@ abstract class DailyChart(context: Context, protected val p: Palette) : View(con
     open fun drawOverlay(c: Canvas, y: (Int) -> Float) {}
 
     override fun onMeasure(w: Int, h: Int) {
-        setMeasuredDimension(MeasureSpec.getSize(w), context.dpi(180f))
+        setMeasuredDimension(MeasureSpec.getSize(w), context.dpi(210f))
     }
 
     private fun indexAt(x: Float): Int = Math.floor(zoom.value(x)).toInt().coerceIn(0, days.size - 1)
@@ -522,7 +522,7 @@ abstract class DailyChart(context: Context, protected val p: Palette) : View(con
             if ((days.size - 1 - i) % every != 0) continue
             val label = fmt.format(days[i].day)
             val half = ink.axis.measureText(label) / 2
-            c.drawText(label, cx(i).coerceIn(half, plotW - half), bottom + ink.dp(15f), ink.axis)
+            c.drawText(label, cx(i).coerceIn(half, plotW - half), bottom + ink.dp(17f), ink.axis)
         }
         val touched = if (scrub.x >= 0f) indexAt(scrub.x) else -1
         c.save()
@@ -680,10 +680,10 @@ class MiniLineChart(
     }
 
     override fun onMeasure(w: Int, h: Int) {
-        setMeasuredDimension(MeasureSpec.getSize(w), context.dpi(96f))
+        setMeasuredDimension(MeasureSpec.getSize(w), context.dpi(120f))
     }
 
-    private fun plotW() = width - ink.dp(50f)
+    private fun plotW() = width - ink.dp(60f)
 
     override fun onDraw(c: Canvas) {
         val values = pts.filter { it.second != GAP }
@@ -691,7 +691,7 @@ class MiniLineChart(
         val plotW = plotW()
         zoom.plotW = plotW
         val top = ink.dp(28f)
-        val bottom = height - ink.dp(18f)
+        val bottom = height - ink.dp(22f)
         var lo = if (fromZero) 0 else values.minOf { it.second }
         var hi = values.maxOf { it.second }
         if (hi - lo < minSpan) {
@@ -721,7 +721,7 @@ class MiniLineChart(
             val w = ink.axis.measureText(label)
             val px = x(t).coerceIn(w / 2, plotW - w / 2)
             if (px - w / 2 < lastRight + ink.dp(6f)) continue
-            c.drawText(label, px, bottom + ink.dp(14f), ink.axis)
+            c.drawText(label, px, bottom + ink.dp(17f), ink.axis)
             lastRight = px + w / 2
         }
 
@@ -752,7 +752,7 @@ class MiniLineChart(
         ink.fill.shader = ink.areaShader(color, top, bottom, 0x30)
         c.drawPath(area, ink.fill)
         ink.fill.shader = null
-        ink.stroke.color = color; ink.stroke.strokeWidth = ink.dp(2f); ink.stroke.pathEffect = null
+        ink.stroke.color = color; ink.stroke.strokeWidth = ink.dp(2.5f); ink.stroke.pathEffect = null
         c.drawPath(line, ink.stroke)
         c.restore()
         c.restore()

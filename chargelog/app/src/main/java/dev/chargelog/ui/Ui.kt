@@ -30,13 +30,14 @@ class Palette(context: Context) {
     // Surfaces
     val bg = if (dark) 0xFF0C1015.toInt() else 0xFFF2F4F7.toInt()
     val card = if (dark) 0xFF151A21.toInt() else 0xFFFFFFFF.toInt()
-    val line = if (dark) 0xFF252C36.toInt() else 0xFFE4E7EC.toInt()
-    val grid = if (dark) 0xFF20262F.toInt() else 0xFFEEF0F3.toInt()
+    val line = if (dark) 0xFF2F3742.toInt() else 0xFFD0D5DD.toInt()
+    val grid = if (dark) 0xFF262D37.toInt() else 0xFFE4E7EC.toInt()
 
     // Text
     val ink = if (dark) 0xFFE9EDF2.toInt() else 0xFF101828.toInt()
-    val ink2 = if (dark) 0xFFA3ADBA.toInt() else 0xFF475467.toInt()
-    val muted = if (dark) 0xFF6E7887.toInt() else 0xFF8A94A6.toInt()
+    // Secondary ≈10.5:1 and muted ≥5.4:1 (light) / 6.9:1 (dark) on cards: readable small text.
+    val ink2 = if (dark) 0xFFC3CAD5.toInt() else 0xFF344054.toInt()
+    val muted = if (dark) 0xFF9AA4B2.toInt() else 0xFF5D6B82.toInt()
 
     // Metrics
     val soc = if (dark) 0xFF199E70.toInt() else 0xFF1BAF7A.toInt()
@@ -81,7 +82,7 @@ fun Context.number(text: CharSequence, size: Float, color: Int): TextView =
 
 /** Small caption above a value. */
 fun Context.caption(text: CharSequence, p: Palette): TextView =
-    label(text, 12f, p.muted).apply { letterSpacing = 0.02f }
+    label(text, 13f, p.muted).apply { letterSpacing = 0.01f }
 
 fun Context.roundRect(color: Int, radiusDp: Float, strokeColor: Int? = null): GradientDrawable =
     GradientDrawable().apply {
@@ -111,23 +112,23 @@ const val WRAP = ViewGroup.LayoutParams.WRAP_CONTENT
 
 /** Section heading with optional trailing text on the right. */
 fun Context.sectionTitle(p: Palette, text: String, trailing: CharSequence? = null): LinearLayout = row().apply {
-    addView(label(text, 15f, p.ink, bold = true), lp(0, WRAP, 1f))
-    if (trailing != null) addView(label(trailing, 12f, p.muted))
+    addView(label(text, 16f, p.ink, bold = true), lp(0, WRAP, 1f))
+    if (trailing != null) addView(label(trailing, 13f, p.muted))
 }
 
 /** "label ........ value" line used inside cards. */
 fun Context.kv(p: Palette, key: String, value: String): LinearLayout = row().apply {
-    addView(label(key, 14f, p.ink2), lp(0, WRAP, 1f))
-    addView(number(value, 14f, p.ink))
-    setPadding(0, dpi(7f), 0, dpi(7f))
+    addView(label(key, 15f, p.ink2), lp(0, WRAP, 1f))
+    addView(number(value, 15f, p.ink))
+    setPadding(0, dpi(8f), 0, dpi(8f))
 }
 
 /** Stat tile: caption, large figure, optional muted note under it. */
-fun Context.tile(p: Palette, caption: String, value: String, note: String? = null, size: Float = 20f): LinearLayout =
+fun Context.tile(p: Palette, caption: String, value: String, note: String? = null, size: Float = 22f): LinearLayout =
     column().apply {
         addView(caption(caption, p))
-        addView(number(value, size, p.ink), lp(WRAP, WRAP, top = dpi(5f)))
-        if (note != null) addView(label(note, 11f, p.muted), lp(WRAP, WRAP, top = dpi(4f)))
+        addView(number(value, size, p.ink), lp(WRAP, WRAP, top = dpi(6f)))
+        if (note != null) addView(label(note, 12f, p.muted), lp(WRAP, WRAP, top = dpi(5f)))
     }
 
 /** Tiles laid out in equal columns separated by hairlines. */
@@ -145,7 +146,7 @@ fun Context.chip(p: Palette, text: String, dotColor: Int): LinearLayout = row().
     background = roundRect(p.bg, 20f, p.line)
     setPadding(dpi(10f), dpi(5f), dpi(12f), dpi(5f))
     addView(View(context).apply { background = roundRect(dotColor, 4f) }, lp(dpi(8f), dpi(8f)))
-    addView(label(text, 13f, p.ink, bold = true), lp(WRAP, WRAP, left = dpi(6f)))
+    addView(label(text, 14f, p.ink, bold = true), lp(WRAP, WRAP, left = dpi(7f)))
 }
 
 /** Small legend entry: colored mark + muted text. */
@@ -159,8 +160,8 @@ fun Context.legend(p: Palette, text: String, color: Int, dashed: Boolean = false
             }
         }
     } else View(context).apply { background = roundRect(color, 2f) }
-    addView(mark, lp(dpi(12f), if (dashed) dpi(8f) else dpi(8f)))
-    addView(label(text, 11f, p.muted), lp(WRAP, WRAP, left = dpi(5f)))
+    addView(mark, lp(dpi(14f), if (dashed) dpi(8f) else dpi(9f)))
+    addView(label(text, 12f, p.ink2), lp(WRAP, WRAP, left = dpi(6f)))
 }
 
 /** Segmented control (e.g. 7 / 30 / 90 days). */
@@ -170,10 +171,10 @@ fun Context.segmented(p: Palette, options: List<String>, selected: Int, onPick: 
         setPadding(dpi(3f), dpi(3f), dpi(3f), dpi(3f))
         options.forEachIndexed { i, o ->
             val on = i == selected
-            addView(label(o, 13f, if (on) p.ink else p.muted, bold = on).apply {
+            addView(label(o, 14f, if (on) p.ink else p.ink2, bold = on).apply {
                 gravity = Gravity.CENTER
                 if (on) background = roundRect(p.card, 9f, p.line)
-                setPadding(dpi(14f), dpi(6f), dpi(14f), dpi(6f))
+                setPadding(dpi(15f), dpi(8f), dpi(15f), dpi(8f))
                 setOnClickListener { if (!on) onPick(i) }
             })
         }
