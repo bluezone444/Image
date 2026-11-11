@@ -37,7 +37,7 @@ import dev.chargelog.data.Db
 import dev.chargelog.data.ExportKind
 import dev.chargelog.data.Exporter
 import dev.chargelog.data.Recorder
-import dev.chargelog.data.VoltageProbe
+import dev.chargelog.core.Ocv
 import dev.chargelog.core.Volt
 import dev.chargelog.service.MonitorService
 import dev.chargelog.service.Watchdog
@@ -451,9 +451,9 @@ class MainActivity : Activity() {
         val observed = points.filter { !it.est }
         val temps = observed.filter { it.temp > 0 }.map { it.ts to it.temp } +
             listOfNotNull(s?.takeIf { it.temp > 0 }?.let { now to it.temp })
-        val ref = VoltageProbe.reference(batteryIntent)
+        val refMv = s?.let { Volt.reference(it) }?.takeIf { it > 0 }
         val volts = observed.map { it.ts to Volt.reference(it) }.filter { it.second > 0 } +
-            listOfNotNull(ref?.let { now to it.mv })
+            listOfNotNull(refMv?.let { now to it })
         fun half(
             name: String, now0: String, pts: List<Pair<Long, Int>>, fmt: (Int) -> String, span: Int, color: Int,
             source: String? = null,
@@ -467,12 +467,12 @@ class MainActivity : Activity() {
                     lp(MATCH, dpi(34f), top = dpi(6f)))
                 addView(label(if (pts.isEmpty()) "기록 없음" else "오늘 ${fmt(pts.minOf { it.second })} – ${fmt(pts.maxOf { it.second })}",
                     11f, p.muted), lp(WRAP, WRAP, top = dpi(4f)))
-                if (source != null) addView(label("키: $source", 10f, p.muted), lp(WRAP, WRAP, top = dpi(2f)))
+                if (source != null) addView(label(source, 10f, p.muted), lp(WRAP, WRAP, top = dpi(2f)))
             }
         addView(tileRow(p, listOf(
             half("배터리 온도", s?.let { c1(it.temp) } ?: "-", temps, c1, 20, p.temp),
-            half("전압(참조값)", ref?.let { v2(it.mv) } ?: "-", volts, v2, 100, p.volt,
-                ref?.let { it.key + if (it.isOcv) " · OCV" else " · 부하 전압" }),
+            half("전압(참조값)", refMv?.let { v2(it) } ?: "-", volts, v2, 100, p.volt,
+                Recorder.describeVoltage(this@MainActivity, s)),
         )))
     }
 
@@ -621,11 +621,14 @@ class MainActivity : Activity() {
         val observed = points.filter { !it.est }
         val temps = observed.filter { it.temp > 0 }.map { it.ts to it.temp }
         val volts = observed.map { it.ts to Volt.reference(it) }.filter { it.second > 0 }
-        val usedOcv = observed.any { it.ocv > 0 }
+        // Which method produced the plotted values, by share of readings.
+        val bySrc = observed.groupingBy { it.ocvSrc }.eachCount()
+        val srcNote = "출처: " + listOf(Ocv.SRC_DIRECT, Ocv.SRC_REST, Ocv.SRC_IR, Ocv.SRC_NONE)
+            .filter { (bySrc[it] ?: 0) > 0 }
+            .joinToString(" · ") { "${Ocv.label(it)} ${bySrc[it]}" }
         miniChart("배터리 온도", temps, c1, 20, p.temp, start, end, now)?.let { addView(it, lp(MATCH, WRAP, top = dpi(12f))) }
         miniChart("전압(참조값)", volts, v2, 100, p.volt, start, end, now,
-            note = if (usedOcv) "키: OCV (${VoltageProbe.ocv(batteryIntent)?.key ?: "기록 당시 OCV 소스"})"
-                else "키: EXTRA_VOLTAGE \"voltage\" · 부하 전압")?.let { addView(it, lp(MATCH, WRAP, top = dpi(8f))) }
+            note = srcNote)?.let { addView(it, lp(MATCH, WRAP, top = dpi(8f))) }
     }
 
     /** Shows a scrolling page that is rebuilt from scratch (Stats, Data). */
@@ -798,12 +801,14 @@ class MainActivity : Activity() {
                     "그래프에서는 점선, 세션에서는 '추정'으로 표시되며 내보내기 파일의 estimated 열이 1입니다. " +
                     "온도·전압 차트에는 추정값을 쓰지 않습니다.", 12f, p.ink2), lp(MATCH, WRAP, top = dpi(2f)).apply { bottomMargin = dpi(6f) })
             db.lastSample()?.let { addView(kv(p, "마지막 기록", Format.dateTime(it.ts, zone))) }
-            val ref = VoltageProbe.reference(batteryIntent)
-            addView(kv(p, "전압(참조값) 키", ref?.let { if (it.isOcv) "${it.key} · OCV" else "voltage · 부하 전압" } ?: "-"))
-            if (ref != null && !ref.isOcv) addView(label(
-                "이 기기는 앱이 읽을 수 있는 OCV 값을 제공하지 않아 배터리 브로드캐스트의 " +
-                    "EXTRA_VOLTAGE(\"voltage\", 부하 상태 단자 전압)를 참조값으로 씁니다. " +
-                    "확인한 OCV 후보는 충전기 진단 화면에 있습니다.", 12f, p.ink2), lp(MATCH, WRAP, top = dpi(2f)))
+            val cur = current
+            addView(kv(p, "전압(참조값)", cur?.let { "${Volt.reference(it)} mV" } ?: "-"))
+            addView(label(Recorder.describeVoltage(this@MainActivity, cur), 12f, p.ink2), lp(MATCH, WRAP))
+            if (cur != null && cur.ocvSrc != Ocv.SRC_DIRECT) addView(label(
+                "앱이 읽을 수 있는 연료게이지 OCV(batt_vfocv, voltage_ocv 등)를 찾지 못해, 전류가 50mA 미만일 때는 " +
+                    "단자 전압을 OCV 근사로, 그 밖에는 단자 전압 + 전류×내부저항으로 OCV를 추정합니다. " +
+                    "내부저항은 이 폰의 전류 변화 때 전압 변화로 계속 학습합니다. 확인한 후보 경로는 충전기 진단 화면에 있습니다.",
+                12f, p.muted), lp(MATCH, WRAP, top = dpi(4f)).apply { bottomMargin = dpi(4f) })
             val exempt = isExempt()
             addView(kv(p, "배터리 최적화 제외", if (exempt) "설정됨" else "미설정"))
             addView(label(
@@ -889,7 +894,7 @@ class MainActivity : Activity() {
         Thread {
             val message = try {
                 val out = contentResolver.openOutputStream(uri) ?: throw java.io.IOException("no stream")
-                out.use { Exporter(db, zone).write(kind, it) }
+                out.use { Exporter(this, db, zone).write(kind, it) }
                 "저장했습니다: ${kind.label}"
             } catch (e: Exception) {
                 "저장 실패: ${e.message}"

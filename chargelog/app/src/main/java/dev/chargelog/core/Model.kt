@@ -43,6 +43,19 @@ data class Sample(
     val ocv: Int = 0,
     /** True for readings filled in by [GapFiller] while recording was interrupted. */
     val est: Boolean = false,
+    /** Battery current in µA as reported (sign as the device reports it); 0 when unknown. */
+    val currentUa: Int = 0,
+    /** Remaining charge in µAh (BATTERY_PROPERTY_CHARGE_COUNTER); 0 when unknown. */
+    val chargeUah: Int = 0,
+    /** BatteryManager.BATTERY_HEALTH_* (2 = good); 0 when unknown. */
+    val health: Int = 0,
+    /** Charger's reported maximum current (µA) and voltage (µV); 0 when not reported. */
+    val maxChargeUa: Int = 0,
+    val maxChargeUv: Int = 0,
+    /** Battery charge cycle count (Android 14+); -1 when not reported. */
+    val cycles: Int = -1,
+    /** How [ocv] was obtained: one of the Ocv.SRC_* codes. */
+    val ocvSrc: Int = 0,
 ) {
     val charging: Boolean get() = plugged != Plug.NONE
 }

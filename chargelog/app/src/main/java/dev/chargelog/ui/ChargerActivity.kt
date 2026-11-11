@@ -14,6 +14,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import dev.chargelog.core.Plug
+import dev.chargelog.data.Recorder
 import dev.chargelog.data.VoltageProbe
 import java.util.Locale
 
@@ -112,9 +113,12 @@ class ChargerActivity : Activity() {
             "현재 배터리 입력" to (if (plugged == 0) "-" else f(batteryW)),
             "이 화면 최고 입력" to (if (peakW > 0) f(peakW) else "-"),
             "배터리 전압 (\"voltage\")" to "$mv mV",
-            "전압(참조값)" to (VoltageProbe.reference(i)?.let {
-                "${it.mv} mV · ${it.key}" + if (it.isOcv) " (OCV)" else " (부하 전압)"
+            "전압(참조값)" to (i?.let { Recorder.parse(this, it) }?.let {
+                "${dev.chargelog.core.Volt.reference(it)} mV · ${Recorder.describeVoltage(this, it)}"
             } ?: "-"),
+            "내부저항 (학습)" to Recorder.rFit(this).let {
+                String.format(Locale.US, "%.3f Ω · 측정 %d회", it.ohms, it.count) + if (it.count < dev.chargelog.core.RFit.MIN_POINTS) " (기본값 사용 중)" else ""
+            },
             "전류 (CURRENT_NOW)" to "$now",
             "전류 (평균)" to "$avg",
         )

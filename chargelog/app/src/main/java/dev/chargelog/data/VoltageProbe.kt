@@ -1,66 +1,71 @@
 package dev.chargelog.data
 
 import android.content.Intent
-import android.os.BatteryManager
 import dev.chargelog.core.Volt
 import java.io.File
 
 /**
- * Finds an open-circuit voltage (OCV) source on this device. Android has no public OCV API:
- * some vendors add an extra to the battery broadcast, and some kernels expose it in sysfs,
- * which may or may not be readable by apps. When nothing is found, the terminal voltage from
- * the broadcast key "voltage" (EXTRA_VOLTAGE) is the reference.
+ * Looks for an open-circuit voltage (OCV) the device exposes directly. Android has no public
+ * OCV API: some vendors put it in the battery broadcast, and fuel-gauge drivers expose it in
+ * sysfs (generic `voltage_ocv`, Samsung `batt_vfocv`), which SELinux may or may not let apps
+ * read. Every /sys/class/power_supply/<supply>/ directory is scanned once for those names.
  */
 object VoltageProbe {
 
-    data class Reading(val mv: Int, val key: String, val isOcv: Boolean)
+    data class Reading(val mv: Int, val key: String)
 
-    /** sysfs files known to carry OCV on common fuel gauges (Samsung, Qualcomm BMS, generic). */
-    val SYSFS = listOf(
-        "/sys/class/power_supply/battery/voltage_ocv",
+    private val NAMES = listOf("voltage_ocv", "batt_vfocv", "fg_vfocv", "vfocv", "ocv")
+    private val FIXED = listOf(
         "/sys/class/power_supply/battery/batt_vfocv",
+        "/sys/class/power_supply/battery/voltage_ocv",
         "/sys/class/power_supply/bms/voltage_ocv",
-        "/sys/class/power_supply/max77705-fuelgauge/voltage_ocv",
-        "/sys/class/power_supply/sec-fuelgauge/voltage_ocv",
     )
 
     @Volatile private var workingFile: String? = null
-    @Volatile private var filesProbed = false
+    @Volatile private var probed = false
+    @Volatile private var broadcastKey: String? = null
 
-    /** OCV from the broadcast or sysfs, or null when this device does not expose one. */
+    /** Every candidate path: the fixed ones plus each supply directory × each known name. */
+    fun candidates(): List<String> {
+        val dirs = try { File("/sys/class/power_supply").listFiles()?.map { it.path }.orEmpty() } catch (e: Exception) { emptyList() }
+        return (FIXED + dirs.flatMap { d -> NAMES.map { "$d/$it" } }).distinct()
+    }
+
+    /** Name of the key or file that supplied the last direct OCV. */
+    fun directKey(): String? = broadcastKey?.let { "broadcast \"$it\"" } ?: workingFile
+
+    /** Direct OCV from the broadcast or sysfs, or null when this device does not expose one. */
     fun ocv(intent: Intent?): Reading? {
         intent?.extras?.let { ex ->
             for (k in ex.keySet().sorted()) {
                 if (!k.contains("ocv", ignoreCase = true)) continue
                 @Suppress("DEPRECATION")
                 val raw = (ex.get(k) as? Number)?.toLong() ?: continue
-                Volt.toMv(raw)?.let { return Reading(it, "broadcast \"$k\"", true) }
+                Volt.toMv(raw)?.let { broadcastKey = k; return Reading(it, "broadcast \"$k\"") }
             }
         }
-        val known = workingFile
-        if (known != null) readFile(known)?.let { return Reading(it, known.substringAfterLast('/'), true) }
-        if (!filesProbed) {
-            filesProbed = true
-            for (f in SYSFS) readFile(f)?.let { workingFile = f; return Reading(it, f.substringAfterLast('/'), true) }
+        workingFile?.let { f -> readFile(f)?.let { return Reading(it, f) } }
+        if (!probed) {
+            probed = true
+            for (f in candidates()) readFile(f)?.let { workingFile = f; return Reading(it, f) }
         }
         return null
     }
 
-    /** The value shown as "전압(참조값)": OCV when available, otherwise the terminal voltage. */
-    fun reference(intent: Intent?): Reading? = ocv(intent) ?: intent
-        ?.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0)?.takeIf { it > 0 }
-        ?.let { Reading(it, "EXTRA_VOLTAGE \"voltage\"", false) }
-
-    /** Every candidate with what was found, for the diagnostics screen. */
+    /** Every candidate with what was found, for the diagnostics screen and exports. */
     fun report(intent: Intent?): List<Pair<String, String>> {
         val out = ArrayList<Pair<String, String>>()
         val extras = intent?.extras
-        val ocvKeys = extras?.keySet()?.filter { it.contains("ocv", ignoreCase = true) }.orEmpty()
-        if (ocvKeys.isEmpty()) out.add("broadcast *ocv*" to "없음")
+        val keys = extras?.keySet()?.filter { it.contains("ocv", ignoreCase = true) }.orEmpty()
+        if (keys.isEmpty()) out.add("broadcast *ocv*" to "없음")
         @Suppress("DEPRECATION")
-        for (k in ocvKeys) out.add("broadcast \"$k\"" to "${extras?.get(k)}")
-        for (f in SYSFS) {
-            val v = try { File(f).readText().trim() } catch (e: Exception) { "읽기 불가 (${e.javaClass.simpleName})" }
+        for (k in keys) out.add("broadcast \"$k\"" to "${extras?.get(k)}")
+        val dirs = try { File("/sys/class/power_supply").list()?.sorted()?.joinToString(", ") } catch (e: Exception) { null }
+        out.add("/sys/class/power_supply" to (dirs ?: "목록 읽기 불가"))
+        for (f in candidates()) {
+            val file = File(f)
+            if (!FIXED.contains(f) && !file.exists()) continue
+            val v = try { file.readText().trim() } catch (e: Exception) { "읽기 불가 (${e.javaClass.simpleName})" }
             out.add(f to v)
         }
         return out

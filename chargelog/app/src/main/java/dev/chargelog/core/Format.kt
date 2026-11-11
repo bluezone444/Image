@@ -3,6 +3,7 @@ package dev.chargelog.core
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 object Format {
     private val iso = DateTimeFormatter.ISO_OFFSET_DATE_TIME
@@ -39,14 +40,28 @@ object Format {
 
     // ---- CSV ----
 
-    const val SAMPLE_HEADER = "timestamp_ms,datetime,soc_pct,plugged,status,temp_c,voltage_mv,ocv_mv,estimated"
+    fun healthLabel(h: Int): String = when (h) {
+        2 -> "good"; 3 -> "overheat"; 4 -> "dead"; 5 -> "over_voltage"; 6 -> "failure"; 7 -> "cold"
+        1 -> "unknown"; else -> ""
+    }
 
-    fun sampleCsv(s: Sample, zone: ZoneId): String =
-        "${s.ts},${iso(s.ts, zone)},${s.level},${Plug.label(s.plugged)},${statusLabel(s.status)}," +
-            "${tenths(s.temp)},${s.voltage},${if (s.ocv > 0) s.ocv.toString() else ""},${if (s.est) 1 else 0}"
+    private fun milli(micro: Int): String = if (micro == 0) "" else String.format(Locale.US, "%.1f", micro / 1000.0)
+
+    const val SAMPLE_HEADER = "timestamp_ms,datetime,soc_pct,plugged,status,health,temp_c,voltage_mv," +
+        "current_ma,charge_counter_mah,ocv_mv,ocv_source,charger_max_ma,charger_max_mv,charger_max_w," +
+        "cycle_count,estimated"
+
+    fun sampleCsv(s: Sample, zone: ZoneId): String = listOf(
+        s.ts, iso(s.ts, zone), s.level, Plug.label(s.plugged), statusLabel(s.status), healthLabel(s.health),
+        tenths(s.temp), s.voltage, milli(s.currentUa), milli(s.chargeUah),
+        if (s.ocv > 0) s.ocv else "", Ocv.code(s.ocvSrc),
+        milli(s.maxChargeUa), milli(s.maxChargeUv),
+        if (s.maxChargeUa > 0 && s.maxChargeUv > 0) String.format(Locale.US, "%.1f", s.maxChargeUa.toDouble() * s.maxChargeUv / 1e12) else "",
+        if (s.cycles >= 0) s.cycles else "", if (s.est) 1 else 0,
+    ).joinToString(",")
 
     const val SESSION_HEADER =
-        "id,type,start_ms,start,start_soc,end_ms,end,end_soc,delta_soc,duration_min,charger," +
+        "id,type,start_ms,start,start_soc,end_ms,end,end_soc,delta_soc,duration_min,rate_pct_per_hour,charger," +
             "peak_soc_time,min_soc,max_soc,max_temp_c,estimated"
 
     fun sessionCsv(s: Session, zone: ZoneId): String {
@@ -55,15 +70,16 @@ object Format {
             s.id, s.type.name.lowercase(), s.startTs, iso(s.startTs, zone), s.startSoc,
             end ?: "", end?.let { iso(it, zone) } ?: "", s.endSoc, s.delta,
             end?.let { (it - s.startTs) / 60_000L } ?: "",
+            end?.let { s.ratePerHour(it)?.let { r -> String.format(Locale.US, "%.2f", r) } } ?: "",
             if (s.type == SessionType.CHARGE) Plug.label(s.plug) else "",
             iso(s.peakTs, zone), s.minSoc, s.maxSoc, tenths(s.maxTemp), if (s.est) 1 else 0,
         ).joinToString(",")
     }
 
-    const val DAY_HEADER = "date,usage_pct,charged_pct,min_soc,max_soc"
+    const val DAY_HEADER = "date,usage_pct,charged_pct,min_soc,max_soc,charge_sessions,readings,estimated_readings"
 
-    fun dayCsv(d: DayStat): String =
-        "${d.day},${d.usage},${d.charged},${d.minSoc ?: ""},${d.maxSoc ?: ""}"
+    fun dayCsv(d: DayStat, charges: Int = 0, readings: Int = 0, estimated: Int = 0): String =
+        "${d.day},${d.usage},${d.charged},${d.minSoc ?: ""},${d.maxSoc ?: ""},$charges,$readings,$estimated"
 
     fun tenths(v: Int): String = "${v / 10}.${Math.abs(v % 10)}"
 }

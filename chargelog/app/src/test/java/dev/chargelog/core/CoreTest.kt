@@ -199,7 +199,7 @@ class CoreTest {
         val s = Sample(0, 50, 0, 3, 300, 3900)
         assertEquals(3900, Volt.reference(s))
         assertEquals(3870, Volt.reference(s.copy(ocv = 3870)))
-        assertTrue(Format.sampleCsv(s.copy(ocv = 3870), zone).endsWith(",3900,3870,0"))
+        assertTrue(Format.sampleCsv(s.copy(ocv = 3870, ocvSrc = Ocv.SRC_DIRECT), zone).contains(",3900,,,3870,direct,"))
     }
 
     // ---- gap estimation ----
@@ -288,6 +288,30 @@ class CoreTest {
         assertEquals(50.0, rates.chargePerHour, 1e-9)
     }
 
+    @Test fun ocvSourcesAndUnits() {
+        assertEquals(-812_000, Ocv.toMicroAmps(-812))          // mA reported → µA
+        assertEquals(1_250_000, Ocv.toMicroAmps(1_250_000))
+        assertEquals(0, Ocv.toMicroAmps(Int.MIN_VALUE))
+        assertNull(Ocv.estimate(3900, 0, false, 0.1))          // no current: cannot say
+        assertEquals(3900 to Ocv.SRC_REST, Ocv.estimate(3900, -30_000, false, 0.1))
+        assertEquals(3980 to Ocv.SRC_IR, Ocv.estimate(3900, -800_000, false, 0.1))    // discharge: V + I·R
+        assertEquals(4100 to Ocv.SRC_IR, Ocv.estimate(4200, 1_000_000, true, 0.1))    // charging: V − I·R
+    }
+
+    @Test fun internalResistanceFit() {
+        val fit = RFit()
+        assertEquals(Ocv.DEFAULT_R_OHM, fit.ohms, 1e-9)
+        var t = 0L
+        // Same SOC, discharging; every jump of 0.5 A drops the voltage by 50 mV → 0.1 Ω.
+        repeat(6) {
+            fit.add(t, 50, true, 3900, -200_000); t += 10_000
+            assertTrue(fit.add(t, 50, true, 3850, -700_000)); t += 10_000
+        }
+        assertEquals(0.1, fit.ohms, 1e-6)
+        assertTrue(!fit.add(t + 10_000, 49, true, 3800, -1_200_000))  // SOC changed: ignored
+        assertTrue(!fit.add(t + 20_000, 49, false, 3700, -2_200_000)) // charging: ignored
+    }
+
     @Test fun dailyWithNoDataIsEmpty() {
         val day = LocalDate.of(2026, 11, 10)
         val out = Stats.daily(emptyList(), null, zone, day, day)
@@ -297,10 +321,12 @@ class CoreTest {
     @Test fun csvAndFormatting() {
         val ts = Stats.dayStart(LocalDate.of(2026, 11, 11), zone) + 16 * 60 * min + 8 * min
         assertEquals("2026-11-11T16:08:00+09:00", Format.iso(ts, zone))
-        assertEquals(
-            "$ts,2026-11-11T16:08:00+09:00,64,ac,charging,31.5,4120,,0",
-            Format.sampleCsv(Sample(ts, 64, Plug.AC, 2, 315, 4120), zone)
-        )
+        val cols = Format.sampleCsv(Sample(ts, 64, Plug.AC, 2, 315, 4120, currentUa = -812_000,
+            chargeUah = 3_100_000, health = 2, maxChargeUa = 3_000_000, maxChargeUv = 9_000_000, cycles = 210,
+            ocv = 4180, ocvSrc = Ocv.SRC_IR), zone).split(",")
+        assertEquals(Format.SAMPLE_HEADER.split(",").size, cols.size)
+        assertEquals(listOf("$ts", "2026-11-11T16:08:00+09:00", "64", "ac", "charging", "good", "31.5", "4120",
+            "-812.0", "3100.0", "4180", "ir_model", "3000.0", "9000.0", "27.0", "210", "0"), cols)
         assertEquals("7시간 30분", Format.duration(450 * min))
         assertEquals("−69", Format.signed(-69))
         val sess = Session(7, SessionType.CHARGE, ts, 18, ts + 450 * min, 100, Plug.AC, ts + 400 * min, 18, 100, 390)
