@@ -6,12 +6,15 @@ object Plug {
     const val AC = 1
     const val USB = 2
     const val WIRELESS = 4
+    /** Charger of an estimated (not observed) charge. */
+    const val ESTIMATED = 99
 
     fun label(p: Int): String = when (p) {
         NONE -> "none"
         AC -> "ac"
         USB -> "usb"
         WIRELESS -> "wireless"
+        ESTIMATED -> "estimated"
         else -> "other"
     }
 
@@ -20,6 +23,7 @@ object Plug {
         AC -> "충전기"
         USB -> "USB"
         WIRELESS -> "무선"
+        ESTIMATED -> "추정"
         else -> "기타"
     }
 }
@@ -37,6 +41,8 @@ data class Sample(
     val temp: Int,
     val voltage: Int,
     val ocv: Int = 0,
+    /** True for readings filled in by [GapFiller] while recording was interrupted. */
+    val est: Boolean = false,
 ) {
     val charging: Boolean get() = plugged != Plug.NONE
 }
@@ -67,6 +73,8 @@ data class Session(
     val minSoc: Int,
     val maxSoc: Int,
     val maxTemp: Int,
+    /** True when any part of the session comes from estimated readings. */
+    val est: Boolean = false,
 ) {
     val open: Boolean get() = endTs == null
 

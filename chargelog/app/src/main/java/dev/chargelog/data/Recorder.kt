@@ -24,6 +24,19 @@ object Recorder {
         )
     }
 
+    /** One-time replay of the stored history so earlier gaps get estimates as well. */
+    fun rebuildOnce(context: Context) {
+        val prefs = context.getSharedPreferences("data", Context.MODE_PRIVATE)
+        if (prefs.getBoolean(REBUILT_KEY, false)) return
+        synchronized(this) {
+            if (prefs.getBoolean(REBUILT_KEY, false)) return
+            Db.get(context).rebuildWithEstimates()
+            prefs.edit().putBoolean(REBUILT_KEY, true).apply()
+        }
+    }
+
+    private const val REBUILT_KEY = "rebuilt_estimates_v1"
+
     /** @return the parsed reading, or null if the intent carried no usable level. */
     @Synchronized
     fun record(context: Context, intent: Intent): Sample? {

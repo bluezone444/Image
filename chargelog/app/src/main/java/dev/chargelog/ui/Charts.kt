@@ -19,6 +19,8 @@ import java.util.Locale
 
 /** SOC over one day (0–24h). Charging periods are shaded; touch shows the value at that time. */
 class SocChartView(context: Context, private val p: Palette) : View(context) {
+    private val estPath = Path()
+    private val estDash = DashPathEffect(floatArrayOf(context.dp(4f), context.dp(4f)), 0f)
     private var points: List<Sample> = emptyList()
     private var sessions: List<Session> = emptyList()
     private var start = 0L
@@ -81,17 +83,28 @@ class SocChartView(context: Context, private val p: Palette) : View(context) {
         }
 
         if (points.isEmpty() || last <= start) return
-        path.reset()
-        var started = false
-        for (s in points) {
+        // Observed stretches solid; anything touching an estimated reading dashed.
+        path.reset(); estPath.reset()
+        for (i in points.indices) {
+            val s = points[i]
             val px = x(s.ts); val py = y(s.level)
-            if (!started) { path.moveTo(px, py); started = true } else path.lineTo(px, py)
+            if (i == 0) { path.moveTo(px, py); continue }
+            val prev = points[i - 1]
+            val target = if (s.est || prev.est) estPath else path
+            target.moveTo(x(prev.ts), y(prev.level))
+            target.lineTo(px, py)
         }
-        path.lineTo(x(last), y(points.last().level))
+        val tail = points.last()
+        (if (tail.est) estPath else path).apply { moveTo(x(tail.ts), y(tail.level)); lineTo(x(last), y(tail.level)) }
         paint.color = p.accent
         paint.strokeWidth = context.dp(2f)
         paint.strokeJoin = Paint.Join.ROUND
+        paint.strokeCap = Paint.Cap.ROUND
         c.drawPath(path, paint)
+        paint.color = p.ink2
+        paint.pathEffect = estDash
+        c.drawPath(estPath, paint)
+        paint.pathEffect = null
 
         if (touchX >= 0f) {
             val ts = (start + (end - start) * (touchX / plotW).toDouble()).toLong().coerceIn(start, last)

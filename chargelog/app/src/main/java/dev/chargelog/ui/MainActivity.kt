@@ -132,6 +132,12 @@ class MainActivity : Activity() {
         Watchdog.schedule(this)
         render()
         askExemptionOnce()
+        // Earlier history gets its gaps estimated once, off the main thread.
+        val app = applicationContext
+        Thread {
+            Recorder.rebuildOnce(app)
+            runOnUiThread { if (!isFinishing && tabBar.visibility == View.VISIBLE) render() }
+        }.start()
     }
 
     // ------------------------------------------------------ keep-alive setup
@@ -366,6 +372,7 @@ class MainActivity : Activity() {
         root.addView(card(p, 14f).apply {
             addView(row().apply {
                 addView(title("오늘 SOC"), lp(0, WRAP, 1f))
+                if (points.any { it.est }) addView(legend(p, "추정", p.ink2, dashed = true), lp(WRAP, WRAP).apply { rightMargin = dpi(12f) })
                 addView(legend(p, "충전 구간", p.accentDim))
             })
             if (points.isEmpty()) {
@@ -403,7 +410,8 @@ class MainActivity : Activity() {
                 addView(chip(p, state, dot), lp(WRAP, WRAP))
                 if (open != null) {
                     val charge = open.type == SessionType.CHARGE
-                    addView(caption(if (charge) "이번 충전" else "충전 후 사용", p), lp(WRAP, WRAP, top = dpi(10f)))
+                    addView(caption((if (charge) "이번 충전" else "충전 후 사용") + if (open.est) " · 추정 포함" else "", p),
+                        lp(WRAP, WRAP, top = dpi(10f)))
                     addView(row().apply {
                         gravity = Gravity.BOTTOM
                         addView(number("${Format.signed(open.delta)}%", 24f, p.ink))
@@ -438,10 +446,11 @@ class MainActivity : Activity() {
     /** Temperature and voltage as small sparklines side by side. */
     private fun sensorCard(points: List<Sample>, start: Long, now: Long): View = card(p, 14f).apply {
         val s = current
-        val temps = points.filter { it.temp > 0 }.map { it.ts to it.temp } +
+        val observed = points.filter { !it.est }
+        val temps = observed.filter { it.temp > 0 }.map { it.ts to it.temp } +
             listOfNotNull(s?.takeIf { it.temp > 0 }?.let { now to it.temp })
         val ref = VoltageProbe.reference(batteryIntent)
-        val volts = points.map { it.ts to Volt.reference(it) }.filter { it.second > 0 } +
+        val volts = observed.map { it.ts to Volt.reference(it) }.filter { it.second > 0 } +
             listOfNotNull(ref?.let { now to it.mv })
         fun half(
             name: String, now0: String, pts: List<Pair<Long, Int>>, fmt: (Int) -> String, span: Int, color: Int,
@@ -597,13 +606,15 @@ class MainActivity : Activity() {
         }
         addView(row().apply {
             addView(legend(p, "SOC", p.soc))
+            if (points.any { it.est }) addView(legend(p, "추정", p.ink2, dashed = true), lp(WRAP, WRAP, left = dpi(12f)))
             addView(legend(p, "충전 구간", p.accentDim), lp(WRAP, WRAP, left = dpi(12f)))
         }, lp(WRAP, WRAP, top = dpi(14f)))
         addView(SocChartView(context, p).apply { set(points, sessions, start, end, now, zone) },
             lp(MATCH, WRAP, top = dpi(2f)))
-        val temps = points.filter { it.temp > 0 }.map { it.ts to it.temp }
-        val volts = points.map { it.ts to Volt.reference(it) }.filter { it.second > 0 }
-        val usedOcv = points.any { it.ocv > 0 }
+        val observed = points.filter { !it.est }
+        val temps = observed.filter { it.temp > 0 }.map { it.ts to it.temp }
+        val volts = observed.map { it.ts to Volt.reference(it) }.filter { it.second > 0 }
+        val usedOcv = observed.any { it.ocv > 0 }
         miniChart("배터리 온도", temps, c1, 20, p.temp, start, end, now)?.let { addView(it, lp(MATCH, WRAP, top = dpi(12f))) }
         miniChart("전압(참조값)", volts, v2, 100, p.volt, start, end, now,
             note = if (usedOcv) "키: OCV (${VoltageProbe.ocv(batteryIntent)?.key ?: "기록 당시 OCV 소스"})"
@@ -646,7 +657,8 @@ class MainActivity : Activity() {
 
     private fun sessionLine1(s: Session): String {
         val kind = if (s.type == SessionType.CHARGE) "충전" else "사용"
-        return "$kind  ${s.startSoc}% → ${s.endSoc}%  (${Format.signed(s.delta)}%)"
+        val est = if (s.est) "  · 추정" else ""
+        return "$kind  ${s.startSoc}% → ${s.endSoc}%  (${Format.signed(s.delta)}%)$est"
     }
 
     private fun sessionLine2(s: Session, now: Long): String {
@@ -769,6 +781,12 @@ class MainActivity : Activity() {
             addView(kv(p, "기록 시작", first?.let { Format.dateTime(it, zone) } ?: "-"), lp(MATCH, WRAP, top = dpi(8f)))
             addView(kv(p, "SOC 기록 수", db.sampleCount().toString()))
             addView(kv(p, "세션 수", db.sessionCount().toString()))
+            val estCount = db.estimatedCount()
+            addView(kv(p, "추정 기록 수", estCount.toString()))
+            addView(label(
+                "기록이 끊겼던 구간(강제 중지, 전원 꺼짐 등)은 앞뒤 잔량과 평소 충전·사용 속도로 추정해 채웁니다. " +
+                    "그래프에서는 점선, 세션에서는 '추정'으로 표시되며 내보내기 파일의 estimated 열이 1입니다. " +
+                    "온도·전압 차트에는 추정값을 쓰지 않습니다.", 12f, p.ink2), lp(MATCH, WRAP, top = dpi(2f)).apply { bottomMargin = dpi(6f) })
             db.lastSample()?.let { addView(kv(p, "마지막 기록", Format.dateTime(it.ts, zone))) }
             val ref = VoltageProbe.reference(batteryIntent)
             addView(kv(p, "전압(참조값) 키", ref?.let { if (it.isOcv) "${it.key} · OCV" else "voltage · 부하 전압" } ?: "-"))

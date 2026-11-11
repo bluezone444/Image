@@ -39,15 +39,15 @@ object Format {
 
     // ---- CSV ----
 
-    const val SAMPLE_HEADER = "timestamp_ms,datetime,soc_pct,plugged,status,temp_c,voltage_mv,ocv_mv"
+    const val SAMPLE_HEADER = "timestamp_ms,datetime,soc_pct,plugged,status,temp_c,voltage_mv,ocv_mv,estimated"
 
     fun sampleCsv(s: Sample, zone: ZoneId): String =
         "${s.ts},${iso(s.ts, zone)},${s.level},${Plug.label(s.plugged)},${statusLabel(s.status)}," +
-            "${tenths(s.temp)},${s.voltage},${if (s.ocv > 0) s.ocv.toString() else ""}"
+            "${tenths(s.temp)},${s.voltage},${if (s.ocv > 0) s.ocv.toString() else ""},${if (s.est) 1 else 0}"
 
     const val SESSION_HEADER =
         "id,type,start_ms,start,start_soc,end_ms,end,end_soc,delta_soc,duration_min,charger," +
-            "peak_soc_time,min_soc,max_soc,max_temp_c"
+            "peak_soc_time,min_soc,max_soc,max_temp_c,estimated"
 
     fun sessionCsv(s: Session, zone: ZoneId): String {
         val end = s.endTs
@@ -56,7 +56,7 @@ object Format {
             end ?: "", end?.let { iso(it, zone) } ?: "", s.endSoc, s.delta,
             end?.let { (it - s.startTs) / 60_000L } ?: "",
             if (s.type == SessionType.CHARGE) Plug.label(s.plug) else "",
-            iso(s.peakTs, zone), s.minSoc, s.maxSoc, tenths(s.maxTemp),
+            iso(s.peakTs, zone), s.minSoc, s.maxSoc, tenths(s.maxTemp), if (s.est) 1 else 0,
         ).joinToString(",")
     }
 

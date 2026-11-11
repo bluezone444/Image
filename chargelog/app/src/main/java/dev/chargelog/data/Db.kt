@@ -11,25 +11,30 @@ import dev.chargelog.core.SessionType
 import dev.chargelog.core.Store
 
 class Db private constructor(context: Context) :
-    SQLiteOpenHelper(context, "chargelog.db", null, 2), Store {
+    SQLiteOpenHelper(context, "chargelog.db", null, 3), Store {
 
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(
             "CREATE TABLE samples(ts INTEGER PRIMARY KEY, level INTEGER NOT NULL, " +
                 "plugged INTEGER NOT NULL, status INTEGER NOT NULL, temp INTEGER NOT NULL, " +
-                "voltage INTEGER NOT NULL, ocv INTEGER NOT NULL DEFAULT 0)"
+                "voltage INTEGER NOT NULL, ocv INTEGER NOT NULL DEFAULT 0, est INTEGER NOT NULL DEFAULT 0)"
         )
         db.execSQL(
             "CREATE TABLE sessions(id INTEGER PRIMARY KEY AUTOINCREMENT, type INTEGER NOT NULL, " +
                 "start_ts INTEGER NOT NULL, start_soc INTEGER NOT NULL, end_ts INTEGER, " +
                 "end_soc INTEGER NOT NULL, plug INTEGER NOT NULL, peak_ts INTEGER NOT NULL, " +
-                "min_soc INTEGER NOT NULL, max_soc INTEGER NOT NULL, max_temp INTEGER NOT NULL)"
+                "min_soc INTEGER NOT NULL, max_soc INTEGER NOT NULL, max_temp INTEGER NOT NULL, " +
+                "est INTEGER NOT NULL DEFAULT 0)"
         )
         db.execSQL("CREATE INDEX idx_sessions_start ON sessions(start_ts)")
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         if (oldVersion < 2) db.execSQL("ALTER TABLE samples ADD COLUMN ocv INTEGER NOT NULL DEFAULT 0")
+        if (oldVersion < 3) {
+            db.execSQL("ALTER TABLE samples ADD COLUMN est INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE sessions ADD COLUMN est INTEGER NOT NULL DEFAULT 0")
+        }
     }
 
     // ---- samples ----
@@ -48,6 +53,7 @@ class Db private constructor(context: Context) :
         val v = ContentValues().apply {
             put("ts", s.ts); put("level", s.level); put("plugged", s.plugged)
             put("status", s.status); put("temp", s.temp); put("voltage", s.voltage); put("ocv", s.ocv)
+            put("est", if (s.est) 1 else 0)
         }
         writableDatabase.insertWithOnConflict("samples", null, v, SQLiteDatabase.CONFLICT_REPLACE)
     }
@@ -79,7 +85,7 @@ class Db private constructor(context: Context) :
 
     private fun sample(c: Cursor) = Sample(
         ts = c.getLong(0), level = c.getInt(1), plugged = c.getInt(2),
-        status = c.getInt(3), temp = c.getInt(4), voltage = c.getInt(5), ocv = c.getInt(6),
+        status = c.getInt(3), temp = c.getInt(4), voltage = c.getInt(5), ocv = c.getInt(6), est = c.getInt(7) != 0,
     )
 
     // ---- sessions ----
@@ -113,6 +119,28 @@ class Db private constructor(context: Context) :
         writableDatabase.update("sessions", values(s), "id = ?", arrayOf(s.id.toString()))
     }
 
+    fun estimatedCount(): Long =
+        readableDatabase.rawQuery("SELECT COUNT(*) FROM samples WHERE est = 1", null)
+            .use { it.moveToFirst(); it.getLong(0) }
+
+    /**
+     * Replays every observed reading through a fresh [Tracker] so that gaps already in the
+     * history get estimated readings and sessions too. Runs in one transaction.
+     */
+    fun rebuildWithEstimates() {
+        val real = samples(0, Long.MAX_VALUE).filter { !it.est }
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            clearAll()
+            val tracker = dev.chargelog.core.Tracker(this)
+            real.forEach { tracker.onReading(it) }
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+    }
+
     fun clearAll() {
         writableDatabase.delete("samples", null, null)
         writableDatabase.delete("sessions", null, null)
@@ -123,13 +151,14 @@ class Db private constructor(context: Context) :
         if (s.endTs == null) putNull("end_ts") else put("end_ts", s.endTs)
         put("end_soc", s.endSoc); put("plug", s.plug); put("peak_ts", s.peakTs)
         put("min_soc", s.minSoc); put("max_soc", s.maxSoc); put("max_temp", s.maxTemp)
+        put("est", if (s.est) 1 else 0)
     }
 
     private fun session(c: Cursor) = Session(
         id = c.getLong(0), type = SessionType.of(c.getInt(1)), startTs = c.getLong(2),
         startSoc = c.getInt(3), endTs = if (c.isNull(4)) null else c.getLong(4),
         endSoc = c.getInt(5), plug = c.getInt(6), peakTs = c.getLong(7),
-        minSoc = c.getInt(8), maxSoc = c.getInt(9), maxTemp = c.getInt(10),
+        minSoc = c.getInt(8), maxSoc = c.getInt(9), maxTemp = c.getInt(10), est = c.getInt(11) != 0,
     )
 
     companion object {

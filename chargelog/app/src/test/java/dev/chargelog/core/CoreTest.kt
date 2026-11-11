@@ -199,7 +199,93 @@ class CoreTest {
         val s = Sample(0, 50, 0, 3, 300, 3900)
         assertEquals(3900, Volt.reference(s))
         assertEquals(3870, Volt.reference(s.copy(ocv = 3870)))
-        assertTrue(Format.sampleCsv(s.copy(ocv = 3870), zone).endsWith(",3900,3870"))
+        assertTrue(Format.sampleCsv(s.copy(ocv = 3870), zone).endsWith(",3900,3870,0"))
+    }
+
+    // ---- gap estimation ----
+
+    private fun checkFill(st: FakeStore, from: Long, to: Long) {
+        val est = st.samples.filter { it.est }
+        assertTrue(est.all { it.ts > from && it.ts < to })
+        assertTrue(st.samples.zipWithNext().all { (a, b) -> b.ts > a.ts })
+        // Consecutive stored readings never jump by more than 1 % once filled.
+        assertTrue(st.samples.zipWithNext().all { (a, b) -> Math.abs(a.level - b.level) <= 1 })
+    }
+
+    @Test fun smallChangesAreNotEstimated() {
+        val st = FakeStore(); val t = Tracker(st)
+        t.onReading(r(0, 60))
+        t.onReading(r(300, 61))                          // +1 after 5 h: recalibration, not a gap
+        t.onReading(r(301, 58))                          // −3 within a minute: sudden jump, too short
+        assertTrue(st.samples.none { it.est })
+        assertEquals(1, st.sessions.size)
+    }
+
+    @Test fun missedDischargeIsLinear() {
+        val st = FakeStore(); val t = Tracker(st)
+        t.onReading(r(0, 80))
+        t.onReading(r(360, 60))                          // 6 h later, 20 % lower
+        checkFill(st, 0, 360 * min)
+        val est = st.samples.filter { it.est }
+        assertEquals((79 downTo 61).toList(), est.map { it.level })
+        assertTrue(est.all { !it.charging })
+        // Evenly spread: 61 % sits close to the end.
+        assertTrue(est.last().ts > 330 * min)
+        assertEquals(1, st.sessions.size)
+        assertTrue(st.sessions[0].est)
+    }
+
+    @Test fun missedChargeWhileUnpluggedBecomesEstimatedChargeSession() {
+        val st = FakeStore(); val t = Tracker(st)
+        t.onReading(r(0, 30))
+        t.onReading(r(8 * 60, 90))                       // 8 h later, unplugged at 90 %
+        checkFill(st, 0, 8 * 60 * min)
+        val s = st.sessions.sortedBy { it.startTs }
+        assertEquals(listOf(SessionType.DISCHARGE, SessionType.CHARGE, SessionType.DISCHARGE), s.map { it.type })
+        val charge = s[1]
+        assertTrue(charge.est)
+        assertEquals(Plug.ESTIMATED, charge.plug)
+        assertTrue(charge.startSoc <= 30)                // went down first, then charged
+        assertEquals(90, charge.endSoc)
+        assertEquals(8 * 60 * min, charge.endTs)         // unplug seen at the real reading
+        assertTrue(s[2].open && !s[2].est)
+    }
+
+    @Test fun pluggedInDuringGapContinuesIntoRealChargeSession() {
+        val st = FakeStore(); val t = Tracker(st)
+        t.onReading(r(0, 40))
+        t.onReading(r(3 * 60, 70, Plug.AC))              // found charging at 70 %
+        checkFill(st, 0, 3 * 60 * min)
+        val s = st.sessions.sortedBy { it.startTs }
+        assertEquals(listOf(SessionType.DISCHARGE, SessionType.CHARGE), s.map { it.type })
+        assertTrue(s[1].open && s[1].est)
+        assertEquals(Plug.AC, s[1].plug)                 // real charger replaces the estimate
+        assertEquals(70, s[1].endSoc)
+    }
+
+    @Test fun unpluggedDuringGapChargesToFullThenDischarges() {
+        val st = FakeStore(); val t = Tracker(st)
+        t.onReading(r(0, 30, Plug.AC))
+        t.onReading(r(9 * 60, 85))                       // overnight: found unplugged at 85 %
+        checkFill(st, 0, 9 * 60 * min)
+        assertEquals(100, st.samples.maxOf { it.level })
+        val s = st.sessions.sortedBy { it.startTs }
+        assertEquals(listOf(SessionType.CHARGE, SessionType.DISCHARGE), s.map { it.type })
+        assertEquals(100, s[0].maxSoc)
+        assertTrue(s[0].est && s[1].est)
+        assertTrue(s[1].open)
+    }
+
+    @Test fun ratesComeFromObservedSessions() {
+        val h = 60 * min
+        val sessions = listOf(
+            Session(1, SessionType.DISCHARGE, 0, 100, 10 * h, 50, 0, 0, 50, 100, 300),     // 5 %/h
+            Session(2, SessionType.CHARGE, 10 * h, 50, 11 * h, 100, 1, 0, 50, 100, 300),   // 50 %/h
+            Session(3, SessionType.CHARGE, 11 * h, 0, 12 * h, 90, 1, 0, 0, 90, 300, est = true),
+        )
+        val rates = GapFiller.rates(sessions, 12 * h)
+        assertEquals(5.0, rates.dischargePerHour, 1e-9)
+        assertEquals(50.0, rates.chargePerHour, 1e-9)
     }
 
     @Test fun dailyWithNoDataIsEmpty() {
@@ -212,7 +298,7 @@ class CoreTest {
         val ts = Stats.dayStart(LocalDate.of(2026, 11, 11), zone) + 16 * 60 * min + 8 * min
         assertEquals("2026-11-11T16:08:00+09:00", Format.iso(ts, zone))
         assertEquals(
-            "$ts,2026-11-11T16:08:00+09:00,64,ac,charging,31.5,4120,",
+            "$ts,2026-11-11T16:08:00+09:00,64,ac,charging,31.5,4120,,0",
             Format.sampleCsv(Sample(ts, 64, Plug.AC, 2, 315, 4120), zone)
         )
         assertEquals("7시간 30분", Format.duration(450 * min))

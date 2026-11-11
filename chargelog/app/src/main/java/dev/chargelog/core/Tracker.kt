@@ -17,8 +17,26 @@ interface Store {
  */
 class Tracker(private val store: Store) {
 
-    /** @return true when the reading changed stored state (new sample). */
+    /**
+     * Records a reading. When it shows that readings were missed since the previous one, the gap
+     * is first filled with estimated readings (see [GapFiller]).
+     *
+     * @return true when the reading changed stored state (new sample).
+     */
     fun onReading(reading: Sample): Boolean {
+        val prev = store.lastSample()
+        if (prev != null && !reading.est) {
+            val r = if (reading.ts < prev.ts) reading.copy(ts = prev.ts) else reading
+            // Cheap check first; the rate lookup only runs when a gap is actually present.
+            if (GapFiller.isGap(prev, r)) {
+                val estimates = GapFiller.fill(prev, r, GapFiller.rates(store.latestSessions(30), r.ts))
+                for (e in estimates) record(e)
+            }
+        }
+        return record(reading)
+    }
+
+    private fun record(reading: Sample): Boolean {
         val last = store.lastSample()
         // If the wall clock moved backwards (manual change, network time correction), keep
         // recording at the last known time instead of dropping readings until it catches up.
@@ -56,6 +74,7 @@ class Tracker(private val store: Store) {
     private fun newSession(type: SessionType, r: Sample) = Session(
         type = type, startTs = r.ts, startSoc = r.level, endSoc = r.level,
         plug = r.plugged, peakTs = r.ts, minSoc = r.level, maxSoc = r.level, maxTemp = r.temp,
+        est = r.est,
     )
 
     private fun extend(s: Session, r: Sample, track: Boolean = true): Session {
@@ -67,6 +86,7 @@ class Tracker(private val store: Store) {
             minSoc = minOf(s.minSoc, r.level),
             maxSoc = maxOf(s.maxSoc, r.level),
             maxTemp = maxOf(s.maxTemp, r.temp),
+            est = s.est || r.est,
         )
     }
 
