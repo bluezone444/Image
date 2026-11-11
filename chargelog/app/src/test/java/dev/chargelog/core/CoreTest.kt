@@ -511,7 +511,7 @@ class CoreTest {
         assertEquals(listOf(0L to 15, m to 20, 2 * m to 25, 3 * m to Drain.BREAK, 4 * m to 100, 5 * m to 100), out)
     }
 
-    @Test fun dailyUsageAbove100AndGaugeBouncesIgnored() {
+    @Test fun dailyUsageAccumulatesEveryDrop() {
         val day = LocalDate.of(2026, 11, 10)
         val t0 = Stats.dayStart(day, zone)
         fun s(m: Long, level: Int, plug: Int = Plug.NONE) = Sample(t0 + m * min, level, plug, if (plug == 0) 3 else 2, 300, 4000)
@@ -521,8 +521,8 @@ class CoreTest {
             s(201, 100), s(400, 10),                                    // −90
         )
         val d = Stats.daily(samples, null, zone, day, day).single()
-        assertEquals(40 + 40 + 90, d.usage)          // 170 %: above 100 is fine, bounce not counted
-        assertEquals(80, d.charged)                   // the +1 bounce is not charging
+        assertEquals(40 + 1 + 40 + 90, d.usage)      // 171 %: every drop accumulates, above 100 is fine
+        assertEquals(80, d.charged)                   // the unplugged +1 tick is not charging
         assertEquals(10, d.minSoc); assertEquals(100, d.maxSoc)
     }
 

@@ -76,12 +76,8 @@ class DailyBuilder(
     }
     private var prevLevel: Int? = baselineLevel
     private var prevDay: LocalDate? = null
-    /**
-     * Unplugged +1 % gauge bounces not yet undone. Samsung's gauge sometimes ticks up 1 % and
-     * back while unplugged; neither step is real charging or use, so the rise is not counted as
-     * charged and the matching drop back is not counted as usage.
-     */
-    private var bounce = 0
+    private var prevCharging = false
+
 
     // Readings arrive in order, so the local day is looked up once per day, not per reading.
     private var curDay: LocalDate? = null
@@ -111,20 +107,16 @@ class DailyBuilder(
             acc.see(level)
             if (p != null) {
                 val diff = level - p
-                when {
-                    diff < 0 -> {
-                        val undone = minOf(bounce, -diff)
-                        bounce -= undone
-                        acc.usage += -diff - undone
-                    }
-                    diff == 1 && !charging -> bounce = minOf(bounce + 1, 1)
-                    diff > 0 -> { acc.charged += diff; bounce = 0 }
-                }
-                if (charging) bounce = 0
+                // Every drop is discharge and accumulates, small gauge bounces included.
+                // A rise counts as charged, except a lone +1 % gauge tick while unplugged on both
+                // sides, which is not charging.
+                if (diff < 0) acc.usage -= diff
+                else if (diff > 1 || (diff == 1 && (charging || prevCharging))) acc.charged += diff
             }
         }
         prevLevel = level
         prevDay = day
+        prevCharging = charging
     }
 
     fun build(): List<DayStat> {
