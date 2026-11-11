@@ -218,7 +218,12 @@ class RingGauge(context: Context, private val p: Palette) : View(context) {
 }
 
 /** Axis-free line of recent values, with a soft fill and the latest point marked. */
-class Sparkline(context: Context, private val p: Palette, private val color: Int) : View(context) {
+class Sparkline(
+    context: Context,
+    private val p: Palette,
+    private val color: Int,
+    private val fromZero: Boolean = false,
+) : View(context) {
     private var values: List<Pair<Long, Int>> = emptyList()
     private var start = 0L
     private var end = 1L
@@ -237,30 +242,47 @@ class Sparkline(context: Context, private val p: Palette, private val color: Int
     }
 
     override fun onDraw(c: Canvas) {
-        if (values.isEmpty()) return
+        val real = values.filter { it.second != GAP }
+        if (real.isEmpty()) return
         val pad = context.dp(4f)
-        var lo = values.minOf { it.second }
-        var hi = values.maxOf { it.second }
-        if (hi - lo < minSpan) { val mid = (hi + lo) / 2; lo = mid - minSpan / 2; hi = lo + minSpan }
+        var lo = if (fromZero) 0 else real.minOf { it.second }
+        var hi = real.maxOf { it.second }
+        if (hi - lo < minSpan) {
+            if (fromZero) hi = lo + minSpan
+            else { val mid = (hi + lo) / 2; lo = mid - minSpan / 2; hi = lo + minSpan }
+        }
         val w = width - 2 * pad
         val h = height - 2 * pad
         fun x(ts: Long) = pad + w * (ts - start).coerceIn(0, end - start) / (end - start).toFloat()
         fun y(v: Int) = pad + h - h * (v - lo) / (hi - lo).toFloat()
 
         path.reset(); area.reset()
-        values.forEachIndexed { i, (ts, v) ->
-            if (i == 0) { path.moveTo(x(ts), y(v)); area.moveTo(x(ts), height.toFloat()); area.lineTo(x(ts), y(v)) }
+        var open = false
+        var runEnd = 0f
+        for ((ts, v) in values) {
+            if (v == GAP) {
+                if (open) { area.lineTo(runEnd, height.toFloat()); area.close(); open = false }
+                continue
+            }
+            if (!open) { path.moveTo(x(ts), y(v)); area.moveTo(x(ts), height.toFloat()); area.lineTo(x(ts), y(v)); open = true }
             else { path.lineTo(x(ts), y(v)); area.lineTo(x(ts), y(v)) }
+            runEnd = x(ts)
         }
-        val lastX = x(values.last().first)
-        area.lineTo(lastX, height.toFloat()); area.close()
+        if (open) { area.lineTo(runEnd, height.toFloat()); area.close() }
+        val lastPt = values.last()
         fill.shader = LinearGradient(0f, pad, 0f, height.toFloat(),
             (color and 0x00FFFFFF) or 0x38000000, color and 0x00FFFFFF, Shader.TileMode.CLAMP)
         c.drawPath(area, fill)
         line.color = color; line.strokeWidth = context.dp(2f)
         c.drawPath(path, line)
-        val ly = y(values.last().second)
+        if (lastPt.second == GAP) return
+        val lastX = x(lastPt.first)
+        val ly = y(lastPt.second)
         dot.color = p.card; c.drawCircle(lastX, ly, context.dp(4f), dot)
         dot.color = color; c.drawCircle(lastX, ly, context.dp(2.75f), dot)
+    }
+
+    private companion object {
+        const val GAP = dev.chargelog.core.Drain.BREAK
     }
 }

@@ -312,6 +312,29 @@ class CoreTest {
         assertTrue(!fit.add(t + 20_000, 49, false, 3700, -2_200_000)) // charging: ignored
     }
 
+    @Test fun dischargeCurrentFromChargeCounter() {
+        fun smp(m: Long, level: Int, q: Int, plug: Int = Plug.NONE, cur: Int = 0) =
+            Sample(m * min, level, plug, if (plug == 0) 3 else 2, 300, 3900, chargeUah = q, currentUa = cur)
+        val samples = listOf(
+            smp(0, 80, 4_000_000),
+            smp(60, 70, 3_600_000),            // 400 mAh in 1 h → 400 mA
+            smp(90, 65, 3_300_000),            // 300 mAh in 30 min → 600 mA
+            smp(91, 65, 3_300_000, Plug.AC),   // 1 min, counter flat, no current → no value
+            smp(150, 90, 4_200_000, Plug.AC),  // charging: gap
+            smp(151, 90, 4_200_000),           // unplugged
+        )
+        val now = 211 * min
+        val ser = Drain.series(samples, now, smp(0, 88, 4_100_000, cur = -250_000))
+        // 0–60 at 400, 60–90 at 600, gap, then 151–now at 100 mAh / 60 min = 100 mA
+        assertEquals(listOf(0L to 400, 60 * min to 400, 60 * min to 600, 90 * min to 600, 90 * min to Drain.BREAK,
+            151 * min to 100, now to 100), ser)
+        val (avg, max) = Drain.summary(ser)!!
+        assertEquals((400 * 60 + 600 * 30 + 100 * 60) / 150, avg)
+        assertEquals(600, max)
+        // Short interval without counter change falls back to the instantaneous current.
+        assertEquals(812, Drain.rate(smp(0, 50, 0), smp(1, 50, 0, cur = -812_000)))
+    }
+
     @Test fun dailyWithNoDataIsEmpty() {
         val day = LocalDate.of(2026, 11, 10)
         val out = Stats.daily(emptyList(), null, zone, day, day)

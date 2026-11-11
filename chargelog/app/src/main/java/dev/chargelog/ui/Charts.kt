@@ -24,6 +24,9 @@ import java.util.Locale
 
 // ---------------------------------------------------------------- shared pieces
 
+/** Gap marker inside a line series (e.g. charging stretches in the discharge-current line). */
+private const val GAP = dev.chargelog.core.Drain.BREAK
+
 /**
  * Horizontal zoom for a chart: a two-finger pinch scales the x axis around the fingers and
  * follows them (pan); double tap, or tapping the zoom pill, resets. The viewport is kept per
@@ -565,6 +568,10 @@ class MiniLineChart(
     private val format: (Int) -> String,
     /** Smallest visible span of the value axis, so flat data does not look noisy. */
     private val minSpan: Int,
+    /** Start the value axis at 0 (magnitudes such as current). */
+    private val fromZero: Boolean = false,
+    /** Tooltip text where the series has a gap ([dev.chargelog.core.Drain.BREAK]). */
+    private val gapLabel: String = "-",
 ) : View(context) {
     private val ink = ChartInk(context, p)
     private val zoom = XZoom(this, 30 * 60_000.0)
@@ -596,14 +603,18 @@ class MiniLineChart(
     private fun plotW() = width - ink.dp(50f)
 
     override fun onDraw(c: Canvas) {
-        if (pts.isEmpty()) return
+        val values = pts.filter { it.second != GAP }
+        if (values.isEmpty()) return
         val plotW = plotW()
         zoom.plotW = plotW
         val top = ink.dp(28f)
         val bottom = height - ink.dp(18f)
-        var lo = pts.minOf { it.second }
-        var hi = pts.maxOf { it.second }
-        if (hi - lo < minSpan) { val mid = (hi + lo) / 2; lo = mid - minSpan / 2; hi = lo + minSpan }
+        var lo = if (fromZero) 0 else values.minOf { it.second }
+        var hi = values.maxOf { it.second }
+        if (hi - lo < minSpan) {
+            if (fromZero) hi = lo + minSpan
+            else { val mid = (hi + lo) / 2; lo = mid - minSpan / 2; hi = lo + minSpan }
+        }
         fun x(ts: Long) = zoom.x(ts.toDouble())
         fun y(v: Int) = bottom - (bottom - top) * (v - lo) / (hi - lo).toFloat()
         val last = minOf(now, end)
@@ -629,13 +640,27 @@ class MiniLineChart(
         }
 
         line.reset(); area.reset()
-        pts.forEachIndexed { i, (ts, v) ->
-            if (i == 0) { line.moveTo(x(ts), y(v)); area.moveTo(x(ts), bottom); area.lineTo(x(ts), y(v)) }
-            else { line.lineTo(x(ts), y(v)); area.lineTo(x(ts), y(v)) }
+        // Each run between gaps is its own stroke and filled area.
+        var open = false
+        var runEndX = 0f
+        for ((ts, v) in pts) {
+            if (v == GAP) {
+                if (open) { area.lineTo(runEndX, bottom); area.close(); open = false }
+                continue
+            }
+            val px = x(ts); val py = y(v)
+            if (!open) { line.moveTo(px, py); area.moveTo(px, bottom); area.lineTo(px, py); open = true }
+            else { line.lineTo(px, py); area.lineTo(px, py) }
+            runEndX = px
         }
-        val endX = x(maxOf(last, pts.last().first))
-        line.lineTo(endX, y(pts.last().second))
-        area.lineTo(endX, y(pts.last().second)); area.lineTo(endX, bottom); area.close()
+        if (open) {
+            // A continuous series (no gap markers) is held flat up to now.
+            if (pts.none { it.second == GAP }) {
+                val endX = x(maxOf(last, pts.last().first))
+                line.lineTo(endX, y(pts.last().second)); area.lineTo(endX, y(pts.last().second)); runEndX = endX
+            }
+            area.lineTo(runEndX, bottom); area.close()
+        }
         ink.fill.shader = ink.areaShader(color, top, bottom, 0x30)
         c.drawPath(area, ink.fill)
         ink.fill.shader = null
@@ -646,13 +671,18 @@ class MiniLineChart(
         pill = if (scrub.x < 0f) ink.zoomPill(c, zoom) else null
         if (scrub.x >= 0f) {
             val ts = zoom.value(scrub.x).toLong().coerceIn(start, maxOf(start, last))
-            val v = pts.lastOrNull { it.first <= ts }?.second ?: pts.first().second
+            val at = pts.lastOrNull { it.first <= ts }
+            val v = at?.second ?: GAP
             val px = x(ts)
             ink.stroke.color = p.ink2; ink.stroke.strokeWidth = ink.dp(1f); ink.stroke.pathEffect = ink.dash
             c.drawLine(px, top, px, bottom, ink.stroke)
             ink.stroke.pathEffect = null
-            ink.dot(c, px, y(v), color, ink.dp(3.5f))
-            ink.bubble(c, "${Format.time(ts, zone)}  ${format(v)}", px, ink.dp(1f), width.toFloat())
+            if (v == GAP) {
+                ink.bubble(c, "${Format.time(ts, zone)}  $gapLabel", px, ink.dp(1f), width.toFloat())
+            } else {
+                ink.dot(c, px, y(v), color, ink.dp(3.5f))
+                ink.bubble(c, "${Format.time(ts, zone)}  ${format(v)}", px, ink.dp(1f), width.toFloat())
+            }
         }
     }
 

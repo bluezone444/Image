@@ -37,6 +37,7 @@ import dev.chargelog.data.Db
 import dev.chargelog.data.ExportKind
 import dev.chargelog.data.Exporter
 import dev.chargelog.data.Recorder
+import dev.chargelog.core.Drain
 import dev.chargelog.core.Ocv
 import dev.chargelog.core.Volt
 import dev.chargelog.service.MonitorService
@@ -341,6 +342,7 @@ class MainActivity : Activity() {
     private fun pct(v: Int?): String = v?.let { "$it%" } ?: "-"
     private val v2 = { mv: Int -> String.format(Locale.US, "%.2fV", mv / 1000.0) }
     private val c1 = { t: Int -> "${Format.tenths(t)}°C" }
+    private val ma = { v: Int -> "${v}mA" }
 
     // ------------------------------------------------------------------ home
 
@@ -451,28 +453,35 @@ class MainActivity : Activity() {
         val observed = points.filter { !it.est }
         val temps = observed.filter { it.temp > 0 }.map { it.ts to it.temp } +
             listOfNotNull(s?.takeIf { it.temp > 0 }?.let { now to it.temp })
-        val refMv = s?.let { Volt.reference(it) }?.takeIf { it > 0 }
-        val volts = observed.map { it.ts to Volt.reference(it) }.filter { it.second > 0 } +
-            listOfNotNull(refMv?.let { now to it })
+        // Discharge current replaces voltage on the dashboard; voltage is only stored and exported.
+        val drain = Drain.series(points, now, s)
+        val drainSum = Drain.summary(drain)
+        val drainNow = when {
+            s == null -> "-"
+            s.charging -> "충전 중"
+            s.currentUa != 0 -> "${Math.abs(s.currentUa) / 1000}mA"
+            else -> "-"
+        }
         fun half(
             name: String, now0: String, pts: List<Pair<Long, Int>>, fmt: (Int) -> String, span: Int, color: Int,
-            source: String? = null,
+            source: String? = null, rangeText: String? = null, fromZero: Boolean = false,
         ) =
             column().apply {
                 addView(row().apply {
                     addView(caption(name, p), lp(0, WRAP, 1f))
                     addView(number(now0, 15f, p.ink))
                 })
-                addView(Sparkline(context, p, color).apply { set(pts, start, maxOf(now, start + 1), span) },
+                addView(Sparkline(context, p, color, fromZero).apply { set(pts, start, maxOf(now, start + 1), span) },
                     lp(MATCH, dpi(34f), top = dpi(6f)))
-                addView(label(if (pts.isEmpty()) "기록 없음" else "오늘 ${fmt(pts.minOf { it.second })} – ${fmt(pts.maxOf { it.second })}",
+                addView(label(rangeText ?: if (pts.isEmpty()) "기록 없음" else "오늘 ${fmt(pts.minOf { it.second })} – ${fmt(pts.maxOf { it.second })}",
                     11f, p.muted), lp(WRAP, WRAP, top = dpi(4f)))
                 if (source != null) addView(label(source, 10f, p.muted), lp(WRAP, WRAP, top = dpi(2f)))
             }
         addView(tileRow(p, listOf(
             half("배터리 온도", s?.let { c1(it.temp) } ?: "-", temps, c1, 20, p.temp),
-            half("전압(참조값)", refMv?.let { v2(it) } ?: "-", volts, v2, 100, p.volt,
-                Recorder.describeVoltage(this@MainActivity, s)),
+            half("방전 전류", drainNow, drain, ma, 300, p.volt,
+                rangeText = drainSum?.let { "오늘 평균 ${it.first}mA · 최대 ${it.second}mA" } ?: "오늘 방전 기록 없음",
+                fromZero = true),
         )))
     }
 
@@ -620,15 +629,13 @@ class MainActivity : Activity() {
         }, lp(MATCH, WRAP, top = dpi(2f)))
         val observed = points.filter { !it.est }
         val temps = observed.filter { it.temp > 0 }.map { it.ts to it.temp }
-        val volts = observed.map { it.ts to Volt.reference(it) }.filter { it.second > 0 }
-        // Which method produced the plotted values, by share of readings.
-        val bySrc = observed.groupingBy { it.ocvSrc }.eachCount()
-        val srcNote = "출처: " + listOf(Ocv.SRC_DIRECT, Ocv.SRC_REST, Ocv.SRC_IR, Ocv.SRC_NONE)
-            .filter { (bySrc[it] ?: 0) > 0 }
-            .joinToString(" · ") { "${Ocv.label(it)} ${bySrc[it]}" }
+        val drain = Drain.series(points, minOf(now, end), if (now in start until end) current else null)
+        val drainSum = Drain.summary(drain)
         miniChart("배터리 온도", temps, c1, 20, p.temp, start, end, now)?.let { addView(it, lp(MATCH, WRAP, top = dpi(12f))) }
-        miniChart("전압(참조값)", volts, v2, 100, p.volt, start, end, now,
-            note = srcNote)?.let { addView(it, lp(MATCH, WRAP, top = dpi(8f))) }
+        miniChart("방전 전류", drain, ma, 300, p.volt, start, end, now,
+            note = "충전 중 구간 제외 · 측정 간격의 평균 (전하량 감소 ÷ 시간)",
+            range = drainSum?.let { "평균 ${it.first}mA · 최대 ${it.second}mA" },
+            fromZero = true, gapLabel = "방전 아님")?.let { addView(it, lp(MATCH, WRAP, top = dpi(8f))) }
     }
 
     /** Shows a scrolling page that is rebuilt from scratch (Stats, Data). */
@@ -648,17 +655,19 @@ class MainActivity : Activity() {
     /** Title row with the day's range, above a compact line chart. Null when there is no data. */
     private fun miniChart(
         name: String, pts: List<Pair<Long, Int>>, fmt: (Int) -> String, minSpan: Int, color: Int,
-        start: Long, end: Long, now: Long, note: String? = null,
+        start: Long, end: Long, now: Long, note: String? = null, range: String? = null,
+        fromZero: Boolean = false, gapLabel: String = "-",
     ): View? {
-        if (pts.isEmpty()) return null
+        val values = pts.filter { it.second != Drain.BREAK }
+        if (values.isEmpty()) return null
         return column().apply {
             addView(row().apply {
                 addView(View(context).apply { background = roundRect(color, 2f) }, lp(dpi(10f), dpi(3f)))
                 addView(label(name, 13f, p.ink, bold = true), lp(0, WRAP, 1f, left = dpi(6f)))
-                addView(label("${fmt(pts.minOf { it.second })} – ${fmt(pts.maxOf { it.second })}", 12f, p.ink2))
+                addView(label(range ?: "${fmt(values.minOf { it.second })} – ${fmt(values.maxOf { it.second })}", 12f, p.ink2))
             })
             if (note != null) addView(label(note, 10f, p.muted), lp(WRAP, WRAP, top = dpi(3f)))
-            addView(MiniLineChart(context, p, color, fmt, minSpan).apply {
+            addView(MiniLineChart(context, p, color, fmt, minSpan, fromZero, gapLabel).apply {
                 zoomKey = "detail-$name"
                 set(pts, start, end, now, zone)
             },
@@ -802,8 +811,10 @@ class MainActivity : Activity() {
                     "온도·전압 차트에는 추정값을 쓰지 않습니다.", 12f, p.ink2), lp(MATCH, WRAP, top = dpi(2f)).apply { bottomMargin = dpi(6f) })
             db.lastSample()?.let { addView(kv(p, "마지막 기록", Format.dateTime(it.ts, zone))) }
             val cur = current
-            addView(kv(p, "전압(참조값)", cur?.let { "${Volt.reference(it)} mV" } ?: "-"))
+            addView(kv(p, "전압(참조값, 저장만)", cur?.let { "${Volt.reference(it)} mV" } ?: "-"))
             addView(label(Recorder.describeVoltage(this@MainActivity, cur), 12f, p.ink2), lp(MATCH, WRAP))
+            addView(label("전압은 순간 변동이 커서 대시보드에는 표시하지 않고, 기록마다 저장해 내보내기(samples.csv의 " +
+                "voltage_mv, ocv_mv, ocv_source)에서 활용할 수 있습니다.", 12f, p.muted), lp(MATCH, WRAP, top = dpi(4f)))
             if (cur != null && cur.ocvSrc != Ocv.SRC_DIRECT) addView(label(
                 "앱이 읽을 수 있는 연료게이지 OCV(batt_vfocv, voltage_ocv 등)를 찾지 못해, 전류가 50mA 미만일 때는 " +
                     "단자 전압을 OCV 근사로, 그 밖에는 단자 전압 + 전류×내부저항으로 OCV를 추정합니다. " +
