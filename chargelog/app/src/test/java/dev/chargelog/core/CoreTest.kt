@@ -410,7 +410,7 @@ class CoreTest {
         var r = ChargeSpec.classify(listOf(chg(0.0, 2_000_000, maxUa = 3_250_000, maxUv = 20_000_000),
             chg(5.0, 8_000_000, maxUa = 3_250_000, maxUv = 20_000_000)), 50, fold)!!
         assertEquals(ChargeSpec.Tier.SUPER2, r.tier); assertTrue(r.limitedByPhone)
-        assertEquals("초고속 충전 2.0 45W (최대 지원)", r.label())
+        assertEquals("초고속 충전 2.0 45W", r.label())
         // Same charger on a 25 W phone.
         r = ChargeSpec.classify(listOf(chg(0.0, 2_000_000, maxUa = 4_500_000, maxUv = 10_000_000),
             chg(5.0, 2_000_000, maxUa = 4_500_000, maxUv = 10_000_000)), 50, ChargeSpec.Phone(25))!!
@@ -433,7 +433,7 @@ class CoreTest {
         // 22 W measured ≈ 26 W estimated: over the 20 W this phone supports → shown as the maximum.
         r = ChargeSpec.classify(listOf(w(0.0, 5_500_000), w(4.0, 5_400_000)), 30, fold)!!
         assertEquals(20, r.watts); assertTrue(r.limitedByPhone); assertNull(r.peakInputW)
-        assertEquals("무선 20W (최대 지원)", r.label()); assertEquals("wireless_20w", r.code())
+        assertEquals("무선 20W", r.label()); assertEquals("wireless_20w", r.code())
         // ~4 W → 5 W step; phone without a confirmed wireless rating still gets a step.
         r = ChargeSpec.classify(listOf(w(0.0, 1_000_000), w(4.0, 1_050_000)), 30, ChargeSpec.Phone(45))!!
         assertEquals(5, r.watts); assertTrue(!r.limitedByPhone)
