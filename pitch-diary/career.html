@@ -2230,6 +2230,17 @@ function dockHtml(){
 function bindDock(){ root.querySelectorAll('.dock button').forEach(b => b.onclick = () => { if (b.dataset.t === 'home' && UI.tab !== 'home'){ UI.hSel = null; UI.hPick = null; } UI.tab = b.dataset.t; renderHub(); }); }
 
 // ---------- 타이틀 / 생성 ----------
+// 첫 화면 기본 캐릭터: 탈과 악세사리를 갖춘 귀여운 마스코트 (들어올 때마다 하나씩 바뀐다)
+const TS_MASCOTS = [
+  {look:{skin:6, hairColor:2, eyeS:'big', eyes:'brown', brow:'soft', mouth:'cat', mark:'blush', face:'round'}, equip:{head:'hBear', neck:'chain', boots:'bootPink', wrist:'wrist'}},
+  {look:{skin:0, hairColor:3, eyeS:'star', eyes:'blue', brow:'arch', mouth:'grin', mark:'blush', face:'round'}, equip:{head:'hRabbit', face:'fHeart', back:'bWings', boots:'bootPink'}},
+  {look:{skin:1, hairColor:0, eyeS:'round', eyes:'green', brow:'soft', mouth:'fang', mark:'blush', face:'chubby'}, equip:{head:'hDino', back:'bTail', wrist:'wrist', boots:'bootBlack'}},
+  {look:{skin:6, hairColor:8, eyeS:'cat', eyes:'hazel', brow:'short', mouth:'cat', mark:'blush', face:'round'}, equip:{head:'hCat', ear:'earring', back:'bCape', boots:'bootGold'}},
+  {look:{skin:0, hairColor:0, eyeS:'smile', eyes:'brown', brow:'soft', mouth:'laugh', mark:'blush', face:'chubby'}, equip:{head:'hPanda', neck:'chain', hands:'gloves', boots:'bootPink'}},
+  {look:{skin:2, hairColor:3, eyeS:'big', eyes:'brown', brow:'soft', mouth:'teeth', mark:'blush', face:'round'}, equip:{head:'hLion', back:'bCape', wrist:'wrist', boots:'bootGold'}}
+];
+let tsMascot = -1;
+const nextMascot = () => { tsMascot = (tsMascot < 0 ? ri(0, TS_MASCOTS.length - 1) : tsMascot + 1) % TS_MASCOTS.length; const m = TS_MASCOTS[tsMascot]; return {look: cleanLook({...DEFAULT_LOOK, hair:'short', ...m.look}), equip: {...m.equip}}; };
 const TS_HOOKS = ['K리그에서 유럽 무대까지, 나만의 축구 인생', '고3 유망주에서 발롱도르까지', '감독의 황당한 질문, 센스 있게 받아쳐라', '시즌 베스트 11에 내 이름을 올려라', '은퇴하면 아들이 내 뒤를 잇는다'];
 // 타이틀: 문구가 바뀌고, 캐릭터가 가끔 세리머니하고, 탭하면 점프한다
 function titleLife(tv, demo, has){
@@ -2246,11 +2257,12 @@ function titleLife(tv, demo, has){
   if (host) host.onclick = () => { cheer(pick(['jump', 'jump', 'clap']), 1200); const t = root.querySelector('.ts-tapme'); if (t) t.remove(); };
   const dice = $('#tsDice');
   if (dice) dice.onclick = () => {
-    const L = rollLook({...cleanLook(demo.look)});
+    const m = nextMascot(), L = rollLook({...m.look}, ['skin','eyeS','eyes','brow','mouth','face']); demo.equip = m.equip;
     if (['frown','pout','wavy','flat','o'].includes(L.mouth)) L.mouth = pick(['smile','grin','teeth','laugh','tiny']); // 첫 화면은 밝은 표정으로
     if (['worried','angry'].includes(L.brow)) L.brow = 'soft';
+    if (!['round','big','smile','star','cat','lash','wink','dot'].includes(L.eyeS)) L.eyeS = pick(['big','star','round','smile']);
     demo.look = L; UI.preLook = L;
-    tv.rebuild({look:L}); dice.classList.remove('roll'); void dice.offsetWidth; dice.classList.add('roll'); cheer('jump', 1000);
+    tv.rebuild({look:L, equip:m.equip}); dice.classList.remove('roll'); void dice.offsetWidth; dice.classList.add('roll'); cheer('jump', 1000);
   };
 }
 function renderTitle(){
@@ -2259,7 +2271,7 @@ function renderTitle(){
   const saves = Array.from({length:SLOTS}, (_, i) => load(i)), cnt = saves.filter(Boolean).length;
   const hero = saves[curSlot] ? curSlot : saves.findIndex(Boolean), sv = hero >= 0 ? saves[hero] : null, has = !!sv, firstEmpty = saves.findIndex(x => !x);
   const demo = has ? {look:sv.look, stats:sv.stats, club:sv.club, equip:sv.equip || {}, pos:sv.pos, name:sv.name}
-                   : {look: UI.preLook ? cleanLook(UI.preLook) : {...DEFAULT_LOOK, hair:'twoblock'}, stats:{...POS.FW.base, phy:66}, club:pick(['FC서울','울산 HD','전북 현대','포항 스틸러스']), equip:{}, pos:'FW', name:''};
+                   : (() => { const m = nextMascot(); return {look: UI.preLook ? cleanLook(UI.preLook) : m.look, stats:{...POS.FW.base, phy:48}, club:pick(['FC서울','울산 HD','전북 현대','포항 스틸러스']), equip:m.equip, pos:'FW', name:''}; })();
   const card = (x, i) => {
     if (!x) return `<button class="ts-new slot-empty ${cnt ? '' : 'primary'}" ${i === firstEmpty ? 'id="newg"' : ''} data-new="${i}" type="button">${ic('user-plus')} ${cnt ? `새 선수 만들기 · 슬롯 ${i + 1}` : '커리어 시작하기'}${cnt ? `<small class="slot-left">남은 슬롯 ${SLOTS - cnt}</small>` : ''}</button>`;
     const L = LEAGUES[CLUB[x.club].lg], ret = x.phase === 'retired', hs = (x.phase === 'school' || x.phase === 'scout') && x.hs;
@@ -2276,7 +2288,7 @@ function renderTitle(){
       <div class="ts-brand"><span class="ts-mark">${ic('goal')}</span><span>PITCH CAREER</span></div>
       <span class="ts-chip">${TRIAL_END ? `체험판 · ${trialDate()}까지` : `${new Date().getFullYear() + 1} SEASON`}</span>
     </header>
-    <div class="ts-stage"><div class="viewer hero" id="tv"></div><div class="ts-floor" aria-hidden="true"></div><i class="ts-tapme" aria-hidden="true">${has ? '탭!' : '탭해서 세리머니'}</i>${has ? '' : `<button type="button" class="ts-dice" id="tsDice">${ic('dice-5')} 랜덤 얼굴</button>`}</div>
+    <div class="ts-stage"><div class="viewer hero" id="tv"></div><div class="ts-floor" aria-hidden="true"></div><i class="ts-tapme" aria-hidden="true">${has ? '탭!' : '탭해서 세리머니'}</i>${has ? '' : `<button type="button" class="ts-dice" id="tsDice">${ic('dice-5')} 다른 친구</button>`}</div>
     <section class="ts-body">
       <h1 class="ts-title"><span>PITCH</span><span>CAREER</span></h1>
       <p class="ts-sub" aria-live="polite"><span class="ts-hook">${TS_HOOKS[0]}</span></p>
