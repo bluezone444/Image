@@ -36,10 +36,26 @@ object Ocv {
         else -> ""
     }
 
-    /** Reported current as µA: values that only make sense as mA (|x| < 20 000) are scaled. */
-    fun toMicroAmps(raw: Int): Int =
-        if (raw == Int.MIN_VALUE || raw == Int.MAX_VALUE) 0
-        else if (Math.abs(raw) in 1 until 20_000) raw * 1000 else raw
+    /** A raw reading this large can only be µA (as mA it would be 20 A or more). */
+    fun provesMicroAmps(raw: Int): Boolean =
+        raw != Int.MIN_VALUE && raw != Int.MAX_VALUE && Math.abs(raw.toLong()) >= MA_LIMIT
+
+    /**
+     * Reported current as µA. BATTERY_PROPERTY_CURRENT_NOW is specified in µA but some devices
+     * report mA. The unit belongs to the device, not to the value: once a reading has shown the
+     * device reports µA ([provesMicroAmps]), pass [deviceReportsMicroAmps] = true and small
+     * values are kept as they are (19 250 µA is 19 mA, not 19 A). Until then small values are
+     * taken as mA, except those that would be an impossible current for a phone as mA.
+     */
+    fun toMicroAmps(raw: Int, deviceReportsMicroAmps: Boolean = false): Int {
+        if (raw == Int.MIN_VALUE || raw == Int.MAX_VALUE) return 0
+        val mag = Math.abs(raw.toLong())
+        return if (deviceReportsMicroAmps || mag >= MA_LIMIT || mag > MAX_PLAUSIBLE_MA) raw else raw * 1000
+    }
+
+    private const val MA_LIMIT = 20_000L
+    /** No phone battery carries more than this many mA. */
+    private const val MAX_PLAUSIBLE_MA = 12_000L
 
     /**
      * Estimated OCV in mV and how it was obtained, or null without voltage or current.

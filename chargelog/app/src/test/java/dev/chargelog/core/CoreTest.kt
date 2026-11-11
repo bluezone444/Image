@@ -289,8 +289,6 @@ class CoreTest {
     }
 
     @Test fun ocvSourcesAndUnits() {
-        assertEquals(-812_000, Ocv.toMicroAmps(-812))          // mA reported → µA
-        assertEquals(1_250_000, Ocv.toMicroAmps(1_250_000))
         assertEquals(0, Ocv.toMicroAmps(Int.MIN_VALUE))
         assertNull(Ocv.estimate(3900, 0, false, 0.1))          // no current: cannot say
         assertEquals(3900 to Ocv.SRC_REST, Ocv.estimate(3900, -30_000, false, 0.1))
@@ -364,30 +362,126 @@ class CoreTest {
         assertEquals(5 * 60 + 19 * 12, Cadence.STANDARD.rowsPerDay())
     }
 
-    @Test fun chargeTierClassification() {
-        fun chg(ua: Int, mv: Int = 4000, plug: Int = Plug.AC, maxUa: Int = 0, maxUv: Int = 0) =
-            Sample(0, 40, plug, 2, 300, mv, currentUa = ua, maxChargeUa = maxUa, maxChargeUv = maxUv)
+    private fun chg(
+        tMin: Double, ua: Int, mv: Int = 4000, plug: Int = Plug.AC, maxUa: Int = 0, maxUv: Int = 0, status: Int = 2,
+    ) = Sample((tMin * min).toLong(), 40, plug, status, 300, mv, currentUa = ua, maxChargeUa = maxUa, maxChargeUv = maxUv)
+
+    @Test fun phoneTableLookup() {
         assertEquals(45, ChargeSpec.phoneMaxWatts("SM-S938N"))
         assertEquals(60, ChargeSpec.phoneMaxWatts("sm-s948u"))
-        assertNull(ChargeSpec.phoneMaxWatts("Pixel 9"))
+        assertNull(ChargeSpec.phoneMaxWatts("Pixel 9")); assertNull(ChargeSpec.phone("Pixel 9"))
+        assertNull(ChargeSpec.phone("SM-S938N")!!.wirelessW)      // wireless rating not confirmed
+        // Galaxy Z Fold8 Ultra: 45 W wired, 20 W wireless (Korean model has the N suffix).
+        assertEquals(ChargeSpec.Phone(45, 20), ChargeSpec.phone("SM-F976N"))
+        assertEquals(ChargeSpec.Phone(45, 20), ChargeSpec.phone("sm-f976b"))
+        assertEquals(45, ChargeSpec.phoneMaxWatts("SM-F976N"))
+    }
 
-        // ~22 W into the battery → 25 W super fast.
-        var r = ChargeSpec.classify(listOf(chg(1_000_000), chg(5_500_000)), 30, 45)!!
-        assertEquals(ChargeSpec.Tier.SUPER, r.tier); assertEquals(22.0, r.peakInputW!!, 1e-9); assertTrue(r.confident)
-        // ~36 W measured → 45 W (2.0).
-        r = ChargeSpec.classify(listOf(chg(9_000_000)), 20, 45)!!
-        assertEquals(ChargeSpec.Tier.SUPER2, r.tier)
-        // 45 W-capable charger on a 25 W phone → capped and flagged.
-        r = ChargeSpec.classify(listOf(chg(2_000_000, maxUa = 4_500_000, maxUv = 10_000_000)), 50, 25)!!
-        assertEquals(ChargeSpec.Tier.SUPER, r.tier); assertTrue(r.limitedByPhone)
-        // Reported 9 V × 1.67 A ≈ 15 W → fast charging.
-        r = ChargeSpec.classify(listOf(chg(500_000, maxUa = 1_670_000, maxUv = 9_000_000)), 50, null)!!
+    @Test fun chargeTierIsNearestSupportedStep() {
+        val p45 = ChargeSpec.Phone(45, 20)
+        // 22 W into the battery ÷ 0.85 ≈ 25.9 W at the charger → 25 W super fast.
+        var r = ChargeSpec.classify(listOf(chg(0.0, 1_000_000), chg(2.0, 5_500_000), chg(5.0, 5_000_000)), 30, p45)!!
+        assertEquals(ChargeSpec.Tier.SUPER, r.tier); assertEquals(25, r.watts)
+        assertEquals(22.0, r.peakInputW!!, 1e-9); assertTrue(r.confident); assertTrue(!r.pending)
+        assertEquals("초고속 충전 25W", r.label()); assertEquals("super_25w", r.code())
+        // 36 W measured ≈ 42 W → 45 W (2.0).
+        r = ChargeSpec.classify(listOf(chg(0.0, 9_000_000), chg(4.0, 8_800_000)), 20, p45)!!
+        assertEquals(ChargeSpec.Tier.SUPER2, r.tier); assertTrue(!r.limitedByPhone)
+        // 10 W measured ≈ 11.8 W → nearer to 10 than to 15.
+        r = ChargeSpec.classify(listOf(chg(0.0, 2_500_000), chg(5.0, 2_400_000)), 20, p45)!!
+        assertEquals(ChargeSpec.Tier.NORMAL, r.tier)
+        // 11.2 W measured ≈ 13.2 W → 15 W fast.
+        r = ChargeSpec.classify(listOf(chg(0.0, 2_800_000), chg(5.0, 2_700_000)), 20, p45)!!
+        assertEquals(ChargeSpec.Tier.FAST, r.tier)
+        // Reported 9 V × 1.67 A ≈ 15 W → fast charging, also on an unlisted phone.
+        r = ChargeSpec.classify(listOf(chg(0.0, 500_000, maxUa = 1_670_000, maxUv = 9_000_000),
+            chg(5.0, 500_000, maxUa = 1_670_000, maxUv = 9_000_000)), 50, null)!!
         assertEquals(ChargeSpec.Tier.FAST, r.tier)
         // Started at 85 % with only a trickle measured: not conclusive.
-        r = ChargeSpec.classify(listOf(chg(700_000)), 85, 45)!!
+        r = ChargeSpec.classify(listOf(chg(0.0, 700_000), chg(10.0, 600_000)), 85, p45)!!
         assertEquals(ChargeSpec.Tier.NORMAL, r.tier); assertTrue(!r.confident)
-        // Wireless is labelled as such.
-        assertTrue(ChargeSpec.classify(listOf(chg(2_000_000, plug = Plug.WIRELESS)), 30, 45)!!.wireless)
+        assertEquals("일반 충전 이상일 수 있음", r.label()); assertEquals("normal_10w_min", r.code())
+        assertEquals(15, ChargeSpec.nearest(12.6, listOf(10, 15, 25))); assertEquals(10, ChargeSpec.nearest(12.5, listOf(10, 15, 25)))
+    }
+
+    @Test fun chargePowerNeverExceedsPhoneMaximum() {
+        val fold = ChargeSpec.phone("SM-F976N")
+        // A 65 W charger reports 20 V × 3.25 A on a 45 W phone → the phone's maximum, flagged.
+        var r = ChargeSpec.classify(listOf(chg(0.0, 2_000_000, maxUa = 3_250_000, maxUv = 20_000_000),
+            chg(5.0, 8_000_000, maxUa = 3_250_000, maxUv = 20_000_000)), 50, fold)!!
+        assertEquals(ChargeSpec.Tier.SUPER2, r.tier); assertTrue(r.limitedByPhone)
+        assertEquals("초고속 충전 2.0 45W (최대 지원)", r.label())
+        // Same charger on a 25 W phone.
+        r = ChargeSpec.classify(listOf(chg(0.0, 2_000_000, maxUa = 4_500_000, maxUv = 10_000_000),
+            chg(5.0, 2_000_000, maxUa = 4_500_000, maxUv = 10_000_000)), 50, ChargeSpec.Phone(25))!!
+        assertEquals(ChargeSpec.Tier.SUPER, r.tier); assertTrue(r.limitedByPhone)
+        // Measured 52 W on a 45 W phone (within 1.5×): classified at the maximum, figure not shown.
+        r = ChargeSpec.classify(listOf(chg(0.0, 13_000_000), chg(1.0, 12_800_000), chg(5.0, 12_500_000)), 20, fold)!!
+        assertEquals(45, r.watts); assertTrue(r.limitedByPhone); assertNull(r.peakInputW)
+        // 80 W (> 1.5 × 45) is a bad reading: ignored, the rest decides.
+        r = ChargeSpec.classify(listOf(chg(0.0, 5_500_000), chg(2.0, 20_000_000), chg(5.0, 5_400_000)), 20, fold)!!
+        assertEquals(ChargeSpec.Tier.SUPER, r.tier); assertEquals(22.0, r.peakInputW!!, 1e-9); assertTrue(!r.limitedByPhone)
+    }
+
+    @Test fun wirelessPowerIsCappedAndStepped() {
+        val fold = ChargeSpec.phone("SM-F976N")
+        fun w(t: Double, ua: Int) = chg(t, ua, plug = Plug.WIRELESS)
+        // The reported bug: 19 250 µA read as 19.25 A → 77 W. Dropped; the real ~12 W remains.
+        var r = ChargeSpec.classify(listOf(w(0.0, 2_900_000), w(2.0, 3_000_000), w(4.0, 19_250_000), w(6.0, 2_950_000)), 30, fold)!!
+        assertTrue(r.wireless); assertEquals(12.0, r.peakInputW!!, 1e-9)
+        assertEquals(15, r.watts); assertEquals("무선 15W", r.label()); assertEquals("wireless_15w", r.code())
+        // 22 W measured ≈ 26 W estimated: over the 20 W this phone supports → shown as the maximum.
+        r = ChargeSpec.classify(listOf(w(0.0, 5_500_000), w(4.0, 5_400_000)), 30, fold)!!
+        assertEquals(20, r.watts); assertTrue(r.limitedByPhone); assertNull(r.peakInputW)
+        assertEquals("무선 20W (최대 지원)", r.label()); assertEquals("wireless_20w", r.code())
+        // ~4 W → 5 W step; phone without a confirmed wireless rating still gets a step.
+        r = ChargeSpec.classify(listOf(w(0.0, 1_000_000), w(4.0, 1_050_000)), 30, ChargeSpec.Phone(45))!!
+        assertEquals(5, r.watts); assertTrue(!r.limitedByPhone)
+        // A wrongly scaled lone spike below the ceiling (12 W among 0.2 W) is not the peak either.
+        r = ChargeSpec.classify(listOf(w(0.0, 50_000), w(2.0, 3_000_000), w(4.0, 40_000), w(6.0, 45_000)), 30, fold)!!
+        assertEquals(5, r.watts); assertEquals(0.2, r.peakInputW!!, 1e-9)
+        assertEquals(22.0, ChargeSpec.plausiblePeak(listOf(4.0, 22.0, 21.0, 77.0), 67.5)!!, 1e-9)
+        assertNull(ChargeSpec.plausiblePeak(listOf(77.0, 90.0), 30.0))
+    }
+
+    @Test fun shortChargeIsNotClassified() {
+        val fold = ChargeSpec.phone("SM-F976N")
+        // 90 seconds on the charger, current still ramping: no "1W", no tier.
+        var r = ChargeSpec.classify(listOf(chg(0.0, 250_000), chg(1.5, 300_000)), 40, fold)!!
+        assertTrue(r.pending); assertTrue(r.short); assertNull(r.peakInputW); assertEquals(0, r.watts)
+        assertEquals("판정 보류 (짧은 충전)", r.label()); assertEquals("pending_short", r.code())
+        // A single reading, even a strong one.
+        r = ChargeSpec.classify(listOf(chg(0.0, 9_000_000)), 20, fold)!!
+        assertTrue(r.pending)
+        // Three minutes of charging is enough.
+        r = ChargeSpec.classify(listOf(chg(0.0, 250_000), chg(3.0, 5_500_000), chg(3.5, 5_400_000)), 40, fold)!!
+        assertTrue(!r.pending); assertEquals(25, r.watts)
+        // Plugged in for an hour but full (never "charging"): held, and not called short.
+        r = ChargeSpec.classify(listOf(chg(0.0, 10_000, status = 5), chg(60.0, 8_000, status = 5)), 100, fold)!!
+        assertTrue(r.pending); assertTrue(!r.short); assertEquals("pending_idle", r.code())
+        // Not plugged at all: nothing to classify.
+        assertNull(ChargeSpec.classify(listOf(chg(0.0, -500_000, plug = Plug.NONE, status = 3)), 40, fold))
+        // The export column carries the hold.
+        val s = Session(7, SessionType.CHARGE, 0, 40, 90_000, 41, 1, 0, 40, 41, 300)
+        assertTrue(Format.sessionCsv(s, zone, ChargeSpec.classify(listOf(chg(0.0, 250_000), chg(1.5, 300_000)), 40, fold))
+            .endsWith(",,,pending_short"))
+    }
+
+    @Test fun currentUnitIsDecidedPerDevice() {
+        // Unknown device: small values are mA.
+        assertEquals(-812_000, Ocv.toMicroAmps(-812))
+        assertEquals(1_250_000, Ocv.toMicroAmps(1_250_000))
+        // A large reading proves the device reports µA ...
+        assertTrue(Ocv.provesMicroAmps(1_250_000)); assertTrue(Ocv.provesMicroAmps(-20_000))
+        assertTrue(!Ocv.provesMicroAmps(19_999)); assertTrue(!Ocv.provesMicroAmps(Int.MIN_VALUE))
+        // ... and from then on small values stay µA: 19 250 µA is 19 mA, not 19 A (77 W).
+        assertEquals(19_250, Ocv.toMicroAmps(19_250, deviceReportsMicroAmps = true))
+        assertEquals(-812, Ocv.toMicroAmps(-812, deviceReportsMicroAmps = true))
+        assertEquals(0.077, ChargeSpec.inputWatts(Sample(0, 90, 4, 2, 300, 4000,
+            currentUa = Ocv.toMicroAmps(19_250, true)))!!, 1e-9)
+        // Even before that is known, 19 250 cannot be mA (19 A), so it is not scaled.
+        assertEquals(19_250, Ocv.toMicroAmps(19_250)); assertEquals(12_000_000, Ocv.toMicroAmps(12_000))
+        assertEquals(0, Ocv.toMicroAmps(Int.MAX_VALUE, true))
     }
 
     @Test fun dailyWithNoDataIsEmpty() {
@@ -410,5 +504,118 @@ class CoreTest {
         val sess = Session(7, SessionType.CHARGE, ts, 18, ts + 450 * min, 100, Plug.AC, ts + 400 * min, 18, 100, 390)
         assertEquals(Format.SESSION_HEADER.split(",").size, Format.sessionCsv(sess, zone).split(",").size)
         assertEquals(10.9, sess.ratePerHour(0)!!, 0.05)
+    }
+
+    // ---- statistics filters ----
+
+    @Test fun dayTypeSplitsWeekdaysAndWeekend() {
+        val sun = LocalDate.of(2026, 11, 1)          // a Sunday
+        assertEquals(java.time.DayOfWeek.SUNDAY, sun.dayOfWeek)
+        val week = (0L..6L).map { sun.plusDays(it) } // Sun..Sat
+        assertEquals(listOf(sun, sun.plusDays(6)), week.filter { DayType.WEEKEND.matches(it) })
+        assertEquals((1L..5L).map { sun.plusDays(it) }, week.filter { DayType.WEEKDAY.matches(it) })
+        assertEquals(week, week.filter { DayType.ALL.matches(it) })
+        assertEquals(DayType.ALL, DayType.of(null)); assertEquals(DayType.WEEKEND, DayType.of("WEEKEND"))
+    }
+
+    @Test fun statsPeriodStart() {
+        val today = LocalDate.of(2026, 11, 11)
+        val first = LocalDate.of(2026, 3, 5)
+        assertEquals(today.minusDays(6), StatsPeriod.D7.start(today, first))
+        assertEquals(today.minusDays(29), StatsPeriod.D30.start(today, first))
+        assertEquals(today.minusDays(89), StatsPeriod.D90.start(today, null))
+        assertEquals(first, StatsPeriod.ALL.start(today, first))
+        assertEquals(today, StatsPeriod.ALL.start(today, null))                 // nothing recorded
+        assertEquals(today, StatsPeriod.ALL.start(today, today.plusDays(2)))    // clock set back
+        assertEquals(StatsPeriod.D30, StatsPeriod.of("?")); assertEquals(StatsPeriod.ALL, StatsPeriod.of("ALL"))
+        assertEquals(listOf("7일", "30일", "90일", "전체"), StatsPeriod.values().map { it.label })
+    }
+
+    @Test fun filterKeepsMatchingDaysAndSessions() {
+        val sun = LocalDate.of(2026, 11, 1)
+        val days = (0L..6L).map { DayStat(sun.plusDays(it), 10, 0, 50, 60) }
+        assertEquals(days, StatsFilter.days(days, DayType.ALL))
+        assertEquals(listOf(sun, sun.plusDays(6)), StatsFilter.days(days, DayType.WEEKEND).map { it.day })
+        assertEquals(5, StatsFilter.days(days, DayType.WEEKDAY).size)
+        assertEquals(listOf(false, true, true, true, true, true, false),
+            StatsFilter.mask(days, DayType.WEEKDAY).toList())
+        fun charge(id: Long, dayIdx: Long, hour: Long): Session {
+            val t = Stats.dayStart(sun.plusDays(dayIdx), zone) + hour * 60 * min
+            return Session(id, SessionType.CHARGE, t, 20, t + 600 * min, 90, 1, t, 20, 90, 300)
+        }
+        // Friday 23:00 → Saturday morning counts as a weekday charge: the start day decides.
+        val sessions = listOf(charge(1, 0, 10), charge(2, 5, 23), charge(3, 6, 12), charge(4, 3, 8))
+        assertEquals(listOf(1L, 3L), StatsFilter.sessions(sessions, DayType.WEEKEND, zone).map { it.id })
+        assertEquals(listOf(2L, 4L), StatsFilter.sessions(sessions, DayType.WEEKDAY, zone).map { it.id })
+        assertEquals(sessions, StatsFilter.sessions(sessions, DayType.ALL, zone))
+    }
+
+    @Test fun summaryHonoursDayTypeFilter() {
+        val sun = LocalDate.of(2026, 11, 1)
+        // Sun 1st (install) .. Wed 11th (today); weekend days use much more.
+        val usage = listOf(5, 50, 60, 70, 80, 90, 150, 170, 40, 30, 7)
+        val period = usage.mapIndexed { i, u -> DayStat(sun.plusDays(i.toLong()), u, 0, 100 - u / 2, 100) }
+        val installTs = Stats.dayStart(sun, zone) + 600 * min
+        val today = sun.plusDays(10)
+        fun charge(dayIdx: Long, startSoc: Int, endSoc: Int, minutes: Long): Session {
+            val t = Stats.dayStart(sun.plusDays(dayIdx), zone) + 20 * 60 * min
+            return Session(0, SessionType.CHARGE, t, startSoc, t + minutes * min, endSoc, 1, t, startSoc, endSoc, 300)
+        }
+        val sessions = listOf(
+            charge(2, 30, 90, 60), charge(4, 40, 100, 90),            // weekdays
+            charge(6, 10, 100, 120), charge(7, 20, 80, 100), charge(7, 60, 100, 40),  // Sat, Sun, Sun
+        )
+        val all = Summaries.of(period, sessions, installTs, today, zone)
+        assertEquals(9, all.days.size)
+        assertEquals(5, all.chargeCount)
+
+        val wd = Summaries.of(period, sessions, installTs, today, zone, DayType.WEEKDAY)
+        assertEquals(listOf(50, 60, 70, 80, 90, 40, 30), wd.days.map { it.usage })   // Mon–Fri, Mon, Tue
+        assertTrue(wd.days.all { DayType.WEEKDAY.matches(it.day) })
+        assertEquals(60.0, wd.avgUsage!!, 1e-9)
+        assertEquals(60, wd.medianUsage)
+        assertEquals(2.0 / 7, wd.chargesPerDay!!, 1e-9)
+        assertEquals(2, wd.chargeCount)
+        assertEquals(35.0, wd.avgChargeStart!!, 1e-9)
+        assertEquals(75.0, wd.avgChargeMinutes!!, 1e-9)
+        assertEquals(sun.plusDays(5), wd.lowest!!.day)        // Friday, not the heavier Sunday
+
+        val we = Summaries.of(period, sessions, installTs, today, zone, DayType.WEEKEND)
+        assertTrue(we.completeDaysOnly)
+        assertEquals(listOf(sun.plusDays(6), sun.plusDays(7)), we.days.map { it.day })  // install Sunday excluded
+        assertEquals(160.0, we.avgUsage!!, 1e-9)
+        assertEquals(1.5, we.chargesPerDay!!, 1e-9)
+        assertEquals(3, we.chargeCount)
+        assertEquals(30.0, we.avgChargeStart!!, 1e-9)
+        assertEquals(sun.plusDays(7), we.lowest!!.day)
+
+        // No matching day at all: empty summary, no crash.
+        val none = Summaries.of(period.subList(1, 6), sessions.take(2), installTs, sun.plusDays(5), zone, DayType.WEEKEND)
+        assertTrue(none.days.isEmpty()); assertNull(none.avgUsage); assertNull(none.chargesPerDay)
+        assertNull(none.lowest); assertEquals(0, none.chargeCount)
+    }
+
+    @Test fun dailyBuilderMatchesListForm() {
+        val day = LocalDate.of(2026, 11, 10)
+        val t0 = Stats.dayStart(day, zone)
+        val samples = (0 until 400).map { i ->
+            Sample(t0 + i * 17L * min, 50 + ((i * 37) % 51) - 25, 0, 3, 300, 4000)
+        }
+        val base = Sample(t0 - 5 * min, 64, 0, 3, 300, 4000)
+        val expected = Stats.daily(samples, base, zone, day, day.plusDays(6))
+        val b = DailyBuilder(zone, day, day.plusDays(6), base.level)
+        samples.forEach { b.add(it.ts, it.level) }
+        assertEquals(expected, b.build())
+        // A sub-range computed on its own (with its own baseline) gives the same days.
+        val from = day.plusDays(2)
+        val cut = Stats.dayStart(from, zone)
+        val tail = Stats.daily(samples.filter { it.ts >= cut }, samples.last { it.ts < cut }, zone, from, day.plusDays(6))
+        assertEquals(expected.subList(2, 7), tail)
+    }
+
+    @Test fun themeModeResolution() {
+        assertTrue(ThemeMode.SYSTEM.isDark(true)); assertTrue(!ThemeMode.SYSTEM.isDark(false))
+        assertTrue(!ThemeMode.LIGHT.isDark(true)); assertTrue(ThemeMode.DARK.isDark(false))
+        assertEquals(ThemeMode.SYSTEM, ThemeMode.of(null)); assertEquals(ThemeMode.DARK, ThemeMode.of("DARK"))
     }
 }

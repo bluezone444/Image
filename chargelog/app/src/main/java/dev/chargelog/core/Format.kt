@@ -75,7 +75,7 @@ object Format {
             iso(s.peakTs, zone), s.minSoc, s.maxSoc, tenths(s.maxTemp), if (s.est) 1 else 0,
             spec?.peakInputW?.let { String.format(Locale.US, "%.1f", it) } ?: "",
             spec?.reportedW?.let { String.format(Locale.US, "%.1f", it) } ?: "",
-            spec?.let { if (it.wireless) "wireless" else "${it.tier.name.lowercase()}_${it.tier.watts}w" + if (it.confident) "" else "_min" } ?: "",
+            spec?.code() ?: "",
         ).joinToString(",")
     }
 

@@ -42,6 +42,9 @@ class Db private constructor(context: Context) :
         }
     }
 
+    /** Per-day aggregates with finished days cached. */
+    val days = DayCache(this)
+
     // ---- samples ----
 
     override fun lastSample(): Sample? =
@@ -78,6 +81,14 @@ class Db private constructor(context: Context) :
             "SELECT * FROM samples WHERE ts >= ? AND ts < ? ORDER BY ts",
             arrayOf(from.toString(), to.toString())
         ).use { c -> while (c.moveToNext()) block(sample(c)) }
+    }
+
+    /** Only (time, SOC) of each sample with from <= ts < to, ascending; for long-range aggregates. */
+    fun forEachLevel(from: Long, to: Long, block: (Long, Int) -> Unit) {
+        readableDatabase.rawQuery(
+            "SELECT ts, level FROM samples WHERE ts >= ? AND ts < ? ORDER BY ts",
+            arrayOf(from.toString(), to.toString())
+        ).use { c -> while (c.moveToNext()) block(c.getLong(0), c.getInt(1)) }
     }
 
     fun firstSampleTs(): Long? =
@@ -151,12 +162,14 @@ class Db private constructor(context: Context) :
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()
+            days.clear()
         }
     }
 
     fun clearAll() {
         writableDatabase.delete("samples", null, null)
         writableDatabase.delete("sessions", null, null)
+        days.clear()
     }
 
     private fun values(s: Session) = ContentValues().apply {

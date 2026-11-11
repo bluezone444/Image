@@ -1,21 +1,29 @@
 package dev.chargelog.ui
 
+import android.app.Activity
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
+import android.os.Build
+import android.text.TextUtils
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsetsController
+import android.view.WindowManager
 import android.widget.LinearLayout
 import android.widget.TextView
+import dev.chargelog.core.ThemeMode
 
 /**
  * Design tokens for the current light/dark mode. Text always uses the ink tokens; the three
@@ -24,8 +32,8 @@ import android.widget.TextView
  * modes); light-mode SOC is under 3:1 on white, so every chart carries its values as text.
  */
 class Palette(context: Context) {
-    val dark = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
-        Configuration.UI_MODE_NIGHT_YES
+    /** Follows the in-app setting (system / light / dark), not only the system mode. */
+    val dark = Theme.isDark(context)
 
     // Surfaces
     val bg = if (dark) 0xFF0C1015.toInt() else 0xFFF2F4F7.toInt()
@@ -48,11 +56,69 @@ class Palette(context: Context) {
     val accent get() = soc
     val accentDim = if (dark) 0xFF1B3A2F.toInt() else 0xFFD5F2E6.toInt()
     val accentWash = if (dark) 0x2E199E70 else 0x241BAF7A
+    /** Marks that are shown for context but not counted (days outside the statistics filter). */
+    val faint = if (dark) 0xFF3A4452.toInt() else 0xFFC7CDD6.toInt()
 
     // Status
     val danger = if (dark) 0xFFF97066.toInt() else 0xFFD92D20.toInt()
     val warnBg = if (dark) 0xFF2B2113.toInt() else 0xFFFFF6E5.toInt()
     val warnLine = if (dark) 0xFF5C4317.toInt() else 0xFFF5D9A3.toInt()
+}
+
+/** The in-app appearance setting and how it is applied to an activity's window. */
+object Theme {
+    private const val KEY = "theme_mode"
+
+    fun mode(context: Context): ThemeMode =
+        ThemeMode.of(context.getSharedPreferences("ui", Context.MODE_PRIVATE).getString(KEY, null))
+
+    fun setMode(context: Context, mode: ThemeMode) {
+        context.getSharedPreferences("ui", Context.MODE_PRIVATE).edit().putString(KEY, mode.name).apply()
+    }
+
+    fun systemDark(context: Context): Boolean =
+        (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+            Configuration.UI_MODE_NIGHT_YES
+
+    fun isDark(context: Context): Boolean = mode(context).isDark(systemDark(context))
+
+    /**
+     * Call before super.onCreate(): picks the platform theme for the chosen mode so dialogs,
+     * toasts' anchors, scroll edge effects and text selection match the app's own colors.
+     */
+    fun applyTo(activity: Activity) {
+        activity.setTheme(
+            if (isDark(activity)) android.R.style.Theme_DeviceDefault_NoActionBar
+            else android.R.style.Theme_DeviceDefault_Light_NoActionBar
+        )
+    }
+
+    /** Window background, status/navigation bar colors and dark-or-light bar icons. */
+    fun paintWindow(activity: Activity, p: Palette, navColor: Int = p.bg) {
+        val w = activity.window
+        w.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+        @Suppress("DEPRECATION")
+        w.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS or
+            WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
+        w.setBackgroundDrawable(ColorDrawable(p.bg))
+        @Suppress("DEPRECATION")
+        run { w.statusBarColor = p.bg; w.navigationBarColor = navColor }
+        if (Build.VERSION.SDK_INT >= 28) @Suppress("DEPRECATION") run { w.navigationBarDividerColor = Color.TRANSPARENT }
+        if (Build.VERSION.SDK_INT >= 29) { w.isStatusBarContrastEnforced = false; w.isNavigationBarContrastEnforced = false }
+        val decor = w.decorView
+        if (Build.VERSION.SDK_INT >= 30) {
+            val light = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or
+                WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
+            decor.windowInsetsController?.setSystemBarsAppearance(if (p.dark) 0 else light, light)
+        }
+        // Still honoured on every version, and the only way before Android 11.
+        @Suppress("DEPRECATION")
+        run {
+            val light = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+            decor.systemUiVisibility =
+                if (p.dark) decor.systemUiVisibility and light.inv() else decor.systemUiVisibility or light
+        }
+    }
 }
 
 /** Medium weight sans with tabular figures, for numbers that update in place. */
@@ -112,22 +178,40 @@ const val WRAP = ViewGroup.LayoutParams.WRAP_CONTENT
 
 /** Section heading with optional trailing text on the right. */
 fun Context.sectionTitle(p: Palette, text: String, trailing: CharSequence? = null): LinearLayout = row().apply {
-    addView(label(text, 16f, p.ink, bold = true), lp(0, WRAP, 1f))
-    if (trailing != null) addView(label(trailing, 13f, p.muted))
+    // The title keeps its natural width; a long trailing note wraps instead of squeezing it.
+    if (trailing == null) addView(label(text, 16f, p.ink, bold = true), lp(0, WRAP, 1f))
+    else {
+        addView(label(text, 16f, p.ink, bold = true), lp(WRAP, WRAP))
+        addView(label(trailing, 13f, p.muted).apply { gravity = Gravity.END }, lp(0, WRAP, 1f, left = dpi(12f)))
+    }
 }
 
 /** "label ........ value" line used inside cards. */
-fun Context.kv(p: Palette, key: String, value: String): LinearLayout = row().apply {
-    addView(label(key, 15f, p.ink2), lp(0, WRAP, 1f))
-    addView(number(value, 15f, p.ink))
-    setPadding(0, dpi(8f), 0, dpi(8f))
-}
+fun Context.kv(p: Palette, key: String, value: String): LinearLayout =
+    if (value.length > 14) {
+        // A long value would squeeze the key to nothing in one row: put it on its own line.
+        column().apply {
+            addView(label(key, 15f, p.ink2))
+            addView(number(value, 15f, p.ink), lp(MATCH, WRAP, top = dpi(4f)))
+            setPadding(0, dpi(8f), 0, dpi(8f))
+        }
+    } else row().apply {
+        addView(label(key, 15f, p.ink2), lp(0, WRAP, 1f))
+        addView(number(value, 15f, p.ink), lp(WRAP, WRAP, left = dpi(12f)))
+        setPadding(0, dpi(8f), 0, dpi(8f))
+    }
 
 /** Stat tile: caption, large figure, optional muted note under it. */
 fun Context.tile(p: Palette, caption: String, value: String, note: String? = null, size: Float = 22f): LinearLayout =
     column().apply {
         addView(caption(caption, p))
-        addView(number(value, size, p.ink), lp(WRAP, WRAP, top = dpi(6f)))
+        // One line that shrinks to fit: "100%" must not wrap in a narrow column or at a large
+        // system font size.
+        addView(number(value, size, p.ink).apply {
+            maxLines = 1
+            gravity = Gravity.BOTTOM or Gravity.START
+            setAutoSizeTextTypeUniformWithConfiguration(10, Math.round(size), 1, TypedValue.COMPLEX_UNIT_SP)
+        }, lp(MATCH, Math.round(sp(size) * 1.22f), top = dpi(5f)))
         if (note != null) addView(label(note, 12f, p.muted), lp(WRAP, WRAP, top = dpi(5f)))
     }
 
@@ -164,20 +248,48 @@ fun Context.legend(p: Palette, text: String, color: Int, dashed: Boolean = false
     addView(label(text, 12f, p.ink2), lp(WRAP, WRAP, left = dpi(6f)))
 }
 
-/** Segmented control (e.g. 7 / 30 / 90 days). */
-fun Context.segmented(p: Palette, options: List<String>, selected: Int, onPick: (Int) -> Unit): LinearLayout =
+/**
+ * Segmented control (e.g. 7 / 30 / 90 days). With [stretch] the options share the full width
+ * equally; otherwise each is as wide as its label.
+ */
+fun Context.segmented(
+    p: Palette, options: List<String>, selected: Int, stretch: Boolean = false, onPick: (Int) -> Unit,
+): LinearLayout =
     row().apply {
         background = roundRect(p.bg, 12f, p.line)
         setPadding(dpi(3f), dpi(3f), dpi(3f), dpi(3f))
+        val padH = dpi(if (stretch) 4f else 12f)
         options.forEachIndexed { i, o ->
             val on = i == selected
             addView(label(o, 14f, if (on) p.ink else p.ink2, bold = on).apply {
                 gravity = Gravity.CENTER
+                maxLines = 1
+                ellipsize = TextUtils.TruncateAt.END
                 if (on) background = roundRect(p.card, 9f, p.line)
-                setPadding(dpi(15f), dpi(8f), dpi(15f), dpi(8f))
+                setPadding(padH, dpi(9f), padH, dpi(9f))
                 setOnClickListener { if (!on) onPick(i) }
-            })
+            }, if (stretch) lp(0, WRAP, 1f) else lp(WRAP, WRAP))
         }
+    }
+
+/** One choice in a single-select list: radio mark, title and an optional explanation. */
+fun Context.optionRow(p: Palette, title: String, note: String?, on: Boolean, onPick: () -> Unit): LinearLayout =
+    row().apply {
+        setPadding(dpi(2f), dpi(11f), dpi(2f), dpi(11f))
+        addView(object : View(context) {
+            val pt = Paint(Paint.ANTI_ALIAS_FLAG)
+            override fun onDraw(c: Canvas) {
+                val r = minOf(width, height) / 2f
+                pt.style = Paint.Style.STROKE; pt.strokeWidth = dp(2f); pt.color = if (on) p.ink else p.muted
+                c.drawCircle(width / 2f, height / 2f, r - dp(1.5f), pt)
+                if (on) { pt.style = Paint.Style.FILL; c.drawCircle(width / 2f, height / 2f, r - dp(5.5f), pt) }
+            }
+        }, lp(dpi(20f), dpi(20f)))
+        addView(column().apply {
+            addView(label(title, 15f, p.ink, bold = on))
+            if (note != null) addView(label(note, 13f, p.muted), lp(MATCH, WRAP, top = dpi(3f)))
+        }, lp(0, WRAP, 1f, left = dpi(12f)))
+        setOnClickListener { if (!on) onPick() }
     }
 
 /** Circular SOC gauge with the value in the middle. */

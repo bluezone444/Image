@@ -119,7 +119,8 @@ class Exporter(private val context: Context, private val db: Db, private val zon
         w.name("timezone").value(zone.id)
         w.name("app_version").value(appVersion())
         w.name("device").value("${Build.MANUFACTURER} ${Build.MODEL}")
-        w.name("phone_max_wired_w").let { n -> phoneMax?.let { n.value(it.toLong()) } ?: n.nullValue() }
+        w.name("phone_max_wired_w").let { n -> phoneMax?.let { n.value(it.wiredW.toLong()) } ?: n.nullValue() }
+        w.name("phone_max_wireless_w").let { n -> phoneMax?.wirelessW?.let { n.value(it.toLong()) } ?: n.nullValue() }
         w.name("android").value(Build.VERSION.RELEASE)
         w.name("sdk").value(Build.VERSION.SDK_INT.toLong())
         w.name("record_start").value(db.firstSampleTs()?.let { Format.iso(it, zone) })
@@ -190,7 +191,8 @@ class Exporter(private val context: Context, private val db: Db, private val zon
             w.name("max_temp_c").value(s.maxTemp / 10.0)
             w.name("estimated").value(s.est)
             spec(s)?.let { r ->
-                w.name("charge_tier").value(if (r.wireless) "wireless" else r.tier.label)
+                w.name("charge_tier").value(r.code())
+                w.name("charge_tier_label").value(r.label())
                 w.name("charge_tier_confident").value(r.confident)
                 r.peakInputW?.let { w.name("peak_input_w").value(it) }
                 r.reportedW?.let { w.name("charger_reported_w").value(it) }
@@ -240,7 +242,7 @@ class Exporter(private val context: Context, private val db: Db, private val zon
         w.endObject()
     }
 
-    private val phoneMax by lazy { ChargeSpec.phoneMaxWatts(Build.MODEL) }
+    private val phoneMax by lazy { ChargeSpec.phone(Build.MODEL) }
 
     private fun spec(s: dev.chargelog.core.Session): ChargeSpec.Result? =
         if (s.type != SessionType.CHARGE) null
@@ -279,9 +281,12 @@ sessions.csv — 충전(charge)·사용(discharge) 세션
   start/end, start_soc/end_soc, delta_soc, duration_min, rate_pct_per_hour,
   charger, peak_soc_time(최고 잔량 도달 시각), min_soc, max_soc, max_temp_c,
   estimated(추정 구간 포함 여부),
-  peak_input_w(충전 중 배터리 입력 최고 W), charger_reported_w(충전기 보고 최대 W),
-  charge_tier(normal_10w / fast_15w / super_25w / super2_45w / super3_60w / wireless,
-              _min이 붙으면 잔량이 높을 때 시작해 그 이상일 수 있음)
+  peak_input_w(충전 중 배터리 입력 최고 W, 휴대폰 최대치를 넘는 비정상 값은 제외),
+  charger_reported_w(충전기 보고 최대 W),
+  charge_tier(유선: normal_10w / fast_15w / super_25w / super2_45w / super3_60w,
+              무선: wireless_5w / 10w / 15w / 20w / 25w — 가장 가까운 단계, 휴대폰 최대치 이하.
+              _min이 붙으면 잔량이 높을 때 시작해 그 이상일 수 있음.
+              pending_short = 충전이 3분 미만이라 판정 보류, pending_idle = 충전 전류 없음)
 
 daily.csv — 일별 요약
   usage_pct(하루 잔량 감소 합계, 100% 초과 가능), charged_pct, min_soc, max_soc,

@@ -41,6 +41,7 @@ class ChargerActivity : Activity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Theme.applyTo(this)
         super.onCreate(savedInstanceState)
         p = Palette(this)
         summary = column()
@@ -62,6 +63,7 @@ class ChargerActivity : Activity() {
             }, lp(MATCH, WRAP, top = dpi(12f)))
         }
         setContentView(ScrollView(this).apply { setBackgroundColor(p.bg); addView(page) })
+        Theme.paintWindow(this, p)
     }
 
     override fun onStart() {
@@ -79,7 +81,7 @@ class ChargerActivity : Activity() {
     private fun button(text: String, action: () -> Unit): TextView =
         label(text, 15f, p.ink, bold = true).apply {
             gravity = android.view.Gravity.CENTER
-            background = roundRect(p.card, 14f)
+            background = roundRect(p.card, 14f, p.line)
             setPadding(dpi(12f), dpi(13f), dpi(12f), dpi(13f))
             setOnClickListener { action() }
         }
@@ -97,9 +99,9 @@ class ChargerActivity : Activity() {
         val maxUa = i?.getIntExtra("max_charging_current", -1) ?: -1
         val maxUv = i?.getIntExtra("max_charging_voltage", -1) ?: -1
 
-        // CURRENT_NOW is specified in µA but some devices report mA; values under 20 000 are
-        // taken as mA. Sign conventions also differ, so use the magnitude.
-        val amps = Math.abs(now).let { if (it in 1 until 20_000) it / 1000.0 else it / 1_000_000.0 }
+        // Same per-device unit handling as the recorder (µA or mA); sign conventions differ,
+        // so use the magnitude.
+        val amps = Math.abs(Recorder.microAmps(this, now)) / 1e6
         val batteryW = if (plugged != 0 && now != Int.MIN_VALUE) amps * mv / 1000.0 else 0.0
         if (batteryW > peakW) peakW = batteryW
         val negotiatedW = if (maxUa > 0 && maxUv > 0) maxUa.toDouble() * maxUv / 1e12 else null
@@ -119,7 +121,7 @@ class ChargerActivity : Activity() {
             "내부저항 (학습)" to Recorder.rFit(this).let {
                 String.format(Locale.US, "%.3f Ω · 측정 %d회", it.ohms, it.count) + if (it.count < dev.chargelog.core.RFit.MIN_POINTS) " (기본값 사용 중)" else ""
             },
-            "전류 (CURRENT_NOW)" to "$now",
+            "전류 (CURRENT_NOW)" to "$now  →  ${Math.round(amps * 1000)} mA",
             "전류 (평균)" to "$avg",
         )
 

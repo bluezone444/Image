@@ -20,44 +20,9 @@ object Stats {
         from: LocalDate,
         to: LocalDate,
     ): List<DayStat> {
-        class Acc { var usage = 0; var charged = 0; var min: Int? = null; var max: Int? = null
-            fun see(level: Int) {
-                min = min?.let { minOf(it, level) } ?: level
-                max = max?.let { maxOf(it, level) } ?: level
-            }
-        }
-        val accs = LinkedHashMap<LocalDate, Acc>()
-        var d = from
-        while (!d.isAfter(to)) { accs[d] = Acc(); d = d.plusDays(1) }
-
-        var prev: Sample? = baseline
-        var prevDay: LocalDate? = null
-        for (s in samples) {
-            val day = Instant.ofEpochMilli(s.ts).atZone(zone).toLocalDate()
-            val p = prev
-            // The SOC held since the previous reading also belongs to every day it spans.
-            if (p != null) {
-                var carry = prevDay?.plusDays(1) ?: from
-                while (!carry.isAfter(day)) { accs[carry]?.see(p.level); carry = carry.plusDays(1) }
-            }
-            val acc = accs[day]
-            if (acc != null) {
-                acc.see(s.level)
-                if (p != null) {
-                    val diff = s.level - p.level
-                    if (diff < 0) acc.usage -= diff else acc.charged += diff
-                }
-            }
-            prev = s
-            prevDay = day
-        }
-        // Days after the final reading keep its SOC (up to today, the caller's `to`).
-        val p = prev
-        if (p != null) {
-            var carry = prevDay?.plusDays(1) ?: from
-            while (!carry.isAfter(to)) { accs[carry]?.see(p.level); carry = carry.plusDays(1) }
-        }
-        return accs.map { (day, a) -> DayStat(day, a.usage, a.charged, a.min, a.max) }
+        val b = DailyBuilder(zone, from, to, baseline?.level)
+        for (s in samples) b.add(s.ts, s.level)
+        return b.build()
     }
 
     /**
@@ -83,4 +48,77 @@ object Stats {
     }
 
     fun dayStart(day: LocalDate, zone: ZoneId): Long = day.atStartOfDay(zone).toInstant().toEpochMilli()
+}
+
+/**
+ * Streaming form of [Stats.daily]: feed (time, SOC) readings in ascending time order, then
+ * [build]. Lets long histories be aggregated without holding every reading in memory.
+ *
+ * @param baselineLevel SOC of the last reading before [from], if any
+ */
+class DailyBuilder(
+    private val zone: ZoneId,
+    private val from: LocalDate,
+    private val to: LocalDate,
+    baselineLevel: Int?,
+) {
+    private class Acc {
+        var usage = 0; var charged = 0; var min: Int? = null; var max: Int? = null
+        fun see(level: Int) {
+            min = min?.let { minOf(it, level) } ?: level
+            max = max?.let { maxOf(it, level) } ?: level
+        }
+    }
+
+    private val accs = LinkedHashMap<LocalDate, Acc>().also {
+        var d = from
+        while (!d.isAfter(to)) { it[d] = Acc(); d = d.plusDays(1) }
+    }
+    private var prevLevel: Int? = baselineLevel
+    private var prevDay: LocalDate? = null
+
+    // Readings arrive in order, so the local day is looked up once per day, not per reading.
+    private var curDay: LocalDate? = null
+    private var curStart = 0L
+    private var curEnd = 0L
+
+    private fun dayOf(ts: Long): LocalDate {
+        val c = curDay
+        if (c != null && ts >= curStart && ts < curEnd) return c
+        val d = Instant.ofEpochMilli(ts).atZone(zone).toLocalDate()
+        curDay = d
+        curStart = Stats.dayStart(d, zone)
+        curEnd = Stats.dayStart(d.plusDays(1), zone)
+        return d
+    }
+
+    fun add(ts: Long, level: Int) {
+        val day = dayOf(ts)
+        val p = prevLevel
+        // The SOC held since the previous reading also belongs to every day it spans.
+        if (p != null) {
+            var carry = prevDay?.plusDays(1) ?: from
+            while (!carry.isAfter(day)) { accs[carry]?.see(p); carry = carry.plusDays(1) }
+        }
+        val acc = accs[day]
+        if (acc != null) {
+            acc.see(level)
+            if (p != null) {
+                val diff = level - p
+                if (diff < 0) acc.usage -= diff else acc.charged += diff
+            }
+        }
+        prevLevel = level
+        prevDay = day
+    }
+
+    fun build(): List<DayStat> {
+        // Days after the final reading keep its SOC (up to today, the caller's `to`).
+        val p = prevLevel
+        if (p != null) {
+            var carry = prevDay?.plusDays(1) ?: from
+            while (!carry.isAfter(to)) { accs[carry]?.see(p); carry = carry.plusDays(1) }
+        }
+        return accs.map { (day, a) -> DayStat(day, a.usage, a.charged, a.min, a.max) }
+    }
 }

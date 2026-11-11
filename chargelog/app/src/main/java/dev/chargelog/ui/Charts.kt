@@ -8,7 +8,6 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Shader
-import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
@@ -128,28 +127,52 @@ class XZoom(private val view: View, private val minSpan: Double) {
         }
     }).apply { isQuickScaleEnabled = false }
 
-    private val taps = GestureDetector(view.context, object : GestureDetector.SimpleOnGestureListener() {
-        override fun onDoubleTap(e: MotionEvent): Boolean {
-            if (!zoomed) return false
-            reset()
-            return true
+    // Double tap. Tracked here (not with a GestureDetector) and remembered per [key], because a
+    // tap can rebuild the screen (selecting a day), which replaces the view between the two taps.
+    private var downTime = 0L
+    private var downX = 0f
+    private var downY = 0f
+    private var moved = false
+    private var ownTap: DoubleArray? = null
+    private val tapSlop = view.context.dp(12f)
+    private val doubleTapSlop = view.context.dp(48f)
+
+    private fun trackTap(e: MotionEvent) {
+        when (e.actionMasked) {
+            MotionEvent.ACTION_DOWN -> { downTime = e.eventTime; downX = e.x; downY = e.y; moved = false }
+            MotionEvent.ACTION_MOVE ->
+                if (Math.abs(e.x - downX) > tapSlop || Math.abs(e.y - downY) > tapSlop) moved = true
+            MotionEvent.ACTION_CANCEL -> moved = true
+            MotionEvent.ACTION_UP -> {
+                if (pinching || moved || e.eventTime - downTime > TAP_MS) return
+                val k = key
+                val prev = if (k != null) lastTap[k] else ownTap
+                val second = prev != null && e.eventTime - prev[0].toLong() in 0..DOUBLE_TAP_MS &&
+                    Math.abs(e.x - prev[1]) < doubleTapSlop && Math.abs(e.y - prev[2]) < doubleTapSlop
+                val next = if (second) null else doubleArrayOf(e.eventTime.toDouble(), e.x.toDouble(), e.y.toDouble())
+                if (k != null) { if (next == null) lastTap.remove(k) else lastTap[k] = next } else ownTap = next
+                if (second && zoomed) reset()
+            }
         }
-    })
+    }
 
     /** Feed every touch event. Returns true while a pinch owns the gesture. */
     fun onTouch(e: MotionEvent): Boolean {
         if (e.actionMasked == MotionEvent.ACTION_DOWN) pinching = false
         scale.onTouchEvent(e)
-        taps.onTouchEvent(e)
         if (e.pointerCount > 1 || scale.isInProgress) {
             pinching = true
             view.parent?.requestDisallowInterceptTouchEvent(true)
         }
+        trackTap(e)
         return pinching
     }
 
     companion object {
         private val saved = HashMap<String, DoubleArray>()
+        private val lastTap = HashMap<String, DoubleArray>()
+        private const val TAP_MS = 300L
+        private const val DOUBLE_TAP_MS = 400L
     }
 }
 
@@ -252,16 +275,24 @@ private fun tickLabel(t: Long, dayStart: Long, step: Long, zone: ZoneId): String
     else "${java.time.Instant.ofEpochMilli(t).atZone(zone).hour}시"
 }
 
-/** Common one-finger behaviour: show the value under the finger; vertical drags scroll the page. */
+/**
+ * Common one-finger behaviour: show the value under the finger; vertical drags scroll the page.
+ * The tooltip stays for a moment after the finger lifts, then goes away by itself; it is
+ * dropped at once when the page takes the gesture over for scrolling.
+ */
 private class Scrub(private val view: View) {
     var x = -1f
     private var downX = 0f
     private var downY = 0f
     private var horizontal = false
+    private val hide = Runnable { x = -1f; view.invalidate() }
+
+    fun clear() { view.removeCallbacks(hide); x = -1f }
 
     fun onTouch(e: MotionEvent, plotW: Float) {
         when (e.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
+                view.removeCallbacks(hide)
                 downX = e.x; downY = e.y; horizontal = false
                 x = e.x.coerceIn(0f, plotW)
             }
@@ -273,8 +304,47 @@ private class Scrub(private val view: View) {
                 }
                 if (horizontal) x = e.x.coerceIn(0f, plotW)
             }
+            MotionEvent.ACTION_UP -> { view.removeCallbacks(hide); view.postDelayed(hide, LINGER_MS) }
+            MotionEvent.ACTION_CANCEL -> clear()
         }
         view.invalidate()
+    }
+
+    private companion object { const val LINGER_MS = 2500L }
+}
+
+/** Touch handling shared by every chart: pinch zoom first, then the reset pill, then scrubbing. */
+private class ChartTouch(private val view: View, private val zoom: XZoom, private val scrub: Scrub) {
+    private var onPill = false
+
+    /**
+     * @param pill where the "원래대로" pill was last drawn, if it is showing
+     * @param onTap called with the scrub position when a one-finger touch ends
+     */
+    fun handle(e: MotionEvent, plotW: Float, pill: RectF?, onTap: (Float) -> Unit = {}): Boolean {
+        if (zoom.onTouch(e)) { scrub.clear(); onPill = false; view.invalidate(); return true }
+        when (e.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                // Decided on touch-down: the pill is hidden while a tooltip shows, so by the time
+                // the finger lifts its rectangle would already be gone.
+                val slop = view.context.dp(8f)
+                onPill = pill != null && e.x >= pill.left - slop && e.x <= pill.right + slop &&
+                    e.y >= pill.top - slop && e.y <= pill.bottom + slop
+                if (onPill) return true
+            }
+            MotionEvent.ACTION_UP -> {
+                if (onPill) { onPill = false; zoom.reset(); scrub.clear(); view.invalidate(); return true }
+                val at = scrub.x
+                scrub.onTouch(e, plotW)
+                if (at >= 0f) onTap(at)
+                view.performClick()
+                return true
+            }
+            MotionEvent.ACTION_CANCEL -> onPill = false
+            else -> if (onPill) return true
+        }
+        scrub.onTouch(e, plotW)
+        return true
     }
 }
 
@@ -285,6 +355,7 @@ class SocChartView(context: Context, private val p: Palette) : View(context) {
     private val ink = ChartInk(context, p)
     private val zoom = XZoom(this, 30 * 60_000.0)
     private val scrub = Scrub(this)
+    private val touch = ChartTouch(this, zoom, scrub)
     var zoomKey: String?
         get() = zoom.key
         set(v) { zoom.key = v }
@@ -306,7 +377,7 @@ class SocChartView(context: Context, private val p: Palette) : View(context) {
         this.points = points; this.sessions = sessions
         this.start = start; this.end = end; this.now = now; this.zone = zone
         zoom.setDomain(start.toDouble(), end.toDouble())
-        scrub.x = -1f
+        scrub.clear()
         invalidate()
     }
 
@@ -429,6 +500,7 @@ class SocChartView(context: Context, private val p: Palette) : View(context) {
         for (s in points) {
             if (s.ts > ts) {
                 val a = prev ?: return s.level
+                if (s.ts <= a.ts) return s.level
                 val f = (ts - a.ts).toDouble() / (s.ts - a.ts)
                 return Math.round(a.level + (s.level - a.level) * f).toInt()
             }
@@ -437,16 +509,7 @@ class SocChartView(context: Context, private val p: Palette) : View(context) {
         return prev?.level
     }
 
-    override fun onTouchEvent(e: MotionEvent): Boolean {
-        if (zoom.onTouch(e)) { scrub.x = -1f; invalidate(); return true }
-        if (e.actionMasked == MotionEvent.ACTION_UP) {
-            if (pill?.contains(e.x, e.y) == true) { zoom.reset(); scrub.x = -1f; return true }
-            performClick()
-            return true
-        }
-        scrub.onTouch(e, plotW())
-        return true
-    }
+    override fun onTouchEvent(e: MotionEvent): Boolean = touch.handle(e, plotW(), pill)
 
     override fun performClick(): Boolean = super.performClick()
 }
@@ -461,16 +524,24 @@ abstract class DailyChart(context: Context, protected val p: Palette) : View(con
     protected val ink = ChartInk(context, p)
     private val zoom = XZoom(this, 3.0)
     private val scrub = Scrub(this)
+    private val touch = ChartTouch(this, zoom, scrub)
     var zoomKey: String?
         get() = zoom.key
         set(v) { zoom.key = v }
 
     var days: List<DayStat> = emptyList()
-        set(v) { field = v; scrub.x = -1f; zoom.setDomain(0.0, v.size.toDouble()); invalidate() }
+        set(v) { field = v; scrub.clear(); zoom.setDomain(0.0, v.size.toDouble()); invalidate() }
     /** Persistently selected column (drawn in ink); -1 for none. */
     var selected = -1
         set(v) { field = v; invalidate() }
     var onSelect: ((Int) -> Unit)? = null
+    /**
+     * Per day, whether the statistics filter counts it (same order as [days]); null counts all.
+     * Days that are not counted stay on the time axis but are drawn faint.
+     */
+    var counted: BooleanArray? = null
+        set(v) { field = v; invalidate() }
+    protected fun isCounted(i: Int): Boolean = counted?.getOrNull(i) ?: true
 
     private var pill: RectF? = null
     protected val path = Path()
@@ -486,7 +557,7 @@ abstract class DailyChart(context: Context, protected val p: Palette) : View(con
     protected fun yOf(v: Double) = zoom.y(v)
 
     abstract fun maxValue(): Int
-    abstract fun drawColumn(c: Canvas, i: Int, d: DayStat, y: (Int) -> Float, highlight: Boolean)
+    abstract fun drawColumn(c: Canvas, i: Int, d: DayStat, y: (Int) -> Float, highlight: Boolean, counted: Boolean)
     abstract fun tooltip(d: DayStat): String?
     open fun drawOverlay(c: Canvas, y: (Int) -> Float) {}
 
@@ -527,7 +598,7 @@ abstract class DailyChart(context: Context, protected val p: Palette) : View(con
         val touched = if (scrub.x >= 0f) indexAt(scrub.x) else -1
         c.save()
         c.clipRect(0f, top - ink.dp(2f), plotW, bottom)
-        for (i in first..lastIdx) drawColumn(c, i, days[i], y, i == touched || i == selected)
+        for (i in first..lastIdx) drawColumn(c, i, days[i], y, i == touched || i == selected, isCounted(i))
         drawOverlay(c, y)
         c.restore()
         c.restore()
@@ -535,7 +606,8 @@ abstract class DailyChart(context: Context, protected val p: Palette) : View(con
         pill = if (scrub.x < 0f) ink.zoomPill(c, zoom) else null
         if (touched >= 0) {
             val tip = tooltip(days[touched]) ?: return
-            ink.bubble(c, tip, cx(touched), ink.dp(1f), width.toFloat())
+            val note = if (isCounted(touched) || days[touched].minSoc == null) "" else " · 평균 제외"
+            ink.bubble(c, tip + note, cx(touched), ink.dp(1f), width.toFloat())
         }
     }
 
@@ -563,15 +635,7 @@ abstract class DailyChart(context: Context, protected val p: Palette) : View(con
 
     override fun onTouchEvent(e: MotionEvent): Boolean {
         if (days.isEmpty()) return false
-        if (zoom.onTouch(e)) { scrub.x = -1f; invalidate(); return true }
-        if (e.actionMasked == MotionEvent.ACTION_UP) {
-            if (pill?.contains(e.x, e.y) == true) { zoom.reset(); scrub.x = -1f; return true }
-            if (scrub.x >= 0f) onSelect?.invoke(indexAt(scrub.x))
-            performClick()
-            return true
-        }
-        scrub.onTouch(e, plotW)
-        return true
+        return touch.handle(e, plotW, pill) { x -> onSelect?.invoke(indexAt(x)) }
     }
 
     override fun performClick(): Boolean = super.performClick()
@@ -590,13 +654,14 @@ class UsageChartView(context: Context, p: Palette) : DailyChart(context, p) {
         return (top + 49) / 50 * 50
     }
 
-    override fun drawColumn(c: Canvas, i: Int, d: DayStat, y: (Int) -> Float, highlight: Boolean) {
+    override fun drawColumn(c: Canvas, i: Int, d: DayStat, y: (Int) -> Float, highlight: Boolean, counted: Boolean) {
         if (d.usage <= 0) return
         val base = y(0)
         val t = minOf(y(d.usage), base - ink.dp(2f))
         // Today is still running: drawn lighter so it does not read as a full day.
         val color = when {
             highlight -> p.ink
+            !counted -> p.faint
             d.day == today -> p.accentDim
             else -> p.soc
         }
@@ -620,11 +685,11 @@ class RangeChartView(context: Context, p: Palette) : DailyChart(context, p) {
 
     override fun maxValue() = 100
 
-    override fun drawColumn(c: Canvas, i: Int, d: DayStat, y: (Int) -> Float, highlight: Boolean) {
+    override fun drawColumn(c: Canvas, i: Int, d: DayStat, y: (Int) -> Float, highlight: Boolean, counted: Boolean) {
         val mn = d.minSoc ?: return
         val mx = d.maxSoc ?: return
         val t = minOf(y(mx), y(mn) - ink.dp(3f))
-        val color = if (highlight) p.ink else p.soc
+        val color = if (highlight) p.ink else if (counted) p.soc else p.faint
         bar(c, cx(i), t, y(mn), color, roundBottom = true)
     }
 
@@ -659,6 +724,7 @@ class MiniLineChart(
     private val ink = ChartInk(context, p)
     private val zoom = XZoom(this, 30 * 60_000.0)
     private val scrub = Scrub(this)
+    private val touch = ChartTouch(this, zoom, scrub)
     var zoomKey: String?
         get() = zoom.key
         set(v) { zoom.key = v }
@@ -675,7 +741,7 @@ class MiniLineChart(
     fun set(points: List<Pair<Long, Int>>, start: Long, end: Long, now: Long, zone: ZoneId) {
         pts = points; this.start = start; this.end = end; this.now = now; this.zone = zone
         zoom.setDomain(start.toDouble(), end.toDouble())
-        scrub.x = -1f
+        scrub.clear()
         invalidate()
     }
 
@@ -775,16 +841,7 @@ class MiniLineChart(
         }
     }
 
-    override fun onTouchEvent(e: MotionEvent): Boolean {
-        if (zoom.onTouch(e)) { scrub.x = -1f; invalidate(); return true }
-        if (e.actionMasked == MotionEvent.ACTION_UP) {
-            if (pill?.contains(e.x, e.y) == true) { zoom.reset(); scrub.x = -1f; return true }
-            performClick()
-            return true
-        }
-        scrub.onTouch(e, plotW())
-        return true
-    }
+    override fun onTouchEvent(e: MotionEvent): Boolean = touch.handle(e, plotW(), pill)
 
     override fun performClick(): Boolean = super.performClick()
 }

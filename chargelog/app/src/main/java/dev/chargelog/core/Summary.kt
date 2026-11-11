@@ -30,6 +30,7 @@ object Summaries {
      * @param period daily stats for the period, oldest first, ending today
      * @param sessions sessions overlapping the period
      * @param firstSampleTs when recording started; that day is only partly recorded
+     * @param dayType only days of this type count, and only charges started on such days
      */
     fun of(
         period: List<DayStat>,
@@ -37,9 +38,10 @@ object Summaries {
         firstSampleTs: Long?,
         today: LocalDate,
         zone: ZoneId,
+        dayType: DayType = DayType.ALL,
     ): Summary {
         val firstDay = firstSampleTs?.let { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() }
-        val recorded = period.filter { it.minSoc != null && (firstDay == null || !it.day.isBefore(firstDay)) }
+        val recorded = StatsFilter.days(period, dayType).filter { it.minSoc != null && (firstDay == null || !it.day.isBefore(firstDay)) }
         // A full day is one recorded from midnight to midnight: not the install day, not today.
         val complete = recorded.filter { it.day != firstDay && it.day != today }
         val base = complete.ifEmpty { recorded }
@@ -49,7 +51,7 @@ object Summaries {
         val chargesInBase = sessions.count { it.type == SessionType.CHARGE && dayOf(it.startTs) in baseDays }
 
         val periodStart = period.firstOrNull()?.day
-        val charges = sessions.filter {
+        val charges = StatsFilter.sessions(sessions, dayType, zone).filter {
             it.type == SessionType.CHARGE && !it.open && it.delta > 0 &&
                 (periodStart == null || !dayOf(it.startTs).isBefore(periodStart))
         }

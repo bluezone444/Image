@@ -23,6 +23,26 @@ object Recorder {
         ).also { rfit = it; lastSavedCount = it.count }
     }
 
+    /** Null until read from preferences; true once this device is known to report µA. */
+    private var reportsMicroAmps: Boolean? = null
+
+    /**
+     * BATTERY_PROPERTY_CURRENT_NOW as µA. Whether the device reports µA or mA is decided per
+     * device and remembered: the first reading too large to be mA settles it for good.
+     */
+    @Synchronized
+    fun microAmps(context: Context, raw: Int): Int {
+        var known = reportsMicroAmps ?: prefs(context).getBoolean(UNIT_KEY, false).also { reportsMicroAmps = it }
+        if (!known && Ocv.provesMicroAmps(raw)) {
+            known = true
+            reportsMicroAmps = true
+            prefs(context).edit().putBoolean(UNIT_KEY, true).apply()
+        }
+        return Ocv.toMicroAmps(raw, known)
+    }
+
+    private const val UNIT_KEY = "current_unit_microamps"
+
     private fun prefs(context: Context) = context.getSharedPreferences("data", Context.MODE_PRIVATE)
 
     /** Everything the system reports for one battery broadcast, plus the derived OCV. */
@@ -34,7 +54,7 @@ object Recorder {
         val voltage = intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0)
         val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, BatteryManager.BATTERY_STATUS_UNKNOWN)
         val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)
-        val current = Ocv.toMicroAmps(bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW))
+        val current = microAmps(context, bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW))
         val counter = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)
             .takeIf { it > 0 && it != Int.MAX_VALUE } ?: 0
         val soc = Math.round(level * 100f / scale)
@@ -80,14 +100,18 @@ object Recorder {
         }
     }
 
-    /** One-time replay of the stored history so earlier gaps get estimates as well. */
-    fun rebuildOnce(context: Context) {
+    /**
+     * One-time replay of the stored history so earlier gaps get estimates as well.
+     * @return true when the history was rewritten by this call.
+     */
+    fun rebuildOnce(context: Context): Boolean {
         val prefs = prefs(context)
-        if (prefs.getBoolean(REBUILT_KEY, false)) return
+        if (prefs.getBoolean(REBUILT_KEY, false)) return false
         synchronized(this) {
-            if (prefs.getBoolean(REBUILT_KEY, false)) return
+            if (prefs.getBoolean(REBUILT_KEY, false)) return false
             Db.get(context).rebuildWithEstimates()
             prefs.edit().putBoolean(REBUILT_KEY, true).apply()
+            return true
         }
     }
 
