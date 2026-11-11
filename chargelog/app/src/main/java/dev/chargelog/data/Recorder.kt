@@ -20,6 +20,7 @@ object Recorder {
             status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, BatteryManager.BATTERY_STATUS_UNKNOWN),
             temp = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0),
             voltage = intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0),
+            ocv = VoltageProbe.ocv(intent)?.mv ?: 0,
         )
     }
 

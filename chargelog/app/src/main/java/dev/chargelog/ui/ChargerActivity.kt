@@ -14,6 +14,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import dev.chargelog.core.Plug
+import dev.chargelog.data.VoltageProbe
 import java.util.Locale
 
 /**
@@ -110,12 +111,18 @@ class ChargerActivity : Activity() {
             } ?: "보고 안 함"),
             "현재 배터리 입력" to (if (plugged == 0) "-" else f(batteryW)),
             "이 화면 최고 입력" to (if (peakW > 0) f(peakW) else "-"),
-            "배터리 전압" to "$mv mV",
+            "배터리 전압 (\"voltage\")" to "$mv mV",
+            "전압(참조값)" to (VoltageProbe.reference(i)?.let {
+                "${it.mv} mV · ${it.key}" + if (it.isOcv) " (OCV)" else " (부하 전압)"
+            } ?: "-"),
             "전류 (CURRENT_NOW)" to "$now",
             "전류 (평균)" to "$avg",
         )
 
         val sb = StringBuilder()
+        sb.append("[OCV 후보]\n")
+        for ((k, v) in VoltageProbe.report(i)) sb.append(k).append(" = ").append(v).append('\n')
+        sb.append("\n[배터리 브로드캐스트 전체]\n")
         val extras = i?.extras
         if (extras != null) {
             for (k in extras.keySet().sorted()) {

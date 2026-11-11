@@ -70,6 +70,7 @@ class Exporter(private val db: Db, private val zone: ZoneId = ZoneId.systemDefau
                 w.name("status").value(Format.statusLabel(s.status))
                 w.name("temp_c").value(s.temp / 10.0)
                 w.name("voltage_mv").value(s.voltage.toLong())
+                if (s.ocv > 0) w.name("ocv_mv").value(s.ocv.toLong()) else w.name("ocv_mv").nullValue()
                 w.endObject()
             }
             w.endArray()

@@ -39,11 +39,11 @@ object Format {
 
     // ---- CSV ----
 
-    const val SAMPLE_HEADER = "timestamp_ms,datetime,soc_pct,plugged,status,temp_c,voltage_mv"
+    const val SAMPLE_HEADER = "timestamp_ms,datetime,soc_pct,plugged,status,temp_c,voltage_mv,ocv_mv"
 
     fun sampleCsv(s: Sample, zone: ZoneId): String =
         "${s.ts},${iso(s.ts, zone)},${s.level},${Plug.label(s.plugged)},${statusLabel(s.status)}," +
-            "${tenths(s.temp)},${s.voltage}"
+            "${tenths(s.temp)},${s.voltage},${if (s.ocv > 0) s.ocv.toString() else ""}"
 
     const val SESSION_HEADER =
         "id,type,start_ms,start,start_soc,end_ms,end,end_soc,delta_soc,duration_min,charger," +

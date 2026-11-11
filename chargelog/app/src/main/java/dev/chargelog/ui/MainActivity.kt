@@ -37,6 +37,8 @@ import dev.chargelog.data.Db
 import dev.chargelog.data.ExportKind
 import dev.chargelog.data.Exporter
 import dev.chargelog.data.Recorder
+import dev.chargelog.data.VoltageProbe
+import dev.chargelog.core.Volt
 import dev.chargelog.service.MonitorService
 import dev.chargelog.service.Watchdog
 import java.time.LocalDate
@@ -60,6 +62,8 @@ class MainActivity : Activity() {
     /** Day shown in the Stats tab's day detail; null picks a sensible default. */
     private var statsDay: LocalDate? = null
     private var current: Sample? = null
+    /** Latest battery broadcast, used to name the voltage source. */
+    private var batteryIntent: Intent? = null
 
     private val zone: ZoneId get() = ZoneId.systemDefault()
 
@@ -68,6 +72,7 @@ class MainActivity : Activity() {
             val prev = current
             val s = Recorder.record(context, intent) ?: return
             current = s
+            batteryIntent = intent
             // ACTION_BATTERY_CHANGED also fires for every temperature/voltage wobble; only
             // rebuild the screen when something it shows has changed.
             if (prev == null || prev.level != s.level || prev.plugged != s.plugged ||
@@ -120,7 +125,10 @@ class MainActivity : Activity() {
         // Sticky: delivers the current state right away, then every change while visible.
         val sticky = registerReceiver(receiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         receiverOn = true
-        if (sticky != null) current = Recorder.record(this, sticky) ?: current
+        if (sticky != null) {
+            current = Recorder.record(this, sticky) ?: current
+            batteryIntent = sticky
+        }
         Watchdog.schedule(this)
         render()
         askExemptionOnce()
@@ -281,7 +289,9 @@ class MainActivity : Activity() {
             val on = i == tab
             tabBar.addView(column().apply {
                 gravity = Gravity.CENTER
-                addView(label(name, 14f, if (on) p.ink else p.muted, bold = on))
+                // WRAP so the label sits centered over the indicator (a vertical
+                // LinearLayout would otherwise stretch it and left-align the text).
+                addView(label(name, 14f, if (on) p.ink else p.muted, bold = on), lp(WRAP, WRAP))
                 addView(View(context).apply {
                     background = roundRect(if (on) p.ink else android.graphics.Color.TRANSPARENT, 2f)
                 }, lp(dpi(18f), dpi(3f), top = dpi(6f)))
@@ -430,9 +440,13 @@ class MainActivity : Activity() {
         val s = current
         val temps = points.filter { it.temp > 0 }.map { it.ts to it.temp } +
             listOfNotNull(s?.takeIf { it.temp > 0 }?.let { now to it.temp })
-        val volts = points.filter { it.voltage > 0 }.map { it.ts to it.voltage } +
-            listOfNotNull(s?.takeIf { it.voltage > 0 }?.let { now to it.voltage })
-        fun half(name: String, now0: String, pts: List<Pair<Long, Int>>, fmt: (Int) -> String, span: Int, color: Int) =
+        val ref = VoltageProbe.reference(batteryIntent)
+        val volts = points.map { it.ts to Volt.reference(it) }.filter { it.second > 0 } +
+            listOfNotNull(ref?.let { now to it.mv })
+        fun half(
+            name: String, now0: String, pts: List<Pair<Long, Int>>, fmt: (Int) -> String, span: Int, color: Int,
+            source: String? = null,
+        ) =
             column().apply {
                 addView(row().apply {
                     addView(caption(name, p), lp(0, WRAP, 1f))
@@ -442,10 +456,12 @@ class MainActivity : Activity() {
                     lp(MATCH, dpi(34f), top = dpi(6f)))
                 addView(label(if (pts.isEmpty()) "기록 없음" else "오늘 ${fmt(pts.minOf { it.second })} – ${fmt(pts.maxOf { it.second })}",
                     11f, p.muted), lp(WRAP, WRAP, top = dpi(4f)))
+                if (source != null) addView(label("키: $source", 10f, p.muted), lp(WRAP, WRAP, top = dpi(2f)))
             }
         addView(tileRow(p, listOf(
             half("배터리 온도", s?.let { c1(it.temp) } ?: "-", temps, c1, 20, p.temp),
-            half("배터리 전압", s?.let { v2(it.voltage) } ?: "-", volts, v2, 100, p.volt),
+            half("전압(참조값)", ref?.let { v2(it.mv) } ?: "-", volts, v2, 100, p.volt,
+                ref?.let { it.key + if (it.isOcv) " · OCV" else " · 부하 전압" }),
         )))
     }
 
@@ -586,9 +602,12 @@ class MainActivity : Activity() {
         addView(SocChartView(context, p).apply { set(points, sessions, start, end, now, zone) },
             lp(MATCH, WRAP, top = dpi(2f)))
         val temps = points.filter { it.temp > 0 }.map { it.ts to it.temp }
-        val volts = points.filter { it.voltage > 0 }.map { it.ts to it.voltage }
+        val volts = points.map { it.ts to Volt.reference(it) }.filter { it.second > 0 }
+        val usedOcv = points.any { it.ocv > 0 }
         miniChart("배터리 온도", temps, c1, 20, p.temp, start, end, now)?.let { addView(it, lp(MATCH, WRAP, top = dpi(12f))) }
-        miniChart("배터리 전압", volts, v2, 100, p.volt, start, end, now)?.let { addView(it, lp(MATCH, WRAP, top = dpi(8f))) }
+        miniChart("전압(참조값)", volts, v2, 100, p.volt, start, end, now,
+            note = if (usedOcv) "키: OCV (${VoltageProbe.ocv(batteryIntent)?.key ?: "기록 당시 OCV 소스"})"
+                else "키: EXTRA_VOLTAGE \"voltage\" · 부하 전압")?.let { addView(it, lp(MATCH, WRAP, top = dpi(8f))) }
     }
 
     /** Shows a scrolling page that is rebuilt from scratch (Stats, Data). */
@@ -608,7 +627,7 @@ class MainActivity : Activity() {
     /** Title row with the day's range, above a compact line chart. Null when there is no data. */
     private fun miniChart(
         name: String, pts: List<Pair<Long, Int>>, fmt: (Int) -> String, minSpan: Int, color: Int,
-        start: Long, end: Long, now: Long,
+        start: Long, end: Long, now: Long, note: String? = null,
     ): View? {
         if (pts.isEmpty()) return null
         return column().apply {
@@ -617,6 +636,7 @@ class MainActivity : Activity() {
                 addView(label(name, 13f, p.ink, bold = true), lp(0, WRAP, 1f, left = dpi(6f)))
                 addView(label("${fmt(pts.minOf { it.second })} – ${fmt(pts.maxOf { it.second })}", 12f, p.ink2))
             })
+            if (note != null) addView(label(note, 10f, p.muted), lp(WRAP, WRAP, top = dpi(3f)))
             addView(MiniLineChart(context, p, color, fmt, minSpan).apply { set(pts, start, end, now, zone) },
                 lp(MATCH, WRAP, top = dpi(2f)))
         }
@@ -750,6 +770,12 @@ class MainActivity : Activity() {
             addView(kv(p, "SOC 기록 수", db.sampleCount().toString()))
             addView(kv(p, "세션 수", db.sessionCount().toString()))
             db.lastSample()?.let { addView(kv(p, "마지막 기록", Format.dateTime(it.ts, zone))) }
+            val ref = VoltageProbe.reference(batteryIntent)
+            addView(kv(p, "전압(참조값) 키", ref?.let { if (it.isOcv) "${it.key} · OCV" else "voltage · 부하 전압" } ?: "-"))
+            if (ref != null && !ref.isOcv) addView(label(
+                "이 기기는 앱이 읽을 수 있는 OCV 값을 제공하지 않아 배터리 브로드캐스트의 " +
+                    "EXTRA_VOLTAGE(\"voltage\", 부하 상태 단자 전압)를 참조값으로 씁니다. " +
+                    "확인한 OCV 후보는 충전기 진단 화면에 있습니다.", 12f, p.ink2), lp(MATCH, WRAP, top = dpi(2f)))
             val exempt = isExempt()
             addView(kv(p, "배터리 최적화 제외", if (exempt) "설정됨" else "미설정"))
             addView(label(

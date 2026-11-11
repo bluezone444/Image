@@ -24,7 +24,11 @@ object Plug {
     }
 }
 
-/** One battery reading. [level] is SOC in percent, [temp] in 0.1 °C, [voltage] in mV. */
+/**
+ * One battery reading. [level] is SOC in percent, [temp] in 0.1 °C, [voltage] is the terminal
+ * voltage in mV (broadcast key "voltage"), [ocv] the open-circuit voltage in mV when the device
+ * exposes one, else 0.
+ */
 data class Sample(
     val ts: Long,
     val level: Int,
@@ -32,6 +36,7 @@ data class Sample(
     val status: Int,
     val temp: Int,
     val voltage: Int,
+    val ocv: Int = 0,
 ) {
     val charging: Boolean get() = plugged != Plug.NONE
 }
@@ -88,3 +93,19 @@ data class DayStat(
     val minSoc: Int?,
     val maxSoc: Int?,
 )
+
+/** Voltage unit handling shared by every source. */
+object Volt {
+    /**
+     * Interprets a raw reading as millivolts: accepts mV (2 500–5 000) or µV (2.5–5.0 M).
+     * Anything else is not a plausible single-cell voltage and yields null.
+     */
+    fun toMv(raw: Long): Int? = when (raw) {
+        in 2_500L..5_000L -> raw.toInt()
+        in 2_500_000L..5_000_000L -> (raw / 1000).toInt()
+        else -> null
+    }
+
+    /** Reference voltage for display: OCV when recorded, otherwise the terminal voltage. */
+    fun reference(s: Sample): Int = if (s.ocv > 0) s.ocv else s.voltage
+}

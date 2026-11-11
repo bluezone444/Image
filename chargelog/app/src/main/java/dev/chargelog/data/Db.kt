@@ -11,13 +11,13 @@ import dev.chargelog.core.SessionType
 import dev.chargelog.core.Store
 
 class Db private constructor(context: Context) :
-    SQLiteOpenHelper(context, "chargelog.db", null, 1), Store {
+    SQLiteOpenHelper(context, "chargelog.db", null, 2), Store {
 
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(
             "CREATE TABLE samples(ts INTEGER PRIMARY KEY, level INTEGER NOT NULL, " +
                 "plugged INTEGER NOT NULL, status INTEGER NOT NULL, temp INTEGER NOT NULL, " +
-                "voltage INTEGER NOT NULL)"
+                "voltage INTEGER NOT NULL, ocv INTEGER NOT NULL DEFAULT 0)"
         )
         db.execSQL(
             "CREATE TABLE sessions(id INTEGER PRIMARY KEY AUTOINCREMENT, type INTEGER NOT NULL, " +
@@ -28,7 +28,9 @@ class Db private constructor(context: Context) :
         db.execSQL("CREATE INDEX idx_sessions_start ON sessions(start_ts)")
     }
 
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {}
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        if (oldVersion < 2) db.execSQL("ALTER TABLE samples ADD COLUMN ocv INTEGER NOT NULL DEFAULT 0")
+    }
 
     // ---- samples ----
 
@@ -45,7 +47,7 @@ class Db private constructor(context: Context) :
     override fun insertSample(s: Sample) {
         val v = ContentValues().apply {
             put("ts", s.ts); put("level", s.level); put("plugged", s.plugged)
-            put("status", s.status); put("temp", s.temp); put("voltage", s.voltage)
+            put("status", s.status); put("temp", s.temp); put("voltage", s.voltage); put("ocv", s.ocv)
         }
         writableDatabase.insertWithOnConflict("samples", null, v, SQLiteDatabase.CONFLICT_REPLACE)
     }
@@ -77,7 +79,7 @@ class Db private constructor(context: Context) :
 
     private fun sample(c: Cursor) = Sample(
         ts = c.getLong(0), level = c.getInt(1), plugged = c.getInt(2),
-        status = c.getInt(3), temp = c.getInt(4), voltage = c.getInt(5),
+        status = c.getInt(3), temp = c.getInt(4), voltage = c.getInt(5), ocv = c.getInt(6),
     )
 
     // ---- sessions ----

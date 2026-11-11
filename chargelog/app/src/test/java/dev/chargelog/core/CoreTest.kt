@@ -192,6 +192,16 @@ class CoreTest {
         assertNull(sum.avgChargeStart)
     }
 
+    @Test fun voltageUnits() {
+        assertEquals(3850, Volt.toMv(3850))
+        assertEquals(3850, Volt.toMv(3_850_123))
+        assertNull(Volt.toMv(0)); assertNull(Volt.toMv(385)); assertNull(Volt.toMv(38_500))
+        val s = Sample(0, 50, 0, 3, 300, 3900)
+        assertEquals(3900, Volt.reference(s))
+        assertEquals(3870, Volt.reference(s.copy(ocv = 3870)))
+        assertTrue(Format.sampleCsv(s.copy(ocv = 3870), zone).endsWith(",3900,3870"))
+    }
+
     @Test fun dailyWithNoDataIsEmpty() {
         val day = LocalDate.of(2026, 11, 10)
         val out = Stats.daily(emptyList(), null, zone, day, day)
@@ -202,7 +212,7 @@ class CoreTest {
         val ts = Stats.dayStart(LocalDate.of(2026, 11, 11), zone) + 16 * 60 * min + 8 * min
         assertEquals("2026-11-11T16:08:00+09:00", Format.iso(ts, zone))
         assertEquals(
-            "$ts,2026-11-11T16:08:00+09:00,64,ac,charging,31.5,4120",
+            "$ts,2026-11-11T16:08:00+09:00,64,ac,charging,31.5,4120,",
             Format.sampleCsv(Sample(ts, 64, Plug.AC, 2, 315, 4120), zone)
         )
         assertEquals("7시간 30분", Format.duration(450 * min))
