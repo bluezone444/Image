@@ -464,7 +464,7 @@ class CoreTest {
         // The export column carries the hold.
         val s = Session(7, SessionType.CHARGE, 0, 40, 90_000, 41, 1, 0, 40, 41, 300)
         assertTrue(Format.sessionCsv(s, zone, ChargeSpec.classify(listOf(chg(0.0, 250_000), chg(1.5, 300_000)), 40, fold))
-            .endsWith(",,,pending_short"))
+            .endsWith(",,,pending_short,,,,unplugged_while_charging"))
     }
 
     @Test fun currentUnitIsDecidedPerDevice() {
@@ -482,6 +482,19 @@ class CoreTest {
         // Even before that is known, 19 250 cannot be mA (19 A), so it is not scaled.
         assertEquals(19_250, Ocv.toMicroAmps(19_250)); assertEquals(12_000_000, Ocv.toMicroAmps(12_000))
         assertEquals(0, Ocv.toMicroAmps(Int.MAX_VALUE, true))
+    }
+
+    @Test fun chargeEventsSeparateFullStopAndUnplug() {
+        fun at(m: Long, level: Int, status: Int) = Sample(m * min, level, Plug.AC, status, 300, 4200)
+        // Charges to 100 % at 60 min, phone reports FULL at 62 min, unplugged later (session end).
+        var e = ChargeEvents.of(listOf(at(0, 40, 2), at(60, 100, 2), at(62, 100, 5), at(90, 100, 5)))
+        assertEquals(60 * min, e.fullTs); assertEquals(62 * min, e.stopTs); assertEquals(100, e.stopSoc); assertTrue(e.stopFull)
+        // Battery protection stops at 85 %: no 100 % time, stop at 85.
+        e = ChargeEvents.of(listOf(at(0, 50, 2), at(30, 85, 2), at(31, 85, 4)))
+        assertNull(e.fullTs); assertEquals(31 * min, e.stopTs); assertEquals(85, e.stopSoc); assertTrue(!e.stopFull)
+        // Plugged in already full: never charging, so no stop event.
+        e = ChargeEvents.of(listOf(at(0, 100, 5), at(10, 100, 5)))
+        assertEquals(0L, e.fullTs); assertNull(e.stopTs)
     }
 
     @Test fun dailyWithNoDataIsEmpty() {

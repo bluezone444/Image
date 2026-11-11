@@ -910,7 +910,37 @@ class MainActivity : Activity() {
         return "${Format.dateTimeSec(s.startTs, zone)} → $end  (${Format.durationSec(s.durationMs(now))})"
     }
 
-    /** Value line: rate, and for charging the tier and when the top SOC was reached. */
+    private val eventsCache = HashMap<Long, dev.chargelog.core.ChargeEvents>()
+
+    private fun chargeEvents(s: Session, now: Long): dev.chargelog.core.ChargeEvents {
+        if (!s.open) eventsCache[s.id]?.let { return it }
+        val e = dev.chargelog.core.ChargeEvents.of(db.samples(s.startTs, (s.endTs ?: now) + 1))
+        if (!s.open) eventsCache[s.id] = e
+        return e
+    }
+
+    /**
+     * Charge events line: 100 % reached, charging stopped while still plugged (full or battery
+     * protection), and the unplug, so a full charge and a pulled charger read differently.
+     */
+    private fun chargeEventLine(s: Session, now: Long): String {
+        val e = chargeEvents(s, now)
+        val parts = arrayListOf<String>()
+        e.fullTs?.let { parts.add("100% 도달 ${Format.timeSec(it, zone)}") }
+        if (e.stopTs != null) {
+            parts.add(if (e.stopFull) "충전 종료(완충) ${Format.timeSec(e.stopTs, zone)}"
+                else "충전 멈춤 ${e.stopSoc}% ${Format.timeSec(e.stopTs, zone)} (배터리 보호 등)")
+        }
+        val end = s.endTs
+        when {
+            end == null -> parts.add(if (e.stopTs != null) "연결 유지 중 ${Format.durationSec(now - e.stopTs)}" else "충전 중")
+            e.stopTs == null -> parts.add("충전 중 분리 ${Format.timeSec(end, zone)}")
+            else -> parts.add("분리 ${Format.timeSec(end, zone)} (연결 유지 ${Format.durationSec(end - e.stopTs)})")
+        }
+        return parts.joinToString(" · ")
+    }
+
+    /** Value line: rate, and for charging the tier. */
     private fun sessionLine2(s: Session, now: Long): String {
         val endTs = s.endTs
         val parts = arrayListOf<String>()
@@ -918,8 +948,6 @@ class MainActivity : Activity() {
         if (s.type == SessionType.CHARGE) {
             val spec = chargeSpec(s, now)
             parts.add(spec?.label() ?: Plug.labelKo(s.plug))
-            val settled = (endTs ?: now) - s.peakTs > 20 * 60_000L
-            if (settled && s.maxSoc > s.startSoc) parts.add("${s.maxSoc}% 도달 ${Format.timeSec(s.peakTs, zone)}")
         }
         if (parts.isEmpty()) parts.add(if (s.open) "측정 중" else "-")
         return parts.joinToString(" · ")
@@ -937,6 +965,7 @@ class MainActivity : Activity() {
             addView(number(sessionTimeLine(s, now), 13f, p.ink2), lp(WRAP, WRAP, top = dpi(5f)))
             addView(label(sessionLine2(s, now), 14f, p.ink, bold = true).apply { alpha = 0.85f },
                 lp(WRAP, WRAP, top = dpi(4f)))
+            if (charge) addView(label(chargeEventLine(s, now), 13f, p.ink2), lp(WRAP, WRAP, top = dpi(4f)))
         }, lp(0, WRAP, 1f, left = dpi(10f)))
     }
 

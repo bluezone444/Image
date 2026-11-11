@@ -82,9 +82,19 @@ object Format {
 
     const val SESSION_HEADER =
         "id,type,start_ms,start,start_soc,end_ms,end,end_soc,delta_soc,duration_min,rate_pct_per_hour,charger," +
-            "peak_soc_time,min_soc,max_soc,max_temp_c,estimated,peak_input_w,charger_reported_w,charge_tier"
+            "peak_soc_time,min_soc,max_soc,max_temp_c,estimated,peak_input_w,charger_reported_w,charge_tier," +
+            "full_100_time,charge_stop_time,charge_stop_soc,end_reason"
 
-    fun sessionCsv(s: Session, zone: ZoneId, spec: ChargeSpec.Result? = null): String {
+    /** How a charge session ended: unplugged while charging, after 100 %, after another stop. */
+    fun endReason(s: Session, ev: ChargeEvents?): String = when {
+        s.type != SessionType.CHARGE -> ""
+        s.open -> "open"
+        ev?.stopTs == null -> "unplugged_while_charging"
+        ev.stopFull -> "unplugged_after_full"
+        else -> "unplugged_after_stop"
+    }
+
+    fun sessionCsv(s: Session, zone: ZoneId, spec: ChargeSpec.Result? = null, ev: ChargeEvents? = null): String {
         val end = s.endTs
         return listOf(
             s.id, s.type.name.lowercase(), s.startTs, iso(s.startTs, zone), s.startSoc,
@@ -96,6 +106,10 @@ object Format {
             spec?.peakInputW?.let { String.format(Locale.US, "%.1f", it) } ?: "",
             spec?.reportedW?.let { String.format(Locale.US, "%.1f", it) } ?: "",
             spec?.code() ?: "",
+            ev?.fullTs?.let { iso(it, zone) } ?: "",
+            ev?.stopTs?.let { iso(it, zone) } ?: "",
+            ev?.stopSoc ?: "",
+            endReason(s, ev),
         ).joinToString(",")
     }
 

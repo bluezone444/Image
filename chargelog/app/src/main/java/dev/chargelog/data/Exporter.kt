@@ -79,7 +79,7 @@ class Exporter(private val context: Context, private val db: Db, private val zon
 
     private fun sessionsCsv(w: Writer) {
         bom(w, Format.SESSION_HEADER)
-        db.forEachSession { w.write(Format.sessionCsv(it, zone, spec(it))); w.write("\n") }
+        db.forEachSession { w.write(Format.sessionCsv(it, zone, spec(it), events(it))); w.write("\n") }
     }
 
     private fun dailyCsv(w: Writer) {
@@ -190,6 +190,12 @@ class Exporter(private val context: Context, private val db: Db, private val zon
             w.name("max_soc").value(s.maxSoc.toLong())
             w.name("max_temp_c").value(s.maxTemp / 10.0)
             w.name("estimated").value(s.est)
+            events(s)?.let { ev ->
+                ev.fullTs?.let { w.name("full_100_time").value(Format.iso(it, zone)) }
+                ev.stopTs?.let { w.name("charge_stop_time").value(Format.iso(it, zone)) }
+                ev.stopSoc?.let { w.name("charge_stop_soc").value(it.toLong()) }
+                w.name("end_reason").value(Format.endReason(s, ev))
+            }
             spec(s)?.let { r ->
                 w.name("charge_tier").value(r.code())
                 w.name("charge_tier_label").value(r.label())
@@ -243,6 +249,10 @@ class Exporter(private val context: Context, private val db: Db, private val zon
     }
 
     private val phoneMax by lazy { ChargeSpec.phone(Build.MODEL) }
+
+    private fun events(s: dev.chargelog.core.Session): dev.chargelog.core.ChargeEvents? =
+        if (s.type != SessionType.CHARGE) null
+        else dev.chargelog.core.ChargeEvents.of(db.samples(s.startTs, (s.endTs ?: System.currentTimeMillis()) + 1))
 
     private fun spec(s: dev.chargelog.core.Session): ChargeSpec.Result? =
         if (s.type != SessionType.CHARGE) null
