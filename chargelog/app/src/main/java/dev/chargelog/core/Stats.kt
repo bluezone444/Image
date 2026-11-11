@@ -60,5 +60,27 @@ object Stats {
         return accs.map { (day, a) -> DayStat(day, a.usage, a.charged, a.min, a.max) }
     }
 
+    /**
+     * Groups sessions by every local day they were active on, newest day first and newest
+     * session first within a day. A session that crosses midnight is listed under each day
+     * it covers, so every day's list is complete. Open sessions run until [now].
+     */
+    fun sessionsByDay(sessions: List<Session>, zone: ZoneId, now: Long): List<Pair<LocalDate, List<Session>>> {
+        val byDay = java.util.TreeMap<LocalDate, MutableList<Session>>(compareByDescending { it })
+        for (s in sessions) {
+            val end = maxOf(s.endTs ?: now, s.startTs)
+            val first = Instant.ofEpochMilli(s.startTs).atZone(zone).toLocalDate()
+            // An end exactly at midnight does not reach into the next day.
+            val last = Instant.ofEpochMilli(if (end > s.startTs) end - 1 else end).atZone(zone).toLocalDate()
+            var d = first
+            while (!d.isAfter(last)) {
+                byDay.getOrPut(d) { ArrayList() }.add(s)
+                d = d.plusDays(1)
+            }
+        }
+        val newestFirst = compareByDescending<Session> { it.startTs }.thenByDescending { it.id }
+        return byDay.map { (day, list) -> day to list.sortedWith(newestFirst) }
+    }
+
     fun dayStart(day: LocalDate, zone: ZoneId): Long = day.atStartOfDay(zone).toInstant().toEpochMilli()
 }

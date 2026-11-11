@@ -17,7 +17,6 @@ class FakeStore : Store {
         sessions.sortedWith(compareByDescending<Session> { it.startTs }.thenByDescending { it.id }).take(limit)
     override fun insertSession(s: Session): Long { val id = nextId++; sessions.add(s.copy(id = id)); return id }
     override fun updateSession(s: Session) { sessions[sessions.indexOfFirst { it.id == s.id }] = s }
-    override fun deleteSession(id: Long) { sessions.removeAll { it.id == id } }
 }
 
 class CoreTest {
@@ -63,24 +62,46 @@ class CoreTest {
         assertEquals(100, d2.startSoc); assertEquals(90, d2.endSoc); assertEquals(90, d2.minSoc)
     }
 
-    @Test fun mergesShortChargerBlip() {
+    @Test fun quickReplugKeepsEverySession() {
         val st = FakeStore(); val t = Tracker(st)
         t.onReading(r(0, 40, Plug.WIRELESS))
         t.onReading(r(30, 60, Plug.WIRELESS))
-        t.onReading(r(31, 60))                    // pad wobble
-        t.onReading(r(32, 60, Plug.WIRELESS))     // back within 2 min
+        t.onReading(r(31, 60))                    // unplug
+        t.onReading(r(32, 60, Plug.WIRELESS))     // re-plug a minute later
+        t.onReading(r(33, 60))                    // and again
+        t.onReading(r(34, 61, Plug.WIRELESS))
         t.onReading(r(60, 80, Plug.WIRELESS))
-        assertEquals(1, st.sessions.size)
-        val c = st.sessions[0]
-        assertTrue(c.open); assertEquals(40, c.startSoc); assertEquals(80, c.endSoc)
+        val s = st.sessions.sortedBy { it.startTs }
+        assertEquals(5, s.size)
+        assertEquals(listOf(SessionType.CHARGE, SessionType.DISCHARGE, SessionType.CHARGE,
+            SessionType.DISCHARGE, SessionType.CHARGE), s.map { it.type })
+        // The first charge is closed and untouched by what came after.
+        assertEquals(40, s[0].startSoc); assertEquals(60, s[0].endSoc); assertEquals(31 * min, s[0].endTs)
+        // Sessions chain without gaps and only the last one is open.
+        for (i in 1 until s.size) assertEquals(s[i - 1].endTs, s[i].startTs)
+        assertEquals(1, s.count { it.open }); assertTrue(s.last().open)
+        assertEquals(80, s.last().endSoc)
     }
 
-    @Test fun longUnplugIsNotMerged() {
+    @Test fun longUnplugStartsNewSessions() {
         val st = FakeStore(); val t = Tracker(st)
         t.onReading(r(0, 40, Plug.AC))
         t.onReading(r(30, 60))
         t.onReading(r(40, 58, Plug.AC))
         assertEquals(3, st.sessions.size)
+    }
+
+    @Test fun clockGoingBackwardsDoesNotStopRecording() {
+        val st = FakeStore(); val t = Tracker(st)
+        t.onReading(r(100, 50))
+        t.onReading(r(40, 49))                    // clock set back an hour
+        t.onReading(r(41, 49, Plug.AC))
+        assertEquals(listOf(50, 49, 49), st.samples.map { it.level })
+        assertTrue(st.samples.zipWithNext().all { (a, b) -> b.ts > a.ts })
+        val s = st.sessions.sortedBy { it.startTs }
+        assertEquals(2, s.size)
+        assertTrue(s[0].endTs!! >= s[0].startTs)
+        assertEquals(SessionType.CHARGE, s[1].type)
     }
 
     @Test fun dailyUsageSplitsAtMidnightAndCanExceed100() {
@@ -101,6 +122,24 @@ class CoreTest {
         assertEquals(20, out[0].minSoc); assertEquals(100, out[0].maxSoc)
         assertEquals(5, out[1].usage); assertEquals(30, out[1].minSoc); assertEquals(35, out[1].maxSoc)
         assertEquals(0, out[2].usage); assertEquals(30, out[2].minSoc)   // carried SOC
+    }
+
+    @Test fun sessionsGroupedByEveryDayTheyCover() {
+        val d10 = LocalDate.of(2026, 11, 10)
+        val t0 = Stats.dayStart(d10, zone)
+        fun sess(id: Long, type: SessionType, fromMin: Long, toMin: Long?) =
+            Session(id, type, t0 + fromMin * min, 50, toMin?.let { t0 + it * min }, 50, 0,
+                t0 + fromMin * min, 50, 50, 300)
+        val a = sess(1, SessionType.DISCHARGE, 600, 1380)        // 10th only
+        val b = sess(2, SessionType.CHARGE, 1380, 1440 + 420)    // 23:00 → 07:00 next day
+        val c = sess(3, SessionType.DISCHARGE, 1440 + 420, 2880) // ends exactly at midnight
+        val d = sess(4, SessionType.CHARGE, 2880, null)          // open, on the 12th
+        val now = t0 + (2880 + 60) * min
+        val g = Stats.sessionsByDay(listOf(a, b, c, d), zone, now)
+        assertEquals(listOf(d10.plusDays(2), d10.plusDays(1), d10), g.map { it.first })
+        assertEquals(listOf(4L), g[0].second.map { it.id })
+        assertEquals(listOf(3L, 2L), g[1].second.map { it.id })
+        assertEquals(listOf(2L, 1L), g[2].second.map { it.id })
     }
 
     @Test fun dailyWithNoDataIsEmpty() {

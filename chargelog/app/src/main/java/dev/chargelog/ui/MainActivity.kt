@@ -46,6 +46,7 @@ class MainActivity : Activity() {
     private lateinit var content: FrameLayout
     private lateinit var tabBar: LinearLayout
     private var homeScroll: ScrollView? = null
+    private var sessionList: ListView? = null
 
     private var tab = 0
     private var weekOffset = 0
@@ -56,8 +57,14 @@ class MainActivity : Activity() {
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            current = Recorder.record(context, intent) ?: current
-            render()
+            val prev = current
+            val s = Recorder.record(context, intent) ?: return
+            current = s
+            // ACTION_BATTERY_CHANGED also fires for every temperature/voltage wobble; only
+            // rebuild the screen when something it shows has changed.
+            if (prev == null || prev.level != s.level || prev.plugged != s.plugged ||
+                prev.status != s.status || (tab == 0 && prev.temp / 10 != s.temp / 10)
+            ) render()
         }
     }
 
@@ -122,7 +129,7 @@ class MainActivity : Activity() {
             val on = i == tab
             tabBar.addView(label(name, 15f, if (on) p.ink else p.muted, bold = on).apply {
                 gravity = Gravity.CENTER
-                setOnClickListener { if (tab != i) { tab = i; render() } }
+                setOnClickListener { if (tab != i) { tab = i; sessionList = null; render() } }
             }, lp(0, MATCH, 1f))
         }
     }
@@ -161,6 +168,7 @@ class MainActivity : Activity() {
             lp(MATCH, WRAP, top = dpi(12f)))
         page.addView(dayCard(week.first { it.day == day }, now), lp(MATCH, WRAP, top = dpi(12f)))
 
+        sessionList = null
         val scroll = homeScroll ?: ScrollView(this).also { homeScroll = it }
         scroll.removeAllViews()
         scroll.addView(page)
@@ -325,31 +333,67 @@ class MainActivity : Activity() {
         }, lp(0, WRAP, 1f, left = dpi(10f)))
     }
 
+    private sealed class Row {
+        class Day(val stat: DayStat, val charges: Int) : Row()
+        class Item(val session: Session) : Row()
+    }
+
     private fun renderSessions() {
         val now = System.currentTimeMillis()
-        val items = db.latestSessions(500)
+        val sessions = db.latestSessions(SESSION_HISTORY_LIMIT)
+        val groups = Stats.sessionsByDay(sessions, zone, now)
+
+        // Daily totals for every listed day, computed from the SOC samples in one pass.
+        val stats = HashMap<LocalDate, DayStat>()
+        if (groups.isNotEmpty()) {
+            val oldest = groups.last().first
+            val newest = groups.first().first
+            val from = Stats.dayStart(oldest, zone)
+            val to = Stats.dayStart(newest.plusDays(1), zone)
+            Stats.daily(db.samples(from, to), db.sampleBefore(from), zone, oldest, newest)
+                .forEach { stats[it.day] = it }
+        }
+        val rows = ArrayList<Row>()
+        for ((day, list) in groups) {
+            val dayFrom = Stats.dayStart(day, zone)
+            val dayTo = Stats.dayStart(day.plusDays(1), zone)
+            val charges = list.count { it.type == SessionType.CHARGE && it.startTs in dayFrom until dayTo }
+            rows.add(Row.Day(stats[day] ?: DayStat(day, 0, 0, null, null), charges))
+            list.forEach { rows.add(Row.Item(it)) }
+        }
+
+        // Keep the scroll position when the list is rebuilt for a new reading.
+        val oldList = sessionList
+        val keepPos = oldList?.firstVisiblePosition ?: 0
+        val keepTop = oldList?.getChildAt(0)?.top ?: 0
         val list = ListView(this).apply {
             divider = null
             clipToPadding = false
-            setPadding(dpi(16f), dpi(8f), dpi(16f), dpi(16f))
+            setPadding(dpi(16f), dpi(0f), dpi(16f), dpi(16f))
             adapter = object : BaseAdapter() {
-                override fun getCount() = items.size
-                override fun getItem(i: Int) = items[i]
-                override fun getItemId(i: Int) = items[i].id
+                override fun getCount() = rows.size
+                override fun getItem(i: Int) = rows[i]
+                override fun getItemId(i: Int) = i.toLong()
+                override fun getViewTypeCount() = 2
+                override fun getItemViewType(i: Int) = if (rows[i] is Row.Day) 0 else 1
+                override fun isEnabled(i: Int) = false
                 override fun getView(i: Int, convert: View?, parent: ViewGroup): View =
-                    FrameLayout(context).apply {
-                        setPadding(0, dpi(4f), 0, dpi(4f))
-                        addView(card(p).apply {
-                            val pad = dpi(14f)
-                            setPadding(pad, pad, pad, pad)
-                            addView(sessionRow(items[i], now))
-                        })
+                    when (val row = rows[i]) {
+                        is Row.Day -> dayHeader(row.stat, row.charges)
+                        is Row.Item -> FrameLayout(context).apply {
+                            setPadding(0, dpi(4f), 0, dpi(4f))
+                            addView(card(p).apply {
+                                val pad = dpi(14f)
+                                setPadding(pad, pad, pad, pad)
+                                addView(sessionRow(row.session, now))
+                            })
+                        }
                     }
             }
         }
         val page = column().apply {
             addView(title("충전·사용 세션").apply { setPadding(dpi(22f), dpi(20f), dpi(22f), dpi(4f)) })
-            if (items.isEmpty()) {
+            if (rows.isEmpty()) {
                 addView(label("아직 기록된 세션이 없습니다.", 14f, p.ink2).apply {
                     setPadding(dpi(22f), dpi(8f), dpi(22f), 0)
                 })
@@ -357,9 +401,23 @@ class MainActivity : Activity() {
                 addView(list, lp(MATCH, 0, 1f))
             }
         }
+        if (oldList != null && rows.isNotEmpty()) list.setSelectionFromTop(keepPos, keepTop)
+        sessionList = list
         homeScroll = null
         content.removeAllViews()
         content.addView(page)
+    }
+
+    /** Date heading with that day's totals, above the day's session cards. */
+    private fun dayHeader(stat: DayStat, charges: Int): View = column().apply {
+        setPadding(dpi(6f), dpi(18f), dpi(6f), dpi(6f))
+        val today = LocalDate.now(zone)
+        val name = DateTimeFormatter.ofPattern("M월 d일 (E)", Locale.KOREAN).format(stat.day) +
+            when (stat.day) { today -> " · 오늘"; today.minusDays(1) -> " · 어제"; else -> "" }
+        addView(label(name, 15f, p.ink, bold = true))
+        val parts = arrayListOf("사용 ${stat.usage}%", "충전 ${stat.charged}%", "충전 ${charges}회")
+        if (stat.minSoc != null && stat.maxSoc != null) parts.add("SOC ${stat.minSoc}–${stat.maxSoc}%")
+        addView(label(parts.joinToString(" · "), 13f, p.ink2), lp(MATCH, WRAP, top = dpi(2f)))
     }
 
     // ------------------------------------------------------------------ data
@@ -416,6 +474,7 @@ class MainActivity : Activity() {
         }, lp(MATCH, WRAP, top = dpi(12f)))
 
         homeScroll = null
+        sessionList = null
         content.removeAllViews()
         content.addView(ScrollView(this).apply { addView(page) })
     }
@@ -460,6 +519,8 @@ class MainActivity : Activity() {
 
     companion object {
         private const val REQ_EXPORT = 100
+        /** Roughly a year of typical use; older sessions remain in the DB and in exports. */
+        private const val SESSION_HISTORY_LIMIT = 3000
         private const val NOTIF_PERMISSION = "android.permission.POST_NOTIFICATIONS"
     }
 }

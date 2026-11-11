@@ -237,12 +237,28 @@ class SocChartView(context: Context, private val p: Palette) : View(context) {
         return prev?.level
     }
 
+    private var downX = 0f
+    private var downY = 0f
+    private var scrubbing = false
+
     override fun onTouchEvent(e: MotionEvent): Boolean {
-        when (e.action) {
-            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
-                parent?.requestDisallowInterceptTouchEvent(true)
+        when (e.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                downX = e.x; downY = e.y; scrubbing = false
                 touchX = e.x.coerceIn(0f, plotW())
                 invalidate()
+            }
+            MotionEvent.ACTION_MOVE -> {
+                // Horizontal drag scrubs the chart; vertical drag is left to the page scroll.
+                val dx = Math.abs(e.x - downX); val dy = Math.abs(e.y - downY)
+                if (!scrubbing && dx > context.dp(8f) && dx > dy) {
+                    scrubbing = true
+                    parent?.requestDisallowInterceptTouchEvent(true)
+                }
+                if (scrubbing) {
+                    touchX = e.x.coerceIn(0f, plotW())
+                    invalidate()
+                }
             }
             MotionEvent.ACTION_UP -> performClick()
         }

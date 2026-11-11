@@ -111,10 +111,6 @@ class Db private constructor(context: Context) :
         writableDatabase.update("sessions", values(s), "id = ?", arrayOf(s.id.toString()))
     }
 
-    override fun deleteSession(id: Long) {
-        writableDatabase.delete("sessions", "id = ?", arrayOf(id.toString()))
-    }
-
     fun clearAll() {
         writableDatabase.delete("samples", null, null)
         writableDatabase.delete("sessions", null, null)

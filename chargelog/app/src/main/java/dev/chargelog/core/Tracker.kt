@@ -8,54 +8,46 @@ interface Store {
     fun latestSessions(limit: Int): List<Session>
     fun insertSession(s: Session): Long
     fun updateSession(s: Session)
-    fun deleteSession(id: Long)
 }
 
 /**
  * Turns raw battery readings into deduplicated samples and charge/discharge sessions.
- * Feeding the same reading twice is harmless.
+ * Feeding the same reading twice is harmless. Sessions are only ever appended or
+ * extended; a recorded session is never deleted, however short it was.
  */
-class Tracker(private val store: Store, private val mergeWindowMs: Long = 2 * 60_000L) {
+class Tracker(private val store: Store) {
 
     /** @return true when the reading changed stored state (new sample). */
-    fun onReading(r: Sample): Boolean {
+    fun onReading(reading: Sample): Boolean {
         val last = store.lastSample()
-        if (last != null && r.ts < last.ts) return false // clock went backwards; ignore
+        // If the wall clock moved backwards (manual change, network time correction), keep
+        // recording at the last known time instead of dropping readings until it catches up.
+        val r = if (last != null && reading.ts < last.ts) reading.copy(ts = last.ts) else reading
         val changed = last == null || last.level != r.level ||
             last.plugged != r.plugged || last.status != r.status
         if (changed) {
             // Primary key is ts: never write two samples on the same millisecond.
-            store.insertSample(if (last != null && r.ts == last.ts) r.copy(ts = r.ts + 1) else r)
+            store.insertSample(if (last != null && r.ts <= last.ts) r.copy(ts = last.ts + 1) else r)
         }
         updateSessions(r)
         return changed
     }
 
     private fun updateSessions(r: Sample) {
-        val recent = store.latestSessions(2)
-        val open = recent.firstOrNull()?.takeIf { it.open }
+        val open = store.latestSessions(1).firstOrNull()?.takeIf { it.open }
         val type = if (r.charging) SessionType.CHARGE else SessionType.DISCHARGE
 
-        if (open == null) {
-            store.insertSession(newSession(type, r))
-            return
-        }
-        if (open.type == type) {
-            val updated = extend(open, r)
-            if (updated != open) store.updateSession(updated)
-            return
-        }
-
-        // Plug state flipped. A very short blip (wireless pad wobble, cable re-seat) is
-        // folded back into the session before it instead of splitting the history.
-        val prev = recent.getOrNull(1)
-        val blip = r.ts - open.startTs < mergeWindowMs
-        if (blip && prev != null && prev.type == type && prev.endTs == open.startTs) {
-            store.deleteSession(open.id)
-            store.updateSession(extend(prev.copy(endTs = null), r))
-        } else {
-            store.updateSession(extend(open, r, track = false).copy(endTs = r.ts))
-            store.insertSession(newSession(type, r))
+        when {
+            open == null -> store.insertSession(newSession(type, r))
+            open.type == type -> {
+                val updated = extend(open, r)
+                if (updated != open) store.updateSession(updated)
+            }
+            else -> {
+                // Plug state flipped: close the running session and start the next one.
+                store.updateSession(extend(open, r, track = false).copy(endTs = r.ts))
+                store.insertSession(newSession(type, r))
+            }
         }
     }
 
