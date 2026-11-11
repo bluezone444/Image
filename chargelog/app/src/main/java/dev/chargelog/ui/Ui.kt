@@ -154,6 +154,19 @@ fun Context.number(text: CharSequence, size: Float, color: Int): TextView =
         fontFeatureSettings = "tnum"
     }
 
+/**
+ * "81%" → large figure with a smaller, lighter unit ("%", "회", "mA"…). Text that does not start
+ * with a number is returned unchanged.
+ */
+fun unitStyled(value: String, p: Palette): CharSequence {
+    val m = Regex("^([+\\-−]?[0-9][0-9.,:]*)(\\s*\\D.*)$").find(value) ?: return value
+    val cut = m.groupValues[1].length
+    return android.text.SpannableString(value).apply {
+        setSpan(android.text.style.RelativeSizeSpan(0.6f), cut, value.length, 0)
+        setSpan(android.text.style.ForegroundColorSpan(p.ink2), cut, value.length, 0)
+    }
+}
+
 /** Small caption above a value. */
 fun Context.caption(text: CharSequence, p: Palette): TextView =
     label(text, 13f, p.muted).apply { letterSpacing = 0.01f }
@@ -173,7 +186,17 @@ fun Context.row(): LinearLayout = LinearLayout(this).apply {
 
 /** Flat surface with a hairline border. */
 fun Context.card(p: Palette, padDp: Float = 16f): LinearLayout = column().apply {
-    background = roundRect(p.card, 18f, p.line)
+    // Light: borderless white card lifted by a soft shadow. Dark: shadows are invisible on a
+    // dark page, so the card keeps a hairline border instead.
+    if (p.dark) background = roundRect(p.card, 20f, p.line)
+    else {
+        background = roundRect(p.card, 20f)
+        elevation = dp(3f)
+        if (android.os.Build.VERSION.SDK_INT >= 28) {
+            outlineAmbientShadowColor = 0x33101828
+            outlineSpotShadowColor = 0x33101828
+        }
+    }
     val pad = dpi(padDp)
     setPadding(pad, pad, pad, pad)
 }
@@ -215,7 +238,7 @@ fun Context.tile(p: Palette, caption: String, value: String, note: String? = nul
         addView(caption(caption, p))
         // One line that shrinks to fit: "100%" must not wrap in a narrow column or at a large
         // system font size.
-        addView(number(value, size, p.ink).apply {
+        addView(number(unitStyled(value, p), size, p.ink).apply {
             maxLines = 1
             gravity = Gravity.BOTTOM or Gravity.START
             setAutoSizeTextTypeUniformWithConfiguration(10, Math.round(size), 1, TypedValue.COMPLEX_UNIT_SP)

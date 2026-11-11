@@ -455,6 +455,7 @@ class MainActivity : Activity() {
     }
 
     private fun page(): LinearLayout = column().apply {
+        clipToPadding = false; clipChildren = false
         setPadding(dpi(16f), dpi(14f), dpi(16f), dpi(20f))
     }
 
@@ -518,7 +519,7 @@ class MainActivity : Activity() {
         val gap = if (compact) dpi(8f) else gap()
         val pad = if (compact) 12f else 14f
 
-        val root = column().apply { setPadding(dpi(16f), dpi(if (compact) 10f else 14f), dpi(16f), dpi(if (compact) 8f else 12f)) }
+        val root = column().apply { clipToPadding = false; clipChildren = false; setPadding(dpi(16f), dpi(if (compact) 10f else 14f), dpi(16f), dpi(if (compact) 8f else 12f)) }
         root.addView(column().apply {
             addView(label(dateTitle(today), 13f, p.muted), lp(WRAP, WRAP))
             addView(label("오늘", if (compact) 22f else 26f, p.ink, bold = true), lp(WRAP, WRAP, top = dpi(2f)))
