@@ -445,6 +445,17 @@ class MainActivity : Activity() {
             lp(MATCH, WRAP, top = dpi(8f)))
         addView(label("SOC(%) · 음영은 충전 구간 · 그래프를 누르면 시각별 값", 12f, p.muted))
 
+        // Small information charts: battery temperature and voltage over the same day.
+        val temps = points.filter { it.temp > 0 }.map { it.ts to it.temp }
+        val volts = points.filter { it.voltage > 0 }.map { it.ts to it.voltage }
+        val v2 = { mv: Int -> String.format(Locale.US, "%.2fV", mv / 1000.0) }
+        miniChart("배터리 온도", temps, { "${Format.tenths(it)}°C" }, 20, start, end, now)?.let {
+            addView(it, lp(MATCH, WRAP, top = dpi(14f)))
+        }
+        miniChart("배터리 전압", volts, v2, 100, start, end, now)?.let {
+            addView(it, lp(MATCH, WRAP, top = dpi(10f)))
+        }
+
         val charges = sessions.count { it.type == SessionType.CHARGE }
         addView(label("세션 ${sessions.size}개 (충전 ${charges}회)", 13f, p.ink2), lp(MATCH, WRAP, top = dpi(14f)))
         for (s in sessions.asReversed()) addView(sessionRow(s, now), lp(MATCH, WRAP, top = dpi(10f)))
@@ -585,6 +596,23 @@ class MainActivity : Activity() {
             addView(page)
             if (keepY > 0) post { scrollTo(0, keepY) }
         })
+    }
+
+    /** Title row with the day's range, above a compact line chart. Null when there is no data. */
+    private fun miniChart(
+        name: String, pts: List<Pair<Long, Int>>, fmt: (Int) -> String, minSpan: Int,
+        start: Long, end: Long, now: Long,
+    ): View? {
+        if (pts.isEmpty()) return null
+        return column().apply {
+            addView(row().apply {
+                addView(label(name, 13f, p.ink, bold = true), lp(0, WRAP, 1f))
+                addView(label("최저 ${fmt(pts.minOf { it.second })} · 최고 ${fmt(pts.maxOf { it.second })}",
+                    12f, p.ink2))
+            })
+            addView(MiniLineChart(context, p, fmt, minSpan).apply { set(pts, start, end, now, zone) },
+                lp(MATCH, WRAP, top = dpi(2f)))
+        }
     }
 
     // -------------------------------------------------------------- sessions

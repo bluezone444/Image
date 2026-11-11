@@ -34,6 +34,15 @@ class CoreTest {
         assertEquals(1, st.sessions.size)
     }
 
+    @Test fun temperatureStepsAreSampled() {
+        val st = FakeStore(); val t = Tracker(st)
+        t.onReading(r(0, 50, temp = 300))
+        assertTrue(!t.onReading(r(1, 50, temp = 309)))   // < 1 °C: ignored
+        assertTrue(t.onReading(r(2, 50, temp = 311)))    // 1.1 °C since last stored
+        assertTrue(!t.onReading(r(3, 50, temp = 305)))
+        assertEquals(listOf(300, 311), st.samples.map { it.temp })
+    }
+
     @Test fun recordsChargeStartAndEnd() {
         val st = FakeStore(); val t = Tracker(st)
         t.onReading(r(0, 30))

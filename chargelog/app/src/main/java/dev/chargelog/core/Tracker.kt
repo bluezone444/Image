@@ -23,8 +23,10 @@ class Tracker(private val store: Store) {
         // If the wall clock moved backwards (manual change, network time correction), keep
         // recording at the last known time instead of dropping readings until it catches up.
         val r = if (last != null && reading.ts < last.ts) reading.copy(ts = last.ts) else reading
+        // Temperature moves without SOC changing (heavy use, charging); keep 1 °C steps too.
         val changed = last == null || last.level != r.level ||
-            last.plugged != r.plugged || last.status != r.status
+            last.plugged != r.plugged || last.status != r.status ||
+            Math.abs(last.temp - r.temp) >= TEMP_STEP
         if (changed) {
             // Primary key is ts: never write two samples on the same millisecond.
             store.insertSample(if (last != null && r.ts <= last.ts) r.copy(ts = last.ts + 1) else r)
@@ -66,5 +68,10 @@ class Tracker(private val store: Store) {
             maxSoc = maxOf(s.maxSoc, r.level),
             maxTemp = maxOf(s.maxTemp, r.temp),
         )
+    }
+
+    companion object {
+        /** Temperature change (0.1 °C units) that is worth a new sample on its own. */
+        const val TEMP_STEP = 10
     }
 }

@@ -442,3 +442,114 @@ class RangeChartView(context: Context, p: Palette) : DailyChart(context, p) {
         if (d.minSoc == null) "${dateLabel(d)} · 기록 없음"
         else "${dateLabel(d)} · 최저 ${d.minSoc}% · 최고 ${d.maxSoc}%"
 }
+
+/**
+ * Compact single-series line over one day (0–24 h), e.g. battery temperature or voltage.
+ * The value scale fits the data; a touch shows the value at that time.
+ */
+class MiniLineChart(
+    context: Context,
+    private val p: Palette,
+    private val format: (Int) -> String,
+    /** Smallest visible span of the value axis, so flat data does not look noisy. */
+    private val minSpan: Int,
+) : View(context) {
+    private var pts: List<Pair<Long, Int>> = emptyList()
+    private var start = 0L
+    private var end = 1L
+    private var now = 0L
+    private var zone: ZoneId = ZoneId.systemDefault()
+    private var touchX = -1f
+    private var downX = 0f
+    private var downY = 0f
+    private var scrubbing = false
+
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = context.sp(11f) }
+    private val path = Path()
+
+    fun set(points: List<Pair<Long, Int>>, start: Long, end: Long, now: Long, zone: ZoneId) {
+        pts = points; this.start = start; this.end = end; this.now = now; this.zone = zone
+        touchX = -1f
+        invalidate()
+    }
+
+    override fun onMeasure(w: Int, h: Int) {
+        setMeasuredDimension(MeasureSpec.getSize(w), context.dpi(96f))
+    }
+
+    private fun plotW() = width - context.dp(52f)
+    private fun x(ts: Long) = plotW() * (ts - start).coerceIn(0, end - start) / (end - start).toFloat()
+
+    override fun onDraw(c: Canvas) {
+        if (pts.isEmpty()) return
+        val top = context.dp(18f)
+        val bottom = height - context.dp(6f)
+        var lo = pts.minOf { it.second }
+        var hi = pts.maxOf { it.second }
+        if (hi - lo < minSpan) { val mid = (hi + lo) / 2; lo = mid - minSpan / 2; hi = lo + minSpan }
+        fun y(v: Int) = bottom - (bottom - top) * (v - lo) / (hi - lo).toFloat()
+        val plotW = plotW()
+        val last = minOf(now, end)
+
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = context.dp(1f)
+        paint.color = p.grid
+        text.typeface = Typeface.DEFAULT
+        text.color = p.muted
+        text.textAlign = Paint.Align.LEFT
+        for (v in intArrayOf(lo, hi)) {
+            c.drawLine(0f, y(v), plotW, y(v), paint)
+            c.drawText(format(v), plotW + context.dp(6f), y(v) + text.textSize / 3, text)
+        }
+
+        path.reset()
+        pts.forEachIndexed { i, (ts, v) -> if (i == 0) path.moveTo(x(ts), y(v)) else path.lineTo(x(ts), y(v)) }
+        if (last > pts.last().first) path.lineTo(x(last), y(pts.last().second))
+        paint.color = p.accent
+        paint.strokeWidth = context.dp(2f)
+        paint.strokeJoin = Paint.Join.ROUND
+        c.drawPath(path, paint)
+
+        if (touchX >= 0f) {
+            val ts = (start + (end - start) * (touchX / plotW).toDouble()).toLong().coerceIn(start, last)
+            val v = pts.lastOrNull { it.first <= ts }?.second ?: pts.first().second
+            val px = x(ts)
+            paint.color = p.ink2
+            paint.strokeWidth = context.dp(1f)
+            c.drawLine(px, top, px, bottom, paint)
+            paint.style = Paint.Style.FILL
+            paint.color = p.card
+            c.drawCircle(px, y(v), context.dp(5f), paint)
+            paint.color = p.accent
+            c.drawCircle(px, y(v), context.dp(3.5f), paint)
+            text.color = p.ink
+            text.typeface = Typeface.DEFAULT_BOLD
+            text.textAlign = Paint.Align.CENTER
+            val tip = "${Format.time(ts, zone)} · ${format(v)}"
+            val half = text.measureText(tip) / 2
+            c.drawText(tip, px.coerceIn(half, maxOf(half, width - half)), top - context.dp(6f), text)
+        }
+    }
+
+    override fun onTouchEvent(e: MotionEvent): Boolean {
+        when (e.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                downX = e.x; downY = e.y; scrubbing = false
+                touchX = e.x.coerceIn(0f, plotW()); invalidate()
+            }
+            MotionEvent.ACTION_MOVE -> {
+                val dx = Math.abs(e.x - downX); val dy = Math.abs(e.y - downY)
+                if (!scrubbing && dx > context.dp(8f) && dx > dy) {
+                    scrubbing = true
+                    parent?.requestDisallowInterceptTouchEvent(true)
+                }
+                if (scrubbing) { touchX = e.x.coerceIn(0f, plotW()); invalidate() }
+            }
+            MotionEvent.ACTION_UP -> performClick()
+        }
+        return true
+    }
+
+    override fun performClick(): Boolean = super.performClick()
+}
