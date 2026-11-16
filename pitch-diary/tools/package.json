@@ -1,0 +1,14 @@
+{
+  "name": "pitch-career-tools",
+  "private": true,
+  "description": "Pitch Career 배포 빌드 도구 (난독화 · 압축)",
+  "scripts": {
+    "build": "python3 build.py all",
+    "test": "node test/smoke.js && node test/regression.js"
+  },
+  "dependencies": {
+    "csso": "^5.0.5",
+    "javascript-obfuscator": "^4.1.1",
+    "terser": "^5.31.6"
+  }
+}
