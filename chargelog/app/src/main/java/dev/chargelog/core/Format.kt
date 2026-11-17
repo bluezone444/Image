@@ -126,5 +126,9 @@ object Format {
     fun dayCsv(d: DayStat, charges: Int = 0, readings: Int = 0, estimated: Int = 0): String =
         "${d.day},${d.usage},${d.charged},${d.minSoc ?: ""},${d.maxSoc ?: ""},$charges,$readings,$estimated"
 
-    fun tenths(v: Int): String = "${v / 10}.${Math.abs(v % 10)}"
+    /** 0.1-unit value as "12.3"; the sign is kept for values between −1 and 0 ("-0.5"). */
+    fun tenths(v: Int): String {
+        val a = Math.abs(v.toLong())
+        return (if (v < 0) "-" else "") + "${a / 10}.${a % 10}"
+    }
 }

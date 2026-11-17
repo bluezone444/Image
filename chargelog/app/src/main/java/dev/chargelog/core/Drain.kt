@@ -66,6 +66,9 @@ object Drain {
         return out
     }
 
+    /** Value at the end of a (possibly smoothed) [series]; null when it ends in a gap or is empty. */
+    fun latest(series: List<Pair<Long, Int>>): Int? = series.lastOrNull()?.second?.takeIf { it != BREAK }
+
     /** Time-weighted average and maximum (mA) of a [series]; null when it is empty. */
     fun summary(series: List<Pair<Long, Int>>): Pair<Int, Int>? {
         var weighted = 0.0; var total = 0L; var max = -1

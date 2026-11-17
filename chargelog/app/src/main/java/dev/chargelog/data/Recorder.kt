@@ -57,7 +57,8 @@ object Recorder {
         val current = microAmps(context, bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW))
         val counter = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)
             .takeIf { it > 0 && it != Int.MAX_VALUE } ?: 0
-        val soc = Math.round(level * 100f / scale)
+        // A level above the scale (odd vendor values) must not produce SOC > 100 %.
+        val soc = Math.round(level * 100f / scale).coerceIn(0, 100)
 
         val fit = rFit(context)
         fit.add(now, soc, plugged == 0, voltage, current)
@@ -126,6 +127,15 @@ object Recorder {
     }
 
     private const val CADENCE_KEY = "cadence"
+
+    /**
+     * Deletes all history. Holds the same lock as [record] and [rebuildOnce], so a one-time
+     * rebuild that already read the old history cannot write it back after the delete.
+     */
+    @Synchronized
+    fun clearAll(context: Context) {
+        Db.get(context).clearAll()
+    }
 
     /**
      * @param periodic a scheduled reading, stored even when nothing changed

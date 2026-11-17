@@ -212,7 +212,8 @@ class MainActivity : Activity() {
             Toast.makeText(this, "기록 서비스를 시작하지 못했습니다", Toast.LENGTH_LONG).show()
         }
         // Sticky: delivers the current state right away, then every change while visible.
-        val sticky = registerReceiver(receiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val sticky = if (receiverOn) registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+            else registerReceiver(receiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         receiverOn = true
         if (sticky != null) {
             current = Recorder.record(this, sticky) ?: current
@@ -580,16 +581,22 @@ class MainActivity : Activity() {
                 }
                 addView(label(state, 16f, p.ink, bold = true), lp(WRAP, WRAP))
                 if (open != null) {
-                    addView(row().apply {
-                        gravity = Gravity.BOTTOM
-                        addView(number("${Format.signed(open.delta)}%", if (compact) 26f else 30f, p.ink))
-                        addView(label("  ${open.startSoc}% → ${open.endSoc}%", 14f, p.ink2),
-                            lp(WRAP, WRAP).apply { bottomMargin = dpi(3f) })
-                    }, lp(WRAP, WRAP, top = dpi(if (compact) 4f else 8f)))
+                    // Big change figure on its own line. Font padding stays on so the glyph tops
+                    // are never clipped against the state label above.
+                    addView(number("${Format.signed(open.delta)}%", if (compact) 26f else 30f, p.ink).apply {
+                        includeFontPadding = true
+                        maxLines = 1
+                    }, lp(MATCH, WRAP, top = dpi(if (compact) 2f else 4f)))
+                    addView(label("${open.startSoc}% → ${open.endSoc}%", 14f, p.ink2).apply {
+                        maxLines = 1
+                        ellipsize = android.text.TextUtils.TruncateAt.END
+                    }, lp(MATCH, WRAP, top = dpi(2f)))
                     val parts = arrayListOf("${Format.time(open.startTs, zone)}부터", Format.duration(open.durationMs(now)))
                     open.ratePerHour(now)?.let { parts.add(String.format(Locale.US, "%.1f%%/h", it)) }
-                    addView(label(parts.joinToString(" · ") + if (open.est) " · 추정 포함" else "", 13f, p.ink2),
-                        lp(WRAP, WRAP, top = dpi(4f)))
+                    addView(label(parts.joinToString(" · ") + if (open.est) " · 추정 포함" else "", 13f, p.ink2).apply {
+                        maxLines = 1
+                        ellipsize = android.text.TextUtils.TruncateAt.END
+                    }, lp(MATCH, WRAP, top = dpi(3f)))
                     if (open.type == SessionType.CHARGE) chargeEvents(open, now).fullTs?.let {
                         addView(label("100% 도달 ${Format.timeSec(it, zone)}", 13f, p.ink2), lp(WRAP, WRAP, top = dpi(2f)))
                     }
@@ -619,11 +626,13 @@ class MainActivity : Activity() {
         // Discharge current replaces voltage on the dashboard; voltage is only stored and exported.
         val drain = Drain.series(points, now, s)
         val drainSum = Drain.summary(drain)
+        val drainSmooth = dev.chargelog.core.Smooth.movingAverage(drain, 10 * 60_000L)
+        // Headline = latest point of the plotted (smoothed) series, so it matches the curve and
+        // can never exceed the summary's maximum; the instantaneous current is too noisy.
         val drainNow = when {
             s == null -> "-"
             s.charging -> "충전 중"
-            s.currentUa != 0 -> "${Math.abs(s.currentUa) / 1000}mA"
-            else -> "-"
+            else -> Drain.latest(drainSmooth)?.let { "${it}mA" } ?: "-"
         }
         fun half(
             name: String, now0: String, pts: List<Pair<Long, Int>>, fmt: (Int) -> String, span: Int, color: Int,
@@ -643,7 +652,7 @@ class MainActivity : Activity() {
             }
         addView(tileRow(p, listOf(
             half("배터리 온도", s?.let { c1(it.temp) } ?: "-", dev.chargelog.core.Smooth.movingAverage(temps, 5 * 60_000L), c1, 20, p.temp),
-            half("방전 전류", drainNow, dev.chargelog.core.Smooth.movingAverage(drain, 10 * 60_000L), ma, 300, p.volt,
+            half("방전 전류", drainNow, drainSmooth, ma, 300, p.volt,
                 rangeText = drainSum?.let { "평균 ${it.first} · 최대 ${it.second}mA" } ?: "방전 기록 없음",
                 fromZero = true),
         )))
@@ -1005,7 +1014,9 @@ class MainActivity : Activity() {
     private fun renderSessions() {
         val now = System.currentTimeMillis()
         val today = LocalDate.now(zone)
-        val firstDay = db.firstSampleTs()?.let { java.time.Instant.ofEpochMilli(it).atZone(zone).toLocalDate() } ?: today
+        // minOf: a first reading "after today" (clock moved back) must not make the range invalid
+        // (coerceIn and the date picker's min/max would throw).
+        val firstDay = minOf(db.firstSampleTs()?.let { java.time.Instant.ofEpochMilli(it).atZone(zone).toLocalDate() } ?: today, today)
         val day = (sessionsDay ?: today).coerceIn(firstDay, today)
         sessionsDay = day
         val from = Stats.dayStart(day, zone)
@@ -1194,8 +1205,9 @@ class MainActivity : Activity() {
                     .setMessage("SOC 기록과 세션이 모두 지워지며 되돌릴 수 없습니다.")
                     .setNegativeButton("취소", null)
                     .setPositiveButton("삭제") { _, _ ->
-                        db.clearAll()
+                        Recorder.clearAll(context)
                         specCache.clear()
+                        eventsCache.clear()
                         statsDay = null
                         registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
                             ?.let { Recorder.record(context, it) }
@@ -1234,15 +1246,23 @@ class MainActivity : Activity() {
         val kind = ExportKind.values().getOrNull(requestCode - REQ_EXPORT) ?: return
         val uri = data?.data
         if (resultCode != RESULT_OK || uri == null) return
+        // Application context: the export may outlive this activity (rotation, back).
+        val app = applicationContext
+        val exportZone = zone
         Thread {
             val message = try {
-                val out = contentResolver.openOutputStream(uri) ?: throw java.io.IOException("no stream")
-                out.use { Exporter(this, db, zone).write(kind, it) }
+                val out = app.contentResolver.openOutputStream(uri) ?: throw java.io.IOException("no stream")
+                out.use { Exporter(app, db, exportZone).write(kind, it) }
                 "저장했습니다: ${kind.label}"
             } catch (e: Exception) {
-                "저장 실패: ${e.message}"
+                // Do not leave a truncated file behind that looks like a valid export.
+                try {
+                    android.provider.DocumentsContract.deleteDocument(app.contentResolver, uri)
+                } catch (ignored: Exception) {
+                }
+                "저장 실패: ${e.message ?: e.javaClass.simpleName}"
             }
-            runOnUiThread { Toast.makeText(this, message, Toast.LENGTH_LONG).show() }
+            handler.post { Toast.makeText(app, message, Toast.LENGTH_LONG).show() }
         }.start()
     }
 

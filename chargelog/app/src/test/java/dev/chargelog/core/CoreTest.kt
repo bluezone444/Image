@@ -333,6 +333,30 @@ class CoreTest {
         assertEquals(812, Drain.rate(smp(0, 50, 0), smp(1, 50, 0, cur = -812_000)))
     }
 
+    @Test fun drainHeadlineIsLatestSmoothedValue() {
+        fun smp(m: Long, q: Int, cur: Int, plug: Int = Plug.NONE) =
+            Sample(m * min, 60, plug, if (plug == 0) 3 else 2, 300, 3900, chargeUah = q, currentUa = cur)
+        val samples = listOf(smp(0, 4_000_000, -300_000), smp(30, 3_800_000, -300_000), smp(60, 3_300_000, -300_000))
+        // Instantaneous current spikes to 4 A at "now"; the headline must follow the series instead.
+        val ser = Drain.series(samples, 61 * min, smp(0, 3_290_000, -4_023_000))
+        val smooth = Smooth.movingAverage(ser, 10 * 60_000L)
+        val head = Drain.latest(smooth)!!
+        val (_, max) = Drain.summary(ser)!!
+        assertTrue("headline $head above max $max", head <= max)
+        assertTrue(head < 4023)
+        // Ends in a gap (charging) or empty: no headline.
+        assertNull(Drain.latest(ser + (70 * min to Drain.BREAK)))
+        assertNull(Drain.latest(emptyList()))
+    }
+
+    @Test fun tenthsKeepsSignOfSmallNegatives() {
+        assertEquals("-0.5", Format.tenths(-5))
+        assertEquals("-1.2", Format.tenths(-12))
+        assertEquals("0.0", Format.tenths(0))
+        assertEquals("31.4", Format.tenths(314))
+        assertEquals("-214748364.8", Format.tenths(Int.MIN_VALUE))
+    }
+
     @Test fun periodicReadingsAreStoredOnSchedule() {
         val st = FakeStore(); val t = Tracker(st)
         t.onReading(r(0, 70))
