@@ -28,10 +28,11 @@
 (cd tools && npm ci)                       # 처음 한 번
 node tools/test/smoke.js                   # 고칠 때마다
 node tools/test/regression.js              # 경기 엔진·저장·시즌 흐름을 건드렸을 때
-python3 tools/build.py all 7               # 미리보기 사본 + 웹앱 + 7일 체험판
+python3 tools/build.py all 7               # 미리보기 사본 + 웹앱 + 7일 체험판 + 기한 없는 정식판
 node tools/test/smoke.js dist/trial/pitch-career-trial.html   # 난독화본도 확인
 tools/android/get_sdk.sh                   # APK가 필요할 때 한 번
-PITCH_KS_PASS=… PITCH_KEYSTORE=… tools/android/build_apk.sh   # → dist/trial/pitch-career-trial.apk
+PITCH_KS_PASS=… PITCH_KEYSTORE=… tools/android/build_apk.sh   # 체험판 → dist/trial/pitch-career-trial.apk
+PITCH_KS_PASS=… PITCH_KEYSTORE=… tools/android/build_apk.sh dist/full/pitch-career.html dist/full/PitchCareer.apk 1.0   # 기한 없는 정식판
 ```
 - **서명 키(`pitch-career.jks`, 별칭 `pitch`)는 저장소에 없다.** 사용자가 보관한다. 같은 키로 서명해야 기존 설치 위에 업데이트된다. 키가 없으면 사용자에게 받아서 `tools/android/`에 두고(git 제외됨) 비밀번호도 받는다. 새 키를 만들면 기존 설치본과 호환이 깨진다는 점을 먼저 알린다.
 - 테스트 화면 확인: Playwright(`require('playwright')`). 같은 URL에서 해시만 바꿀 땐 먼저 `about:blank`로 이동. `#skiphs` 해시는 고교 프롤로그를 건너뛴다.

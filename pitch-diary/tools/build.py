@@ -5,6 +5,7 @@
   python3 tools/build.py pub            # 미리보기(아티팩트)용 사본 → dist/pub/career.html
   python3 tools/build.py pwa            # 난독화 정식판 + 오프라인 웹앱 → dist/pwa/
   python3 tools/build.py trial [일수]    # 체험판(기본 7일) → dist/trial/ (단일 HTML · 웹앱 ZIP)
+  python3 tools/build.py full           # 기한 없는 정식판 단일 HTML → dist/full/pitch-career.html (APK 재료)
   python3 tools/build.py all [일수]      # 위 세 가지 모두
 처음 한 번: (cd tools && npm ci)  — 난독화 도구 설치
 """
@@ -42,6 +43,25 @@ def obfuscate(src_path, out_path):
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     subprocess.run(['node', 'obfuscate.js', src_path, out_path], cwd=TOOLS, check=True, stdout=subprocess.DEVNULL)
     return read(out_path)
+
+
+def embed_fonts(s):
+    """글꼴을 data URI로 넣어 파일 하나로 실행되게 한다."""
+    for f in ['PretendardVariable.woff2', 'Pretendard-ExtraBold.woff2']:
+        b64 = base64.b64encode(open(os.path.join(FONTS, f), 'rb').read()).decode()
+        s, n = re.subn(r'url\(fonts/' + re.escape(f) + r'\)', f'url(data:font/woff2;base64,{b64})', s)
+        assert n >= 1, f
+    return s.replace("font-src 'self'", "font-src 'self' data:")
+
+
+def build_full():
+    """기한 없는 정식판(TRIAL_END = 0 그대로) 단일 HTML. 앱(APK)에 넣거나 직접 나눠 줄 때 쓴다."""
+    src = read(SRC)
+    assert src.count('const TRIAL_END = 0;') == 1, '원본의 TRIAL_END는 0이어야 해요'
+    s = obfuscate(SRC, os.path.join(DIST, 'tmp', 'full-obf.html'))
+    out = os.path.join(DIST, 'full', 'pitch-career.html')
+    write(out, embed_fonts(s))
+    print('full  → dist/full/pitch-career.html (기한 없음)')
 
 
 def build_pub():
@@ -90,13 +110,7 @@ def build_trial(days=7):
     out = os.path.join(DIST, 'trial')
     os.makedirs(out, exist_ok=True)
     # 단일 HTML: 글꼴을 data URI로 넣어 파일 하나로 실행
-    one = s
-    for f in ['PretendardVariable.woff2', 'Pretendard-ExtraBold.woff2']:
-        b64 = base64.b64encode(open(os.path.join(FONTS, f), 'rb').read()).decode()
-        one, n = re.subn(r'url\(fonts/' + re.escape(f) + r'\)', f'url(data:font/woff2;base64,{b64})', one)
-        assert n >= 1, f
-    one = one.replace("font-src 'self'", "font-src 'self' data:")
-    write(os.path.join(out, 'pitch-career-trial.html'), one)
+    write(os.path.join(out, 'pitch-career-trial.html'), embed_fonts(s))
     # 웹앱 ZIP
     pw = os.path.join(DIST, 'tmp', 'trial-pwa')
     pwa_dir(s, pw, f'trial-{end_ms}')
@@ -115,4 +129,5 @@ if __name__ == '__main__':
     if cmd in ('pub', 'all'): build_pub()
     if cmd in ('pwa', 'all'): build_pwa()
     if cmd in ('trial', 'all'): build_trial(days)
-    if cmd not in ('pub', 'pwa', 'trial', 'all'): sys.exit(__doc__)
+    if cmd in ('full', 'all'): build_full()
+    if cmd not in ('pub', 'pwa', 'trial', 'full', 'all'): sys.exit(__doc__)
